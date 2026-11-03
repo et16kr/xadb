@@ -924,9 +924,20 @@ pub(crate) enum RowProducerInput {
         cell_bytes: usize,
         projection: [u8; 32],
     },
-    /// The CLR of either effect: an INSERT root's removes its row, a DELETE
-    /// root's restores the row from U; `current_row_len` is the RootJob's
-    /// cell C and `current_projection` its projection.
+    /// An UPDATE root's Forward (dev3-row-update.md#api): the sealed new
+    /// canonical value's length and digest, the RootJob's old cell C and its
+    /// projection, which is the planned new row's (unlike `Delete`'s, which
+    /// is the old row's).
+    Update {
+        canonical_len: usize,
+        canonical_digest: [u8; 32],
+        old_cell: usize,
+        projection: [u8; 32],
+    },
+    /// The CLR of any effect: an INSERT root's removes its row, a DELETE or
+    /// UPDATE root's restores the row from U; `current_row_len` is the
+    /// current row's cell (the RootJob's C, or an UPDATE root's new C') and
+    /// `current_projection` the RootJob's projection.
     Clr {
         current_row_len: usize,
         current_projection: [u8; 32],

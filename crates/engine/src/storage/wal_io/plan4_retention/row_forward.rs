@@ -418,9 +418,16 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                         canonical_len: usize::from(draft.input_len),
                         canonical_digest: draft.input,
                     },
-                    // No UPDATE draft before dev3-row-update.md#stages
-                    // stage 3, which adds its producer input.
-                    job3::RowEffect::Update => return Err(invariant()),
+                    // The update Reserve's draft: the sealed new value's
+                    // length and digest; the old cell C and the planned new
+                    // row's projection are the RootJob's
+                    // (dev3-row-update.md#api).
+                    job3::RowEffect::Update => RowProducerInput::Update {
+                        canonical_len: usize::from(draft.input_len),
+                        canonical_digest: draft.input,
+                        old_cell: job.cell_bytes() as usize,
+                        projection: *job.projection_digest(),
+                    },
                 }
             } else {
                 RowProducerInput::Clr {

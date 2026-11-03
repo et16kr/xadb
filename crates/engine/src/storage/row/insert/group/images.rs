@@ -6,7 +6,7 @@
 
 use super::{
     Change, GroupInput, InsertError, Observed, Result, UNDO_BYTES, before_of, debt,
-    encode_undo_after, is_delete, leaf, require, undo_after_len,
+    encode_undo_after, holds_value, leaf, require, undo_after_len,
 };
 use crate::storage::{
     disk::RowPageRole,
@@ -285,9 +285,30 @@ pub(super) fn pages(
                             Some(output),
                         )?;
                     }
-                    // DeleteClr restores the row U's Live before holds
-                    // (dev3-row-delete.md#delete-states).
-                    Change::Clr { .. } if is_delete(observed.job) => {
+                    // UpdateForward replaces the old row by the new value
+                    // (dev3-row-update.md#update-states).
+                    Change::UpdateForward { canonical, .. } => {
+                        leaf::replace(
+                            namespace,
+                            observed.leaf,
+                            input.schema,
+                            page.before,
+                            super::current_version(
+                                observed.actor,
+                                observed.row,
+                                observed.job,
+                                observed.undo.reference,
+                            )?,
+                            Some(canonical),
+                            lsn,
+                            scratch,
+                            Some(output),
+                        )?;
+                    }
+                    // DeleteClr and UpdateClr restore the row U's Live
+                    // before holds (dev3-row-delete.md#delete-states,
+                    // dev3-row-update.md#update-states).
+                    Change::Clr { .. } if holds_value(observed.job) => {
                         let undo = page::decode_page(
                             before_of(observed, RowPageRole::Undo),
                             observed.pages[role_index(observed, RowPageRole::Undo)].identity,

@@ -132,6 +132,8 @@ impl Operation {
         }
     }
     /// The shape of every operation but UPDATE's (whose C' this cannot name).
+    /// Product code names C' through `shape_cells`; tests keep this form.
+    #[cfg(test)]
     pub(crate) fn shape(self, cell: usize, predecessor: bool) -> Result<Shape> {
         self.shape_cells(cell, 0, predecessor)
     }
@@ -192,6 +194,7 @@ impl Operation {
             predecessor,
         })
     }
+    #[cfg(test)]
     pub(crate) fn frame_bytes(self, cell: usize, predecessor: bool) -> Result<usize> {
         self.frame_bytes_cells(cell, 0, predecessor)
     }

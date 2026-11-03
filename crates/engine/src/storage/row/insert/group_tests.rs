@@ -968,28 +968,25 @@ fn as_update_root(job: &mut [u8; JOB_BYTES]) {
     assert_eq!(view.new_cell() as u64, cell);
 }
 
-/// Stage 2 boundary (dev3-row-update.md#stages): A's group producer learns
-/// UPDATE in stage 3. Until then it refuses a valid UPDATE root as its
-/// selected RootJob, and an UPDATE root as the H of a Forward or CLR, before
-/// the first output byte.
+/// RUP-A (dev3-row-update.md#job-effect): the RootJob's effect names the
+/// group, as for DELETE (`rdl_f_insert_producer_refuses_delete_root`). An
+/// INSERT value on a valid UPDATE root (effect 2, C' = C, update cleanup
+/// budget) is Unsupported. A CLR compensates any effect, so it goes on to
+/// the Root's Job census, which the flipped Job no longer matches. Both
+/// refuse before the first output byte. A's UPDATE groups over real UPDATE
+/// pages, an effect-2 H among them, are `group_update_tests.rs`.
 #[test]
-fn rup_f_insert_producer_refuses_update_root() {
-    for case in [Case::ForwardNoH, Case::ForwardH, Case::ClrNoH, Case::ClrH] {
-        refuses(case, InsertError::Unsupported, |f| {
-            as_update_root(&mut f.bank[f.ordinal])
-        });
-    }
-    for case in [Case::ForwardH, Case::ClrH] {
-        refuses(case, InsertError::Unsupported, |f| {
-            let h = f.predecessor.unwrap().reference;
-            let ordinal = (0..JOB_COUNT)
-                .find(|i| {
-                    row::decode_job(&f.bank[*i], namespace())
-                        .is_ok_and(|job| job.state().is_root() && job.undo() == Some(h))
-                })
-                .unwrap();
-            assert_ne!(ordinal, f.ordinal);
-            as_update_root(&mut f.bank[ordinal]);
-        });
+fn rup_a_insert_producer_binds_update_root() {
+    use crate::storage::retention_page::RetentionError;
+    for (case, error) in [
+        (Case::ForwardNoH, InsertError::Unsupported),
+        (Case::ForwardH, InsertError::Unsupported),
+        (
+            Case::ClrNoH,
+            InsertError::Retention(RetentionError::Corrupt),
+        ),
+        (Case::ClrH, InsertError::Retention(RetentionError::Corrupt)),
+    ] {
+        refuses(case, error, |f| as_update_root(&mut f.bank[f.ordinal]));
     }
 }

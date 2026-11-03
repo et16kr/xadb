@@ -2,7 +2,9 @@
 //! images and descriptors. The tag3 envelope is finished last and the whole
 //! frame is reread by the shared layout decoder before success is reported.
 
-use super::{InsertError, Observed, Result, is_delete, operation, projection, require, undo_item};
+use super::{
+    InsertError, Observed, Result, holds_value, operation, projection, require, undo_item,
+};
 use crate::storage::{
     disk::RowPageRole,
     page::{self, PAGE_BYTES},
@@ -68,8 +70,9 @@ fn leaf_slot(observed: &Observed<'_>, bytes: &[u8; PAGE_BYTES]) -> Result<u16> {
     Ok((position.index + 1) as u16)
 }
 
-/// The record of the row in one RowLeaf image: DeleteForward's replaced row
-/// (before) or DeleteClr's restored one (after).
+/// The record of the row in one RowLeaf image: DeleteForward's and
+/// UpdateForward's replaced row (before) or DeleteClr's and UpdateClr's
+/// restored one (after).
 fn leaf_record<'p>(observed: &Observed<'_>, bytes: &'p [u8; PAGE_BYTES]) -> Result<&'p [u8]> {
     let view = tree_page::decode_tree_page(bytes, observed.leaf)?;
     let position = view.lower_bound(&observed.row.get().to_be_bytes())?;
@@ -96,8 +99,9 @@ fn native(
         }
         RowPageRole::Status => (5, Some(0), Some(0)),
         RowPageRole::Undo => (3, Some(0), Some(0)),
-        // A DELETE group replaces the row in place (dev3-row-delete.md#delete-shape).
-        RowPageRole::RowLeaf if is_delete(observed.job) => (
+        // A DELETE or UPDATE group replaces the row in place
+        // (dev3-row-delete.md#delete-shape, dev3-row-update.md#update-shape).
+        RowPageRole::RowLeaf if holds_value(observed.job) => (
             1,
             Some(leaf_slot(observed, page.before)?),
             Some(leaf_slot(observed, after)?),
@@ -137,9 +141,10 @@ fn native(
 }
 
 /// The core's row digests: INSERT's are the absent row and the RootJob
-/// projection; DELETE's the replaced row's record, read from the RowLeaf
-/// before (DeleteForward) or after (DeleteClr), and the tombstone's RootJob
-/// projection (dev3-row-delete.md#delete-states).
+/// projection; DELETE's and UPDATE's the replaced row's record, read from
+/// the RowLeaf before (Forward) or after (CLR), and the RootJob projection of
+/// the tombstone or the new row (dev3-row-delete.md#delete-states,
+/// dev3-row-update.md#update-states).
 fn core(observed: &Observed<'_>, leaf_after: &[u8; PAGE_BYTES], output: &mut [u8]) -> Result<()> {
     let job = observed.job;
     let h = observed.predecessor.is_some();
@@ -158,7 +163,7 @@ fn core(observed: &Observed<'_>, leaf_after: &[u8; PAGE_BYTES], output: &mut [u8
     if let Some(target) = observed.target {
         target.encode(&mut output[112..152])?;
     }
-    let other = if is_delete(job) {
+    let other = if holds_value(job) {
         let leaf = if observed.forward {
             super::before_of(observed, RowPageRole::RowLeaf)
         } else {
@@ -192,7 +197,7 @@ pub(super) fn write(
 ) -> Result<()> {
     let h = observed.predecessor.is_some();
     let operation = operation(observed);
-    let shape = operation.shape(observed.cell, h)?;
+    let shape = operation.shape_cells(observed.cell, observed.new_cell, h)?;
     let leaf_at = usize::from(native_index(observed, RowPageRole::RowLeaf));
     core(observed, &after[leaf_at], &mut output[CORE_AT..NATIVE_AT])?;
 

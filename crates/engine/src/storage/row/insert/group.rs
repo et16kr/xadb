@@ -80,10 +80,12 @@ pub(super) struct Source {
 }
 
 /// The reserve-sealed INSERT value, the delete RowReserve's sealed old row,
-/// or the CLR's actual current Row/RootJob observation. `cell_bytes` is the
-/// RootJob tree-cell length C (`180+L`). A CLR compensates the RootJob's
-/// effect: INSERT's CLR removes the row, DELETE's restores it
-/// (dev3-row-delete.md#delete-states).
+/// the update RowReserve's sealed new value, or the CLR's actual current
+/// Row/RootJob observation. `cell_bytes` is the RootJob tree-cell length C
+/// (`180+L`), or an UPDATE CLR's current new row C'. A CLR compensates the
+/// RootJob's effect: INSERT's CLR removes the row, DELETE's and UPDATE's
+/// restore it (dev3-row-delete.md#delete-states,
+/// dev3-row-update.md#update-states).
 #[derive(Clone, Copy, Debug)]
 pub(super) enum Change<'a> {
     Forward {
@@ -93,6 +95,15 @@ pub(super) enum Change<'a> {
     /// the XRP1 projection `projection`, as the delete RowReserve sealed it.
     DeleteForward {
         cell_bytes: usize,
+        projection: [u8; 32],
+    },
+    /// UpdateForward: the reserve-sealed new canonical value that replaces
+    /// the committed, pruned row of cell `old_cell` (the RootJob's C), and
+    /// the XRP1 projection of the planned new row (the RootJob's,
+    /// dev3-row-update.md#api).
+    UpdateForward {
+        canonical: &'a [u8],
+        old_cell: usize,
         projection: [u8; 32],
     },
     Clr {
@@ -231,7 +242,10 @@ struct Observed<'a> {
     target: Option<UndoRef>,
     ordinal: usize,
     job: JobView<'a>,
+    /// The RootJob's C: the new row (INSERT) or the old row (DELETE, UPDATE).
     cell: usize,
+    /// UPDATE's new row C' (`JobView::new_cell`), 0 for every other effect.
+    new_cell: usize,
     frame_len: usize,
     status: StatusHome,
     transaction: DescriptorSpec,
@@ -470,27 +484,36 @@ fn encode_material(observed: &Observed<'_>, live: bool, output: &mut [u8]) -> Re
     Ok(())
 }
 
-/// A DELETE root (Job effect byte 1, dev3-row-delete.md#job-effect).
-fn is_delete(job: JobView<'_>) -> bool {
-    job.effect() == row::RowEffect::Delete
+/// A DELETE or UPDATE root (Job effect byte 1 or 2): its U holds the old
+/// row's value, and its group replaces the row in place
+/// (dev3-row-delete.md#job-effect, dev3-row-update.md#job-effect).
+fn holds_value(job: JobView<'_>) -> bool {
+    match job.effect() {
+        row::RowEffect::Insert => false,
+        row::RowEffect::Delete | row::RowEffect::Update => true,
+    }
 }
 
-/// The group's opcode: the RootJob's effect picks INSERT's or DELETE's
-/// Forward/CLR (dev3-row-delete.md#delete-shape).
+/// The group's opcode: the RootJob's effect picks INSERT's, DELETE's or
+/// UPDATE's Forward/CLR (dev3-row-delete.md#delete-shape,
+/// dev3-row-update.md#update-shape).
 fn operation(observed: &Observed<'_>) -> Operation {
-    match (observed.forward, is_delete(observed.job)) {
-        (true, false) => Operation::Forward,
-        (false, false) => Operation::Clr,
-        (true, true) => Operation::DeleteForward,
-        (false, true) => Operation::DeleteClr,
+    match (observed.forward, observed.job.effect()) {
+        (true, row::RowEffect::Insert) => Operation::Forward,
+        (false, row::RowEffect::Insert) => Operation::Clr,
+        (true, row::RowEffect::Delete) => Operation::DeleteForward,
+        (false, row::RowEffect::Delete) => Operation::DeleteClr,
+        (true, row::RowEffect::Update) => Operation::UpdateForward,
+        (false, row::RowEffect::Update) => Operation::UpdateClr,
     }
 }
 
 /// The (slot, offset, length) of a root's U record: the 432-byte record at
-/// `INITIAL_UNDO_CELL`, or, for a `live` DELETE root, the Live delete U of
-/// `432+L` (`L = C-180`) ending where it does (dev3-row-delete.md#delete-undo).
+/// `INITIAL_UNDO_CELL`, or, for a `live` DELETE or UPDATE root, the Live U of
+/// `432+L` (`L = C-180`) ending where it does (dev3-row-delete.md#delete-undo,
+/// dev3-row-update.md#update-undo).
 fn undo_place(job: JobView<'_>, live: bool) -> Result<(u16, u16, u16)> {
-    let length = if live && is_delete(job) {
+    let length = if live && holds_value(job) {
         (job.cell_bytes() as usize)
             .checked_sub(TOMBSTONE_CELL)
             .ok_or(InsertError::IdentityMismatch)?
@@ -509,10 +532,11 @@ fn place_range(cell: (u16, u16, u16)) -> std::ops::Range<usize> {
     start..start + usize::from(cell.2)
 }
 
-/// A DELETE root's U (dev3-row-delete.md#delete-undo): the Missing
-/// material's identity, counts and edges with the RowValue before `stamp`,
-/// `logical` and, while Live, the old `value` (none once Releasing).
-fn delete_material<'v>(
+/// A DELETE or UPDATE root's U (dev3-row-delete.md#delete-undo,
+/// dev3-row-update.md#update-undo): the Missing material's identity, counts
+/// and edges with the RowValue before `stamp`, `logical` and, while Live, the
+/// old `value` (none once Releasing).
+fn value_material<'v>(
     observed: &Observed<'_>,
     live: bool,
     stamp: VersionStamp,
@@ -550,8 +574,9 @@ fn before_of<'a>(observed: &Observed<'a>, role: RowPageRole) -> &'a [u8; PAGE_BY
         .before
 }
 
-/// U's Live delete record before DeleteClr, read through entry (a) with the
-/// table `schema` (dev3-row-delete.md#delete-undo).
+/// U's Live delete or update record before DeleteClr or UpdateClr, read
+/// through entry (a) with the table `schema` (dev3-row-delete.md#delete-undo,
+/// dev3-row-update.md#update-undo).
 fn delete_before<'a>(
     observed: &Observed<'a>,
     schema: &RowSchemaInput<'_>,
@@ -572,10 +597,11 @@ fn delete_before<'a>(
 }
 
 /// The U after record of the group into `output`, its length returned.
-/// INSERT's is `encode_material`'s. DeleteForward makes U Live with the
-/// replaced row's stamp, logical and value, read from the RowLeaf before;
-/// DeleteClr makes it Releasing without its value, keeping the stamp and
-/// logical of its Live before (dev3-row-delete.md#delete-undo).
+/// INSERT's is `encode_material`'s. DeleteForward and UpdateForward make U
+/// Live with the replaced row's stamp, logical and value, read from the
+/// RowLeaf before; DeleteClr and UpdateClr make it Releasing without its
+/// value, keeping the stamp and logical of its Live before
+/// (dev3-row-delete.md#delete-undo, dev3-row-update.md#update-undo).
 fn encode_undo_after(
     observed: &Observed<'_>,
     schema: &RowSchemaInput<'_>,
@@ -586,7 +612,7 @@ fn encode_undo_after(
         reference: observed.undo.reference,
         target: row_target(observed.table, observed.row),
     };
-    if !is_delete(observed.job) {
+    if !holds_value(observed.job) {
         encode_material(observed, observed.forward, output)?;
         return Ok(undo_record::UNDO_RECORD_BYTES);
     }
@@ -599,7 +625,7 @@ fn encode_undo_after(
             observed.row,
         )?;
         let value = old.value.ok_or(InsertError::IdentityMismatch)?;
-        delete_material(
+        value_material(
             observed,
             true,
             old.version.stamp,
@@ -611,7 +637,7 @@ fn encode_undo_after(
         let (Some(stamp), Some(logical)) = (live.before_stamp, live.before_logical) else {
             return Err(InsertError::IdentityMismatch);
         };
-        delete_material(observed, false, stamp, logical, &[])
+        value_material(observed, false, stamp, logical, &[])
     };
     let length = undo_record::encode_undo_record(cell, expected, schema, output)?;
     require(
@@ -621,10 +647,10 @@ fn encode_undo_after(
     Ok(length)
 }
 
-/// The length of the U after record: DeleteForward's Live delete U is
-/// `432+L`, every other U after is the 432-byte record.
+/// The length of the U after record: DeleteForward's and UpdateForward's
+/// Live U is `432+L`, every other U after is the 432-byte record.
 fn undo_after_len(observed: &Observed<'_>) -> usize {
-    if observed.forward && is_delete(observed.job) {
+    if observed.forward && holds_value(observed.job) {
         undo_record::UNDO_RECORD_BYTES + observed.cell - TOMBSTONE_CELL
     } else {
         undo_record::UNDO_RECORD_BYTES
@@ -676,7 +702,7 @@ fn observe<'a>(
 ) -> Result<Observed<'a>> {
     let forward = matches!(
         input.change,
-        Change::Forward { .. } | Change::DeleteForward { .. }
+        Change::Forward { .. } | Change::DeleteForward { .. } | Change::UpdateForward { .. }
     );
     let profile = input.profile;
     let namespace = profile.spec().namespace;
@@ -723,23 +749,22 @@ fn observe<'a>(
     // Selected RootJob, TerminalJob and the census-derived predecessor H.
     let ordinal = input.root_job;
     let job = row::decode_job(&input.jobs[ordinal], namespace)?;
-    // The RootJob's effect names the group (dev3-row-delete.md#job-effect):
-    // an INSERT value goes to an INSERT root, the sealed old row to a DELETE
-    // root; a CLR compensates either. This producer has no UPDATE group yet
-    // (dev3-row-update.md#stages: module A learns it in stage 3).
-    require(
-        job.effect() != row::RowEffect::Update,
-        InsertError::Unsupported,
-    )?;
-    let delete = is_delete(job);
+    // The RootJob's effect names the group (dev3-row-delete.md#job-effect,
+    // dev3-row-update.md#job-effect): an INSERT value goes to an INSERT
+    // root, the sealed old row to a DELETE root, the sealed new value to an
+    // UPDATE root; a CLR compensates any of them.
+    let effect = job.effect();
     require(
         match input.change {
-            Change::Forward { .. } => !delete,
-            Change::DeleteForward { .. } => delete,
+            Change::Forward { .. } => effect == row::RowEffect::Insert,
+            Change::DeleteForward { .. } => effect == row::RowEffect::Delete,
+            Change::UpdateForward { .. } => effect == row::RowEffect::Update,
             Change::Clr { .. } => true,
         },
         InsertError::Unsupported,
     )?;
+    // UPDATE's new row C' (185..=2228 by the Job codec), 0 otherwise.
+    let new_cell = job.new_cell() as usize;
     let h = input.predecessor.is_some();
     require(
         job.state()
@@ -813,12 +838,6 @@ fn observe<'a>(
             previous = Some(candidate);
         }
     }
-    // An UPDATE root as H needs the effect-2 proof (dev3-row-update.md
-    // #previous-proof), which this producer learns in stage 3.
-    require(
-        previous.is_none_or(|job| job.effect() != row::RowEffect::Update),
-        InsertError::Unsupported,
-    )?;
     let census = previous
         .map(|job| -> Result<UndoLink> {
             Ok(UndoLink {
@@ -890,7 +909,7 @@ fn observe<'a>(
     require(core.reference() == actor, InsertError::IdentityMismatch)?;
     let head = input.predecessor.map(|link| link.reference);
     let (cell, target) = match input.change {
-        Change::Forward { .. } | Change::DeleteForward { .. } => {
+        Change::Forward { .. } | Change::DeleteForward { .. } | Change::UpdateForward { .. } => {
             require(
                 core.state() == TransactionState::Active && core.undo_head() == head,
                 InsertError::OrderMismatch,
@@ -899,6 +918,19 @@ fn observe<'a>(
             let cell = match input.change {
                 Change::Forward { canonical } => 180 + canonical.len(),
                 Change::DeleteForward { cell_bytes, .. } => cell_bytes,
+                // The sealed new value is C' and its planned row the
+                // RootJob's projection (dev3-row-update.md#job-effect).
+                Change::UpdateForward {
+                    canonical,
+                    old_cell,
+                    projection: planned,
+                } => {
+                    require(
+                        180 + canonical.len() == new_cell && planned == *job.projection_digest(),
+                        InsertError::IdentityMismatch,
+                    )?;
+                    old_cell
+                }
                 Change::Clr { .. } => unreachable!("matched Forward"),
             };
             (cell, None)
@@ -938,11 +970,20 @@ fn observe<'a>(
                     && target != Some(input.undo.reference),
                 InsertError::OrderMismatch,
             )?;
+            // The current row is the RootJob's: an UPDATE root's is the new
+            // row C' (dev3-row-update.md#api), every other root's its C.
             require(
-                digest == *job.projection_digest(),
+                digest == *job.projection_digest()
+                    && cell_bytes
+                        == match effect {
+                            row::RowEffect::Update => new_cell,
+                            row::RowEffect::Insert | row::RowEffect::Delete => {
+                                job.cell_bytes() as usize
+                            }
+                        },
                 InsertError::IdentityMismatch,
             )?;
-            (cell_bytes, target)
+            (job.cell_bytes() as usize, target)
         }
     };
     require(
@@ -992,7 +1033,7 @@ fn observe<'a>(
                 && transaction.last_mutation_sequence == job.mutation()
                 && transaction.remaining[1]
                     == debt(
-                        row::row_forward_wal(job.effect(), cell as u32, job.new_cell(), h),
+                        row::row_forward_wal(effect, cell as u32, job.new_cell(), h),
                         1,
                     ),
             InsertError::BudgetMismatch,
@@ -1026,8 +1067,9 @@ fn observe<'a>(
     let undo_cell = undo_page.cell(0).ok_or(InsertError::IdentityMismatch)?;
 
     // H proof: unchanged Live predecessor with a removable incoming edge. A
-    // DELETE H is the Live delete U, proved by its outline without a schema
-    // (dev3-row-delete.md#previous-proof).
+    // DELETE or UPDATE H is the Live value U, proved by its outline without
+    // a schema (dev3-row-delete.md#previous-proof,
+    // dev3-row-update.md#previous-proof).
     if let Some(link) = input.predecessor {
         let identity = fixed_identity(namespace, link.reference.page(), 3);
         let previous = previous.ok_or(InsertError::OrderMismatch)?;
@@ -1056,7 +1098,7 @@ fn observe<'a>(
                 previous.row_id().ok_or(InsertError::IdentityMismatch)?,
             ),
         };
-        let (state, metadata) = if is_delete(previous) {
+        let (state, metadata) = if holds_value(previous) {
             let outline = undo_record::decode_undo_record_metadata(cell, expected)?;
             require(
                 outline.before_kind == UndoBeforeKind::RowValue
@@ -1121,9 +1163,9 @@ fn observe<'a>(
     let leaf_bytes = &input.before[leaf_source.index];
     checked_page(leaf_bytes, input.leaf.identity, PageKind::RowLeaf, header)?;
     let version = current_version(actor, input.row, job, input.undo.reference)?;
-    let actual_cell = match (forward, delete) {
-        (true, false) => None,
-        (false, false) => {
+    let actual_cell = match (forward, effect) {
+        (true, row::RowEffect::Insert) => None,
+        (false, row::RowEffect::Insert) => {
             let current = leaf::current(namespace, input.leaf, input.schema, leaf_bytes, version)?;
             require(
                 current.record.len() + 12 == cell
@@ -1135,7 +1177,7 @@ fn observe<'a>(
         }
         // DeleteForward: the committed, pruned inline row the delete
         // RowReserve sealed (dev3-row-delete.md#delete-states).
-        (true, true) => {
+        (true, row::RowEffect::Delete) => {
             let Change::DeleteForward {
                 projection: sealed, ..
             } = input.change
@@ -1153,8 +1195,36 @@ fn observe<'a>(
             )?;
             Some(old.cell)
         }
+        // UpdateForward: the committed, pruned inline row of the RootJob's
+        // old cell C (dev3-row-update.md#update-states); the draft
+        // commitment, not a sealed projection, keeps it since the Reserve.
+        (true, row::RowEffect::Update) => {
+            let old = leaf::existing(namespace, input.leaf, input.schema, leaf_bytes, input.row)?;
+            require(
+                matches!(old.version.stamp, VersionStamp::Committed(_))
+                    && old.version.undo.is_none()
+                    && old.value.is_some()
+                    && old.record.len() + 12 == cell,
+                InsertError::IdentityMismatch,
+            )?;
+            Some(old.cell)
+        }
+        // UpdateClr: the actor's new row C' the RootJob projection sealed.
+        (false, row::RowEffect::Update) => {
+            let current =
+                leaf::existing(namespace, input.leaf, input.schema, leaf_bytes, input.row)?;
+            require(
+                current.version == version
+                    && current.value.is_some()
+                    && current.record.len() + 12 == new_cell
+                    && projection(input.table, input.row, Some(current.record))?
+                        == *job.projection_digest(),
+                InsertError::IdentityMismatch,
+            )?;
+            Some(current.cell)
+        }
         // DeleteClr: the actor's tombstone the RootJob projection sealed.
-        (false, true) => {
+        (false, row::RowEffect::Delete) => {
             let tombstone =
                 leaf::existing(namespace, input.leaf, input.schema, leaf_bytes, input.row)?;
             require(
@@ -1179,7 +1249,11 @@ fn observe<'a>(
     // The whole leaf edit plan, before writes: duplicate RowId, inline limit
     // and capacity for Forward; the exact removal for CLR. The Forward record
     // must be the one the RootJob projection committed to at reserve; so must
-    // DeleteForward's tombstone. DeleteClr's restored row is planned with U.
+    // DeleteForward's tombstone and UpdateForward's new row. A replacement
+    // that does not fit the leaf is Capacity here, before any output; C's
+    // observer also checks the leaf reservation (dev3-row-update.md
+    // #leaf-reservation). DeleteClr's and UpdateClr's restored row is
+    // planned with U.
     match input.change {
         Change::Forward { canonical } => {
             let candidate = leaf::check(
@@ -1224,7 +1298,29 @@ fn observe<'a>(
                 InsertError::IdentityMismatch,
             )?;
         }
-        Change::Clr { .. } if delete => {}
+        Change::UpdateForward { canonical, .. } => {
+            let candidate = leaf::replace(
+                namespace,
+                input.leaf,
+                input.schema,
+                leaf_bytes,
+                version,
+                Some(canonical),
+                PageLsn(header.lsn),
+                record,
+                None,
+            )?;
+            require(
+                candidate.cell_bytes == new_cell
+                    && projection(
+                        input.table,
+                        input.row,
+                        Some(&record[..candidate.record_bytes]),
+                    )? == *job.projection_digest(),
+                InsertError::IdentityMismatch,
+            )?;
+        }
+        Change::Clr { .. } if holds_value(job) => {}
         Change::Clr { .. } => leaf::remove(
             namespace,
             input.leaf,
@@ -1322,6 +1418,7 @@ fn observe<'a>(
             ordinal,
             job,
             cell,
+            new_cell,
             frame_len: 0,
             status,
             transaction,
@@ -1330,15 +1427,16 @@ fn observe<'a>(
             jobs: input.jobs,
             pages,
         };
-        if delete {
+        if holds_value(job) {
             require(
                 undo_page.header().lsn.0 >= job.last_step(),
                 InsertError::IdentityMismatch,
             )?;
-            // U's Live delete record, through entry (a) with the table
-            // schema, is the Job's material with a committed RowValue before
-            // of L = C-180, and that row goes back without a split
-            // (dev3-row-delete.md#delete-undo, #leaf-reservation).
+            // U's Live delete or update record, through entry (a) with the
+            // table schema, is the Job's material with a committed RowValue
+            // before of L = C-180, and that row goes back without a split
+            // (dev3-row-delete.md#delete-undo, #leaf-reservation;
+            // dev3-row-update.md#update-undo, #leaf-reservation).
             let live = delete_before(&partial, &input.schema)?;
             let (
                 Some(stamp @ VersionStamp::Committed(_)),
@@ -1349,7 +1447,7 @@ fn observe<'a>(
                 return Err(InsertError::IdentityMismatch);
             };
             require(
-                UndoCell::Live(live) == delete_material(&partial, true, stamp, logical, value)
+                UndoCell::Live(live) == value_material(&partial, true, stamp, logical, value)
                     && value.len() + TOMBSTONE_CELL == cell,
                 InsertError::IdentityMismatch,
             )?;
@@ -1378,11 +1476,13 @@ fn observe<'a>(
             )?;
         }
     }
-    let operation = match (forward, delete) {
-        (true, false) => Operation::Forward,
-        (false, false) => Operation::Clr,
-        (true, true) => Operation::DeleteForward,
-        (false, true) => Operation::DeleteClr,
+    let operation = match (forward, effect) {
+        (true, row::RowEffect::Insert) => Operation::Forward,
+        (false, row::RowEffect::Insert) => Operation::Clr,
+        (true, row::RowEffect::Delete) => Operation::DeleteForward,
+        (false, row::RowEffect::Delete) => Operation::DeleteClr,
+        (true, row::RowEffect::Update) => Operation::UpdateForward,
+        (false, row::RowEffect::Update) => Operation::UpdateClr,
     };
     Ok(Observed {
         forward,
@@ -1399,7 +1499,8 @@ fn observe<'a>(
         ordinal,
         job,
         cell,
-        frame_len: operation.frame_bytes(cell, h)?,
+        new_cell,
+        frame_len: operation.frame_bytes_cells(cell, new_cell, h)?,
         status,
         transaction,
         transaction_bytes,

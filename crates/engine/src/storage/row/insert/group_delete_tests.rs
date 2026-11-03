@@ -27,7 +27,8 @@ use crate::{
         },
         status_home::StatusHome,
         transaction_record::{
-            LogicalRowVersion, RollbackState, TransactionState, TransactionStatusCell, VersionStamp,
+            LogicalRowVersion, RollbackState, StatusSlotRef, TransactionState,
+            TransactionStatusCell, TxnRef, VersionStamp,
         },
         tree_page::{TREE_ENTRY_CAPACITY, TreeExpectation},
         undo_record::{self, UndoCell, UndoLink, UndoRecordExpectation},
@@ -36,7 +37,7 @@ use crate::{
 };
 use foundation::identity::{Generation, ObjectHandle, ObjectId, RowId, SchemaEpoch};
 
-type Page = [u8; PAGE_BYTES];
+pub(super) type Page = [u8; PAGE_BYTES];
 /// One before image of A's group: the page, its identity, its kind and the
 /// cell (slot, offset, length) it carries.
 type Image<'p> = (&'p Page, PageIdentity, PageKind, Option<(u16, u16, u16)>);
@@ -70,26 +71,26 @@ const ORDINALS: [(&str, usize); 5] = [
 ];
 const TERMINAL: usize = 18;
 
-fn generation(value: u64) -> Generation {
+pub(super) fn generation(value: u64) -> Generation {
     Generation::new(value).unwrap()
 }
-fn namespace() -> Namespace {
+pub(super) fn namespace() -> Namespace {
     Namespace {
         database: DatabaseId::new([1; 16]).unwrap(),
         timeline: 1,
     }
 }
-fn profile() -> Profile {
+pub(super) fn profile() -> Profile {
     row_profile::decode_profile(PROFILE, None).unwrap()
 }
-fn page_ref(page_no: u64, incarnation: u64) -> PageRef {
+pub(super) fn page_ref(page_no: u64, incarnation: u64) -> PageRef {
     PageRef {
         file: FileId::new(0x1_0000_0001).unwrap(),
         page_no,
         incarnation: generation(incarnation),
     }
 }
-fn identity(page_no: u64, incarnation: u64, owner: u64) -> PageIdentity {
+pub(super) fn identity(page_no: u64, incarnation: u64, owner: u64) -> PageIdentity {
     PageIdentity {
         database: namespace().database,
         page: page_ref(page_no, incarnation),
@@ -97,14 +98,14 @@ fn identity(page_no: u64, incarnation: u64, owner: u64) -> PageIdentity {
         owner_generation: generation(1),
     }
 }
-fn table() -> ObjectHandle {
+pub(super) fn table() -> ObjectHandle {
     ObjectHandle {
         object: ObjectId::new(6).unwrap(),
         generation: generation(1),
         schema_epoch: SchemaEpoch::new(1).unwrap(),
     }
 }
-fn columns() -> [Column; 2] {
+pub(super) fn columns() -> [Column; 2] {
     [
         Column {
             name: "n".into(),
@@ -118,7 +119,7 @@ fn columns() -> [Column; 2] {
         },
     ]
 }
-fn leaf_expected() -> TreeExpectation {
+pub(super) fn leaf_expected() -> TreeExpectation {
     TreeExpectation {
         identity: identity(13, 2, 6),
         kind: PageKind::RowLeaf,
@@ -126,12 +127,12 @@ fn leaf_expected() -> TreeExpectation {
         arity: 0,
     }
 }
-fn job_cell(ordinal: usize) -> (u16, u16, u16) {
+pub(super) fn job_cell(ordinal: usize) -> (u16, u16, u16) {
     let slot = ordinal % 15;
     (slot as u16, (16_352 - 1024 * (slot + 1)) as u16, 1024)
 }
 /// (slot, offset, length) of slot `slot` by the literal page directory.
-fn directory(page: &Page, slot: u16) -> (u16, u16, u16) {
+pub(super) fn directory(page: &Page, slot: u16) -> (u16, u16, u16) {
     let at = 128 + 4 * usize::from(slot);
     (
         slot,
@@ -140,7 +141,7 @@ fn directory(page: &Page, slot: u16) -> (u16, u16, u16) {
     )
 }
 /// The RowLeaf directory entry of `row`.
-fn row_cell(page: &Page, row: u64) -> (u16, u16, u16) {
+pub(super) fn row_cell(page: &Page, row: u64) -> (u16, u16, u16) {
     let count = u16::from_le_bytes([page[72], page[73]]);
     (1..count)
         .map(|slot| directory(page, slot))
@@ -150,7 +151,7 @@ fn row_cell(page: &Page, row: u64) -> (u16, u16, u16) {
         })
         .unwrap_or_else(|| panic!("row {row} is absent"))
 }
-fn bytes_of(page: &Page, cell: (u16, u16, u16)) -> &[u8] {
+pub(super) fn bytes_of(page: &Page, cell: (u16, u16, u16)) -> &[u8] {
     &page[usize::from(cell.1)..usize::from(cell.1) + usize::from(cell.2)]
 }
 /// One history D literal by its `index.tsv` row (name, offset, length).
@@ -169,33 +170,60 @@ fn insert_canonical() -> &'static [u8] {
     blob("D-530-canonical")
 }
 
-/// One A group's input over its history D before state.
-struct Case {
-    before: Box<[Page; 9]>,
+/// The history an A group's before state comes from: the RootJob of each
+/// group, the actor's Terminal Job, its Status page and its identity.
+pub(super) struct History {
+    pub(super) ordinals: &'static [(&'static str, usize)],
+    pub(super) terminal: usize,
+    pub(super) status_page: u64,
+    pub(super) actor: (TxnRef, StatusSlotRef),
+}
+
+/// History D's T2.
+fn history_d() -> History {
+    History {
+        ordinals: &ORDINALS,
+        terminal: TERMINAL,
+        status_page: 20,
+        actor: a_actor(),
+    }
+}
+
+/// One A group's input over its history before state.
+pub(super) struct Case {
+    pub(super) before: Box<[Page; 9]>,
     count: usize,
-    sources: [Option<Source>; 9],
+    pub(super) sources: [Option<Source>; 9],
     header: WalFrameHeader,
-    row: RowId,
-    undo: UndoLink,
+    pub(super) row: RowId,
+    pub(super) undo: UndoLink,
     statement: Option<u64>,
     mutation: u64,
     mark: Option<crate::storage::undo_ref::UndoRef>,
     predecessor: Option<UndoLink>,
-    ordinal: usize,
-    after_order: [RowPageRole; 5],
-    columns: [Column; 2],
-    clr: Option<(Option<crate::storage::undo_ref::UndoRef>, Option<UndoLink>)>,
+    pub(super) ordinal: usize,
+    pub(super) after_order: [RowPageRole; 5],
+    pub(super) columns: [Column; 2],
+    pub(super) clr: Option<(Option<crate::storage::undo_ref::UndoRef>, Option<UndoLink>)>,
     sealed: (usize, [u8; 32]),
+    terminal: usize,
+    actor: (TxnRef, StatusSlotRef),
 }
 
 impl Case {
     fn new(state: &ABefore) -> Self {
-        let ordinal = ORDINALS
+        Self::over(state, &history_d())
+    }
+
+    /// The group's input over `state`, a before state of `history`.
+    pub(super) fn over(state: &ABefore, history: &History) -> Self {
+        let ordinal = history
+            .ordinals
             .iter()
             .find(|(name, _)| *name == state.name)
             .unwrap()
             .1;
-        let (actor, location) = a_actor();
+        let (actor, location) = history.actor;
         let job = row::decode_job(&state.bank[ordinal], namespace()).unwrap();
         let undo = UndoLink {
             reference: job.undo().unwrap(),
@@ -255,7 +283,7 @@ impl Case {
             ),
             (
                 &state.status,
-                identity(20, 2, 2),
+                identity(history.status_page, 2, 2),
                 PageKind::TransactionStatus,
                 Some(STATUS_CELL),
             ),
@@ -269,7 +297,7 @@ impl Case {
                 &state.leaf,
                 identity(13, 2, 6),
                 PageKind::RowLeaf,
-                (job.effect() == row::RowEffect::Delete || !forward)
+                (job.effect() != row::RowEffect::Insert || !forward)
                     .then(|| row_cell(&state.leaf, job.row_id().unwrap().get())),
             ),
             (
@@ -309,7 +337,7 @@ impl Case {
             source(0),
             source(1),
             Some(Source {
-                cell: Some(job_cell(TERMINAL)),
+                cell: Some(job_cell(history.terminal)),
                 ..source(1).unwrap()
             }),
             source(2),
@@ -323,7 +351,7 @@ impl Case {
         let mut roles = [
             (1, RowPageRole::Root),
             (3, RowPageRole::RootJob),
-            (20, RowPageRole::Status),
+            (history.status_page, RowPageRole::Status),
             (u_page, RowPageRole::Undo),
             (13, RowPageRole::RowLeaf),
         ];
@@ -375,11 +403,13 @@ impl Case {
             columns: columns(),
             clr,
             sealed,
+            terminal: history.terminal,
+            actor: history.actor,
         }
     }
 
-    fn input<'a>(&'a self, state: &'a ABefore, change: Change<'a>) -> GroupInput<'a> {
-        let (actor, location) = a_actor();
+    pub(super) fn input<'a>(&'a self, state: &'a ABefore, change: Change<'a>) -> GroupInput<'a> {
+        let (actor, location) = self.actor;
         GroupInput {
             profile: profile(),
             table: table(),
@@ -399,7 +429,7 @@ impl Case {
             mark: self.mark,
             predecessor: self.predecessor,
             root_job: self.ordinal,
-            terminal_job: TERMINAL,
+            terminal_job: self.terminal,
             sources: self.sources,
             before: &self.before,
             before_count: self.count,
@@ -433,7 +463,7 @@ impl Case {
 }
 
 /// The RowLeaf entry of `row`, or an empty one when it is absent.
-fn row_cell_or_zero(page: &Page, row: u64) -> (u16, u16, u16) {
+pub(super) fn row_cell_or_zero(page: &Page, row: u64) -> (u16, u16, u16) {
     let count = u16::from_le_bytes([page[72], page[73]]);
     (1..count)
         .map(|slot| directory(page, slot))
@@ -444,7 +474,7 @@ fn row_cell_or_zero(page: &Page, row: u64) -> (u16, u16, u16) {
         .unwrap_or((0, 0, 0))
 }
 
-fn scratch() -> Box<[u8; group::SCRATCH_BYTES]> {
+pub(super) fn scratch() -> Box<[u8; group::SCRATCH_BYTES]> {
     vec![0x5a; group::SCRATCH_BYTES]
         .into_boxed_slice()
         .try_into()
@@ -452,7 +482,7 @@ fn scratch() -> Box<[u8; group::SCRATCH_BYTES]> {
 }
 
 /// Byte equality reporting only the first difference.
-fn same(label: &str, actual: &[u8], expected: &[u8]) {
+pub(super) fn same(label: &str, actual: &[u8], expected: &[u8]) {
     assert_eq!(actual.len(), expected.len(), "{label}: length");
     if let Some(at) = actual.iter().zip(expected).position(|(a, b)| a != b) {
         let end = (at + 16).min(actual.len());
@@ -465,13 +495,13 @@ fn same(label: &str, actual: &[u8], expected: &[u8]) {
 }
 
 /// A produced group: A's answer, its frame and its five after images.
-type ProducedGroup = (
+pub(super) type ProducedGroup = (
     Result<group::Produced, InsertError>,
     Box<[u8; FRAME_BYTES]>,
     Box<[Page; 5]>,
 );
 
-fn produce(case: &Case, state: &ABefore, change: Change<'_>) -> ProducedGroup {
+pub(super) fn produce(case: &Case, state: &ABefore, change: Change<'_>) -> ProducedGroup {
     let mut frame: Box<[u8; FRAME_BYTES]> = vec![0xa5; FRAME_BYTES]
         .into_boxed_slice()
         .try_into()

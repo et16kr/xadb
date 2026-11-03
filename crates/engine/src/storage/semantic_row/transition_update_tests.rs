@@ -467,6 +467,65 @@ fn history_u_with(rejects: bool, mut probe: impl FnMut(&str, &World)) -> usize {
     world.rejects.as_ref().map_or(0, Cell::get)
 }
 
+/// A's groups of history U and the group before each: UpdateForward h0
+/// (row 9 grows), UpdateForward over an effect-2 H (row 12 shrinks), its
+/// UpdateClr, the INSERT Forward over an effect-2 H and the same-size
+/// UpdateForward over an effect-0 H (row 11).
+const A_GROUPS: [(&str, &str); 5] = [
+    ("U-558", "U-557"),
+    ("U-560", "U-559"),
+    ("U-562", "U-561"),
+    ("U-565", "U-564"),
+    ("U-567", "U-566"),
+];
+
+/// T3's actor and Status location in history U.
+pub(crate) fn a_actor() -> (TxnRef, StatusSlotRef) {
+    (actor(7, 2), slot(21, 2))
+}
+
+/// T3's Terminal Job's ordinal in history U's Jobs bank.
+pub(crate) const U_TERMINAL: usize = TERMINAL;
+
+/// One literal of the UPDATE author's set (history U, `R-U-*`).
+pub(crate) fn u_blob(name: &str) -> &'static [u8] {
+    assert!(name.starts_with("U-") || name.starts_with("R-U-"), "{name}");
+    blob(name)
+}
+
+/// The before states of A's history U groups, in history order (RUP-A),
+/// with the same bookkeeping as history D's (`delete::ABefore`).
+pub(crate) fn a_befores() -> Vec<delete::ABefore> {
+    let mut out = Vec::new();
+    history_u_with(false, |name, world| {
+        let Some((group, _)) = A_GROUPS.iter().find(|(_, before)| *before == name) else {
+            return;
+        };
+        out.push(delete::ABefore {
+            name: group,
+            previous_lsn: world.lsn,
+            root: Box::new(world.root),
+            jobs: Box::new(world.jobs[1].expect("Jobs page 1")),
+            bank: Box::new(world.bank),
+            status: Box::new(*World::find(&world.status, 21)),
+            undo: world
+                .undo
+                .iter()
+                .map(|(page_no, page)| (*page_no, Box::new(*page)))
+                .collect(),
+            leaf: Box::new(world.leaf.expect("RowLeaf")),
+            transaction: Box::new(world.transaction.expect("Tx descriptor")),
+            aging: Box::new(world.aging.expect("Aging descriptor")),
+            frame: blob(group),
+        });
+    });
+    assert_eq!(
+        out.iter().map(|before| before.name).collect::<Vec<_>>(),
+        A_GROUPS.map(|(group, _)| group)
+    );
+    out
+}
+
 #[test]
 fn rup_c_update_history_matches_literals() {
     assert_eq!(history_u(false), 0);
