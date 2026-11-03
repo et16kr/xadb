@@ -1,0 +1,11 @@
+case	RUP-N06
+phase	produce
+pid	16155
+source	8516c91dd0c38253eeb9d87cdd63094d18cc7e456800d966e347553f47732cf0
+elf	bcb791f8e90fcbb39aaa3d03e361633fd137a61ebabfc93f54a781763aa4f173
+result	crashed
+q	3
+rows	1,2
+wal_before	9a5f8e1bbf34352ea80461baa36e8911f0dd3c604fb310eb41eb3e979c8cc826
+wal_cut	18057dc4326a386a28fee73345bd9c20f7c630d3937af7cbfba41f90f1bc66b3
+wal_cut_bytes	2505539

@@ -1,0 +1,80 @@
+{
+  "RUP-N01": {
+    "pids": [
+      "15686",
+      "15702",
+      "15705"
+    ],
+    "acks": [
+      3,
+      4
+    ],
+    "result": "PASS"
+  },
+  "RUP-N02": {
+    "pids": [
+      "15734",
+      "15737",
+      "15768"
+    ],
+    "acks": [
+      3,
+      4
+    ],
+    "result": "PASS",
+    "wal_prefix_of_before_cut": "RUP-N01",
+    "wal_group_bytes": 89895
+  },
+  "RUP-N03": {
+    "pids": [
+      "15795",
+      "15825",
+      "15861"
+    ],
+    "acks": [
+      2,
+      3
+    ],
+    "result": "PASS"
+  },
+  "RUP-N04": {
+    "pids": [
+      "15883",
+      "15885",
+      "16005"
+    ],
+    "acks": [
+      2,
+      3
+    ],
+    "result": "PASS",
+    "wal_prefix_of_before_cut": "RUP-N03",
+    "wal_group_bytes": 91695
+  },
+  "RUP-N05": {
+    "pids": [
+      "16007",
+      "16040",
+      "16153"
+    ],
+    "acks": [
+      3,
+      4
+    ],
+    "result": "PASS"
+  },
+  "RUP-N06": {
+    "pids": [
+      "16155",
+      "16192",
+      "16264"
+    ],
+    "acks": [
+      3,
+      4
+    ],
+    "result": "PASS",
+    "wal_prefix_of_before_cut": "RUP-N05",
+    "wal_group_bytes": 91487
+  }
+}

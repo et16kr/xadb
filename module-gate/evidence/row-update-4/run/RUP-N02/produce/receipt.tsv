@@ -1,0 +1,11 @@
+case	RUP-N02
+phase	produce
+pid	15734
+source	8516c91dd0c38253eeb9d87cdd63094d18cc7e456800d966e347553f47732cf0
+elf	bcb791f8e90fcbb39aaa3d03e361633fd137a61ebabfc93f54a781763aa4f173
+result	acked
+q	3
+rows	1,2
+wal_before	e0d8c4b7e9dd8e2a6b887385adc4497c8b5fc6de2a95bd0c900cc679cf186146
+wal_cut	49d117a268c5f7fbbbbd54f4718a1beac38423247f007acd753f51f9fba8d3c2
+wal_cut_bytes	2117354

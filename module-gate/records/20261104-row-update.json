@@ -1,6 +1,6 @@
 {
   "schema": "XADB_MODULE_GATE_RECORD_V1",
-  "change": "DEV3 Row UPDATE first path, stages 2 and 3 (07-2 and 07-3, dev3-row-update.md#implementation-2, #implementation-3). Stage 2: scope3 opcodes UpdateForward=10/UpdateClr=13/UpdatePrune=24 with two-cell shapes and frames (largest Row frame 97936 B) and the kind-1 header C' derivation; Job3 effect 2 with C' in [286,288), the UPDATE recipes and the widened leaf reservation D; C's whole-group transitions (update RowReserve, UpdatePrune; observe A's UpdateForward/UpdateClr) with the effect-2 previous root proof, against an independent author's history U. Stage 3: the product path. A's autocommit_update_live/transaction_update_live executor and UpdateForward/UpdateClr producer; C's update preflight with the holder-root classification and reserve_update; the install allow list; B's value_before over an updated row; live and recovery UpdatePrune, scope(), Row replay, base4 and the test-only observers; RUP-A/C/J/B/R over literals and the actual C. Census: RowWrite C margins preflight 704 B and reserve 499 B, S1B Row arm 25,739 <= 25,743 B unchanged, A driver sites 54 within the F4 ceilings, read cursor value_before load 34,468 <= 34,586 B. Stage 4 (native fault cuts RUP-N01..06) is not part of this record.",
+  "change": "DEV3 Row UPDATE first path, stages 2 to 4 (07-2 to 07-4, dev3-row-update.md#implementation-2, #implementation-3, #implementation-4). Stage 2: scope3 opcodes UpdateForward=10/UpdateClr=13/UpdatePrune=24 with two-cell shapes and frames (largest Row frame 97936 B) and the kind-1 header C' derivation; Job3 effect 2 with C' in [286,288), the UPDATE recipes and the widened leaf reservation D; C's whole-group transitions (update RowReserve, UpdatePrune; observe A's UpdateForward/UpdateClr) with the effect-2 previous root proof, against an independent author's history U. Stage 3: the product path. A's autocommit_update_live/transaction_update_live executor and UpdateForward/UpdateClr producer; C's update preflight with the holder-root classification and reserve_update; the install allow list; B's value_before over an updated row; live and recovery UpdatePrune, scope(), Row replay, base4 and the test-only observers; RUP-A/C/J/B/R over literals and the actual C. Census: RowWrite C margins preflight 704 B and reserve 499 B, S1B Row arm 25,739 <= 25,743 B unchanged, A driver sites 54 within the F4 ceilings, read cursor value_before load 34,468 <= 34,586 B. Stage 4 (07-4, #implementation-4): native fault cuts RUP-N01..N06 before and after UpdatePrune, UpdateForward and UpdateClr (memory twins in CI, an ignored native worker and its controller with a frozen inventory); no product code changes in stage 4.",
   "rust_tests": [
     {
       "paths": [
@@ -1717,7 +1717,7 @@
         "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_read.rs",
         "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_base.rs"
       ],
-      "reason": "Test-only JOIN supply for UPDATE over the actual C: row_literal's int_of decodes nullable Int64 (NULL maps to NULL_INT) and row_join's int_of delegates to it; autocommit.rs mounts update.rs, which mounts update_busy/read/base. The RUP-J/B/R cases are these files' own; the LXT/LAC JOIN cases use the shared helpers.",
+      "reason": "Test-only JOIN supply for UPDATE over the actual C: row_literal's int_of decodes nullable Int64 (NULL maps to NULL_INT) and row_join's int_of delegates to it; autocommit.rs mounts update.rs, which mounts update_busy/read/base. The RUP-J/B/R cases are these files' own; the LXT/LAC JOIN cases use the shared helpers; update.rs also mounts the Linux-only RUP-N module (update_native.rs).",
       "cases": [
         {
           "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
@@ -1841,6 +1841,27 @@
         {
           "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/autocommit.rs",
           "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::lac_j01_autocommit_of_thirteen_rows_commits_and_two_drains_clean_it",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_native.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::native::rup_n01_n02_memory_update_prune_cuts",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_native.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::native::rup_n03_n04_memory_update_forward_cuts",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_native.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::native::rup_n05_n06_memory_update_clr_cuts",
           "sources": [
             "head"
           ]
@@ -1984,6 +2005,36 @@
         {
           "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_base.rs",
           "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::base::rup_r06_base4_refuses_broken_update_states",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_native.rs",
+        "tests/fixtures/module-row-update/native-inventory.json"
+      ],
+      "reason": "RUP-N01..N06 (dev3-row-update.md#implementation-4): crashes before and after each UPDATE group over the actual C supply on a nullable Int64 T. UpdatePrune: N01 A's autocommit UPDATE of 100 to 200 ACKed at q 3, N02 plus the first live cleanup step. UpdateForward: N03 an explicit Serializable transaction's preflight and RowReserve of 100 to NULL (C' = C - 8), N04 its UPDATE statement with the transaction Active. UpdateClr: N05 after Y on a second Status commits 102 at q 3, A's Commit is refused (SerializationConflict) and its full RollbackStart, N06 plus the rollback's first step, which grows the row back inside the leaf's reservation. CI runs the memory twins: produce, recover (C recovery with A's CLR handler, B's read, a new ACK) and reenter over the memory directory, each asserting the frozen inventory's q, CLR count and values and the Row Job states C's restart binds at the cut, so the before and after cuts differ in CI too. The native worker is ignored; the controller (scripts/check_dev3_row_update_native.py) ran its 18 processes, recorded under module-gate/evidence/row-update-4/.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_native.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::native::rup_n01_n02_memory_update_prune_cuts",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_native.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::native::rup_n03_n04_memory_update_forward_cuts",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_native.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::native::rup_n05_n06_memory_update_clr_cuts",
           "sources": [
             "head"
           ]

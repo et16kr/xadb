@@ -1,6 +1,6 @@
 # DEV3 Row UPDATE 첫 경로 — 형식·전이 설계
 
-2026-11-04 · `D3-ROW-UPDATE-001` · **설계 동결 / D2 ACCEPTED(2회차) / 2단계(C 형식·전이, §16)·3단계(제품 경로, 메모리 시험, §17) 구현 / 4단계 NOT_RUN**
+2026-11-04 · `D3-ROW-UPDATE-001` · **설계 동결 / D2 ACCEPTED(2회차) / 2단계(C 형식·전이, §16)·3단계(제품 경로, 메모리 시험, §17)·4단계(native fault cut, §18) 구현**
 
 [DELETE 첫 경로](dev3-row-delete.md) · [첫 Row profile](dev3-module-consumers.md#profile) · [WAL shape](dev3-module-consumers.md#row-shape) · [scope3 wire 기록](dev3-module-consumers.md#row-scope3-wire) · [API 흐름](dev3-module-consumers.md#api-flow) · [Row 격리](dev3-task-10-concurrency.md#module-row-isolation) · [자원 정본](dev3-resource-bounds.md#row-missing-module-budget) · [Undo 형식](dev3-undo-format.md) · [live Row 정리](dev3-task-14-reclamation.md#live-row-retirement) · [명시 거래 실행기](dev3-module-boundaries.md#explicit-transaction) · [행 owner](dev3-task-06-tree-rows.md#algorithms) · [일정 07](../plans/dev3-schedule-baseline.md#items)
 
@@ -417,6 +417,27 @@ DELETE와 같은 규칙으로, **영속 update 행·update U를 쓰는 제품 �
   - RUP-R01..R07: 효과2 네 상태의 재시작(loser UpdateClr, winner UpdatePrune), base4 수용(다섯 상태와 줄어드는 Active), 거절(재stamp·짝 없는 행·C' 아닌 cell·비canonical U·넓힌 D), release cursor 3, replay(`rup_r_row_arm_replays_history_u`), base4 graph(`rup_r_base4_update_root_needs_its_old_row`).
   - 바뀐 코드를 지나는 기존 시험: INSERT·DELETE의 A group·실행기·JOIN·base·read(RDL-A·B·C·J·R), LXT, row_forward·row_write·row_recovery·row_rollback 등 Row 묶음 197개, census.
 
+<a id="implementation-4"></a>
+## 18. 4단계(07-4) 구현 기록
+
+4단계는 native fault cut RUP-N01..N06이다. 제품 경로는 바뀌지 않는다. 시험, controller, 동결 inventory만 더했다. 방식은 DELETE 3단계([§19](dev3-row-delete.md#implementation-3))와 같다.
+
+- **RUP-N 이력.** 사례마다 이력 하나를 실행 전에 정했다(`tests/fixtures/module-row-update/native-inventory.json`). T는 nullable Int64 열 하나다. CREATE가 q 1을 쓰고, A의 자동커밋 INSERT가 행 100·101을 q 2에 commit한 뒤 정리까지 마친다. 그 뒤 행 100에 사례의 단계를 밟고 cut에서 멈춘다. N01·N02는 100을 200으로 바꾼다(같은 cell, C'=C). N03..N06은 NULL로 바꾼다(C'=C−8). 그래서 leaf가 D=8 B를 예약하고, N06과 복구의 UpdateClr은 그 예약 안에서 행을 다시 키운다.
+
+  | 사례 | cut | 마지막 단계 | READY q | 복구 CLR | READY 행 |
+  | --- | --- | --- | --- | --- | --- |
+  | N01 | UpdatePrune 앞 | 자동커밋 UPDATE와 그 ACK(q 3) | 3 | 0 | 200, 101 |
+  | N02 | UpdatePrune 뒤 | N01과 live 정리의 첫 단계(UpdatePrune) | 3 | 0 | 200, 101 |
+  | N03 | UpdateForward 앞 | 명시 거래(Serializable)의 preflight와 RowReserve | 2 | 0 | 100, 101 |
+  | N04 | UpdateForward 뒤 | 명시 거래의 UPDATE statement, 거래는 Active | 2 | 1 | 100, 101 |
+  | N05 | UpdateClr 앞 | N04 뒤 Y(다른 Status)가 102를 INSERT해 q 3에 commit, A의 Commit은 SerializationConflict로 거절, A의 full RollbackStart | 3 | 1 | 100, 101, 102 |
+  | N06 | UpdateClr 뒤 | N05와 rollback의 첫 단계(UpdateClr) | 3 | 0 | 100, 101, 102 |
+
+- **세 process와 controller.** DELETE §19와 같다. worker는 `row_join::retire::autocommit::update::native::rup_native_worker`(ignored)이고, controller `scripts/check_dev3_row_update_native.py`는 DELETE controller의 검사를 그대로 쓴다(사례 ID·inventory schema·worker 이름·환경 변수 이름만 다르다). produce의 결과·q·RowId와 WAL witness, 파일마다 마지막 write 뒤의 성공 sync와 마지막 sync 뒤 쓰기 없음, "뒤" 사례의 cut WAL이 짝 "앞" 사례의 cut WAL을 바이트 그대로 앞에 두고 그 뒤 WAL write가 그 group 하나뿐임(N01→N02 UpdatePrune, N03→N04 UpdateForward, N05→N06 UpdateClr), recover·reenter의 READY q·CLR 수·B가 읽은 값, 세 pid, 복구 process의 자원 한도다.
+- **결과.** debug test ELF에서 18 process가 모두 통과했다. 복구 step은 N01 20, N02 18, N03 16, N04 21, N05 28, N06 28이다. N01에서는 복구가 UpdatePrune을 했고, N02에서는 live 정리가 이미 했다. 복구 CLR은 N03 0(Reserved root는 Cancel), N04 1, N05 1, N06 0이다. "뒤" 사례가 더한 WAL group은 UpdatePrune 89,895 B(C=C'=193, `89316+C+2C'`), UpdateForward 91,695 B(C=193, C'=185, `91124+2C+C'`), UpdateClr 91,487 B(`90916+2C+C'`)로 §3의 frame 식과 같다(h=0). 복구 process는 모두 handle 0, peak 3, fd peak 6이다. 실행 기록은 [`module-gate/evidence/row-update-4/`](../../module-gate/evidence/row-update-4/README.md)에 있다.
+- **메모리 쌍둥이.** `rup_n01_n02_memory_update_prune_cuts`, `rup_n03_n04_memory_update_forward_cuts`, `rup_n05_n06_memory_update_clr_cuts`가 같은 이력을 memory directory 위에서 돈다. cut의 파일에서 C의 재시작이 base4로 잡는 Row Job 상태를 §9와 대조하므로 "앞"과 "뒤"가 CI에서도 갈린다(N01은 Retained update root와 TerminalReady, N02는 ReleasingCommitted root와 TerminalReady, N05는 Retained, N06은 ReleasingCompensated). 각 사례의 기대값이 동결 inventory에 그대로 적혀 있는지도 본다. CI가 도는 것은 이 셋이고 native worker는 ignored다.
+- **한계.** DELETE §19의 한계와 같다. cut은 process 종료이고 group 경계에만 둔다. group 안의 torn write, 복구 도중의 crash, I/O fault는 일정 12·17의 몫이다. RUP-N05·N06의 둘째·셋째 Status page는 시험이 직접 초기화한다. 커지는 UPDATE의 native cut은 두지 않았다. 커지는 값의 Forward·CLR·commit과 재시작은 메모리 시험 RUP-J02가 실제 C 위에서 본다. native 결과는 이 cloud 환경의 실행 한 번이다.
+
 ## 작성 기록
 
 - 2026-11-04 r1 초안. main `5760f30`의 source를 읽고 썼다(operation.rs, wire.rs, core.rs, job.rs, undo_record.rs, transition.rs, transition/prepare.rs, ledger.rs, row_preflight.rs의 `delete_class`, plan4_apply/row/read.rs의 `missing_before`·`value_before`, row/read/driver.rs, plan4_recovery_base/row/actor.rs, plan4_apply.rs의 `RowLoanLayout`).
@@ -424,3 +445,4 @@ DELETE와 같은 규칙으로, **영속 update 행·update U를 쓰는 제품 �
 - 2026-11-04 D2 2회차 **ACCEPT**(같은 검토자). r2가 1회차 15건을 모두 닫았고 새 필수·권고는 없음을 확인했다. 사소 6건을 r3에 반영했다: §7 표의 거절 층(codec·read.rs) 구분, before 값을 겹치지 않는 copy 구간 `[10240,12288)`에 두어 r2의 상태 규칙을 대체(copy 버퍼가 이미 `PAGE_BYTES`라 바이트 증가 0), §6 표의 DELETE Forward·Update 필드 출처와 `ReservedEntry.delete`, §9 Releasing의 길이 검산은 canonical decode뿐, §10 읽기 census 문장.
 - 2026-11-04 §16(2단계 구현 기록) 추가. C 형식·전이층, 효과2 소비자의 명시 거절 목록, census(S1B 상한 초과를 배치 변경으로 해소, 여유 4 B), 독립 저자 이력 U와 RUP-F·RUP-C·거절 지점 시험을 적었다. 07-2가 고칠 설명(§3.5)은 소비자 계약의 shape 표·cleanup 최대·scope3 wire 기록·`candidate_template` 상계, 자원 정본, 모듈 경계의 XOI 배치, `RowLoanLayout::FRAME` 주석에 반영했다.
 - 2026-11-04 §17(3단계 구현 기록) 추가. A 실행기·생산자, A↔C 경계(설치 본문 Row write 허용 목록 누락을 RUP-J가 찾음), holder root 판정, B `value_before`, 회수·replay·복구·base4, RDL-B09 대조군 이동, 시험 전용 관찰자, census(C 여유 preflight 704 B·reserve 499 B, S1B 그대로), RUP-A·C·J·B·R 시험을 적었다.
+- 2026-11-04 §18(4단계 구현 기록) 추가. native fault cut RUP-N01..N06(UpdatePrune·UpdateForward·UpdateClr 앞뒤, 18 process 통과), 메모리 쌍둥이, 동결 inventory와 controller, 한계를 적었다.

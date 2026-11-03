@@ -1,0 +1,18 @@
+case	RUP-N05
+phase	recover
+pid	16040
+source	8516c91dd0c38253eeb9d87cdd63094d18cc7e456800d966e347553f47732cf0
+elf	bcb791f8e90fcbb39aaa3d03e361633fd137a61ebabfc93f54a781763aa4f173
+handles	0
+peak	3
+fd_peak	6
+mutations	852
+log_bytes	954199
+result	ready
+steps	28
+clrs	1
+rows	[(1, 100), (2, 101), (3, 102)]
+values	100,101,102
+q_ready	3
+ack_row	4
+ack_q	4

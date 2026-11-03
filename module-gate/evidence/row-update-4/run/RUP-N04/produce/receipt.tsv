@@ -1,0 +1,11 @@
+case	RUP-N04
+phase	produce
+pid	15883
+source	8516c91dd0c38253eeb9d87cdd63094d18cc7e456800d966e347553f47732cf0
+elf	bcb791f8e90fcbb39aaa3d03e361633fd137a61ebabfc93f54a781763aa4f173
+result	crashed
+q	2
+rows	1,2
+wal_before	20b2e76db227381caa720c6affd32ae64b4905e9c3ebfac5a94bf0d2cd9d3c83
+wal_cut	2015c863887baa93b98d56f935f87ad6b0a84c52f82e7ce69db39adb14637e7c
+wal_cut_bytes	2030147

@@ -1,0 +1,42 @@
+{
+  "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::native::rup_native_worker",
+  "cases": {
+    "RUP-N01": [
+      "produce",
+      "recover",
+      "reenter"
+    ],
+    "RUP-N02": [
+      "produce",
+      "recover",
+      "reenter"
+    ],
+    "RUP-N03": [
+      "produce",
+      "recover",
+      "reenter"
+    ],
+    "RUP-N04": [
+      "produce",
+      "recover",
+      "reenter"
+    ],
+    "RUP-N05": [
+      "produce",
+      "recover",
+      "reenter"
+    ],
+    "RUP-N06": [
+      "produce",
+      "recover",
+      "reenter"
+    ]
+  },
+  "source": "8516c91dd0c38253eeb9d87cdd63094d18cc7e456800d966e347553f47732cf0",
+  "elf": "bcb791f8e90fcbb39aaa3d03e361633fd137a61ebabfc93f54a781763aa4f173",
+  "input": "9beb56f542fbdb1a54779109471288c9746cac4270acdc94a3dd76bdc6fd04a6",
+  "per_process_seconds": 180,
+  "log_bytes_cap": 16777216,
+  "rust_stack": 33554432,
+  "expected": "produce stops at its cut with the inventory result and q; the last step changed the WAL and every write before the cut is synced; recover is READY at the last ACKed q with the inventory's CLRs and committed values, then a new ACK; reenter reads both ACKs"
+}
