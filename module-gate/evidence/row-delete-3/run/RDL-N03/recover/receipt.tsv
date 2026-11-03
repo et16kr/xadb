@@ -1,0 +1,18 @@
+case	RDL-N03
+phase	recover
+pid	22721
+source	5cd5baac52e26b434e894dec7f9322cc6b2511d15ca43a6a31d04746266858a8
+elf	0cb626ce50afa8b961cc08a8a2649e56d05196317859b1b82118b31ccc5f0047
+handles	0
+peak	3
+fd_peak	6
+mutations	648
+log_bytes	591897
+result	ready
+steps	16
+clrs	0
+rows	[(1, 100), (2, 101)]
+values	100,101
+q_ready	2
+ack_row	3
+ack_q	3

@@ -1,0 +1,51 @@
+{
+  "schema": "xadb.row-delete-native-inventory.v1",
+  "contract": "devdoc/contracts/dev3-row-delete.md#implementation-3",
+  "worker": "row_join::retire::autocommit::delete::native::rdl_native_worker",
+  "history": "CREATE of T publishes q 1. A's autocommit INSERT commits rows 100 and 101 (RowIds 1 and 2) at q 2 and the live cleanup drains them. Each case then runs the steps up to its cut over row 100 and exits the process with no flush or shutdown write.",
+  "new_value": 17,
+  "cases": {
+    "RDL-N01": {
+      "cut": "before DeletePrune: A's autocommit DELETE of 100 ACKed at q 3",
+      "last_step": "the autocommit DELETE (DeleteForward and Commit)",
+      "produce": {"result": "acked", "q": 3, "rows": [1, 2]},
+      "recover": {"q_ready": 3, "clrs": 0, "values": [101], "ack_q": 4},
+      "reenter": {"q_ready": 4, "clrs": 0, "values": [101, 17]}
+    },
+    "RDL-N02": {
+      "cut": "after DeletePrune: N01 and the first live cleanup step",
+      "last_step": "the live DeletePrune group",
+      "produce": {"result": "acked", "q": 3, "rows": [1, 2]},
+      "recover": {"q_ready": 3, "clrs": 0, "values": [101], "ack_q": 4},
+      "reenter": {"q_ready": 4, "clrs": 0, "values": [101, 17]}
+    },
+    "RDL-N03": {
+      "cut": "before DeleteForward: an explicit Serializable transaction's preflight and RowReserve of 100",
+      "last_step": "the RowReserve group",
+      "produce": {"result": "crashed", "q": 2, "rows": [1, 2]},
+      "recover": {"q_ready": 2, "clrs": 0, "values": [100, 101], "ack_q": 3},
+      "reenter": {"q_ready": 3, "clrs": 0, "values": [100, 101, 17]}
+    },
+    "RDL-N04": {
+      "cut": "after DeleteForward: the explicit transaction's DELETE statement of 100, the transaction Active",
+      "last_step": "the DELETE statement: RowReserve and DeleteForward (its end writes no group)",
+      "produce": {"result": "crashed", "q": 2, "rows": [1, 2]},
+      "recover": {"q_ready": 2, "clrs": 1, "values": [100, 101], "ack_q": 3},
+      "reenter": {"q_ready": 3, "clrs": 0, "values": [100, 101, 17]}
+    },
+    "RDL-N05": {
+      "cut": "before DeleteClr: N04, then Y (another Status) INSERTs 102 and commits at q 3, A's Commit is refused (SerializationConflict) and A's full RollbackStart",
+      "last_step": "the RollbackStart group",
+      "produce": {"result": "crashed", "q": 3, "rows": [1, 2]},
+      "recover": {"q_ready": 3, "clrs": 1, "values": [100, 101, 102], "ack_q": 4},
+      "reenter": {"q_ready": 4, "clrs": 0, "values": [100, 101, 102, 17]}
+    },
+    "RDL-N06": {
+      "cut": "after DeleteClr: N05 and the rollback's first step",
+      "last_step": "the DeleteClr group",
+      "produce": {"result": "crashed", "q": 3, "rows": [1, 2]},
+      "recover": {"q_ready": 3, "clrs": 0, "values": [100, 101, 102], "ack_q": 4},
+      "reenter": {"q_ready": 4, "clrs": 0, "values": [100, 101, 102, 17]}
+    }
+  }
+}

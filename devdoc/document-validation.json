@@ -1,15 +1,15 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-11-04T00:17:10.420787+09:00",
+  "date": "2026-11-04T02:28:45.114044+09:00",
   "status": "PASS",
   "errors": [],
   "markdown_documents": [
     {
       "file": "devdoc/README.md",
-      "links": 299,
+      "links": 301,
       "duplicate_ids": 0,
-      "sha256": "22b596efa1d845151338bf6c7a389cfddd6db85d811c7440bac0f450a982f5d7"
+      "sha256": "855bf7d64b0ec3a4c447f941e8b546f501750d9de61a49eeaadee6526a19a32a"
     },
     {
       "file": "devdoc/contracts/README.md",
@@ -289,9 +289,9 @@
     },
     {
       "file": "devdoc/contracts/dev3-row-delete.md",
-      "links": 27,
+      "links": 30,
       "duplicate_ids": 0,
-      "sha256": "c763344b285d575e9c7ff10323c31793e10c10dec8534f1019b68cce1603f512"
+      "sha256": "9cf57ff0d8c40bf27c7f249d5f84f59c926d7c4e9ecefde831410e08d16fef7b"
     },
     {
       "file": "devdoc/contracts/dev3-row-format.md",
@@ -1411,9 +1411,9 @@
     },
     {
       "file": "devdoc/plans/README.md",
-      "links": 78,
+      "links": 79,
       "duplicate_ids": 0,
-      "sha256": "2a215005c46adbb1ad93bc47cec9405651285a5cc150cb8dbac0b715dda2e85c"
+      "sha256": "1dd306871f32e16c06288a592054eb9958d4e7205c1fcd9a750138d0e36eb5d5"
     },
     {
       "file": "devdoc/plans/bottom-up-development.md",
@@ -1441,15 +1441,21 @@
     },
     {
       "file": "devdoc/plans/dev3-ai-throughput-improvement.md",
-      "links": 36,
+      "links": 37,
       "duplicate_ids": 0,
-      "sha256": "f79f77f1ba85a6484e9ab8d170e1d40977efca9bec4ad7d130505c3eafa8a17d"
+      "sha256": "37f3ab515aa6ad79e5598cae27ad6cd5b3db27d8ce360a2201699222ea21ecde"
     },
     {
       "file": "devdoc/plans/dev3-implementation-plan.md",
-      "links": 122,
+      "links": 123,
       "duplicate_ids": 0,
-      "sha256": "087e09066acdc876b292c9bbaea244a4a0c4593d34be6f6cb976cda8ac9f7e5f"
+      "sha256": "6afbfd8c72479724df28a246916122a5ca2fef8c6f9c76a5808a8cb183b0bfbc"
+    },
+    {
+      "file": "devdoc/plans/dev3-schedule-baseline.md",
+      "links": 106,
+      "duplicate_ids": 0,
+      "sha256": "07a8e41976acee8183e7b814953e031b5a34ce7eb2404799c194487fcf94ba53"
     },
     {
       "file": "devdoc/plans/dev3-test-plan.md",

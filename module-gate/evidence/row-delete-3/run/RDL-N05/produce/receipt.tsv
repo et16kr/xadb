@@ -1,0 +1,11 @@
+case	RDL-N05
+phase	produce
+pid	22737
+source	5cd5baac52e26b434e894dec7f9322cc6b2511d15ca43a6a31d04746266858a8
+elf	0cb626ce50afa8b961cc08a8a2649e56d05196317859b1b82118b31ccc5f0047
+result	crashed
+q	3
+rows	1,2
+wal_before	ffcb3b79b39ebc10eeb0fcd833f2e4b644ba1d9db80e6bb220ac770c930a56c8
+wal_cut	8db1b5438cab6c55b310ab08951845252151de0cba32411979d34f4d679e7bae
+wal_cut_bytes	2414047
