@@ -1,9 +1,9 @@
 {
   "RDL-N01": {
     "pids": [
-      "8773",
-      "8780",
-      "8782"
+      "22701",
+      "22703",
+      "22706"
     ],
     "acks": [
       3,
@@ -13,22 +13,23 @@
   },
   "RDL-N02": {
     "pids": [
-      "8784",
-      "8786",
-      "8789"
+      "22708",
+      "22711",
+      "22717"
     ],
     "acks": [
       3,
       4
     ],
     "result": "PASS",
-    "wal_prefix_of_before_cut": "RDL-N01"
+    "wal_prefix_of_before_cut": "RDL-N01",
+    "wal_group_bytes": 89689
   },
   "RDL-N03": {
     "pids": [
-      "8792",
-      "8797",
-      "8799"
+      "22719",
+      "22721",
+      "22724"
     ],
     "acks": [
       2,
@@ -38,22 +39,23 @@
   },
   "RDL-N04": {
     "pids": [
-      "8802",
-      "8804",
-      "8806"
+      "22726",
+      "22728",
+      "22735"
     ],
     "acks": [
       2,
       3
     ],
     "result": "PASS",
-    "wal_prefix_of_before_cut": "RDL-N03"
+    "wal_prefix_of_before_cut": "RDL-N03",
+    "wal_group_bytes": 91690
   },
   "RDL-N05": {
     "pids": [
-      "8808",
-      "8814",
-      "8816"
+      "22737",
+      "22739",
+      "22742"
     ],
     "acks": [
       3,
@@ -63,15 +65,16 @@
   },
   "RDL-N06": {
     "pids": [
-      "8818",
-      "8821",
-      "8826"
+      "22744",
+      "22749",
+      "22752"
     ],
     "acks": [
       3,
       4
     ],
     "result": "PASS",
-    "wal_prefix_of_before_cut": "RDL-N05"
+    "wal_prefix_of_before_cut": "RDL-N05",
+    "wal_group_bytes": 91482
   }
 }
