@@ -30,7 +30,7 @@ use crate::storage::{
     row_record::{MAX_ROW_COLUMNS, ValueRef},
     semantic_row::Operation,
 };
-use foundation::error::Effect;
+use foundation::{error::Effect, identity::RowId};
 use std::convert::Infallible;
 
 pub(in crate::storage) mod autocommit;
@@ -80,6 +80,16 @@ trait Boundary {
         &'r mut self,
         statement: &'r Self::Statement,
         table: &'r Self::Table,
+        loan: &'i mut Loan,
+    ) -> Result<PreflightNext<Self::Preflight<'r, 'i>, Self::Target>, RetentionError>;
+    /// C's DELETE preflight of `row` (`preflight_delete`,
+    /// dev3-row-delete.md#api): `preflight`'s answers, and `NoRow` for a
+    /// target that is no row under the statement snapshot.
+    fn preflight_delete<'r, 'i>(
+        &'r mut self,
+        statement: &'r Self::Statement,
+        table: &'r Self::Table,
+        row: RowId,
         loan: &'i mut Loan,
     ) -> Result<PreflightNext<Self::Preflight<'r, 'i>, Self::Target>, RetentionError>;
     fn start_rollback<'r, 'i>(
@@ -170,6 +180,9 @@ trait Preflight: Sized {
     fn validation_lane(&mut self) -> Result<Self::Lane<'_>, RetentionError>;
     /// The row's only first effect; the plan is untrusted.
     fn reserve(self, input: RowInputPlan) -> Result<Self::Reserved, RowOwnedError<Self>>;
+    /// A DELETE preflight's only first effect (`reserve_delete`): C reserves
+    /// the target it classified, and A validates nothing.
+    fn reserve_delete(self) -> Result<Self::Reserved, RowOwnedError<Self>>;
     /// Returns the admission and loan; the observed read set stays. C
     /// documents Drop as the same no-effect release.
     fn finish(self) -> Result<(), RetentionError>;
@@ -690,6 +703,109 @@ fn validate_row<P: Preflight>(
             .validate(values)
             .map_err(|error| Failure::new(Stage::Validate, error.into())),
         Err(error) => Err(Failure::new(Stage::ValidationLane, error.into())),
+    }
+}
+
+/// One DELETE statement of one target row (dev3-row-delete.md#api). The
+/// statement and fence are checked first, with no C call; the RowId needs no
+/// argument check (0 is not representable). Then the row (`delete_row`): on
+/// success `slot` holds the deleted row's observation, the statement is
+/// finished and the answer is 1; a target that is no row under the statement
+/// snapshot finishes the statement with 0 and leaves `slot` as it was. A
+/// failed row ends the statement as an INSERT's (`end_statement`), and since
+/// a DELETE applies at most its one row, that is `Returned` (or
+/// `MustResolve`), never `RollbackRequired`.
+#[allow(
+    clippy::result_large_err,
+    reason = "Failure keeps the stage, the error and any refused cleanup inline, without allocation"
+)]
+fn delete_statement<B: Boundary>(
+    call: &mut B,
+    statement: B::Statement,
+    table: &B::Table,
+    loan: &mut Loan,
+    row: RowId,
+    slot: &mut Option<B::Applied>,
+) -> Result<usize, DriveError<B::Statement>> {
+    if let Err(error) = statement.check() {
+        let failure = Failure::new(Stage::Statement, error.into());
+        return Err(DriveError::new(failure, After::Returned(statement)));
+    }
+    let (failed, deleted) = match delete_row(call, &statement, table, loan, row) {
+        Ok(Some(applied)) => {
+            *slot = Some(applied);
+            (None, 1)
+        }
+        Ok(None) => (None, 0),
+        Err(failure) => (Some(failure), 0),
+    };
+    end_statement(call, statement, failed, deleted, deleted)
+}
+
+/// The DELETE's one row, as `insert_row`'s: C's preflight of the target,
+/// flushed and tried again on FlushRequired; None when C answered NoRow
+/// (the table read is registered and nothing is held); otherwise the
+/// delete Reserve and A's DeleteForward producer, prepare and apply on the
+/// reservation (`erase_row`), in frames that are not laid out at the
+/// preflight and its flush.
+#[inline(never)]
+#[allow(
+    clippy::result_large_err,
+    reason = "Failure keeps the stage, the error and any refused cleanup inline, without allocation"
+)]
+fn delete_row<B: Boundary>(
+    call: &mut B,
+    statement: &B::Statement,
+    table: &B::Table,
+    loan: &mut Loan,
+    row: RowId,
+) -> Result<Option<B::Applied>, Failure> {
+    let preflight = loop {
+        // C's answer is dropped at the end of this statement, so the flush
+        // below may borrow the call again.
+        let target = match call.preflight_delete(statement, table, row, loan) {
+            Ok(PreflightNext::Ready(preflight)) => break preflight,
+            Ok(PreflightNext::Flush(target)) => target,
+            Ok(PreflightNext::NoRow) => return Ok(None),
+            // A refusal (Busy, Unsupported, SerializationConflict among
+            // them) ends the row: C returned what it took.
+            Err(error) => return Err(Failure::new(Stage::Preflight, error.into())),
+        };
+        flush(call, &target)?;
+    };
+    erase_row(preflight).map(Some)
+}
+
+/// The DELETE after a Ready preflight: its Reserve (`reserve_delete_row`),
+/// then A's producer, prepare and apply on the reservation (`forward_row`,
+/// the INSERT's: C's lane hands A the DeleteForward). Never inlined, as
+/// `write_row`.
+#[inline(never)]
+#[allow(
+    clippy::result_large_err,
+    reason = "Failure keeps the stage, the error and any refused cleanup inline, without allocation"
+)]
+fn erase_row<P: Preflight>(preflight: P) -> Result<P::Applied, Failure> {
+    match reserve_delete_row(preflight) {
+        Ok(reserved) => forward_row(reserved),
+        Err(failure) => Err(failure),
+    }
+}
+
+/// The DELETE's one Reserve. A refusal finishes the preflight.
+#[inline(never)]
+#[allow(
+    clippy::result_large_err,
+    reason = "Failure keeps the stage, the error and any refused cleanup inline, without allocation"
+)]
+fn reserve_delete_row<P: Preflight>(preflight: P) -> Result<P::Reserved, Failure> {
+    match preflight.reserve_delete() {
+        Ok(reserved) => Ok(reserved),
+        Err(RowOwnedError::Before { error, owned }) => {
+            let failure = Failure::new(Stage::Reserve, error.into());
+            Err(finish_preflight(owned, failure))
+        }
+        Err(RowOwnedError::Fatal(error)) => Err(Failure::fatal(Stage::Reserve, error)),
     }
 }
 
@@ -1347,7 +1463,7 @@ impl CallSite {
     }
 }
 
-pub(super) const CALL_SITES: usize = 26;
+pub(super) const CALL_SITES: usize = 39;
 
 /// A's share at each call site, in the size_of inventory sense of
 /// `carrier_bytes` and with its conventions: a C call's result counts twice
@@ -1391,7 +1507,8 @@ pub(super) const CALL_SITES: usize = 26;
 ///
 /// It relies on which frames are separate: `insert_row`, `end_statement`,
 /// `write_row` and its steps (`reserve_row`, `validate_row`, `forward_row`,
-/// `produce_row`, `prepare_row`, `apply_row`), `flush`, `finish_preflight`,
+/// `produce_row`, `prepare_row`, `apply_row`), the DELETE's `delete_row`,
+/// `erase_row` and `reserve_delete_row`, `flush`, `finish_preflight`,
 /// `cancel`, `finish_statement`, `compensate`, the two rollback starts and
 /// `rollback_step` are never inlined, so none
 /// of their slots is laid out in their caller's frame: none of `write_row`'s
@@ -1567,6 +1684,64 @@ const fn call_sites<B: Boundary + 'static>() -> [CallSite; CALL_SITES] {
     let in_produce = in_forward + produce_frame;
     let in_prepare = in_forward + prepare_frame;
     let in_apply = in_prepare + apply_frame;
+    // The DELETE statement (`delete_statement`, dev3-row-delete.md#resources):
+    // its arguments (the target and its slot in place of the rows and their
+    // slots) and its own result; while delete_row runs, the row's result
+    // slot and delete_row's arguments.
+    let delete_statement = slack
+        + size_of::<&mut B>()
+        + size_of::<&B::Table>()
+        + size_of::<&mut Loan>()
+        + size_of::<RowId>()
+        + size_of::<&mut Option<A<B>>>()
+        + size_of::<S<B>>()
+        + size_of::<Result<usize, DriveError<S<B>>>>();
+    let delete_row =
+        delete_statement + size_of::<Result<Option<A<B>>, Failure>>() + 4 * r + size_of::<RowId>();
+    // ... after a Ready preflight: erase_row's result slot in delete_row (it
+    // is mapped, not a tail); while reserve_delete_row runs, the preflight
+    // (in delete_row's frame) and reserve_delete_row's result slot.
+    let erasing = delete_row + size_of::<Result<A<B>, Failure>>();
+    let delete_reserving = erasing + size_of::<P<B>>() + size_of::<Result<R<B>, Failure>>();
+    // ... after the Reserve, as `forwarding` and `producing`.
+    let delete_forwarding = erasing + size_of::<R<B>>();
+    let delete_producing = delete_forwarding + r + size_of::<Result<RowProposal, Failure>>();
+    let delete_flushing = delete_row + size_of::<G<B>>() + 2 * r + size_of::<Result<(), Failure>>();
+    // delete_statement's own slots: its arguments and result; the check's
+    // result and the Failure its refusal binds; delete_row's result and the
+    // (failure, count) it binds. end_statement's result is its own.
+    let delete_statement_frame = delete_statement - slack
+        + size_of::<Result<(), RetentionError>>()
+        + failure
+        + size_of::<Result<Option<A<B>>, Failure>>()
+        + size_of::<Option<Failure>>()
+        + size_of::<usize>();
+    // delete_row: its arguments; C's preflight answer; the Ready preflight
+    // and the flush target it takes out of the answer; flush's result;
+    // erase_row's result before `map` (the mapped result is its own).
+    let delete_row_frame = 4 * r
+        + size_of::<RowId>()
+        + size_of::<Result<PreflightNext<P<B>, G<B>>, RetentionError>>()
+        + size_of::<P<B>>()
+        + size_of::<G<B>>()
+        + size_of::<Result<(), Failure>>()
+        + size_of::<Result<A<B>, Failure>>();
+    // erase_row: reserve_delete_row's result, which holds the reservation
+    // forward_row takes (forward_row's result is its own).
+    let erase_frame = size_of::<Result<R<B>, Failure>>();
+    // reserve_delete_row: the Reserve's result; the refused Reserve's
+    // Failure and finish_preflight's result.
+    let reserve_delete_frame = size_of::<Result<R<B>, RowOwnedError<P<B>>>>() + 2 * failure;
+    let in_delete = slack + delete_statement_frame;
+    let in_delete_end = in_delete + end_frame;
+    let in_delete_row = in_delete + delete_row_frame;
+    let in_delete_flush = in_delete_row + flush_frame;
+    let in_erase = in_delete_row + erase_frame;
+    let in_delete_reserve = in_erase + reserve_delete_frame;
+    let in_delete_forward = in_erase + forward_frame;
+    let in_delete_produce = in_delete_forward + produce_frame;
+    let in_delete_prepare = in_delete_forward + prepare_frame;
+    let in_delete_apply = in_delete_prepare + apply_frame;
     // rollback_step's slots beside its share: the task it binds out of C's
     // answer and compensate's result while `next` runs, C's answer while
     // compensate runs.
@@ -1728,6 +1903,109 @@ const fn call_sites<B: Boundary + 'static>() -> [CallSite; CALL_SITES] {
                 + 2 * size_of::<Result<(), StatementFinishError<S<B>>>>()
                 + r,
             in_end
+                + finish_statement_frame
+                + size_of::<Result<(), StatementFinishError<S<B>>>>()
+                + r,
+        ),
+        Site::new(
+            "delete.check",
+            Bound::Write,
+            delete_statement + 2 * size_of::<Result<(), RetentionError>>() + r,
+            in_delete + size_of::<Result<(), RetentionError>>() + r,
+        ),
+        Site::new(
+            "delete.preflight",
+            Bound::Preflight,
+            delete_row
+                + 2 * size_of::<Result<PreflightNext<P<B>, G<B>>, RetentionError>>()
+                + 4 * r
+                + size_of::<RowId>(),
+            in_delete_row
+                + size_of::<Result<PreflightNext<P<B>, G<B>>, RetentionError>>()
+                + 4 * r
+                + size_of::<RowId>(),
+        ),
+        Site::new(
+            "delete.try_flush",
+            Bound::Write,
+            delete_flushing + 2 * size_of::<Result<(), RetentionError>>() + 2 * r,
+            in_delete_flush + size_of::<Result<(), RetentionError>>() + 2 * r,
+        ),
+        Site::new(
+            "delete.continue_flush",
+            Bound::Write,
+            delete_flushing + 2 * size_of::<Result<FlushStep, RetentionError>>() + r,
+            in_delete_flush + size_of::<Result<FlushStep, RetentionError>>() + r,
+        ),
+        Site::new(
+            "delete.reserve",
+            Bound::Write,
+            delete_reserving + 2 * size_of::<Result<R<B>, RowOwnedError<P<B>>>>(),
+            in_delete_reserve + size_of::<Result<R<B>, RowOwnedError<P<B>>>>(),
+        ),
+        Site::new(
+            "delete.finish_preflight",
+            Bound::Write,
+            delete_reserving + 2 * failure + 2 * size_of::<Result<(), RetentionError>>(),
+            in_delete_reserve + finish_preflight_frame + size_of::<Result<(), RetentionError>>(),
+        ),
+        Site::new(
+            "delete.producer_lane",
+            Bound::Write,
+            delete_producing + 2 * size_of::<Result<L<B>, RetentionError>>() + r,
+            in_delete_produce + size_of::<Result<L<B>, RetentionError>>() + r,
+        ),
+        Site::new(
+            "delete.forward",
+            Bound::A,
+            delete_producing
+                + size_of::<L<B>>()
+                + 2 * size_of::<Result<RowProposal, InsertError>>(),
+            in_delete_produce + size_of::<Result<RowProposal, InsertError>>(),
+        ),
+        Site::new(
+            "delete.prepare",
+            Bound::Write,
+            delete_forwarding
+                + size_of::<RowProposal>()
+                + 2 * size_of::<Result<D<B>, RowOwnedError<R<B>>>>(),
+            in_delete_prepare + size_of::<Result<D<B>, RowOwnedError<R<B>>>>(),
+        ),
+        Site::new(
+            "delete.apply",
+            Bound::Write,
+            erasing + size_of::<D<B>>() + 2 * size_of::<Result<A<B>, RowOwnedError<D<B>>>>(),
+            in_delete_apply + size_of::<Result<A<B>, RowOwnedError<D<B>>>>(),
+        ),
+        Site::new(
+            "delete.reopen",
+            Bound::Write,
+            erasing + size_of::<D<B>>() + size_of::<RetentionError>() + 2 * size_of::<R<B>>(),
+            in_delete_apply + size_of::<R<B>>(),
+        ),
+        Site::new(
+            "delete.cancel",
+            Bound::Write,
+            erasing
+                + size_of::<R<B>>()
+                + 2 * failure
+                + 2 * size_of::<Result<(), RowOwnedError<R<B>>>>(),
+            in_delete_apply + cancel_frame + size_of::<Result<(), RowOwnedError<R<B>>>>(),
+        ),
+        // As `insert.finish_statement`: end_statement's share is the same,
+        // below the DELETE statement's frame.
+        Site::new(
+            "delete.finish_statement",
+            Bound::Write,
+            slack
+                + size_of::<&mut B>()
+                + size_of::<usize>()
+                + size_of::<Result<usize, DriveError<S<B>>>>()
+                + size_of::<Result<(), DriveError<S<B>>>>()
+                + size_of::<S<B>>()
+                + 2 * size_of::<Result<(), StatementFinishError<S<B>>>>()
+                + r,
+            in_delete_end
                 + finish_statement_frame
                 + size_of::<Result<(), StatementFinishError<S<B>>>>()
                 + r,

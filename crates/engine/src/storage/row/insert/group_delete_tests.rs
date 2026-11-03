@@ -31,6 +31,9 @@ use crate::{
 use foundation::identity::{Generation, ObjectHandle, ObjectId, RowId, SchemaEpoch};
 
 type Page = [u8; PAGE_BYTES];
+/// One before image of A's group: the page, its identity, its kind and the
+/// cell (slot, offset, length) it carries.
+type Image<'p> = (&'p Page, PageIdentity, PageKind, Option<(u16, u16, u16)>);
 
 const PROFILE: &[u8; 4096] = include_bytes!(concat!(
     env!("CARGO_MANIFEST_DIR"),
@@ -231,7 +234,7 @@ impl Case {
                 .unwrap()
                 .1
         };
-        let mut images: Vec<(&Page, PageIdentity, PageKind, Option<(u16, u16, u16)>)> = vec![
+        let mut images: Vec<Image<'_>> = vec![
             (
                 &state.root,
                 identity(1, 1, 4),
@@ -455,15 +458,14 @@ fn same(label: &str, actual: &[u8], expected: &[u8]) {
     }
 }
 
-fn produce(
-    case: &Case,
-    state: &ABefore,
-    change: Change<'_>,
-) -> (
+/// A produced group: A's answer, its frame and its five after images.
+type ProducedGroup = (
     Result<group::Produced, InsertError>,
     Box<[u8; FRAME_BYTES]>,
     Box<[Page; 5]>,
-) {
+);
+
+fn produce(case: &Case, state: &ABefore, change: Change<'_>) -> ProducedGroup {
     let mut frame: Box<[u8; FRAME_BYTES]> = vec![0xa5; FRAME_BYTES]
         .into_boxed_slice()
         .try_into()

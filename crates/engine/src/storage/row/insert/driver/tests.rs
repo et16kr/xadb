@@ -32,8 +32,8 @@ use crate::{
 use Call::{
     Apply, Cancel, Check, CleanupNext, Clr, ClrApply, ClrLane, ClrPrepare, ClrReopen, Commit,
     ContinueFlush, DropReserved, DropRollback, FinishAborted, FinishPreflight, FinishStatement,
-    Forward, Next, Prepare, Reopen, Reserve, Retire, RollbackFinish, RollbackFlush, RollbackStart,
-    TryFlush, Validate,
+    Forward, Next, PreflightDelete, Prepare, Reopen, Reserve, ReserveDelete, Retire,
+    RollbackFinish, RollbackFlush, RollbackStart, TryFlush, Validate,
 };
 use foundation::{identity::SchemaEpoch, namespace::WriterNamespace};
 use std::cell::RefCell;
@@ -119,6 +119,9 @@ enum Call {
     Retire(usize),
     /// A held rollback's flush of the target its `next` named.
     RollbackFlush(u64),
+    /// C's DELETE preflight of a target row, and its delete Reserve.
+    PreflightDelete(u64),
+    ReserveDelete(u64),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -261,6 +264,13 @@ struct State {
     retire_flushes: Vec<(usize, u64)>,
     /// The `skip` list of each `row_cleanup_next`.
     skips: Vec<Vec<usize>>,
+    /// Rows a DELETE preflight classifies deletable (RowId, canonical
+    /// length); every other target is no row. An applied DELETE takes its
+    /// row out (the actor's own tombstone is no row).
+    visible: Vec<(u64, usize)>,
+    /// Rows of the actor's chain that are DELETE roots: their CLR restores
+    /// the row (`91096+2C+128h`).
+    deleted: Vec<u64>,
 }
 
 impl State {
@@ -312,6 +322,8 @@ fn state(chain: &[(u64, usize)], faults: &[(Call, Fault)]) -> RefCell<State> {
         held: Vec::new(),
         retire_flushes: Vec::new(),
         skips: Vec::new(),
+        visible: Vec::new(),
+        deleted: Vec::new(),
     })
 }
 
@@ -391,7 +403,50 @@ impl<'s> Boundary for LiteralCall<'s> {
             state: self.state,
             loan: Some(loan),
             done: false,
+            delete: None,
         }))
+    }
+    /// As `preflight`, for the DELETE target `row`: a scripted refusal, a
+    /// FlushRequired from `State::flushes`, NoRow for a row not in
+    /// `State::visible`, or a Ready preflight of the row.
+    fn preflight_delete<'r, 'i>(
+        &'r mut self,
+        _statement: &'r LiteralStatement<'s>,
+        _table: &'r LiteralTable,
+        row: RowId,
+        loan: &'i mut Loan,
+    ) -> Result<PreflightNext<LiteralPreflight<'r, 'i>, u64>, RetentionError> {
+        let row = row.get();
+        let mut state = self.state.borrow_mut();
+        let call = PreflightDelete(row);
+        let fault = state.note(call);
+        state.at_preflight = state.at_preflight.min(probe());
+        if state.waiting > 0 {
+            state.violations.push("preflight with a flusher not Ready");
+            return Err(refusal(call, Cause::Busy));
+        }
+        if state.dirty.is_some() {
+            state
+                .violations
+                .push("preflight before the named victim was flushed");
+        }
+        if let Some(at) = state.flushes.iter().position(|(at, _)| *at == row) {
+            let (_, target) = state.flushes.remove(at);
+            state.dirty = Some(target);
+            return Ok(PreflightNext::Flush(target));
+        }
+        let target = state.visible.iter().copied().find(|(at, _)| *at == row);
+        drop(state);
+        factory(call, fault)?;
+        Ok(match target {
+            Some(target) => PreflightNext::Ready(LiteralPreflight {
+                state: self.state,
+                loan: Some(loan),
+                done: false,
+                delete: Some(target),
+            }),
+            None => PreflightNext::NoRow,
+        })
     }
     fn start_rollback<'r, 'i>(
         &'r mut self,
@@ -578,6 +633,8 @@ struct LiteralPreflight<'r, 'i> {
     state: &'r RefCell<State>,
     loan: Option<&'i mut Loan>,
     done: bool,
+    /// A DELETE preflight's target (RowId, canonical length).
+    delete: Option<(u64, usize)>,
 }
 
 impl Drop for LiteralPreflight<'_, '_> {
@@ -602,6 +659,12 @@ impl<'r, 'i> Preflight for LiteralPreflight<'r, 'i> {
         Self: 'l;
     type Reserved = LiteralReserved<'r, 'i>;
     fn validation_lane(&mut self) -> Result<LiteralValidation<'_>, RetentionError> {
+        if self.delete.is_some() {
+            self.state
+                .borrow_mut()
+                .violations
+                .push("validation lane of a DELETE preflight");
+        }
         let fault = self.state.borrow_mut().note(Call::ValidationLane);
         factory(Call::ValidationLane, fault)?;
         let loan = self.loan.as_deref_mut().expect("loan held until release");
@@ -611,6 +674,12 @@ impl<'r, 'i> Preflight for LiteralPreflight<'r, 'i> {
         })
     }
     fn reserve(self, input: RowInputPlan) -> Result<LiteralReserved<'r, 'i>, RowOwnedError<Self>> {
+        if self.delete.is_some() {
+            self.state
+                .borrow_mut()
+                .violations
+                .push("INSERT Reserve of a DELETE preflight");
+        }
         let row = self.state.borrow().row_high + 1;
         let fault = self.state.borrow_mut().note(Reserve(row));
         let mut this = step(Reserve(row), fault, self)?;
@@ -627,6 +696,39 @@ impl<'r, 'i> Preflight for LiteralPreflight<'r, 'i> {
             cell: 180 + state.sealed,
             h: !state.chain.is_empty(),
             active: true,
+            delete: false,
+        };
+        drop(state);
+        this.done = true;
+        Ok(reserved)
+    }
+    /// The delete Reserve of the preflight's target: no new RowId, the old
+    /// row's cell `C = 180 + L`.
+    fn reserve_delete(self) -> Result<LiteralReserved<'r, 'i>, RowOwnedError<Self>> {
+        let Some((row, length)) = self.delete else {
+            self.state
+                .borrow_mut()
+                .violations
+                .push("delete Reserve of an INSERT preflight");
+            return Err(RowOwnedError::Before {
+                error: refusal(ReserveDelete(0), Cause::Unsupported),
+                owned: self,
+            });
+        };
+        let fault = self.state.borrow_mut().note(ReserveDelete(row));
+        let mut this = step(ReserveDelete(row), fault, self)?;
+        let mut state = this.state.borrow_mut();
+        if state.outstanding.replace(row).is_some() {
+            state.violations.push("second outstanding RowReserve");
+        }
+        let reserved = LiteralReserved {
+            state: this.state,
+            loan: this.loan.take(),
+            row,
+            cell: 180 + length,
+            h: !state.chain.is_empty(),
+            active: true,
+            delete: true,
         };
         drop(state);
         this.done = true;
@@ -669,6 +771,8 @@ struct LiteralReserved<'r, 'i> {
     cell: usize,
     h: bool,
     active: bool,
+    /// A DELETE root: Forward is `91304+2C+128h`.
+    delete: bool,
 }
 
 impl Drop for LiteralReserved<'_, '_> {
@@ -702,6 +806,7 @@ impl<'r, 'i> Reserved for LiteralReserved<'r, 'i> {
             row: self.row,
             cell: self.cell,
             h: self.h,
+            delete: self.delete,
             _loan: self.loan.as_deref_mut(),
         })
     }
@@ -749,6 +854,11 @@ impl<'r, 'i> Prepared for LiteralPrepared<'r, 'i> {
         let mut state = reserved.state.borrow_mut();
         state.chain.push((reserved.row, reserved.cell - 180));
         state.outstanding = None;
+        if reserved.delete {
+            let row = reserved.row;
+            state.visible.retain(|(at, _)| *at != row);
+            state.deleted.push(row);
+        }
         drop(state);
         reserved.active = false;
         Ok(LiteralApplied(reserved.row))
@@ -768,6 +878,8 @@ struct LiteralProducer<'l> {
     row: u64,
     cell: usize,
     h: bool,
+    /// A DELETE root: both frames carry the cell twice (`+2C`).
+    delete: bool,
     _loan: Option<&'l mut Loan>,
 }
 
@@ -788,7 +900,8 @@ impl LiteralProducer<'_> {
             Some(Fault::Producer(error)) => return Err(error),
             Some(other) => panic!("unscripted {other:?}"),
         }
-        let frame = base + self.cell + 128 * usize::from(self.h);
+        let cells = if self.delete { 2 } else { 1 };
+        let frame = base + cells * self.cell + 128 * usize::from(self.h);
         Ok(RowProposal::new(operation, frame, 5, ROLES))
     }
 }
@@ -843,12 +956,14 @@ impl<'r, 'i> Rollback for LiteralRollback<'r, 'i> {
         }
         let (row, length) = *state.chain.last().unwrap();
         let h = state.chain.len() >= 2;
+        let delete = state.deleted.contains(&row);
         drop(state);
         Ok(RollbackNext::Candidate(LiteralTask {
             rollback: self,
             row,
             cell: 180 + length,
             h,
+            delete,
         }))
     }
     /// Flushing the target `next` named cleans it; any other target is a
@@ -893,6 +1008,7 @@ struct LiteralTask<'x, 'r, 'i> {
     row: u64,
     cell: usize,
     h: bool,
+    delete: bool,
 }
 
 impl Disarm for LiteralTask<'_, '_, '_> {
@@ -915,6 +1031,7 @@ impl<'x, 'r, 'i> RollbackTask for LiteralTask<'x, 'r, 'i> {
             row: self.row,
             cell: self.cell,
             h: self.h,
+            delete: self.delete,
             _loan: Some(&mut *self.rollback._loan),
         })
     }
@@ -948,7 +1065,14 @@ impl<'x, 'r, 'i> PreparedTask for LiteralPreparedTask<'x, 'r, 'i> {
         let call = ClrApply(self.task.row);
         let fault = self.task.rollback.state.borrow_mut().note(call);
         let this = step(call, fault, self)?;
-        this.task.rollback.state.borrow_mut().chain.pop();
+        let mut state = this.task.rollback.state.borrow_mut();
+        state.chain.pop();
+        // A DELETE root's CLR restores its row.
+        if this.task.delete {
+            let row = this.task.row;
+            state.deleted.retain(|at| *at != row);
+            state.visible.push((row, this.task.cell - 180));
+        }
         Ok(())
     }
     fn reopen(self) -> LiteralTask<'x, 'r, 'i> {
@@ -2489,8 +2613,11 @@ fn call_site_census<W: WriterNamespace + 'static>(writer: &str) {
         Bound::A if site.name == "insert.validate" => (charge, validation),
         Bound::A => (charge, producer),
     };
-    // The A stages bounded here: the Forward producer phase only.
-    let checked = |site: &CallSite| site.bound != Bound::A || site.name == "insert.forward";
+    // The A stages bounded here: the Forward producer phase only (the
+    // DELETE's DeleteForward included).
+    let checked = |site: &CallSite| {
+        site.bound != Bound::A || matches!(site.name, "insert.forward" | "delete.forward")
+    };
     let mut over = Vec::new();
     let mut frame_over = Vec::new();
     for site in sites {
@@ -2546,7 +2673,7 @@ fn call_site_census<W: WriterNamespace + 'static>(writer: &str) {
     let names: std::collections::BTreeSet<_> = sites.iter().map(|site| site.name).collect();
     assert_eq!(names.len(), CALL_SITES);
     let bound = |bound| sites.iter().filter(|site| site.bound == bound).count();
-    assert_eq!((bound(Bound::Preflight), bound(Bound::A)), (1, 3));
+    assert_eq!((bound(Bound::Preflight), bound(Bound::A)), (2, 4));
     // The contract's oracle: the per-call share (M3).
     assert!(over.is_empty(), "{writer}: over the bound at {over:?}");
     assert!(
@@ -3944,3 +4071,6 @@ fn lxt_a07_slot_reading() {
         assert!(slot.take_first().is_none() && matches!(slot, Explicit::Idle));
     }
 }
+
+#[path = "delete_tests.rs"]
+mod delete;
