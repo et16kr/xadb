@@ -11,15 +11,17 @@
 //! - B08: the tombstone restamped `Committed` with no U, which DeletePrune
 //!   never leaves: capture refuses it (Source, Invariant).
 //! - B09: a Missing (INSERT) U under the tombstone: `tombstone_before`
-//!   refuses it (Census, Invariant).
+//!   refuses it (Census, Invariant); and the delete's RowValue U under an
+//!   Inline `Transaction` row (the tombstone re-encoded as a row of the same
+//!   version): B takes the Missing-before path and `read_missing`'s
+//!   schema-less decode refuses the inline RowValue (Census, Undo).
 //!
 //! Each edit path first runs as a control that re-encodes the page's own
 //! cell unchanged: the read then takes the committed row 100 through the
 //! tombstone's U, so each refusal comes from the state, not from the edit.
 //!
-//! The other half of the contract's B09, a RowValue U under an Inline
-//! `Transaction` row, stays the typed Unsupported of `read_missing`
-//! (MCB04-V14, consumers F02): see dev3-row-delete.md#implementation-2b2.
+//! `read_missing`'s typed Unsupported (MCB04-V14) is only for a valid
+//! RowDeleted or chunked RowValue before, which DELETE never writes.
 use super::*;
 use crate::storage::{
     dirty_frame::status_load_test_support,
@@ -45,6 +47,7 @@ enum Broken {
     ReleasingU,
     CommittedTombstone,
     MissingU,
+    InlineRow,
 }
 
 /// The expectation of the Row U `reference` of `row` in table 6.
@@ -200,7 +203,7 @@ fn broken_read(broken: Broken) -> std::result::Result<i64, RowReadError> {
                         replace_undo(bytes, identity, slot, &out[..length]);
                     });
                 }
-                Broken::SameTombstone | Broken::CommittedTombstone => {
+                Broken::SameTombstone | Broken::CommittedTombstone | Broken::InlineRow => {
                     let index = (1..28)
                         .find(|index| {
                             pool.target_request(*index)
@@ -231,8 +234,23 @@ fn broken_read(broken: Broken) -> std::result::Result<i64, RowReadError> {
                             row_record::decode_row_record_with_schema(value, records, schema)
                                 .unwrap();
                         assert!(matches!(tombstone.payload(), RowPayload::Deleted));
+                        let mut canonical = [0; 64];
+                        let length = row_record::encode_canonical_row_borrowed(
+                            schema,
+                            &[ValueRef::Int64(7)],
+                            &mut canonical,
+                        )
+                        .unwrap();
+                        let canonical = &canonical[..length];
+                        let payload = match broken {
+                            Broken::InlineRow => RowPayload::Inline(
+                                row_record::decode_canonical_row_with_schema(canonical, schema)
+                                    .unwrap(),
+                            ),
+                            _ => RowPayload::Deleted,
+                        };
                         let version = match broken {
-                            Broken::SameTombstone => tombstone.version(),
+                            Broken::SameTombstone | Broken::InlineRow => tombstone.version(),
                             _ => RecordVersion {
                                 stamp: VersionStamp::Committed(CommitSeq::new(3).unwrap()),
                                 undo: None,
@@ -244,7 +262,7 @@ fn broken_read(broken: Broken) -> std::result::Result<i64, RowReadError> {
                             records,
                             schema,
                             version,
-                            RowPayload::Deleted,
+                            payload,
                             &mut record,
                         )
                         .unwrap();
@@ -332,6 +350,7 @@ fn rdl_b07_b09_broken_delete_states_are_fatal() {
             (Broken::ReleasingU, RetentionPhase::Census, true),
             (Broken::MissingU, RetentionPhase::Census, false),
             (Broken::CommittedTombstone, RetentionPhase::Source, false),
+            (Broken::InlineRow, RetentionPhase::Census, true),
         ] {
             let error = broken_read(broken).expect_err("a broken DELETE state is never a row");
             let RowReadError::Source(error) = &error else {

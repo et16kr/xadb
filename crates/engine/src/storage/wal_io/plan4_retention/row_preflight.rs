@@ -494,9 +494,10 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     /// (dev3-row-delete.md#classification), with the Catalog leaf, the
     /// RowLeaf and the Jobs bank's pages resident and the gate, admission and
     /// lease held: the snapshot first (an isolation leaf with no other guard
-    /// held), then one typed read of the Catalog leaf and the RowLeaf, the
-    /// table's schema from its record and `delete_class` over the RowLeaf and
-    /// the live Jobs. Returns Delete or NoRow. A refusal (Busy, Unsupported,
+    /// held), then one typed read of the Catalog leaf and the RowLeaf and
+    /// `target_class`: the table's schema from its record, an indexed table
+    /// Unsupported, then `delete_class` over the RowLeaf and the live Jobs.
+    /// Returns Delete or NoRow. A refusal (Busy, Unsupported,
     /// SerializationConflict) is Unchanged and registers nothing; a source
     /// contradiction is Fatal, never a refusal or zero rows. The RowLeaf
     /// image and the Jobs fold into the preflight commitment afterwards, so
@@ -1469,8 +1470,8 @@ pub(in super::super::super) struct RowPreflightBody {
     /// scan, the candidate scan of the allocator copy and the slot0 read.
     pub(in super::super::super) undo_scan: usize,
     /// A DELETE's classification (`delete_target`: the snapshot, the typed
-    /// read of the Catalog leaf and the RowLeaf, the table definition and
-    /// `delete_class`) or its zero-row end (`delete_no_row`: the prefix
+    /// read of the Catalog leaf and the RowLeaf, the table definition, the
+    /// index census and `delete_class`) or its zero-row end (`delete_no_row`: the prefix
     /// recheck and the registration), one after the other.
     pub(in super::super::super) delete: usize,
     /// `row_observe_cut`'s own values: T, the observation, the prefix
