@@ -23,6 +23,11 @@
       "role": "contracts",
       "title": "DEV3 Row DELETE 첫 경로 — 형식·전이 설계"
     },
+    "dev3-row-update.md": {
+      "path": "contracts/dev3-row-update.md",
+      "role": "contracts",
+      "title": "DEV3 Row UPDATE 첫 경로 — 형식·전이 설계"
+    },
     "dev3-module-boundaries.md": {
       "path": "contracts/dev3-module-boundaries.md",
       "role": "contracts",
