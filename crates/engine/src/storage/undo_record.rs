@@ -13,7 +13,10 @@ use super::{
     page::{
         PageError, PageHeader, PageIdentity, PageKind, PageLsn, PageRef, decode_page, encode_page,
     },
-    row_record::{CanonicalRowView, RowError, decode_canonical_row},
+    row_record::{
+        CanonicalRowView, RowError, RowSchemaInput, decode_canonical_row,
+        decode_canonical_row_with_schema,
+    },
     transaction_record::{LogicalRowVersion, TxnRef, VersionStamp, decode_txn_id, encode_txn_id},
     undo_ref::UndoRef,
 };
@@ -400,6 +403,77 @@ pub(crate) struct UndoRecordMetadata<'a> {
     pub(crate) target: UndoTargetView<'a>,
 }
 
+/// How a RowValue before is checked (dev3-row-delete.md#delete-undo): with a
+/// column list (the callers before the DELETE path), with a table's actual
+/// schema (entry (a), `&RowSchemaInput`), or not at all ([`MetadataOnly`],
+/// private to entry (b), whose result is an [`UndoRecordOutline`] and never a
+/// view). Every other before kind is validated the same way under all three.
+/// Each caller's instantiation keeps its own argument type, so no entry adds
+/// a forwarding frame.
+pub(crate) trait BeforeSchema: Copy {
+    /// Check a RowValue before's inline canonical bytes.
+    fn check_row_before(self, bytes: &[u8]) -> Result<(), UndoError>;
+}
+impl BeforeSchema for &[Column] {
+    fn check_row_before(self, bytes: &[u8]) -> Result<(), UndoError> {
+        decode_canonical_row(bytes, self)?;
+        Ok(())
+    }
+}
+impl<const N: usize> BeforeSchema for &[Column; N] {
+    fn check_row_before(self, bytes: &[u8]) -> Result<(), UndoError> {
+        decode_canonical_row(bytes, self)?;
+        Ok(())
+    }
+}
+impl BeforeSchema for &Vec<Column> {
+    fn check_row_before(self, bytes: &[u8]) -> Result<(), UndoError> {
+        decode_canonical_row(bytes, self)?;
+        Ok(())
+    }
+}
+/// Entry (a): the only schema input whose view can yield a RowValue before.
+impl BeforeSchema for &RowSchemaInput<'_> {
+    fn check_row_before(self, bytes: &[u8]) -> Result<(), UndoError> {
+        decode_canonical_row_with_schema(bytes, *self)?;
+        Ok(())
+    }
+}
+/// Entry (b): header and lengths only (a Live RowValue is 5..=2048 inline).
+#[derive(Clone, Copy)]
+struct MetadataOnly;
+impl BeforeSchema for MetadataOnly {
+    fn check_row_before(self, _: &[u8]) -> Result<(), UndoError> {
+        Ok(())
+    }
+}
+
+/// The kind of a before stamp, without its value.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum UndoStampKind {
+    Committed,
+    Transaction,
+}
+
+/// Entry (b)'s result (dev3-row-delete.md#delete-undo): what an occupied
+/// record's header and lengths prove without a schema. It widens
+/// [`UndoRecordMetadata`] with the state, edges, before kind, stamp kind,
+/// logical presence and payload length. It has no payload accessor, stamp
+/// value or `live_before`, and a Live RowValue seen through it is not
+/// schema-checked, so it never stands for a before value.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct UndoRecordOutline<'a> {
+    pub(crate) state: UndoRecordState,
+    pub(crate) metadata: UndoRecordMetadata<'a>,
+    pub(crate) edges: [UndoEdge; 2],
+    pub(crate) before_kind: UndoBeforeKind,
+    pub(crate) before_stamp: Option<UndoStampKind>,
+    pub(crate) before_logical: bool,
+    /// Inline bytes (0 for None or Chunks).
+    pub(crate) payload_bytes: usize,
+    pub(crate) release: UndoRelease,
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct UndoReleaseProgress {
     pub(crate) progress: UndoRelease,
@@ -479,6 +553,29 @@ impl<'a> UndoRecordView<'a> {
             _ => None,
         }
     }
+    /// Private: only entry (b) hands an outline out.
+    fn outline(self) -> Result<UndoRecordOutline<'a>, UndoError> {
+        let record = match self.cell {
+            UndoCell::Free(_) => return Err(UndoError::StateMismatch),
+            UndoCell::Live(r) | UndoCell::Releasing(r) => r,
+        };
+        Ok(UndoRecordOutline {
+            state: self.state(),
+            metadata: self.metadata()?,
+            edges: record.edges,
+            before_kind: record.before_kind,
+            before_stamp: record.before_stamp.map(|stamp| match stamp {
+                VersionStamp::Committed(_) => UndoStampKind::Committed,
+                VersionStamp::Transaction(_) => UndoStampKind::Transaction,
+            }),
+            before_logical: record.before_logical.is_some(),
+            payload_bytes: match record.payload {
+                UndoPayload::Inline(bytes) => bytes.len(),
+                UndoPayload::None | UndoPayload::Chunks(_) => 0,
+            },
+            release: record.release,
+        })
+    }
 }
 
 fn expectation_valid(expected: UndoRecordExpectation<'_>) -> Result<(), UndoError> {
@@ -492,7 +589,7 @@ fn validate_record(
     record: UndoRecord<'_>,
     releasing: bool,
     expected: UndoRecordExpectation<'_>,
-    columns: &[Column],
+    schema: impl BeforeSchema,
 ) -> Result<usize, UndoError> {
     record.target.validate()?;
     if record.target != expected.target || !in_namespace(record.creator.id, expected.namespace) {
@@ -603,7 +700,7 @@ fn validate_record(
             if record.before_kind == UndoBeforeKind::RowValue
                 && (5..=2048).contains(&bytes.len()) =>
         {
-            decode_canonical_row(bytes, columns)?;
+            schema.check_row_before(bytes)?;
             bytes.len()
         }
         UndoPayload::Inline(bytes)
@@ -649,7 +746,7 @@ fn validate_record(
 pub(crate) fn undo_record_encoded_len(
     cell: UndoCell<'_>,
     expected: UndoRecordExpectation<'_>,
-    columns: &[Column],
+    schema: impl BeforeSchema,
 ) -> Result<usize, UndoError> {
     expectation_valid(expected)?;
     match cell {
@@ -657,8 +754,8 @@ pub(crate) fn undo_record_encoded_len(
             Ok(UNDO_RECORD_BYTES)
         }
         UndoCell::Free(_) => Err(UndoError::IdentityMismatch),
-        UndoCell::Live(r) => validate_record(r, false, expected, columns),
-        UndoCell::Releasing(r) => validate_record(r, true, expected, columns),
+        UndoCell::Live(r) => validate_record(r, false, expected, schema),
+        UndoCell::Releasing(r) => validate_record(r, true, expected, schema),
     }
 }
 
@@ -769,10 +866,10 @@ pub(crate) fn initial_undo_page_lsn(
 pub(crate) fn encode_undo_record(
     cell: UndoCell<'_>,
     expected: UndoRecordExpectation<'_>,
-    columns: &[Column],
+    schema: impl BeforeSchema,
     output: &mut [u8],
 ) -> Result<usize, UndoError> {
-    let length = undo_record_encoded_len(cell, expected, columns)?;
+    let length = undo_record_encoded_len(cell, expected, schema)?;
     if output.len() < length {
         return Err(UndoError::NoSpace);
     }
@@ -837,10 +934,19 @@ pub(crate) fn encode_undo_record(
     Ok(length)
 }
 
+/// Entry (b): an occupied record's header and lengths without a schema
+/// (dev3-row-delete.md#delete-undo). Free is a state mismatch.
+pub(crate) fn decode_undo_record_metadata<'a>(
+    input: &'a [u8],
+    expected: UndoRecordExpectation<'_>,
+) -> Result<UndoRecordOutline<'a>, UndoError> {
+    decode_undo_record(input, expected, MetadataOnly)?.outline()
+}
+
 pub(crate) fn decode_undo_record<'a>(
     input: &'a [u8],
     expected: UndoRecordExpectation<'_>,
-    columns: &[Column],
+    schema: impl BeforeSchema,
 ) -> Result<UndoRecordView<'a>, UndoError> {
     expectation_valid(expected)?;
     let generation = decode_record_generation(input, expected.reference.generation())?;
@@ -918,7 +1024,7 @@ pub(crate) fn decode_undo_record<'a>(
                 },
             },
         };
-        validate_record(record, input[6] == 2, expected, columns).map_err(|error| match error {
+        validate_record(record, input[6] == 2, expected, schema).map_err(|error| match error {
             UndoError::InvalidInput => UndoError::Corrupt,
             other => other,
         })?;
@@ -937,11 +1043,20 @@ pub(crate) fn decode_undo_record<'a>(
 
 /// Validate the selected root slot; other schemas and global graph integrity
 /// remain the caller's responsibility. Free is inspection-only, never a lookup.
+/// Entry (b) of `lookup_undo_record`: the selected root slot's outline.
+pub(crate) fn lookup_undo_record_metadata<'a>(
+    input: &'a [u8],
+    identity: PageIdentity,
+    expected: UndoRecordExpectation<'_>,
+) -> Result<UndoRecordOutline<'a>, UndoError> {
+    lookup_undo_record(input, identity, expected, MetadataOnly)?.outline()
+}
+
 pub(crate) fn lookup_undo_record<'a>(
     input: &'a [u8],
     identity: PageIdentity,
     expected: UndoRecordExpectation<'_>,
-    columns: &[Column],
+    schema: impl BeforeSchema,
 ) -> Result<UndoRecordView<'a>, UndoError> {
     expectation_valid(expected)?;
     if identity.database != expected.namespace.database
@@ -962,7 +1077,7 @@ pub(crate) fn lookup_undo_record<'a>(
     let cell = page
         .cell(usize::from(expected.reference.slot()))
         .ok_or(UndoError::IdentityMismatch)?;
-    let view = decode_undo_record(cell, expected, columns)?;
+    let view = decode_undo_record(cell, expected, schema)?;
     if matches!(view.cell, UndoCell::Free(_)) {
         return Err(UndoError::StateMismatch);
     }

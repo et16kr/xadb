@@ -2221,9 +2221,9 @@ mod measured {
             + ur_target_validate()
     }
     /// validate_record over a Row target while the target check or the Row
-    /// before parse runs. Its CatalogValue arm (catalog_expectation and
+    /// before check runs. Its CatalogValue arm (catalog_expectation and
     /// decode_catalog_before) is unreachable: a Row target refuses that before
-    /// kind first (undo_record.rs:534-550).
+    /// kind first (undo_record.rs:631-647). C passes `&[Column]`.
     fn ur_validate_record() -> usize {
         size_of::<(UndoRecord<'_>, bool, UndoRecordExpectation<'_>, &[Column])>()
             + size_of::<R<usize, UndoError>>()
@@ -2234,8 +2234,16 @@ mod measured {
             + returned::<LogicalRowVersion, UndoError>()
             + returned::<VersionStamp, UndoError>()
             + size_of::<(usize, UndoPayloadHead, usize, Option<PageRef>)>()
+            + returned::<(), UndoError>()
+            + ur_target_validate().max(ur_check_row_before())
+    }
+    /// `BeforeSchema::check_row_before` for `&[Column]` (the RowValue arm):
+    /// its arguments and the canonical parse result over decode_canonical_row.
+    fn ur_check_row_before() -> usize {
+        size_of::<(&[Column], &[u8])>()
+            + size_of::<R<(), UndoError>>()
             + returned::<CanonicalRowView<'_>, RowError>()
-            + ur_target_validate().max(rr_canonical_columns())
+            + rr_canonical_columns()
     }
     /// decode_canonical_row: the column-schema wrapper over rr_canonical.
     fn rr_canonical_columns() -> usize {

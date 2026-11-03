@@ -1723,3 +1723,160 @@ fn rdl_f07_delete_undo_live_then_releasing_cursors() {
         }
     }
 }
+
+/// RDL-F08 (dev3-row-delete.md#delete-undo): entry (b) proves an occupied
+/// record's header and lengths without a schema and never yields a before
+/// value; entry (a) checks a RowValue before with the table's actual schema
+/// and is byte-identical to the column entry for the same columns.
+#[test]
+fn rdl_f08_metadata_and_schema_entries() {
+    let f = Fixtures::new();
+    let e = f.expect(3);
+    let schema = inline_schema();
+    let table = RowSchemaInput::Columns(&schema);
+    let logical = LogicalRowVersion::new(
+        TxnId {
+            writer_epoch: 17,
+            local: 23,
+            ..id()
+        },
+        24,
+    )
+    .unwrap();
+    let live = UndoRecord {
+        creator: UndoCreator {
+            id: id(),
+            status_generation: g(20),
+        },
+        sequence: 100,
+        mutation_sequence: 21,
+        incoming: 2,
+        target: target(UndoTargetKind::Row),
+        edges: [link(), UndoEdge::Never],
+        before_kind: UndoBeforeKind::RowValue,
+        before_stamp: Some(VersionStamp::Committed(CommitSeq::new(22).unwrap())),
+        before_logical: Some(logical),
+        payload: UndoPayload::Inline(&f.inline),
+        release: UndoRelease {
+            cursor: 0,
+            chunks_released: 0,
+            next: None,
+        },
+    };
+    let bytes = encode_record(UndoCell::Live(live), e, &schema);
+    // (a) encodes and decodes exactly as the column entry.
+    let mut out = vec![0xa5; bytes.len()];
+    assert_eq!(
+        encode_undo_record(UndoCell::Live(live), e, &table, &mut out),
+        Ok(bytes.len())
+    );
+    assert_eq!(out, bytes);
+    let view = decode_undo_record(&bytes, e, &table).unwrap();
+    assert_eq!(view.live_before(), Ok(live));
+    // (b): the outline, by decode and by slot lookup.
+    let outline = UndoRecordOutline {
+        state: UndoRecordState::Live,
+        metadata: UndoRecordMetadata {
+            creator: live.creator,
+            sequence: 100,
+            mutation_sequence: 21,
+            incoming: 2,
+            target: live.target,
+        },
+        edges: live.edges,
+        before_kind: UndoBeforeKind::RowValue,
+        before_stamp: Some(UndoStampKind::Committed),
+        before_logical: true,
+        payload_bytes: f.inline.len(),
+        release: live.release,
+    };
+    assert_eq!(decode_undo_record_metadata(&bytes, e), Ok(outline));
+    let p = pack(&bytes, 30);
+    assert_eq!(
+        lookup_undo_record_metadata(&p, identity(30), e),
+        Ok(outline)
+    );
+    assert_eq!(
+        lookup_undo_record(&p, identity(30), e, &table)
+            .unwrap()
+            .live_before(),
+        Ok(live)
+    );
+    // A body of the right length that is not canonical: (b) proves only its
+    // length; (a) and the column entry refuse it.
+    let mut bad = bytes.clone();
+    bad[UNDO_RECORD_BYTES..].fill(0xff);
+    assert_eq!(
+        decode_undo_record_metadata(&bad, e).map(|o| o.payload_bytes),
+        Ok(f.inline.len())
+    );
+    assert_eq!(
+        decode_undo_record(&bad, e, &table).err(),
+        Some(UndoError::Corrupt)
+    );
+    assert_eq!(
+        decode_undo_record(&bad, e, &schema).err(),
+        Some(UndoError::Corrupt)
+    );
+    // A Live RowValue body outside 5..=2048 is refused without a schema too.
+    for len in [4usize, 2049] {
+        let mut b = bytes[..UNDO_RECORD_BYTES].to_vec();
+        b[320..324].copy_from_slice(&(len as u32).to_le_bytes());
+        b.resize(UNDO_RECORD_BYTES + len, 0x01);
+        assert_eq!(
+            decode_undo_record_metadata(&b, e).err(),
+            Some(UndoError::Corrupt),
+            "{len}"
+        );
+    }
+    // The Releasing delete U at cursor 3: no body, no stamp, logical kept.
+    let mut releasing = live;
+    releasing.incoming = 0;
+    releasing.payload = UndoPayload::None;
+    releasing.edges = [UndoEdge::Released; 2];
+    releasing.before_stamp = None;
+    releasing.release.cursor = 3;
+    let r = encode_record(UndoCell::Releasing(releasing), e, &[]);
+    let o = decode_undo_record_metadata(&r, e).unwrap();
+    assert_eq!(
+        (
+            o.state,
+            o.before_kind,
+            o.before_stamp,
+            o.before_logical,
+            o.payload_bytes,
+            o.release.cursor
+        ),
+        (
+            UndoRecordState::Releasing,
+            UndoBeforeKind::RowValue,
+            None,
+            true,
+            0,
+            3
+        )
+    );
+    // INSERT's Missing U (U02) and a Free slot (U01).
+    let missing = literal(1);
+    let o = decode_undo_record_metadata(&missing, f.expect(1)).unwrap();
+    assert_eq!(
+        (
+            o.state,
+            o.before_kind,
+            o.before_stamp,
+            o.before_logical,
+            o.payload_bytes
+        ),
+        (
+            UndoRecordState::Live,
+            UndoBeforeKind::Missing,
+            None,
+            false,
+            0
+        )
+    );
+    assert_eq!(
+        decode_undo_record_metadata(&literal(0), f.expect(0)).err(),
+        Some(UndoError::StateMismatch)
+    );
+}

@@ -96,11 +96,12 @@ pub(super) fn status_codec() -> usize {
 /// target, version identities, edge/stamp scratch, hashers, results) with the
 /// Row before parse instead of its CatalogValue one. Every Row material
 /// call names `cells::row_target`, and `validate_record` refuses any record
-/// whose target differs (undo_record.rs:498) or whose before kind a Row target
-/// does not admit (:534-550) before its payload match (:589), so the
-/// CatalogValue arm with `decode_catalog_before` (:612) is unreachable here
-/// for any input, valid or malformed. The RowValue arm's canonical parse
-/// (:606, `decode_canonical_row` over its schema form) stays charged.
+/// whose target differs (undo_record.rs:595) or whose before kind a Row target
+/// does not admit (:631-647) before its payload match (:686), so the
+/// CatalogValue arm with `decode_catalog_before` (:709) is unreachable here
+/// for any input, valid or malformed. The RowValue arm's canonical check
+/// (:703, `BeforeSchema::check_row_before` over `decode_canonical_row` for
+/// C's `&[Column]`) stays charged.
 pub(super) fn undo_row_codec() -> usize {
     size_of::<[u8; UNDO_RECORD_BYTES]>()
         + 3 * size_of::<UndoRecord<'_>>()
@@ -113,6 +114,10 @@ pub(super) fn undo_row_codec() -> usize {
         + size_of::<(&[u8], &[u8], &mut [u8], [usize; 8], [u64; 4])>()
         + 2 * size_of::<ContentHasher>()
         + 4 * size_of::<CodecResult<(), UndoError>>()
+        // `BeforeSchema::check_row_before` (C's `&[Column]` instance) over
+        // decode_canonical_row: its arguments and result, then the parse.
+        + size_of::<(&[Column], &[u8])>()
+        + size_of::<CodecResult<(), UndoError>>()
         + size_of::<(&[u8], &[Column])>()
         + returned::<CanonicalRowView<'_>, RowError>()
         + canonical_codec()
