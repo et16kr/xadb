@@ -418,5 +418,37 @@
   }
  ],
  "na": [],
- "reviews": []
+ "reviews": [
+  {
+   "id": "row-delete-2b3-d2",
+   "class": "D2",
+   "scopes": [
+    "common",
+    "joint"
+   ],
+   "author": "claude-thread-session/claude-project-thread-9inq97",
+   "reviewer": "claude-independent-review/row-delete-2b3",
+   "verdict": "ACCEPT",
+   "required_open": 0,
+   "log": "module-gate/evidence/row-delete-2b3/review.md",
+   "log_sha256": "2fc77a7572a2dc8e7d5894737c665193e146016557035a8bb4839f7f9a88afd4",
+   "files": {
+    "crates/engine/src/storage/row/insert/group_delete_tests.rs": "2221eaac1e8cedfdf07aee3c7a674046df5de1d6",
+    "crates/engine/src/storage/row/insert/group_tests.rs": "c9412f917321e2be3f6fe5c5792da45e03391d68",
+    "crates/engine/src/storage/semantic_row/leaf.rs": "099a04d5355524fef51823a4207388be073d3661",
+    "crates/engine/src/storage/semantic_row/leaf_tests.rs": "08003546e9ceb4e024bf191ac9d6c33915b87b89",
+    "crates/engine/src/storage/semantic_row/status.rs": "fcea67aa519d5223a21660892549f788ba0e125b",
+    "crates/engine/src/storage/semantic_row/status_tests.rs": "24641c3449eb2c382be1890f57d5bddac7a4fd17",
+    "crates/engine/src/storage/semantic_row/transition_delete_tests.rs": "c136c1e9235f0a8e519ccbedb2d219777bbcc35c",
+    "crates/engine/src/storage/semantic_row/transition_tests.rs": "5d8ba6488cc0bbdf0be141c1043ab4a2a1cc10bc",
+    "crates/engine/src/storage/semantic_row/undo.rs": "54cba59436fc749743164aeb923175047e4f92bf",
+    "crates/engine/src/storage/semantic_row/undo_tests.rs": "0a5117c8266d439b475d3413161ee98724c9fd27",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_base.rs": "1b5acf165f4f35d2700ef67bb7e18c7ba9f845d3",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_read.rs": "905faeaca6c1b3d5cfb962d201a0f8813986abdf",
+    "devdoc/README.md": "387456a93ae4c294c15a467529237ffe5e3bed91",
+    "devdoc/contracts/dev3-row-delete.md": "5b969ed2029a6f353ec321d8c702da84425447a8",
+    "devdoc/document-validation.json": "2f9a6eed91c182cedccbe5c07315777cfef36717"
+   }
+  }
+ ]
 }
