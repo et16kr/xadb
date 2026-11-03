@@ -7,7 +7,7 @@
 //! a restart read), never values read back from the same producer.
 use super::super::super::super::row_literal::NULL_INT;
 use super::super::super::super::row_preflight::create_table_with;
-use super::super::super::super::row_recovery::{Drive, PageRead, restart_with};
+use super::super::super::super::row_recovery::{Drive, PageRead, ReadyRead, restart_with};
 use super::*;
 use crate::storage::{
     disk::RowDeleteStep,
@@ -142,6 +142,25 @@ fn nullable() -> TableSpec {
     }
 }
 
+/// A READY read of nothing: `assert_bound` takes only the trace at bind,
+/// and `PageRead`'s leaf decoder is the non-nullable T's, which a NULL row
+/// of the nullable T does not fit.
+struct NoRead;
+
+impl ReadyRead for NoRead {
+    fn read<'s, 'c, W: WriterNamespace>(
+        &self,
+        _: &mut Live<'_, 's, 'c, '_, '_, '_, '_, '_, W>,
+        _: &mut Owner<'c, 's>,
+        _: &mut Owner<'c, 's>,
+        _: &mut [u8; crate::storage::semantic_catalog::PRIVATE_BYTES],
+        _: &Images,
+        _: u64,
+    ) -> Vec<Option<i64>> {
+        Vec::new()
+    }
+}
+
 /// The Row Jobs C's restart of `images` took into its base4 (the cell trace
 /// at bind, before any action): one UPDATE root in state `root` and its
 /// actor's Terminal in state `terminal`.
@@ -151,7 +170,7 @@ fn assert_bound(images: &Images, root: JobState, terminal: JobState) {
         Some(RowRecoveryPolicy::WithRowClr),
         Drive::Action,
         0,
-        &PageRead,
+        &NoRead,
     );
     let states: Vec<_> = restarted.trace[0]
         .iter()
@@ -1217,6 +1236,8 @@ fn rup_c_each_reserve_takes_only_its_own_effect() {
 /// READY with the rows the state machine says.
 /// - Committed (winner): the Retained root beside its Ready Terminal; the
 ///   recovery selects UpdatePrune before READY at q 3, no CLR; 200 and 101.
+///   The shrinking UPDATE to NULL (C' = C - 8, D = 8) committed the same
+///   way: its recovered UpdatePrune keeps the new NULL row; NULL and 101.
 /// - Active (loser): the Retained root beside its Leased Terminal; the
 ///   loser's RollbackStart hands its U to A's recovered handler (the same
 ///   `produce_clr`: the root's effect makes it an UpdateClr that restores
@@ -1230,9 +1251,18 @@ fn rup_c_each_reserve_takes_only_its_own_effect() {
 #[test]
 fn rup_r01_r04_recovery_of_each_update_state() {
     case_within("RUP-R01", std::time::Duration::from_secs(600), || {
-        for (crash, ready, clrs, root, terminal) in [
+        for (crash, shrink, ready, clrs, root, terminal) in [
             (
                 Crash::Committed,
+                false,
+                3,
+                0,
+                JobState::RootRetained,
+                JobState::TerminalReady,
+            ),
+            (
+                Crash::Committed,
+                true,
                 3,
                 0,
                 JobState::RootRetained,
@@ -1240,6 +1270,7 @@ fn rup_r01_r04_recovery_of_each_update_state() {
             ),
             (
                 Crash::Active,
+                false,
                 2,
                 1,
                 JobState::RootRetained,
@@ -1247,6 +1278,7 @@ fn rup_r01_r04_recovery_of_each_update_state() {
             ),
             (
                 Crash::RolledBack,
+                false,
                 2,
                 0,
                 JobState::RootReleasingCompensated,
@@ -1254,13 +1286,14 @@ fn rup_r01_r04_recovery_of_each_update_state() {
             ),
             (
                 Crash::Reserved,
+                false,
                 2,
                 0,
                 JobState::RootReserved,
                 JobState::TerminalLeased,
             ),
         ] {
-            let (images, rows) = crash_images(crash);
+            let (images, rows) = crash_images_of(crash, shrink);
             let joined = join_restart(
                 &clone_directory(&images),
                 RowRecoveryPolicy::WithRowClr,
@@ -1269,24 +1302,24 @@ fn rup_r01_r04_recovery_of_each_update_state() {
             assert_eq!(
                 (joined.ready.0, joined.clrs, joined.row_cells),
                 (ready, clrs, 0),
-                "{crash:?}"
+                "{crash:?} shrink={shrink}"
             );
             let mut expected = rows.clone();
             if crash == Crash::Committed {
-                expected[0].1 = 200;
+                expected[0].1 = if shrink { NULL_INT } else { 200 };
             }
-            assert_eq!(joined.rows, expected, "{crash:?}");
+            assert_eq!(joined.rows, expected, "{crash:?} shrink={shrink}");
             assert_bound(&images, root, terminal);
             println!(
-                "RUP_R01_R04 {crash:?} q={ready} clrs={clrs} restart_steps={}",
+                "RUP_R01_R04 {crash:?} shrink={shrink} q={ready} clrs={clrs} restart_steps={}",
                 joined.steps
             );
         }
     });
 }
 
-/// RUP-J06/J07: rows another transaction's UPDATE holds, and the long new
-/// value, over the actual C supply.
+/// RUP-J06..J08: rows another transaction's UPDATE holds, the long new
+/// value and the order of the new value's checks, over the actual C supply.
 #[path = "update_busy.rs"]
 mod busy;
 

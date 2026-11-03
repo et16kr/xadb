@@ -1,8 +1,9 @@
-//! RUP-J06/J07 (dev3-row-update.md#classification, #tests; RUP-A01..A04):
-//! C's judgement of rows another transaction holds, and the new value's
-//! length refusal, over the actual supply. Each transaction begins on its
-//! own Row Status (as RDL-J11). Expectations are §5's table rows, never
-//! values read back from the same producer.
+//! RUP-J06..J08 (dev3-row-update.md#classification, #tests; RUP-A01..A04):
+//! C's judgement of rows another transaction holds, the new value's
+//! length refusal and the new value's checks after the judgement, over the
+//! actual supply. Each transaction begins on its own Row Status (as
+//! RDL-J11). Expectations are §5's table rows, never values read back from
+//! the same producer.
 use super::*;
 use crate::storage::{row::insert::driver::live::begin_transaction_live, row_record::RowError};
 
