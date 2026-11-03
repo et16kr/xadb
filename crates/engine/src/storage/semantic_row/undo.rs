@@ -1,9 +1,10 @@
 //! Scope3 actual Undo observations, borrowing the original Job bank and pages.
 //! No Row production, allocator/inventory grant, pin/horizon or WAL authority.
-//! A DELETE root's U (dev3-row-delete.md#delete-undo) is seen here through
-//! entry (b) only: its header, every field the Job holds and its lengths. Its
-//! before stamp, old logical and value are not in the Job; `leaf.rs` checks
-//! them through entry (a) against the RowLeaf it observes.
+//! A DELETE or UPDATE root's U (dev3-row-delete.md#delete-undo,
+//! dev3-row-update.md#update-undo) is seen here through entry (b) only: its
+//! header, every field the Job holds and its lengths. Its before stamp, old
+//! logical and value are not in the Job; `leaf.rs` checks them through entry
+//! (a) against the RowLeaf it observes.
 use super::{Error, LayoutView, Operation, Result, status, u32_at};
 use crate::storage::{
     allocation_page::ReservationOwner,
@@ -106,22 +107,19 @@ pub(crate) fn observe(
 ) -> Result<UndoObservation> {
     validate_context(layout, context)?;
     let op = layout.operation();
-    // DeleteForward/DeleteClr/DeletePrune take their INSERT role's steps on
-    // a delete root's U (dev3-row-delete.md#delete-states).
+    // The DELETE and UPDATE Forward/Clr/Prune take their INSERT role's steps
+    // on a delete or update root's U (dev3-row-delete.md#delete-states,
+    // dev3-row-update.md#update-states).
     let role = op.role();
-    // UPDATE's operations reach this observer in dev3-row-update.md#stages
-    // stage 3; until then they and UPDATE roots are Unsupported.
-    if op.update()
-        || !matches!(
-            role,
-            Operation::Reserve
-                | Operation::Forward
-                | Operation::Clr
-                | Operation::Prune
-                | Operation::ReleaseRole
-                | Operation::RootFree
-        )
-    {
+    if !matches!(
+        role,
+        Operation::Reserve
+            | Operation::Forward
+            | Operation::Clr
+            | Operation::Prune
+            | Operation::ReleaseRole
+            | Operation::RootFree
+    ) {
         return Err(Error::Unsupported);
     }
     let ordinal = source.ordinal();
@@ -144,16 +142,10 @@ pub(crate) fn observe(
         UndoSource::Existing { .. } => {
             require(role != Operation::Reserve)?;
             validate_job(selected, context)?;
-            // A DELETE opcode names a delete root, an INSERT opcode an INSERT
-            // root; the release steps serve both. This observer learns UPDATE
-            // roots in dev3-row-update.md#stages stage 3.
-            let delete = match selected.effect() {
-                RowEffect::Insert => false,
-                RowEffect::Delete => true,
-                RowEffect::Update => return Err(Error::Unsupported),
-            };
+            // An INSERT, DELETE or UPDATE opcode names a root of its own
+            // effect; the release steps serve all three.
             if matches!(role, Operation::Forward | Operation::Clr | Operation::Prune)
-                && (op != role) != delete
+                && selected.effect() != opcode_effect(op)
             {
                 return Err(Error::IdentityMismatch);
             }
@@ -234,8 +226,9 @@ pub(crate) fn observe(
             require(page.header().lsn.0 >= previous.last_step())?;
             let earlier = predecessor(jobs, previous, context)?.map(link);
             require(previous.has_previous_transaction() == Some(earlier.is_some()))?;
-            // H is INSERT's exact Missing material, or a delete root's Live U
-            // through entry (b) (dev3-row-delete.md#previous-proof).
+            // H is INSERT's exact Missing material, or a delete or update
+            // root's Live U through entry (b) (dev3-row-delete.md
+            // #previous-proof, dev3-row-update.md#previous-proof).
             validate_live(
                 page.cell(0).ok_or(Error::Corrupt)?,
                 previous,
@@ -322,6 +315,16 @@ pub(crate) fn observe(
     })
 }
 
+/// The root effect a Forward/Clr/Prune opcode names.
+pub(super) fn opcode_effect(op: Operation) -> RowEffect {
+    if op.update() {
+        RowEffect::Update
+    } else if op != op.role() {
+        RowEffect::Delete
+    } else {
+        RowEffect::Insert
+    }
+}
 fn validate_context(layout: LayoutView<'_>, context: UndoContext) -> Result<()> {
     if context.profile.format() != 3 {
         return Err(Error::Unsupported);
@@ -455,8 +458,8 @@ fn validate_material(
     Ok(())
 }
 /// The Live U of a Retained root with transaction edge `transaction` and its
-/// two incoming: INSERT's exact Missing material, or a delete root's U
-/// through entry (b).
+/// two incoming: INSERT's exact Missing material, or a delete or update
+/// root's U through entry (b).
 fn validate_live(
     bytes: &[u8],
     job: JobView<'_>,
@@ -470,14 +473,13 @@ fn validate_live(
             context,
             UndoCell::Live(material(job, transaction, 2, 0)),
         ),
-        RowEffect::Delete => validate_outline(bytes, job, context, true, transaction, 0),
-        // This local observer learns UPDATE roots in dev3-row-update.md
-        // #stages stage 3, with the product path.
-        RowEffect::Update => Err(Error::Unsupported),
+        RowEffect::Delete | RowEffect::Update => {
+            validate_outline(bytes, job, context, true, transaction, 0)
+        }
     }
 }
 /// A Releasing U at release `cursor`: INSERT's exact material, or a delete
-/// root's U through entry (b).
+/// or update root's U through entry (b).
 fn validate_releasing(
     bytes: &[u8],
     job: JobView<'_>,
@@ -492,14 +494,16 @@ fn validate_releasing(
             context,
             UndoCell::Releasing(material(job, transaction, 0, cursor)),
         ),
-        RowEffect::Delete => validate_outline(bytes, job, context, false, transaction, cursor),
-        RowEffect::Update => Err(Error::Unsupported),
+        RowEffect::Delete | RowEffect::Update => {
+            validate_outline(bytes, job, context, false, transaction, cursor)
+        }
     }
 }
-/// A delete root's U through entry (b) (dev3-row-delete.md#delete-undo):
-/// the Job's material fields, a RowValue before with a Committed stamp until
+/// A delete or update root's U through entry (b)
+/// (dev3-row-delete.md#delete-undo, dev3-row-update.md#update-undo): the
+/// Job's material fields, a RowValue before with a Committed stamp until
 /// cursor 3 and an old logical, and while Live the old value's inline length
-/// `C-180` in a `432+L` cell; Releasing has no body (432 B).
+/// `C-180` (C the old cell) in a `432+L` cell; Releasing has no body (432 B).
 fn validate_outline(
     bytes: &[u8],
     job: JobView<'_>,
@@ -557,9 +561,9 @@ fn validate_outline(
     }
     Ok(())
 }
-/// A delete root's U record with its RowValue before (`stamp`, `logical`
-/// and `payload`: the old value while Live, none once Releasing), for
-/// `leaf.rs`'s entry (a) comparison.
+/// A delete or update root's U record with its RowValue before (`stamp`,
+/// `logical` and `payload`: the old value while Live, none once Releasing),
+/// for `leaf.rs`'s entry (a) comparison.
 pub(super) fn delete_record<'a>(
     job: JobView<'_>,
     transaction: UndoEdge,
@@ -626,8 +630,8 @@ fn proof_page<'a>(
     Ok(page)
 }
 /// The one slot's cell ends where the initial cell ends: the 432 B record,
-/// or a Live delete U's `432+L` (dev3-row-delete.md#delete-undo). Its exact
-/// length is the record check's.
+/// or a Live delete or update U's `432+L` (dev3-row-delete.md#delete-undo).
+/// Its exact length is the record check's.
 fn slot0_cell(page: &PageView<'_>) -> bool {
     page.cell_range(0).is_some_and(|range| {
         range.end == undo_record::INITIAL_UNDO_CELL.end && range.len() >= UNDO_RECORD_BYTES

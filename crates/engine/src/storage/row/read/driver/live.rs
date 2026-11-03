@@ -5,8 +5,8 @@
 //! driver judges with, so a caller cannot pair one view's operation with
 //! another view's snapshot, or move a cursor to another table.
 use super::{
-    BeforeObserved, CursorCredit, CursorStep, Observed, PointRead, ReadSource, ReadView, RowCursor,
-    RowReadError, SearchPage, Step, read_point,
+    BeforeObserved, CursorCredit, CursorStep, MissingObserved, Observed, PointRead, ReadSource,
+    ReadView, RowCursor, RowReadError, SearchPage, Step, read_point,
 };
 use crate::storage::{
     disk::{
@@ -54,6 +54,12 @@ impl Observed for RowCandidate<'_> {
     }
     fn deleted(&self) -> bool {
         RowCandidate::deleted(self)
+    }
+}
+
+impl MissingObserved for MissingRowEvidence {
+    fn value_before(&self) -> bool {
+        MissingRowEvidence::value_before(self)
     }
 }
 

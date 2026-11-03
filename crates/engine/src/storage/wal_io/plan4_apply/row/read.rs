@@ -51,6 +51,9 @@ pub(crate) struct RowReadOperation<
     captured: Option<CapturedRowRefs<'b, 'a, 'c, 's>>,
     lease: Option<ReferenceLease<'b, 'a, 'c, 's>>,
     capture_sequence: u64,
+    /// The capture whose U `missing_before` reported as a value before; only
+    /// that Inline candidate may ask `value_before` (0: none).
+    value_capture: u64,
     stopped: bool,
     schema_len: usize,
     table: Option<ObjectHandle>,
@@ -124,10 +127,27 @@ impl RowValueBefore<'_> {
     }
 }
 
-/// C has checked the same U's Missing, row identity and creator/sequence.
+/// C has checked the same U's row identity and creator/sequence, and
+/// either its Missing before (an INSERT's U: the row did not exist) or its
+/// committed Inline RowValue before (an UPDATE's U, dev3-row-update.md#read:
+/// the old value exists and `value_before` may now read it for this capture).
 pub(crate) struct MissingRowEvidence {
-    _private: (),
+    value: bool,
 }
+impl MissingRowEvidence {
+    /// The U holds a committed Inline before value (`ValueBefore`).
+    pub(in crate::storage) fn value_before(&self) -> bool {
+        self.value
+    }
+}
+
+/// The operation's copy buffer holds the schema in `[0, 8192)`, the
+/// captured value in `[8192, 10240)` and a U's before value in
+/// `[10240, 12288)` (dev3-row-update.md#read), so neither copy overwrites
+/// the other.
+const VALUE_COPY: usize = 8192;
+const BEFORE_COPY: usize = 10240;
+const _: () = assert!(VALUE_COPY + 2048 <= BEFORE_COPY && BEFORE_COPY + 2048 <= PAGE_BYTES);
 
 /// Bytes copied from the actual capture into the caller output.
 pub(crate) struct RowCopyObservation {
@@ -263,6 +283,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             captured: None,
             lease: Some(lease),
             capture_sequence: 0,
+            value_capture: 0,
             stopped: false,
             schema_len: 0,
             table: None,
@@ -760,6 +781,10 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         }
         self.read_missing(candidate, reference, table, request)
     }
+    /// The U through entry (b) (dev3-row-update.md#read): its outline
+    /// proves Missing (evidence), a committed Inline RowValue (a value
+    /// before, read later by `value_before`), or an unsupported before;
+    /// everything else is corruption.
     #[inline(never)]
     fn read_missing(
         &mut self,
@@ -771,8 +796,8 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         use crate::storage::{
             transaction_record::VersionStamp,
             undo_record::{
-                self, UndoBeforeKind, UndoPayload, UndoRecordExpectation, UndoTargetKind,
-                UndoTargetView,
+                self, UndoBeforeKind, UndoPayloadForm, UndoRecordExpectation, UndoRecordState,
+                UndoStampKind, UndoTargetKind, UndoTargetView,
             },
         };
         let bad = || {
@@ -786,16 +811,6 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             .backend
             .read_catalog_undo(self.owner, &Plan4Target { request })?;
         let result = (|| {
-            let page =
-                crate::storage::page::decode_page(guard.bytes()?, request.identity, PageKind::Undo)
-                    .map_err(|e| {
-                        fatal(
-                            self.backend.storage,
-                            RetentionPhase::Census,
-                            RetentionCause::Page(e),
-                        )
-                    })?;
-            let cell = page.cell(usize::from(reference.slot())).ok_or_else(bad)?;
             let expected = UndoRecordExpectation {
                 namespace: self.backend.storage.profile().spec().namespace,
                 reference,
@@ -808,15 +823,24 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                     key: &[],
                 },
             };
-            let record = undo_record::decode_undo_record(cell, expected, &[])
-                .and_then(|view| view.live_before())
-                .map_err(|e| {
-                    fatal(
-                        self.backend.storage,
-                        RetentionPhase::Census,
-                        RetentionCause::Undo(e),
-                    )
-                })?;
+            let outline = undo_record::lookup_undo_record_metadata(
+                guard.bytes()?,
+                request.identity,
+                expected,
+            )
+            .map_err(|e| {
+                fatal(
+                    self.backend.storage,
+                    RetentionPhase::Census,
+                    RetentionCause::Undo(e),
+                )
+            })?;
+            // Readers and Row writers exclude each other, so a captured
+            // version's U is never released under the reader.
+            if outline.state != UndoRecordState::Live {
+                return Err(bad());
+            }
+            let record = outline.metadata;
             if record.creator.id != candidate.version.logical.transaction()
                 || matches!(candidate.version.stamp,VersionStamp::Transaction(actor) if actor.id()!=record.creator.id || actor.generation()!=record.creator.status_generation)
                 || record.mutation_sequence != candidate.version.logical.mutation_sequence()
@@ -824,32 +848,63 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             {
                 return Err(bad());
             }
-            // A valid occupied before (the codec accepted its stamp, logical
-            // version and payload) of the candidate's own record is outside
-            // this Missing-only scope: the typed Unsupported, Unchanged and
-            // unfenced (consumers F02 order, MCB04-V14). A RowValue inline
-            // before is checked without a schema, so its codec error stays
-            // the Fatal above; corruption is never lowered to Unsupported.
-            if record.before_kind != UndoBeforeKind::Missing {
-                return Err(unchanged(
-                    RetentionPhase::Census,
-                    RetentionCause::Unsupported,
-                ));
-            }
-            if record.before_stamp.is_some()
-                || record.before_logical.is_some()
-                || !matches!(record.payload, UndoPayload::None)
-            {
-                return Err(bad());
-            }
-            Ok(MissingRowEvidence { _private: () })
+            // The codec has refused a Missing with a stamp or logical, and a
+            // RowValue without them or with another creator's Transaction
+            // stamp; the rest of the outline table is judged here. A valid
+            // Chunks or RowDeleted before is outside this path: the typed
+            // Unsupported, Unchanged and unfenced (consumers F02 order,
+            // MCB04-V14); corruption is never lowered to Unsupported.
+            let value = match outline.before_kind {
+                UndoBeforeKind::Missing => {
+                    if outline.before_stamp.is_some()
+                        || outline.before_logical
+                        || outline.payload_form != UndoPayloadForm::None
+                    {
+                        return Err(bad());
+                    }
+                    false
+                }
+                UndoBeforeKind::RowValue if outline.payload_form == UndoPayloadForm::Chunks => {
+                    return Err(unchanged(
+                        RetentionPhase::Census,
+                        RetentionCause::Unsupported,
+                    ));
+                }
+                UndoBeforeKind::RowDeleted => {
+                    return Err(unchanged(
+                        RetentionPhase::Census,
+                        RetentionCause::Unsupported,
+                    ));
+                }
+                UndoBeforeKind::RowValue => {
+                    if outline.before_stamp != Some(UndoStampKind::Committed)
+                        || !outline.before_logical
+                        || outline.payload_form != UndoPayloadForm::Inline
+                        || !(5..=2048).contains(&outline.payload_bytes)
+                    {
+                        return Err(bad());
+                    }
+                    true
+                }
+                // The codec admits no other before kind for a Row target.
+                UndoBeforeKind::IndexAbsent
+                | UndoBeforeKind::IndexPresent
+                | UndoBeforeKind::CatalogValue => return Err(bad()),
+            };
+            Ok(MissingRowEvidence { value })
         })();
-        merge(result, guard.release_checked()).map(ReadStep::Ready)
+        let evidence = merge(result, guard.release_checked())?;
+        if evidence.value {
+            self.value_capture = candidate.capture_sequence;
+        }
+        Ok(ReadStep::Ready(evidence))
     }
-    /// The tombstone's U RowValue before (dev3-row-delete.md#read): the same
+    /// The U RowValue before of a tombstone (dev3-row-delete.md#read) or of
+    /// an Inline candidate whose U `missing_before` reported as a value
+    /// before in this capture (dev3-row-update.md#read): the same
     /// LOCATION/LOAD order as `missing_before`, then the record through
     /// entry (a) with the operation's Catalog schema. The old canonical is
-    /// put in the operation's copy buffer; B judges `q_old` and only then
+    /// put in the copy buffer's before range; B judges `q_old` and only then
     /// calls `copy_before`. A Releasing U is corruption (Fatal).
     #[inline(never)]
     pub(in crate::storage) fn value_before(
@@ -858,7 +913,7 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         residency: &mut Plan4ResidencyCursor,
     ) -> Result<ReadStep<RowValueBefore<'b>>> {
         self.check_candidate(candidate)?;
-        if !candidate.deleted {
+        if !candidate.deleted && self.value_capture != candidate.capture_sequence {
             return Err(unchanged(
                 RetentionPhase::Census,
                 RetentionCause::WrongState,
@@ -906,7 +961,7 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         };
         let storage = self.backend.storage;
         let bad = || fatal(storage, RetentionPhase::Census, RetentionCause::Invariant);
-        let (schema, copy) = self.copy.split_at_mut(8192);
+        let (schema, copy) = self.copy.split_at_mut(VALUE_COPY);
         let record = catalog_record::decode_catalog_record(
             &schema[..self.schema_len],
             CatalogExpectation {
@@ -944,7 +999,7 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                     .map_err(|e| fatal(storage, RetentionPhase::Census, RetentionCause::Undo(e)))?;
             let (q_old, logical, value) =
                 tombstone_before(&record, &candidate.version).ok_or_else(bad)?;
-            copy[..value.len()].copy_from_slice(value);
+            copy[BEFORE_COPY - VALUE_COPY..][..value.len()].copy_from_slice(value);
             Ok(RowValueBefore {
                 binding: std::marker::PhantomData,
                 lease_identity: candidate.lease_identity,
@@ -979,7 +1034,7 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             return Err(unchanged(RetentionPhase::Census, RetentionCause::Capacity));
         }
         output[..before.canonical_len]
-            .copy_from_slice(&self.copy[8192..8192 + before.canonical_len]);
+            .copy_from_slice(&self.copy[BEFORE_COPY..BEFORE_COPY + before.canonical_len]);
         Ok(RowCopyObservation {
             version: RecordVersion {
                 row: before.row,
@@ -1020,7 +1075,7 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             return Err(unchanged(RetentionPhase::Census, RetentionCause::Capacity));
         }
         output[..candidate.canonical_len]
-            .copy_from_slice(&self.copy[8192..8192 + candidate.canonical_len]);
+            .copy_from_slice(&self.copy[VALUE_COPY..VALUE_COPY + candidate.canonical_len]);
         Ok(RowCopyObservation {
             version: candidate.version,
             len: candidate.canonical_len,
@@ -1083,7 +1138,7 @@ impl<'g, 'b, 'a, 's, 'c, 'p, 'd> RowSearchPage<'g, 'b, 'a, 's, 'c, 'p, 'd> {
                 .capture_sequence
                 .checked_add(1)
                 .ok_or_else(|| unchanged(RetentionPhase::Census, RetentionCause::Capacity))?;
-            let (schema, copy) = self.copy.split_at_mut(8192);
+            let (schema, copy) = self.copy.split_at_mut(VALUE_COPY);
             let record = catalog_record::decode_catalog_record(
                 &schema[..self.schema_len],
                 CatalogExpectation {
@@ -1324,14 +1379,15 @@ impl<W: WriterNamespace> RowReadOperation<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_
     }
 }
 
-/// The before of a tombstone's Live U (dev3-row-delete.md#read): the U of the
-/// tombstone's own transaction (and Status generation) and mutation, whose
+/// The before of a tombstone's or an updated row's Live U
+/// (dev3-row-delete.md#read, dev3-row-update.md#read): the U of the
+/// version's own transaction (and Status generation) and mutation, whose
 /// before is the committed Inline row it replaced (RowValue kind,
-/// `Committed(q_old)`, its logical and value). Any other U under a tombstone
-/// (a Missing or RowDeleted before, a `Transaction` before stamp, no value,
-/// another creator or mutation, sequence 0), or a tombstone not stamped
-/// `Transaction` by that creator, is corruption: None. A Releasing U never
-/// reaches here (`live_before` refuses it).
+/// `Committed(q_old)`, its logical and value). Any other U (a Missing or
+/// RowDeleted before, a `Transaction` before stamp, no value, another
+/// creator or mutation, sequence 0), or a version not stamped `Transaction`
+/// by that creator, is corruption: None. A Releasing U never reaches here
+/// (`live_before` refuses it).
 #[inline(always)]
 fn tombstone_before<'r>(
     record: &crate::storage::undo_record::UndoRecord<'r>,

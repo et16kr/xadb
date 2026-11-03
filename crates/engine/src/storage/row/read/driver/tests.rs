@@ -173,9 +173,16 @@ fn answer<T>(answer: Answer<T>) -> Result<Step<T, FlushTarget>, RetentionError> 
 #[derive(Debug, PartialEq, Eq)]
 struct FlushTarget(u32);
 
-/// A logical Missing-before answer, not a MissingRowEvidence.
+/// A logical Missing-before answer, not a MissingRowEvidence: `true`
+/// reports an UPDATE's committed value before (dev3-row-update.md#read).
 #[derive(Clone, Copy)]
-struct MissingAnswer;
+struct MissingAnswer(bool);
+
+impl MissingObserved for MissingAnswer {
+    fn value_before(&self) -> bool {
+        self.0
+    }
+}
 
 struct LiteralCandidate<'x> {
     version: RecordVersion,
@@ -352,7 +359,11 @@ impl<'x> ReadSource for LiteralSource<'x> {
         let row = candidate.version.row.get();
         self.note(MissingBefore(row));
         let scripted = self.missing.iter().find(|(at, _)| *at == row);
-        answer(scripted.map_or(Answer::Ready(MissingAnswer), |(_, scripted)| *scripted))
+        answer(
+            scripted.map_or(Answer::Ready(MissingAnswer(false)), |(_, scripted)| {
+                *scripted
+            }),
+        )
     }
     fn value_before(
         &mut self,
@@ -360,9 +371,14 @@ impl<'x> ReadSource for LiteralSource<'x> {
     ) -> Result<Step<LiteralBefore, FlushTarget>, RetentionError> {
         let row = candidate.version.row.get();
         self.note(ValueBefore(row));
-        // C reads a U before only for a tombstone; an unscripted answer is a
+        // C reads a U before only for a tombstone or an Inline row whose
+        // Missing-before answer reported a value; an unscripted answer is a
         // test input error.
-        if !candidate.deleted {
+        let reported = self
+            .missing
+            .iter()
+            .any(|(at, a)| *at == row && matches!(a, Answer::Ready(MissingAnswer(true))));
+        if !candidate.deleted && !reported {
             return Err(invariant());
         }
         match self.before.iter().find(|(at, _)| *at == row) {
@@ -1656,3 +1672,6 @@ fn mcb00_d13_native_call_inventory() {
 
 #[path = "delete_tests.rs"]
 mod delete;
+
+#[path = "update_tests.rs"]
+mod update;
