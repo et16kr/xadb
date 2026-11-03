@@ -18,22 +18,22 @@ use crate::storage::{
 };
 use foundation::codec::content_digest;
 
-const BASE: usize = 2_097_152;
-const ARENA: usize = 262_144;
+pub(in super::super) const BASE: usize = 2_097_152;
+pub(in super::super) const ARENA: usize = 262_144;
 const CERTIFICATES: usize = 65_536;
 /// Page geometry: the 128-byte header, its slot directory, the digest.
-const HEADER: usize = 128;
+pub(in super::super) const HEADER: usize = 128;
 const DIGEST: usize = PAGE_BYTES - 32;
 /// Row record fields (`row_record`): flags, RowId, stamp, logical, undo.
-const FLAGS: usize = 6;
-const ROW: std::ops::Range<usize> = 8..16;
-const STAMP: std::ops::Range<usize> = 16..72;
-const LOGICAL: std::ops::Range<usize> = 72..120;
-const UNDO: std::ops::Range<usize> = 120..160;
+pub(in super::super) const FLAGS: usize = 6;
+pub(in super::super) const ROW: std::ops::Range<usize> = 8..16;
+pub(in super::super) const STAMP: std::ops::Range<usize> = 16..72;
+pub(in super::super) const LOGICAL: std::ops::Range<usize> = 72..120;
+pub(in super::super) const UNDO: std::ops::Range<usize> = 120..160;
 /// The logical version's mutation sequence (`LogicalRowVersion` @40).
-const MUTATION: std::ops::Range<usize> = 112..120;
+pub(in super::super) const MUTATION: std::ops::Range<usize> = 112..120;
 /// A committed one-column row's record and a tombstone's (168, no body).
-const ROW_RECORD: usize = 181;
+pub(in super::super) const ROW_RECORD: usize = 181;
 const TOMBSTONE_RECORD: usize = 168;
 /// The Live delete U of the replaced row: 432 + L, L = C - 180 = 13.
 const LIVE_U: usize = 432 + 13;
@@ -47,7 +47,7 @@ fn put_u16(b: &mut [u8], at: usize, v: usize) {
 
 /// C's restart of `images` to READY: the base4 its Rebase wrote and the
 /// Expected it decodes under.
-fn rebased(images: &Images) -> (Box<[u8; BASE]>, Expected) {
+pub(in super::super) fn rebased(images: &Images) -> (Box<[u8; BASE]>, Expected) {
     let directory = clone_directory(images);
     join_restart(&directory, RowRecoveryPolicy::WithRowClr, None);
     let files = directory.state().lock().unwrap().images();
@@ -67,13 +67,20 @@ fn rebased(images: &Images) -> (Box<[u8; BASE]>, Expected) {
     (bytes, expected)
 }
 
-fn census(bytes: &[u8; BASE], expected: Expected) -> std::result::Result<RowCensus, RowBaseError> {
+pub(in super::super) fn census(
+    bytes: &[u8; BASE],
+    expected: Expected,
+) -> std::result::Result<RowCensus, RowBaseError> {
     let mut scratch = Box::new([[0; PAGE_BYTES]; 4]);
     decode(&bytes[..], expected, &mut scratch).map(|view| view.census())
 }
 
 /// The arena index of the one page of `kind` whose cells `pick` accepts.
-fn find(bytes: &[u8; BASE], kind: u8, pick: impl Fn(&[Vec<u8>]) -> bool) -> usize {
+pub(in super::super) fn find(
+    bytes: &[u8; BASE],
+    kind: u8,
+    pick: impl Fn(&[Vec<u8>]) -> bool,
+) -> usize {
     let found: Vec<_> = (0..64)
         .filter(|n| {
             let page = &bytes[ARENA + n * PAGE_BYTES..ARENA + (n + 1) * PAGE_BYTES];
@@ -87,7 +94,7 @@ fn page_mut(bytes: &mut [u8; BASE], n: usize) -> &mut [u8] {
     &mut bytes[ARENA + n * PAGE_BYTES..ARENA + (n + 1) * PAGE_BYTES]
 }
 /// The page's cells in slot order (slot 0 is the tree metadata).
-fn page_cells(page: &[u8]) -> Vec<Vec<u8>> {
+pub(in super::super) fn page_cells(page: &[u8]) -> Vec<Vec<u8>> {
     (0..u16_at(page, 72))
         .map(|slot| {
             let (start, length) = (
@@ -100,7 +107,7 @@ fn page_cells(page: &[u8]) -> Vec<Vec<u8>> {
 }
 /// Lay `cells` out from the digest down in slot order and reseal the page,
 /// its certificate, every section digest and the trailer.
-fn rewrite(bytes: &mut [u8; BASE], n: usize, cells: &[Vec<u8>]) {
+pub(in super::super) fn rewrite(bytes: &mut [u8; BASE], n: usize, cells: &[Vec<u8>]) {
     let page = page_mut(bytes, n);
     let lower = HEADER + 4 * cells.len();
     let mut end = DIGEST;
@@ -141,7 +148,7 @@ fn rewrite(bytes: &mut [u8; BASE], n: usize, cells: &[Vec<u8>]) {
 }
 
 /// A RowLeaf cell: key and value lengths, the big-endian RowId, the record.
-fn leaf_cell(row: u64, record: &[u8]) -> Vec<u8> {
+pub(in super::super) fn leaf_cell(row: u64, record: &[u8]) -> Vec<u8> {
     let mut cell = Vec::with_capacity(12 + record.len());
     cell.extend_from_slice(&8u16.to_le_bytes());
     cell.extend_from_slice(&(record.len() as u16).to_le_bytes());
@@ -149,17 +156,17 @@ fn leaf_cell(row: u64, record: &[u8]) -> Vec<u8> {
     cell.extend_from_slice(record);
     cell
 }
-fn record(cell: &[u8]) -> &[u8] {
+pub(in super::super) fn record(cell: &[u8]) -> &[u8] {
     &cell[12..]
 }
 /// `record` as RowId `row`.
-fn renumbered(record: &[u8], row: u64) -> Vec<u8> {
+pub(in super::super) fn renumbered(record: &[u8], row: u64) -> Vec<u8> {
     let mut out = record.to_vec();
     out[ROW].copy_from_slice(&row.to_le_bytes());
     out
 }
 /// The `Committed(q)` stamp bytes.
-fn committed_stamp(q: u64) -> [u8; 56] {
+pub(in super::super) fn committed_stamp(q: u64) -> [u8; 56] {
     let mut stamp = [0; 56];
     stamp[0] = 1;
     stamp[8..16].copy_from_slice(&q.to_le_bytes());

@@ -936,13 +936,34 @@ enum Crash {
 /// the first one's UPDATE to 200 up to `crash`: the files there and the
 /// two rows (RowId, value) as committed at q 2.
 fn crash_images(crash: Crash) -> (Images, Vec<(u64, i64)>) {
+    crash_images_of(crash, false)
+}
+
+/// `crash_images`, or with `shrink` over the nullable T with the first
+/// row's UPDATE to NULL: the new cell C' = C - 8, so the leaf reserves
+/// D = 8 B for its UpdateClr (dev3-row-update.md#leaf-reservation).
+fn crash_images_of(crash: Crash, shrink: bool) -> (Images, Vec<(u64, i64)>) {
     let oracle = Oracle::new();
+    let new = if shrink { NULL } else { int(200) };
     with_fresh!(
         oracle,
         frames = 28,
         |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
             let _ = core;
-            let (row_status, _) = create_table(live, owner, flusher, status, undo, private, true);
+            let (row_status, _) = if shrink {
+                create_table_with(
+                    live,
+                    owner,
+                    flusher,
+                    status,
+                    undo,
+                    private,
+                    true,
+                    &nullable(),
+                )
+            } else {
+                create_table(live, owner, flusher, status, undo, private, true)
+            };
             // An explicit transaction's Begin takes a second System Undo.
             let inits = if crash == Crash::Committed { 1 } else { 2 };
             for _ in 0..inits {
@@ -985,7 +1006,7 @@ fn crash_images(crash: Crash) -> (Images, Vec<(u64, i64)>) {
                         private,
                         6,
                         target,
-                        int(200)
+                        new
                     );
                     assert_eq!(committed(out), (3, 1));
                     assert!(!fence.is_fenced());
@@ -1011,11 +1032,7 @@ fn crash_images(crash: Crash) -> (Images, Vec<(u64, i64)>) {
                         RowDeleteStep::FlushRequired { .. } => panic!("every source is resident"),
                         RowDeleteStep::NoRow => panic!("a committed row"),
                     };
-                    let plan = validate_insert(
-                        &[ValueRef::Int64(200)],
-                        preflight.validation_lane().unwrap(),
-                    )
-                    .unwrap();
+                    let plan = validate_insert(&new, preflight.validation_lane().unwrap()).unwrap();
                     let reserved = match preflight.reserve_update(plan) {
                         Ok(reserved) => reserved,
                         Err(RowOwnedError::Before { error, .. })
@@ -1053,7 +1070,7 @@ fn crash_images(crash: Crash) -> (Images, Vec<(u64, i64)>) {
                         private,
                         6,
                         target,
-                        int(200)
+                        new
                     );
                     assert_eq!(done(out), 1);
                     assert_eq!(slot.expect("updated row").row(), target);
@@ -1149,3 +1166,17 @@ fn rup_r01_r04_recovery_of_each_update_state() {
         }
     });
 }
+
+/// RUP-J06/J07: rows another transaction's UPDATE holds, and the long new
+/// value, over the actual C supply.
+#[path = "update_busy.rs"]
+mod busy;
+
+/// RUP-B06/B07: reads of an updated row over the actual C supply.
+#[path = "update_read.rs"]
+mod read;
+
+/// RUP-R05..R07: C's base4 of the UPDATE crash states, over actual
+/// captured bases.
+#[path = "update_base.rs"]
+mod base;

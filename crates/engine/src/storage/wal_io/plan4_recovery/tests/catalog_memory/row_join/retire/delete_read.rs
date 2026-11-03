@@ -58,7 +58,7 @@ enum Broken {
 }
 
 /// The expectation of the Row U `reference` of `row` in table 6.
-fn expectation(
+pub(in super::super) fn expectation(
     reference: crate::storage::undo_ref::UndoRef,
     row: u64,
 ) -> UndoRecordExpectation<'static> {
@@ -77,7 +77,12 @@ fn expectation(
 }
 
 /// Rewrites the Undo page `bytes` with slot `slot` replaced by `cell`.
-fn replace_undo(bytes: &mut [u8; PAGE_BYTES], identity: PageIdentity, slot: usize, cell: &[u8]) {
+pub(in super::super) fn replace_undo(
+    bytes: &mut [u8; PAGE_BYTES],
+    identity: PageIdentity,
+    slot: usize,
+    cell: &[u8],
+) {
     let page = decode_page(bytes, identity, PageKind::Undo).unwrap();
     let header = page.header();
     let mut cells = (0..page.len())

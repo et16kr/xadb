@@ -1105,10 +1105,10 @@ fn rdl_j10_two_deletes_roll_back_then_commit() {
 /// RDL-R: C's base4 of the DELETE crash states, over actual captured
 /// bases.
 #[path = "delete_base.rs"]
-mod base;
+pub(super) mod base;
 
 #[path = "delete_read.rs"]
-mod read;
+pub(super) mod read;
 
 #[path = "delete_busy.rs"]
 mod busy;
