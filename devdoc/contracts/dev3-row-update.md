@@ -1,6 +1,6 @@
 # DEV3 Row UPDATE 첫 경로 — 형식·전이 설계
 
-2026-11-04 · `D3-ROW-UPDATE-001` · **설계 초안 / D2 검토 대기 / 구현·시험 NOT_RUN**
+2026-11-04 · `D3-ROW-UPDATE-001` · **설계 r2 / D2 r1 ACCEPT WITH REQUIRED CHANGES 반영, r2 재검토 대기 / 구현·시험 NOT_RUN**
 
 [DELETE 첫 경로](dev3-row-delete.md) · [첫 Row profile](dev3-module-consumers.md#profile) · [WAL shape](dev3-module-consumers.md#row-shape) · [scope3 wire 기록](dev3-module-consumers.md#row-scope3-wire) · [API 흐름](dev3-module-consumers.md#api-flow) · [Row 격리](dev3-task-10-concurrency.md#module-row-isolation) · [자원 정본](dev3-resource-bounds.md#row-missing-module-budget) · [Undo 형식](dev3-undo-format.md) · [live Row 정리](dev3-task-14-reclamation.md#live-row-retirement) · [명시 거래 실행기](dev3-module-boundaries.md#explicit-transaction) · [행 owner](dev3-task-06-tree-rows.md#algorithms) · [일정 07](../plans/dev3-schedule-baseline.md#items)
 
@@ -35,7 +35,7 @@ UPDATE의 Undo는 DELETE가 만든 delete U와 **같은 형식**이다(옛 행�
 | RowLeaf | `Transaction(T)` Inline 행은 INSERT 행(Missing U), tombstone은 DELETE(RowValue U) | `Transaction(T)` Inline 행이 RowValue U를 가지면 UPDATE 행(§3.1). Forward·CLR·Prune 모두 Replace |
 | leaf 공간 | Reserve·Forward가 INSERT 새 cell만, 예약 D는 Retained DELETE root의 `C−180` | 커지는 UPDATE의 Reserve·Forward 검산, 줄어드는 UPDATE의 복원 예약(§4.3) |
 | 대상 판정 | DELETE `delete_class`는 다른 거래의 Inline `Transaction(T')` 행을 INSERT로 본다 | 그 행의 root 효과로 INSERT·UPDATE를 가른다(§5). DELETE 판정도 같이 바뀐다 |
-| B 읽기 | 안 보이는 Inline `Transaction(T)` 행은 `missing_before`(스키마 없는 decode, RowValue면 Fatal) | `missing_before`가 RowValue U를 보고하고 B가 `value_before`로 옛 값을 읽는다(§7) |
+| B 읽기 | 안 보이는 Inline `Transaction(T)` 행은 `missing_before`(스키마 없는 decode. inline RowValue before는 codec 오류로 Fatal, 유효한 chunk RowValue·RowDeleted before는 Unsupported) | `missing_before`가 RowValue U를 보고하고 B가 `value_before`로 옛 값을 읽는다(§7) |
 | 회수 | `row_cleanup_next`·복구 cleanup이 효과로 Prune·DeletePrune을 고른다 | 효과2는 UpdatePrune(`ValuePrune`, §8) |
 | 복구 | loser CLR=Clr·DeleteClr, cleanup=Prune·DeletePrune, base4는 효과 0·1 | UpdateClr·UpdatePrune, base4 효과2 규칙과 역방향 scan(§9) |
 | 비용 | INSERT·DELETE 식, root당 cleanup 최대 316192 | UPDATE 식, 최대 318240(§3.5) |
@@ -81,7 +81,7 @@ kind3(Row) root Job의 `@284` 효과 byte에 2(UPDATE)를 더한다. 효과2 roo
 
 Reserved·Retained는 위를 모두 가진다. Releasing은 지금처럼 `[280,284)`와 `[285,320)`를 zero로 두므로 C'도 지워지고 효과 byte와 RowId만 남는다. Free·Terminal·Catalog Job의 `[284,288)`은 zero다. Job codec은 Row root에서 효과 ≤2, 효과2 Reserved·Retained의 C'이 185..2228, 그 밖에서 `[286,288)` zero를 요구한다. `JobView`에 `new_cell()`을 더하고 `forward_wal()`·`clr_wal()`·`cleanup()`·`has_previous_transaction()`이 효과로 식을 고른다. `has_previous_transaction`은 효과2에서 `budget@400 == 311556+C+2C'`이다.
 
-`@280`을 옛 C로 두는 이유: U의 크기(`432+C−180`), H 증명(§4.4), `live_undo_bytes`, base4의 U 셀 범위가 효과 1·2에서 같은 식이 된다. C'은 Forward의 새 행 cell과 UpdatePrune의 재stamp 행 cell에만 쓰인다.
+`@280`을 옛 C로 두는 이유: U의 크기(`432+C−180`), H 증명(§4.4), `live_undo_bytes`, base4의 U 셀 범위가 효과 1·2에서 같은 식이 된다. C'이 쓰이는 곳은 UpdateForward의 새 행 cell, UpdateClr의 before cell·frame·native 크기, UpdatePrune의 재stamp 행 cell, 세 opcode의 shape·wire decode(§3.4), cleanup budget과 `has_previous_transaction`(§3.5), 넓힌 D(§4.3), rollback 선택이 producer에 넘기는 현재 행 길이(§6), base4의 Retained 행 cell(§9)이다. 옛 C와 새 C'은 Releasing에서 둘 다 지워진다(§9).
 
 <a id="update-shape"></a>
 ### 3.4 opcode와 shape
@@ -102,7 +102,7 @@ Reserved·Retained는 위를 모두 가진다. Releasing은 지금처럼 `[280,2
 | UpdateClr | 3, C', C | 432+L / 432 |
 | UpdatePrune | 3, C', C' | 432+L / 432 |
 
-**wire decode.** native 합 하나로는 C와 C'을 함께 유도할 수 없다. decode는 native 구간에서 kind1 record 하나의 header를 먼저 읽어 C'을 얻는다(UpdateForward는 after 크기, UpdateClr·UpdatePrune은 before 크기). 그다음 C를 합에서 유도한다: UpdateForward·UpdateClr은 `(native−4844−C')/2`(정수), UpdatePrune은 `native−4844−2C'`. kind1 record가 없거나 둘이거나, header가 native 구간을 넘거나, C·C'이 185..2228 밖이면 Corrupt다. 그 뒤 `validate_native_shape`가 모든 native의 presence·크기를 (C, C')로 다시 검산하므로 먼저 읽은 header도 같은 규칙을 지나간다. `Shape`는 `cell`(C)과 `new_cell`(C', 효과2 opcode만, 나머지 0)을 갖는다. 기존 opcode의 decode는 바뀌지 않는다. 옛 binary는 10·13·24를 Unsupported로, 효과 2인 Job을 Corrupt로 거절한다([버전 정책](../policies/version-compatibility-policy.json)의 개발 형식 규칙). [scope3 wire 기록](dev3-module-consumers.md#row-scope3-wire)의 존재 규칙에 RowLeaf kind1의 present(C)→present(C'), present(C')→present(C), present(C')→present(C')를 더한다(07-2).
+**wire decode.** native 합 하나로는 C와 C'을 함께 유도할 수 없다. decode는 native 구간에서 kind1 record 하나의 header를 먼저 읽어 C'을 얻는다(UpdateForward는 after 크기 `@16`, UpdateClr·UpdatePrune은 before 크기 `@12`). 이 사전 scan은 frame 크기 검산보다 앞서므로 길이 불변식에 기대지 않는다: native 구간 `[native_at, native_at+native)`가 frame 안에 있어야 하고, record를 앞에서부터 **최대 5개**(Row opcode의 native_count)만 걷으며, 각 record 길이(`@20`)는 128 이상이고 구간의 남은 바이트 이하여야 한다. 5개를 걷은 뒤 남은 바이트가 있으면 손상이다. 그다음 C를 합에서 검사된 뺄셈으로 유도한다: UpdateForward·UpdateClr은 `(native−4844−C')/2`(홀수면 손상), UpdatePrune은 `native−4844−2C'`. kind1 record가 없거나 둘 이상이거나, 길이 0·128 미만·남은 구간 초과 record, 음수가 되는 뺄셈, C·C'이 185..2228 밖이면 모두 **Corrupt**다(사전 scan의 kind1 중복도 Corrupt이며, kind1 아닌 kind의 중복은 지금처럼 `validate_native_shape`의 IdentityMismatch다). 사전 scan은 `NativeRecords`를 쓰지 않는다. 그 뒤 `validate_native_shape`가 모든 native의 presence·크기를 (C, C')로 다시 검산하므로 먼저 읽은 header도 같은 규칙을 지나간다. `Shape`는 `cell`(C)과 `new_cell`(C', 효과2 opcode만, 나머지 0)을 갖는다. 기존 opcode의 decode는 바뀌지 않는다. 옛 binary는 10·13·24를 Unsupported로, 효과 2인 Job을 Corrupt로 거절한다([버전 정책](../policies/version-compatibility-policy.json)의 개발 형식 규칙). [scope3 wire 기록](dev3-module-consumers.md#row-scope3-wire)의 존재 규칙에 RowLeaf kind1의 present(C)→present(C'), present(C')→present(C), present(C')→present(C')를 더한다(07-2).
 
 <a id="update-costs"></a>
 ### 3.5 비용식
@@ -193,16 +193,28 @@ C의 preflight가 UPDATE 대상을 statement snapshot S로 판정한다. 판정 
 | **`Transaction(T')` Inline, root 효과2, q'≤S** | **Busy**(Prune 전 행) |
 | **`Transaction(T')` Inline, root 효과2, q'>S** | **Serializable: SerializationConflict, ReadCommitted: Busy** |
 | Overflow payload(옛 행) | Unsupported |
-| Committed tombstone, Committed 행의 undo Some, terminal이 없거나 aborted인 `Transaction(T')` 행, **Inline `Transaction(T')` 행을 쥔 root가 T'의 Retained 효과0·2 root 하나가 아님** | 손상(Fatal) |
+| leaf entry가 Value가 아님 | Unsupported(지금과 같음) |
+| Committed tombstone, Committed 행의 undo Some, `Transaction` 행의 undo None, terminal이 없거나 aborted인 `Transaction(T')` 행, **Inline `Transaction(T')` 행을 쥔 root가 아래 묶음을 만족하는 root 정확히 하나가 아님** | 손상(Fatal) |
 
-**root로 가르는 이유.** UpdateForward가 행을 `Transaction(T')`로 바꾸는 순간부터 UpdatePrune이 재stamp하기 전까지 그 RowId는 T'의 Retained 효과2 root가 쥔다. INSERT 행도 같은 동안 효과0 root가 쥔다. census가 모든 non-Free root Job 사이에서 RowId 유일성을 요구하므로 짝은 정확히 하나다. preflight는 이미 Jobs bank를 읽으므로(RowId Busy 검사) U page를 더 읽지 않는다. T' UPDATE 행의 옛 값은 S에 보이므로 0행이 아니다. 쓰기 충돌이고 첫 경로에는 대기가 없으므로 Busy다. q'>S의 Serializable은 commit 검증과 같은 결론을 일찍 낸다. ReadCommitted의 q'>S는 A 실행기가 snapshot을 preflight 바로 앞에서 잡으므로 C 판정 표 시험으로만 본다(DELETE와 같다).
+**root로 가르는 이유.** UpdateForward가 행을 `Transaction(T')`로 바꾸는 순간부터 UpdatePrune이 재stamp하기 전까지 그 RowId는 T'의 Retained 효과2 root가 쥔다. INSERT 행도 같은 동안 효과0 root가 쥔다. census가 모든 non-Free root Job 사이에서 RowId 유일성을 요구하므로 짝은 정확히 하나다. 판정은 그 root를 행에 다음 필드로 묶는다(base4 `actor.rs`의 Retained 짝 검사와 같은 묶음): Row scope, `RootRetained`, 효과 0 또는 2, source == T'(id와 Status 세대), object·generation == 대상 table, RowId == 행의 RowId, undo == 행의 undo ref. 이 중 하나라도 어긋나거나, 같은 RowId를 쥔 root가 0개 또는 2개 이상이면 손상(Fatal)이다. 손상된 bank가 결과를 0행·Busy·SerializationConflict 사이에서 바꾸지 못하게 하기 위해서다(RUP-C·A mutant). preflight는 이미 Jobs bank를 읽으므로(RowId Busy 검사) U page를 더 읽지 않는다. T' UPDATE 행의 옛 값은 S에 보이므로 0행이 아니다. 쓰기 충돌이고 첫 경로에는 대기가 없으므로 Busy다. q'>S의 Serializable은 commit 검증과 같은 결론을 일찍 낸다. ReadCommitted의 q'>S는 A 실행기가 snapshot을 preflight 바로 앞에서 잡으므로 C 판정 표 시험으로만 본다(DELETE와 같다).
 
-**새 값 검사.** 새 값은 A가 table 스키마로 canonical을 만들고 C가 Reserve에서 다시 decode한다(INSERT와 같다). L'이 2048을 넘으면 Unsupported, 스키마에 맞지 않으면 A의 InvalidInput이다. 오류 우선순위는 DELETE와 같고 Reserve admission 단계에 leaf 공간의 Capacity(§4.3)가 더해진다: 입구 origin/open/statement·fence → RowId 0·값 인자(InvalidInput) → statement credit → table·schema·index·leaf level(Unsupported) → 위 판정 → Reserve admission(queue·inventory·F05·leaf 공간의 Capacity) → 효과 재검사. 관측한 손상을 Busy·0행으로 낮추지 않는다.
+**새 값 검사.** 새 값은 A가 table 스키마로 canonical을 만들고 C가 Reserve에서 다시 decode한다(INSERT와 같다). L'이 2048을 넘으면 Unsupported, 스키마에 맞지 않으면 A의 InvalidInput이다. 오류 우선순위는 DELETE와 같고 Reserve admission 단계에 leaf 공간의 Capacity(§4.3)가 더해진다: 입구 origin/open/statement·fence → RowId 0·값 인자(스키마 불일치는 InvalidInput) → statement credit → table·schema·index·leaf level과 새 값 L'>2048(Unsupported, INSERT의 긴 값 거절과 같은 자리) → 위 판정 → Reserve admission(queue·inventory·F05·leaf 공간의 Capacity) → 효과 재검사. 관측한 손상을 Busy·0행으로 낮추지 않는다.
 
 <a id="api"></a>
 ## 6. API 흐름
 
 INSERT·DELETE의 consuming 경계를 그대로 따른다. C 진입은 preflight의 대상 인자에 UPDATE를 더한 것과 그 결과의 `reserve_update(canonical)`이다. `ReservedRow`·`producer_lane`·`prepare`·`apply`·`Cancel`과 statement/commit/rollback 메서드는 공유한다. `Change`에 `ReserveUpdate(&UpdatePlan)`, `UpdateForward`, `UpdateClr`, `UpdatePrune`을 더한다. `UpdatePlan`은 `ReservePlan`의 terminal·container·table·statement와 대상 RowId, A의 새 canonical을 갖는다. replay의 `ReserveAdopted`는 Job after에서 효과·RowId·C'·projection을 채택하고 C는 leaf의 옛 행에서 다시 계산해 비교한다. `Change` 96 B·`Inputs` 448 B 단언은 유지한다.
+
+**A↔C 경계의 UPDATE 값.** 지금 경계의 필드는 cell 길이 하나를 가정한다. 07-3은 다음처럼 넓힌다.
+
+| 자리 | 지금 | UPDATE |
+| --- | --- | --- |
+| `RowPreflightCut`(`wal_io/plan4_apply/row.rs`) | `delete: Option<RowId>`, INSERT는 None | 대상 인자를 `target: Option<(RowId, effect)>`처럼 효과를 가진 값으로 바꾼다. `reserve`는 None, `reserve_delete`는 효과1, `reserve_update`는 효과2만 받는다 |
+| `row_write.rs` reserve의 (input, cut) 짝 | `(Some, None)` INSERT, `(None, Some)` DELETE, 그 밖 Invariant Fatal | `(Some(새 canonical), Some(대상, 효과2))`를 UPDATE로 받는다. 봉인 input은 새 canonical의 길이·digest다(INSERT와 같음) |
+| `RowDraftCut.input_len` | Forward: canonical 길이, CLR(rollback 선택): `job.cell_bytes()` | 효과2 CLR의 현재 행 길이는 `job.new_cell()`(C')이다. 효과 0·1은 그대로 |
+| `RowProducerInput`(`wal_io/plan4_apply.rs`) | `Insert`·`Delete`·`Clr{current_row_len, current_projection, ..}` | `Update{canonical_len, canonical_digest, old_cell, projection}`를 더한다. `Clr`의 `current_row_len`은 효과2에서 C', 복원 길이 C는 U before에서 얻고 Job `@280`과 대조한다 |
+
+이 넷은 07-3에서 같은 PR로 바꾸며 07-2는 손대지 않는다(제품 진입점이 없다).
 
 A는 새 행 cell(UpdateForward)과 복원 cell(UpdateClr)을 만든다. 새 행 cell은 statement의 canonical(candidate 구간)로, 복원 cell은 lane의 U before image에서 table 스키마로(진입 a) 만든다. C 관찰자가 각각 Job의 C'·projection과 U를 독립 검산한다. A의 UPDATE 본문은 module A 경로(`storage/row/insert/` 아래)에 둔다. A 진입점은 `autocommit_update_live`와 `transaction_update_live`이며 자동커밋·명시 거래 실행기의 단계와 slot을 그대로 쓴다. 결과는 `Updated(0|1)`이다. 효과 전 거절과 실패 statement는 INSERT·DELETE 실행기와 같은 경로로 끝낸다.
 
@@ -213,11 +225,27 @@ C의 capture는 지금처럼 Inline 행과 DELETE tombstone을 받고 TxnPin(T)�
 
 | 단계 | 지금 | UPDATE 뒤 |
 | --- | --- | --- |
-| B → `missing_before` | U를 스키마 없이 decode. Missing이면 증거, 유효한 RowDeleted·chunk RowValue는 Unsupported, inline RowValue는 codec 오류로 Fatal | U를 먼저 진입 (b)로 본다. Missing이면 지금과 같다. **Live RowValue·`Committed` stamp·logical·Inline이면 `ValueBefore` 보고**(값은 아직 읽지 않음). 그 밖은 지금과 같다 |
+| B → `missing_before` | U를 스키마 없이 decode. Missing이면 증거, 유효한 RowDeleted·chunk RowValue는 Unsupported, inline RowValue는 codec 오류로 Fatal | U를 진입 (b)(`lookup_undo_record_metadata`)로 보고 아래 outline 표로 판정한다. **Live RowValue·`Committed` stamp·logical·Inline 5..2048이면 `ValueBefore` 보고**(값은 읽지 않음) |
 | B → `value_before` | tombstone 후보만 | tombstone 후보, 또는 **같은 capture에서 `missing_before`가 `ValueBefore`를 보고한 Inline 후보**. 그 밖은 Unchanged WrongState |
 | B 판정 | — | `q_old≤S`면 `copy_before`로 옛 값, 아니면 없음 |
 
-`value_before`의 검증은 그대로다: U를 operation의 Catalog 스키마로 진입 (a) decode하고, `tombstone_before`(이름은 before 판정 일반으로 바꿀 수 있다)가 T·Status 세대·mutation과 RowValue·`Committed(q_old)`·logical·Inline을 요구한다. 첫 경로는 이 행의 U를 두 번 읽는다(진입 b, 그다음 a). 한 번 읽기로 합치려면 `missing_before`가 스키마와 copy 버퍼를 가져야 해 그 단계의 읽기 census가 커진다. 첫 경로는 각 단계의 frame을 지금 크기로 두는 쪽을 택한다(§14).
+**`missing_before`의 (b) outline 판정.** 아래 표를 위에서부터 적용한다. identity 검사는 지금 (a) 결과에서 하던 것(creator id, `Transaction` stamp의 actor id·세대, mutation sequence, sequence≠0)을 `outline.metadata`에서 한다. (b) 진입 자체가 거절하는 header·길이 손상은 지금처럼 codec 오류 Fatal이다.
+
+| outline | 결과 | 거절 층 |
+| --- | --- | --- |
+| state ≠ Live(Free·Releasing) | Fatal | read.rs 판정 |
+| identity 불일치 | Fatal | read.rs 판정 |
+| Missing, stamp·logical·payload 모두 없음 | 증거(`MissingRowEvidence`) | — |
+| Missing인데 stamp·logical·payload 중 하나라도 있음 | Fatal | read.rs 판정 |
+| RowValue, stamp `Committed`, logical 있음, Inline, 길이 5..2048 | `ValueBefore` | — |
+| RowValue Chunks, RowDeleted | Unsupported(Unchanged, 지금과 같음) | read.rs 판정 |
+| RowValue인데 stamp `Transaction`·stamp 없음, logical 없음, Inline 길이 범위 밖, payload None | Fatal | read.rs 판정(Live RowValue의 payload None은 codec도 거절) |
+
+(b) 진입은 [Undo 형식 2026-11-04 개정](dev3-undo-format.md)이 닫은 사용처 목록에 이 용도로 더해진다. outline에는 payload 접근자가 없으므로 이 단계는 값을 내주지 않는다.
+
+**옛 값의 자리.** 지금 `value_before`는 capture가 새 값을 둔 copy 구간(`copy[8192..]`)에 옛 값을 쓴다. tombstone 후보는 새 값이 없어서 안전했지만 Inline 후보에서는 `copy_candidate`가 옛 값을 새 version 이름으로 내줄 수 있다. 그래서 상태 규칙을 둔다: capture 순번 N에서 `value_before`가 한 번이라도 copy 구간에 썼으면 같은 N의 `copy_candidate`는 Unchanged WrongState다. 이 표시는 release와 새 capture에서 지워진다. 버퍼를 늘리지 않으므로 읽기 census는 bool 하나만 는다(§10). B의 올바른 순서(지금 값이면 `copy_candidate`, before면 `value_before`→`copy_before`)는 이 규칙에 걸리지 않는다(RUP-B07).
+
+`value_before`의 검증은 그대로다: U를 operation의 Catalog 스키마로 진입 (a) decode하고, `tombstone_before`(이름은 before 판정 일반으로 바꿀 수 있다)가 T·Status 세대·mutation과 RowValue·`Committed(q_old)`·logical·Inline을 요구한다. 첫 경로는 이 행의 U를 두 번 읽는다(진입 b, 그다음 a). 한 번 읽기로 합치려면 `missing_before`가 스키마와 copy 버퍼를 가져야 해 그 단계의 읽기 census가 커진다고 **추정**한다(측정하지 않았다). 07-3은 두 번 읽기로 구현하고 그 census를 잰다. 여유가 남으면 진입 (a) 한 번이 `Missing | Value`를 돌려주는 대안을 다시 볼 수 있다(§14).
 
 reader와 writer의 배제는 DELETE와 같다. Row 쓰기(preflight에서 Reserve·Forward/Cancel까지, rollback, live 정리)는 terminal read gate를 닫고 들어온 read operation을 기다린다. B read operation은 capture부터 finish까지 admission을 쥐므로 `missing_before`와 `value_before` 사이에 UpdateClr·UpdatePrune·RootFree가 끼어들 수 없다. `value_before`가 Releasing U를 보면 손상(Fatal)이다.
 
@@ -225,6 +253,8 @@ reader와 writer의 배제는 DELETE와 같다. Row 쓰기(preflight에서 Reser
 ## 8. 회수와 가시성
 
 UpdatePrune은 retiring group이고 DeletePrune과 같은 `ValuePrune` scope(q≤published·q≤horizon, U에 다른 pin 0)를 쓴다. Prune이 U의 옛 값을 버리므로 그 값을 읽을 snapshot(S<q)이 없어야 한다. 조건이 안 되면 Busy이고 live 정리는 기존 `skip`으로 다음 root로 넘어간다. `row_cleanup_next`와 복구 cleanup은 효과2 root에 UpdatePrune을 고른다. UpdateClr은 retiring group이 아니다(DeleteClr과 같은 이유). ReleaseRole·RootFree·TerminalFinish는 그대로다.
+
+**scope 대응은 빠짐없이 쓴다.** 지금 `visibility/row_retirement.rs`의 `scope(operation)`은 `_ => None`(참조 target 없음)으로 끝난다. UpdatePrune의 arm이 빠지면 `ValuePrune` gate 없이 옛 값을 버려 S<q인 snapshot이 `Committed(q>S)`·undo None 행을 만나고, 읽기 쪽은 이를 MissingUndo 손상으로 본다(`row/read.rs`의 Committed 판정). 그래서 07-3은 `scope()`를 wildcard 없는 match로 바꾸고 UpdatePrune→`ValuePrune`을 넣는다. q>horizon인 UpdatePrune이 Busy이고 live 정리가 `skip`으로 넘어가는 시험을 RUP-J에 둔다.
 
 <a id="recovery"></a>
 ## 9. 복구
@@ -240,6 +270,8 @@ UpdatePrune은 retiring group이고 DeletePrune과 같은 `ValuePrune` scope(q�
 | Retained | 있음 | `Transaction(actor)`, logical (actor, mutation), undo = `job.undo`, Inline, cell = `job.new_cell`(C'), projection = Job. U는 `[16352−(432+L),16352)`의 Live(`L = cell_bytes−180`), RowValue, before_stamp `Committed(_)` |
 | ReleasingCompensated | 있음 | `Committed`, undo None, Inline. logical = U before_logical(모든 cursor), stamp = U before_stamp(cursor<3) |
 | ReleasingCommitted | 있음 | `Committed(job.commit_q)`, undo None, Inline, logical (actor, mutation) |
+
+Releasing 두 상태의 Job은 C와 C'을 모두 지운다(`[280,284)`·`[285,320)` zero). 그래서 복원 행(Compensated)과 재stamp 행(Committed)의 cell 길이는 Job이 아니라 U(cursor<3의 before) 또는 canonical decode로만 검산된다. INSERT·DELETE의 Releasing과 같다.
 
 역방향 scan: actor가 stamp한 Inline 행 하나는 정확히 하나의 Retained 효과0 **또는 효과2** Job과 짝을 이룬다(지금은 효과0만). tombstone은 지금처럼 효과1과 짝이다. 효과2 짝의 cell은 Job의 C'이다. §4.3의 넓힌 불변식을 base4도 같은 식으로 검산한다. ReleasingCommitted에 남은 키(INSERT와 같음)와 ReleasingCompensated의 복원 행은 Committed 행이므로 다른 root가 같은 RowId를 쥐지 않는지는 지금의 RowId 유일성 검사가 본다.
 
@@ -265,6 +297,8 @@ UpdatePrune은 retiring group이고 DeletePrune과 같은 `ValuePrune` scope(q�
 | C | `plan4_retention/row_start/{retire,recovery}.rs`, `recovery/catalog.rs`, `visibility/*` | UpdatePrune 선택, `ValuePrune` |
 | C | `plan4_apply/row/{read,write,recovery,rollback}.rs`, `plan4_recovery/row_action.rs`, `plan4_retention/history/row.rs` | `missing_before`의 ValueBefore, `value_before`의 Inline 후보, replay·recovery |
 | C | `plan4_recovery_base/row/{actor,graph}.rs` | base4 효과2·역방향 scan·넓힌 D |
+| A↔C | `wal_io/plan4_apply.rs`(`RowProducerInput`), `wal_io/plan4_apply/row.rs`(`RowPreflightCut`), `plan4_retention/row_rollback_select.rs`(`input_len`) | §6의 UPDATE 경계 값 |
+| C | `plan4_retention/visibility/row_retirement.rs` | `scope()` 빠짐없는 match, UpdatePrune→`ValuePrune` |
 | A | `row/insert/{group,leaf}.rs`, `row/insert/group/*`, `row/insert/driver/*` | update 생산자·H 증명·실행기·loser |
 | B | `row/read/**` | `missing_before`의 ValueBefore 갈래 |
 | 문서 | `dev3-undo-format.md`, `dev3-module-consumers.md`(shape 표·wire 기록·`candidate_template`), `dev3-module-boundaries.md`, `dev3-resource-bounds.md`, `plan4_apply.rs` FRAME 주석 | §3.2 개정 표시, 새 opcode 행, 최대 frame·cleanup 설명·fixture 상계 |
@@ -274,11 +308,11 @@ UpdatePrune은 retiring group이고 DeletePrune과 같은 `ValuePrune` scope(q�
 
 | ID | 단계 | 내용 |
 | --- | --- | --- |
-| RUP-F01..08 | 07-2 | literal: opcode decode·shape·frame(C·C' 경계 185/2228, h 0/1, C<C'·C=C'·C>C'), kind1 header로 C' 유도와 그 거절(kind1 없음, 범위 밖, 홀수 합), native 크기 규칙, 효과2 수용·거절(효과 3, `@285`≠0, C' 범위 밖, 효과0·1의 `[286,288)`≠0, Releasing의 C' 잔여), 효과별 식·`has_previous`, ledger 행 |
-| RUP-C01..12 | 07-2 | C 전이: 독립 저자가 만든 이력 U의 literal과 바이트 비교(Reserve(update)·UpdatePrune·Cancel 등 C 몫, UpdateForward·UpdateClr은 관찰), mutant(새 행 cell 크기·projection, 옛 행 미Prune, 다른 RowId, 복원 값), 효과2 H proof, leaf 공간(커지는 Reserve·Forward의 경계, 줄어드는 update의 D로 INSERT Capacity), RowId를 쥔 root, `ReserveAdopted` 효과2, 효과와 opcode 불일치 |
+| RUP-F01..08 | 07-2 | literal: opcode decode·shape·frame(C·C' 경계 185/2228, h 0/1, C<C'·C=C'·C>C'), kind1 header로 C' 유도와 그 거절(kind1 없음·둘, 범위 밖, 홀수 합, 길이 0·128 미만·남은 구간 초과 record, 5개 뒤 남은 바이트), native 크기 규칙, 효과2 수용·거절(효과 3, `@285`≠0, C' 범위 밖, 효과0·1의 `[286,288)`≠0, Releasing의 C' 잔여), 효과별 식·`has_previous`, ledger 행 |
+| RUP-C01..12 | 07-2 | C 전이: 독립 저자가 만든 이력 U의 literal과 바이트 비교(Reserve(update)·UpdatePrune·Cancel 등 C 몫, UpdateForward·UpdateClr은 관찰), mutant(새 행 cell 크기·projection, 옛 행 미Prune, 다른 RowId, 복원 값), 효과2 H proof, leaf 공간(커지는 Reserve·Forward의 경계, 줄어드는 update의 D로 INSERT Capacity), RowId를 쥔 root, `ReserveAdopted` 효과2, 효과와 opcode 불일치. 07-3의 판정 시험은 holder root 묶음 mutant(source·상태·효과·table·undo 어긋남, 짝 0·2개)를 Fatal로 본다 |
 | RUP-A01..08 | 07-3 | A 실행기: 1행·0행(키 없음, own tombstone, 안 보이는 행), Busy, Unsupported(own INSERT·own UPDATE·긴 새 값), SerializationConflict, 명시 거래 statement 실패 뒤 계속, F4 census, A 생산자의 literal 바이트 대조 |
 | RUP-J01..10 | 07-3 | 실제 C 위: 갱신→commit→정리→새 값, 갱신→rollback→옛 값(커지는·줄어드는 값), 명시 거래 갱신 둘·statement rollback, 갱신 뒤 INSERT·DELETE(효과2 H), 정리 전 읽기, 재시작 replay, Busy(다른 거래의 UPDATE 행에 대한 DELETE·UPDATE), jobs·status·undo·leaf 관찰자 대조 |
-| RUP-B01..07 | 07-3 | B: own 새 값, committed q≤S 새 값, 진행 중 거래의 옛 값, q_old>S 없음, q_T>S 옛 값, 읽기 중 UpdateClr의 gate 대기, Releasing U Fatal·ValueBefore 없이 Inline 후보의 `value_before` 거절, 읽기 census |
+| RUP-B01..07 | 07-3 | B: own 새 값, committed q≤S 새 값, 진행 중 거래의 옛 값, q_old>S 없음, q_T>S 옛 값, 읽기 중 UpdateClr의 gate 대기, Releasing U Fatal·ValueBefore 없이 Inline 후보의 `value_before` 거절, `value_before` 뒤 같은 capture의 `copy_candidate` WrongState, (b) outline 표의 각 행(Releasing outline·`Transaction` stamp·logical 없음·길이 범위 밖 Fatal, Chunks·RowDeleted Unsupported), 읽기 census |
 | RUP-R01..07 | 07-3 | 복구(메모리): loser UpdateClr, winner UpdatePrune, 효과2 네 상태의 base4 수용, 짝 없는 Inline 행·cell C' 불일치·비canonical update U·넓힌 D 위반 거절, release cursor 3 |
 | RUP-N01..06 | 07-4 | native fault cut: UpdateForward·UpdateClr·UpdatePrune 앞뒤의 crash, 사례마다 produce·recover·reenter 세 process(DELETE §19와 같은 controller 규칙) |
 
@@ -288,7 +322,7 @@ UpdatePrune은 retiring group이고 DeletePrune과 같은 `ValuePrune` scope(q�
 | 단계 | 일정 항목 | 내용 | 끝 조건 |
 | --- | --- | --- | --- |
 | 1 | 07-1 | 이 문서, 독립 D2 검토 | 검토 ACCEPT, 사용자 병합 |
-| 2 | 07-2 | C 형식·전이층: §3 전부, §4의 C whole-group 전이(UpdateForward·UpdateClr은 관찰만, Reserve(update)·UpdatePrune은 생산), 넓힌 D, 효과2 H, 독립 저자 literal, RUP-F·C. UPDATE를 쓰는 제품 진입점은 없다. 제품 replay는 효과2를 Unsupported로 거절한다 | 변경 시험만 실행, gate record, 독립 검토, PR |
+| 2 | 07-2 | C 형식·전이층: §3 전부, §4의 C whole-group 전이(UpdateForward·UpdateClr은 관찰만, Reserve(update)·UpdatePrune은 생산), 넓힌 D, 효과2 H, 독립 저자 literal, RUP-F·C. UPDATE를 쓰는 제품 진입점은 없다. 제품 replay는 효과2를 Unsupported로 거절한다. `RowEffect`에 `Update`를 더하고 효과를 읽는 모든 제품 소비자를 wildcard 없는 match로 바꿔, 07-3이 여는 곳(A 생산자·H 증명, C forward·clr·live/복구 cleanup 선택, base4 actor·graph, 시험 전용 jobs·undo·leaf 관찰자)은 효과2에서 Unsupported를 돌려준다. 그 목록을 gate record에 적는다(DELETE 2-a record와 같은 방식). `effect() == Delete` 같은 bool 비교는 효과2를 INSERT 쪽으로 보내므로 남기지 않는다 | 변경 시험만 실행, gate record, 독립 검토, PR |
 | 3 | 07-3 | 제품 경로: C preflight·reserve_update와 판정(§5, DELETE 갈래 포함), A 생산자·실행기·loser, B 읽기(§7), live UpdatePrune, replay·recovery·base4, 시험 전용 관찰자, RUP-A·J·B·R | 같음 |
 | 4 | 07-4 | native fault cut과 남은 시험 | 같음. 07의 마지막 항목이라 [§3 행 조건](../plans/dev3-schedule-baseline.md#completion)을 모두 채워야 적립 |
 
@@ -305,7 +339,8 @@ DELETE와 같은 규칙으로, **영속 update 행·update U를 쓰는 제품 �
 - **별도 Job kind**: DELETE §14와 같은 이유.
 - **같은 크기 UPDATE만**: 일정 07의 "크기 변화의 leaf 공간"을 빼게 된다.
 - **커지는 UPDATE의 split**: 첫 profile은 leaf 하나다. Capacity로 거절하고 SMO는 일정 08이다.
-- **`missing_before`가 옛 값까지 읽기(U 한 번 읽기)**: 그 단계가 스키마 decode와 copy 버퍼를 가져 읽기 census 여유(126 B)를 넘을 위험이 크다. 두 번 읽기의 비용은 첫 경로의 한계로 둔다.
+- **`missing_before`가 옛 값까지 읽기(U 한 번 읽기)**: 그 단계가 스키마 decode와 copy 버퍼를 가져 읽기 census 여유(126 B)를 넘을 위험이 크다고 추정한다(측정 전). 진입 (a) 한 번이 `Missing | Value`를 돌려주는 형태도 같은 이유로 보류한다. 07-3이 두 번 읽기의 census를 잰 뒤 다시 본다.
+- **`value_before`에 별도 copy 구간**: 버퍼가 `8192+2×2048`로 커져 읽기 census가 늘어난다. 같은 capture의 `copy_candidate`를 막는 상태 규칙(§7)이 bool 하나로 같은 안전을 준다.
 - **다른 거래 UPDATE 행을 0행으로**: 옛 값이 S에 보이는 행을 없다고 답한다.
 - **own 행 재갱신**: version chain·3pin이 필요하다(일정 08-4).
 
@@ -319,7 +354,10 @@ DELETE와 같은 규칙으로, **영속 update 행·update U를 쓰는 제품 �
 5. DELETE 판정의 Inline 갈래 변경이 RDL 시험의 기대를 바꾸지 않는지(효과0 행의 결과는 같다, §5).
 6. RDL-B09의 후반(Inline `Transaction(T)` 행 아래 delete RowValue U가 Fatal)은 UPDATE 뒤 유효한 모양이 된다. B09는 07-3에서 "Job이 효과1인데 행이 Inline"이 base4·C에서 손상인지로 바꾸고, B 읽기는 그 모양을 UPDATE 행으로 읽는다는 점을 기록한다.
 7. A·B·C census(§10).
+8. 효과를 읽는 제품 소비자가 모두 wildcard 없는 match인지(§13 2단계), `scope()`에 UpdatePrune arm이 있는지(§8).
+9. B의 (b) outline 표와 copy 구간 상태 규칙(§7), holder root 묶음(§5).
 
 ## 작성 기록
 
 - 2026-11-04 r1 초안. main `5760f30`의 source를 읽고 썼다(operation.rs, wire.rs, core.rs, job.rs, undo_record.rs, transition.rs, transition/prepare.rs, ledger.rs, row_preflight.rs의 `delete_class`, plan4_apply/row/read.rs의 `missing_before`·`value_before`, row/read/driver.rs, plan4_recovery_base/row/actor.rs, plan4_apply.rs의 `RowLoanLayout`).
+- 2026-11-04 r2. 독립 D2 r1(ACCEPT WITH REQUIRED CHANGES) 반영. 필수 3건: §7 `value_before`가 capture의 새 값 copy 구간을 덮는 문제를 같은 capture의 `copy_candidate` WrongState 상태 규칙으로 닫음, [Undo 형식](dev3-undo-format.md) 개정에 B `missing_before`를 (b) 사용처로 더함, §7에 (b) outline 판정 표. 권고 6건: §13 2단계의 효과 소비자 빠짐없는 match와 gate record 목록, §8 `scope()` 빠짐없는 match, §3.4 kind1 사전 scan의 경계, §5 holder root 묶음 필드, §6 A↔C 경계 값 표와 §11 파일, §3.3 C' 사용처. 사소 6건: §2 B 행, §5 Fatal 행·Value 아닌 entry, 오류 순서의 L'>2048, §9 Releasing의 C·C' 지움, §8 읽기 쪽 근거, §7·§14 한 번 읽기 근거를 추정으로 표시.
