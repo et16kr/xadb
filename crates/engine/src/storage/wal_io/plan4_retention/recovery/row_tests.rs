@@ -66,6 +66,14 @@ const S1G_INDEX: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/../../tests/fixtures/module-row-format/reserve-replay/index.tsv"
 ));
+const D_BLOBS: &[u8] = include_bytes!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../../tests/fixtures/module-row-format/transition-delete/blobs.bin"
+));
+const D_INDEX: &str = include_str!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../../tests/fixtures/module-row-format/transition-delete/index.tsv"
+));
 
 type Page = [u8; PAGE_BYTES];
 type Descriptor = [u8; 1536];
@@ -94,6 +102,10 @@ fn blob(name: &str) -> &'static [u8] {
 /// An S1-g reserve-replay literal.
 fn g(name: &str) -> &'static [u8] {
     literal(S1G_BLOBS, S1G_INDEX, name)
+}
+/// A Row DELETE history D literal (`module-row-format/transition-delete`).
+fn d(name: &str) -> &'static [u8] {
+    literal(D_BLOBS, D_INDEX, name)
 }
 fn page_of(bytes: &[u8]) -> &Page {
     bytes.try_into().unwrap()
@@ -1106,6 +1118,12 @@ fn reserve_pages() -> Pages {
 }
 
 fn history_h(mode: Mode) -> usize {
+    history_h_replay(mode).rejected.get()
+}
+
+/// The replay after H-515 (T's committed rows 4 and 11 pruned, its root 16
+/// freed): the before state of history D.
+fn history_h_replay(mode: Mode) -> Replay {
     let mut r = h_504(mode);
     r.step(
         "H-505",
@@ -1186,7 +1204,7 @@ fn history_h(mode: Mode) -> usize {
         Change::RootFree { ordinal: 16 },
         undo11,
     );
-    r.rejected.get()
+    r
 }
 
 /// A's Forward/CLR candidates (not produced by C) from their own snapshots.
@@ -1378,6 +1396,49 @@ fn s1b_row_arm_replays_n1_and_a_literals() {
         history_e(mode) + history_n(mode) + history_h(mode) + a_literals(mode),
         0
     );
+}
+
+/// Stage 2b-1 keeps DELETE out of replay (dev3-row-delete.md#implementation-2b1):
+/// after history H and D-516..D-520 (T2's Begin, T's root 15 released and
+/// freed) replay the same as C produced them, the valid delete Reserve D-521
+/// (effect 1, adopted by C's `ReserveAdopted`) is refused Unsupported with no
+/// effect; its replay arrives with opcodes 8/9/23 in stage 2b-2.
+#[test]
+fn rdl_c_row_arm_refuses_delete_reserve_until_its_replay() {
+    let mut r = history_h_replay(Mode::default());
+    for name in ["D-status20-0", "D-undo15-0", "D-undo16-0"] {
+        r.set_page(page_of(d(name)));
+    }
+    r.step(
+        "D-516",
+        d("D-516"),
+        Change::Begin {
+            actor: actor(6, 2),
+            status: slot(20, 2),
+            scope: job3::JobScope::Row,
+        },
+        Pages {
+            jobs: Some(1),
+            status: Some(20),
+            ..pages()
+        },
+    );
+    let undo10 = Pages {
+        jobs: Some(1),
+        undo: Some(10),
+        ..pages()
+    };
+    for name in ["D-517", "D-518", "D-519"] {
+        r.step(name, d(name), Change::ReleaseRole { ordinal: 15 }, undo10);
+    }
+    r.step(
+        "D-520",
+        d("D-520"),
+        Change::RootFree { ordinal: 15 },
+        undo10,
+    );
+    let cause = r.refused("D-521", d("D-521"));
+    assert_eq!(cause, "Some(RowSemantic(Unsupported))", "D-521");
 }
 
 /// H02: every R- variant of the corpus and every replay precondition is

@@ -63,6 +63,16 @@ const INDEX: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/../../tests/fixtures/module-row-format/transition/index.tsv"
 ));
+/// DELETE literals (`module-row-format/transition-delete/author.py`): history
+/// D from the end of H and its `R-D-*` variants.
+const DELETE_BLOBS: &[u8] = include_bytes!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../../tests/fixtures/module-row-format/transition-delete/blobs.bin"
+));
+const DELETE_INDEX: &str = include_str!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../../tests/fixtures/module-row-format/transition-delete/index.tsv"
+));
 const PROFILE: &[u8; 4096] = scope3!("profile3.bin");
 /// Every framing-valid variant and the exact refusal its base's observer must
 /// give: the recomputed canonical group differs from the candidate.
@@ -192,14 +202,25 @@ fn hex(bytes: &[u8]) -> String {
     bytes.iter().map(|byte| format!("{byte:02x}")).collect()
 }
 
-/// One literal from blobs.bin, located and SHA-checked through index.tsv.
+/// The literal set a name belongs to: history D and its `R-D-` variants are
+/// the DELETE author's, everything else the N1 author's.
+fn literals(name: &str) -> (&'static str, &'static [u8]) {
+    if name.starts_with("D-") || name.starts_with("R-D-") {
+        (DELETE_INDEX, DELETE_BLOBS)
+    } else {
+        (INDEX, BLOBS)
+    }
+}
+
+/// One literal from its blobs.bin, located and SHA-checked through index.tsv.
 fn blob(name: &str) -> &'static [u8] {
-    for line in INDEX.lines() {
+    let (index, blobs) = literals(name);
+    for line in index.lines() {
         let fields: Vec<&str> = line.split('\t').collect();
         if fields[0] == name {
             let offset: usize = fields[1].parse().unwrap();
             let length: usize = fields[2].parse().unwrap();
-            let bytes = &BLOBS[offset..offset + length];
+            let bytes = &blobs[offset..offset + length];
             assert_eq!(hex(&content_digest(bytes)), fields[3], "{name}");
             return bytes;
         }
@@ -542,7 +563,7 @@ impl World {
             return;
         };
         let prefix = format!("R-{name}-");
-        for line in INDEX.lines() {
+        for line in literals(name).0.lines() {
             let variant = line.split('\t').next().unwrap();
             if !variant.starts_with(&prefix) {
                 continue;
@@ -552,6 +573,7 @@ impl World {
                 .unwrap_or_else(|error| panic!("{variant} framing {error:?}"));
             let expected = REJECTS
                 .iter()
+                .chain(delete::REJECTS.iter())
                 .find(|(name, _)| *name == variant)
                 .unwrap_or_else(|| panic!("{variant} has no expected refusal"))
                 .1;
@@ -654,6 +676,25 @@ impl World {
         let (Some(actor), Some(location)) = (observed.actor, observed.status) else {
             return;
         };
+        // The scope3 local Undo and Job observers learn the DELETE effect in
+        // stage 2b-2 (dev3-row-delete.md#files: semantic_row/{undo,leaf,jobs}.rs).
+        // Until then they skip a group of an actor with an effect-1 root,
+        // before or after; status.rs skips only the DELETE opcodes themselves.
+        let delete_actor = |bank: &[[u8; JOB_BYTES]; JOB_COUNT]| {
+            bank.iter().any(|cell| {
+                row::decode_job(cell, namespace()).is_ok_and(|job| {
+                    job.state().is_root()
+                        && job.source() == Some(actor)
+                        && job.effect() == row::RowEffect::Delete
+                })
+            })
+        };
+        let job_changed = observed.order[..usize::from(observed.count)].contains(&(JOB as u8));
+        let after_effect = observed
+            .job_ordinal
+            .filter(|_| job_changed)
+            .is_some_and(|ordinal| cell(&after[JOB], ordinal % 15)[284] == 1);
+        let deferred = delete_actor(&self.bank) || after_effect;
         let layout = decode_layout(frame, expectation(self.lsn), profile()).unwrap();
         let op = observed.operation;
         let present =
@@ -700,7 +741,7 @@ impl World {
             before: status_before.unwrap(),
             after: &after[STATUS],
         });
-        if let Some(images) = status_images {
+        if let Some(images) = status_images.filter(|_| op == op.role()) {
             status::observe(
                 layout,
                 status::StatusContext {
@@ -713,6 +754,13 @@ impl World {
                 images,
             )
             .unwrap_or_else(|error| panic!("{name}: status.rs {error:?}"));
+        }
+        if deferred {
+            println!(
+                "N1_CROSS\t{name}\tstatus={}\tundo/jobs deferred to 2b-2 (effect-1 actor)",
+                present(STATUS) && op == op.role()
+            );
+            return;
         }
         let ordinal = observed.job_ordinal;
         if present(UNDO) {
@@ -1155,6 +1203,12 @@ fn h_statement_rollback(world: &mut World) {
 }
 
 fn history_h(rejects: bool) -> usize {
+    let world = history_h_world(rejects);
+    world.rejects.map_or(0, Cell::into_inner)
+}
+
+/// History H from A's h-501 through H-515; history D continues from here.
+fn history_h_world(rejects: bool) -> Box<World> {
     let mut world = h_501();
     world.rejects = rejects.then(|| Cell::new(0));
     h_statement_rollback(&mut world);
@@ -1253,7 +1307,7 @@ fn history_h(rejects: bool) -> usize {
         world.produce(name, Change::ReleaseRole { ordinal: 16 }, undo11);
     }
     world.produce("H-515", Change::RootFree { ordinal: 16 }, undo11);
-    world.rejects.map_or(0, Cell::into_inner)
+    world
 }
 
 #[test]
@@ -1850,6 +1904,9 @@ fn n1_producer_refusals_precede_output() {
 /// `frames` convention); a chain adds the callee chain it enters. Index-key
 /// decoding is omitted: RowLeaf pages and Row Undo targets never reach it.
 /// These sums check the counted `source` terms; they are not stack samples.
+#[path = "transition_delete_tests.rs"]
+mod delete;
+
 mod measured {
     use super::super::source::returned;
     use super::frames;
@@ -1874,8 +1931,9 @@ mod measured {
             },
             undo_record::{
                 UNDO_RECORD_BYTES, UndoBeforeKind, UndoCell, UndoEdge, UndoError, UndoLink,
-                UndoPayload, UndoPayloadHead, UndoRecord, UndoRecordExpectation, UndoRecordView,
-                UndoRelease, UndoTargetView,
+                UndoPayload, UndoPayloadHead, UndoRecord, UndoRecordExpectation,
+                UndoRecordMetadata, UndoRecordOutline, UndoRecordState, UndoRecordView,
+                UndoRelease, UndoStampKind, UndoTargetView,
             },
             undo_ref::UndoRef,
             wal_frame::{
@@ -2220,12 +2278,44 @@ mod measured {
             + size_of::<R<(), UndoError>>()
             + ur_target_validate()
     }
+    /// One `BeforeSchema` instance: its argument and the
+    /// `check_row_before` chain (arguments, result, the canonical parse).
+    #[derive(Clone, Copy)]
+    struct Schema {
+        arg: usize,
+        check: usize,
+    }
+    /// C's `&[Column]`: `decode_canonical_row` over the schema wrapper.
+    fn columns() -> Schema {
+        Schema {
+            arg: size_of::<&[Column]>(),
+            check: ur_check_row_before(),
+        }
+    }
+    /// Entry (a)'s `&RowSchemaInput`: `decode_canonical_row_with_schema`.
+    fn row_schema() -> Schema {
+        Schema {
+            arg: size_of::<&RowSchemaInput<'_>>(),
+            check: size_of::<(&RowSchemaInput<'_>, &[u8])>()
+                + size_of::<R<(), UndoError>>()
+                + returned::<CanonicalRowView<'_>, RowError>()
+                + rr_canonical(),
+        }
+    }
+    /// Entry (b)'s zero-sized `MetadataOnly`: no parse.
+    fn metadata_only() -> Schema {
+        Schema {
+            arg: 0,
+            check: size_of::<&[u8]>() + size_of::<R<(), UndoError>>(),
+        }
+    }
     /// validate_record over a Row target while the target check or the Row
-    /// before parse runs. Its CatalogValue arm (catalog_expectation and
+    /// before check runs. Its CatalogValue arm (catalog_expectation and
     /// decode_catalog_before) is unreachable: a Row target refuses that before
-    /// kind first (undo_record.rs:534-550).
-    fn ur_validate_record() -> usize {
-        size_of::<(UndoRecord<'_>, bool, UndoRecordExpectation<'_>, &[Column])>()
+    /// kind first.
+    fn ur_validate_record(schema: Schema) -> usize {
+        size_of::<(UndoRecord<'_>, bool, UndoRecordExpectation<'_>)>()
+            + schema.arg
             + size_of::<R<usize, UndoError>>()
             + size_of::<R<(), UndoError>>()
             + returned::<TxnRef, PageError>()
@@ -2234,8 +2324,16 @@ mod measured {
             + returned::<LogicalRowVersion, UndoError>()
             + returned::<VersionStamp, UndoError>()
             + size_of::<(usize, UndoPayloadHead, usize, Option<PageRef>)>()
+            + returned::<(), UndoError>()
+            + ur_target_validate().max(schema.check)
+    }
+    /// `BeforeSchema::check_row_before` for `&[Column]` (the RowValue arm):
+    /// its arguments and the canonical parse result over decode_canonical_row.
+    fn ur_check_row_before() -> usize {
+        size_of::<(&[Column], &[u8])>()
+            + size_of::<R<(), UndoError>>()
             + returned::<CanonicalRowView<'_>, RowError>()
-            + ur_target_validate().max(rr_canonical_columns())
+            + rr_canonical_columns()
     }
     /// decode_canonical_row: the column-schema wrapper over rr_canonical.
     fn rr_canonical_columns() -> usize {
@@ -2243,12 +2341,13 @@ mod measured {
             + size_of::<R<CanonicalRowView<'_>, RowError>>()
             + rr_canonical()
     }
-    fn ur_encoded_len() -> usize {
-        size_of::<(UndoCell<'_>, UndoRecordExpectation<'_>, &[Column])>()
+    fn ur_encoded_len(schema: Schema) -> usize {
+        size_of::<(UndoCell<'_>, UndoRecordExpectation<'_>)>()
+            + schema.arg
             + size_of::<R<usize, UndoError>>()
             + size_of::<R<(), UndoError>>()
             + size_of::<UndoRecord<'_>>()
-            + ur_expectation_valid().max(ur_validate_record())
+            + ur_expectation_valid().max(ur_validate_record(schema))
     }
     fn ur_free_encode() -> usize {
         size_of::<(Generation, &mut [u8])>()
@@ -2261,17 +2360,16 @@ mod measured {
             + size_of::<R<(), PageError>>()
             + page_ref_encode()
     }
-    /// encode_undo_record while the length check or a field encoder runs.
-    fn ur_encode() -> usize {
+    /// encode_record_header while a field encoder runs: the edge walk and
+    /// the stamp, logical, payload head and next reference copies.
+    fn ur_record_header() -> usize {
         size_of::<(
-            UndoCell<'_>,
+            &UndoRecord<'_>,
+            u8,
             UndoRecordExpectation<'_>,
-            &[Column],
-            &mut [u8],
-        )>() + size_of::<R<usize, UndoError>>()
-            + 2 * returned::<usize, UndoError>()
-            + size_of::<[u8; UNDO_RECORD_BYTES]>()
-            + size_of::<(&[u8], &[u8], UndoRecord<'_>)>()
+            &mut [u8; UNDO_RECORD_BYTES],
+        )>() + size_of::<R<&[u8], UndoError>>()
+            + 2 * size_of::<R<(), PageError>>()
             + size_of::<(
                 Enumerate<array::IntoIter<UndoEdge, 2>>,
                 usize,
@@ -2284,16 +2382,44 @@ mod measured {
                 LogicalRowVersion,
                 UndoPayloadHead,
                 PageRef,
+                &[u8],
             )>()
-            + 2 * size_of::<R<(), PageError>>()
-            + ur_encoded_len()
-                .max(txn_id_encode())
+            + txn_id_encode()
                 .max(undo_ref_encode())
                 .max(stamp_encode())
                 .max(logical_encode())
                 .max(ur_head_encode())
                 .max(page_ref_encode())
+    }
+    /// encode_undo_record while the length check, the free encoder or the
+    /// header runs.
+    fn ur_encode(schema: Schema) -> usize {
+        size_of::<(UndoCell<'_>, UndoRecordExpectation<'_>, &mut [u8])>()
+            + schema.arg
+            + size_of::<R<usize, UndoError>>()
+            + 2 * returned::<usize, UndoError>()
+            + size_of::<(UndoRecord<'_>, u8)>()
+            + size_of::<[u8; UNDO_RECORD_BYTES]>()
+            + size_of::<(&[u8], &[u8])>()
+            + returned::<&[u8], UndoError>()
+            + ur_encoded_len(schema)
+                .max(ur_record_header())
                 .max(ur_free_encode())
+    }
+    /// encode_undo_record_head (entry (a)'s schema): the same length check,
+    /// then the header into the caller's head.
+    fn ur_encode_head() -> usize {
+        size_of::<(
+            UndoCell<'_>,
+            UndoRecordExpectation<'_>,
+            &mut [u8; UNDO_RECORD_BYTES],
+        )>() + row_schema().arg
+            + size_of::<R<usize, UndoError>>()
+            + returned::<usize, UndoError>()
+            + size_of::<(UndoRecord<'_>, u8)>()
+            + size_of::<[u8; UNDO_RECORD_BYTES]>()
+            + returned::<&[u8], UndoError>()
+            + ur_encoded_len(row_schema()).max(ur_record_header())
     }
     fn ur_record_generation() -> usize {
         size_of::<(&[u8], Generation)>()
@@ -2316,8 +2442,9 @@ mod measured {
     }
     /// decode_undo_record: every field result of the record literal, then
     /// validate_record or one field decoder.
-    fn ur_decode() -> usize {
-        size_of::<(&[u8], UndoRecordExpectation<'_>, &[Column])>()
+    fn ur_decode(schema: Schema) -> usize {
+        size_of::<(&[u8], UndoRecordExpectation<'_>)>()
+            + schema.arg
             + size_of::<R<UndoRecordView<'_>, UndoError>>()
             + 2 * size_of::<R<(), UndoError>>()
             + returned::<Generation, UndoError>()
@@ -2344,7 +2471,7 @@ mod measured {
                 .max(stamp_decode())
                 .max(logical_decode())
                 .max(page_ref_decode())
-                .max(ur_validate_record())
+                .max(ur_validate_record(schema))
     }
     /// cells::check_material over encode_material: the canonical cell stays
     /// live while encode_undo_record or decode_undo_record runs.
@@ -2364,7 +2491,138 @@ mod measured {
             + size_of::<UndoRecordExpectation<'_>>()
             + returned::<usize, UndoError>()
             + returned::<UndoRecordView<'_>, UndoError>();
-        check + encode + ur_encode().max(ur_decode())
+        check + encode + ur_encode(columns()).max(ur_decode(columns()))
+    }
+    /// `cells::expectation`: the Job identities and the expectation.
+    fn cells_expectation() -> usize {
+        size_of::<(Namespace, JobView<'_>)>()
+            + size_of::<R<UndoRecordExpectation<'_>, Error>>()
+            + size_of::<(UndoRef, ObjectHandle, RowId)>()
+    }
+    /// `cells::material`: the Job identities and the record literal.
+    fn cells_material() -> usize {
+        size_of::<(JobView<'_>, UndoEdge, u64, u8)>()
+            + size_of::<R<UndoRecord<'_>, Error>>()
+            + size_of::<(TxnRef, ObjectHandle, RowId)>()
+            + size_of::<UndoRecord<'_>>()
+    }
+    /// `UndoRecordView::outline`: the view and the outline it builds.
+    fn ur_outline() -> usize {
+        size_of::<UndoRecordView<'_>>()
+            + size_of::<R<UndoRecordOutline<'_>, UndoError>>()
+            + size_of::<UndoRecord<'_>>()
+            + returned::<UndoRecordMetadata<'_>, UndoError>()
+            + size_of::<(UndoRecordState, Option<UndoStampKind>)>()
+    }
+    /// decode_undo_record_metadata (entry (b)): the view, then its outline.
+    fn ur_metadata_decode() -> usize {
+        size_of::<(&[u8], UndoRecordExpectation<'_>)>()
+            + size_of::<R<UndoRecordOutline<'_>, UndoError>>()
+            + size_of::<R<UndoRecordView<'_>, UndoError>>()
+            + ur_decode(metadata_only()).max(ur_outline())
+    }
+    /// `cells::check_live` over `check_outline`: the Job material, payload
+    /// length and expectation, the decoded outline and the expected one,
+    /// over the material, the expectation or the metadata decode.
+    pub(super) fn ur_outline_check() -> usize {
+        size_of::<(Namespace, JobView<'_>, UndoEdge, &[u8])>()
+            + size_of::<R<(), Error>>()
+            + size_of::<(Namespace, JobView<'_>, bool, UndoEdge, u8, &[u8])>()
+            + size_of::<R<(), Error>>()
+            + returned::<UndoRecord<'_>, Error>()
+            + returned::<usize, Error>()
+            + returned::<UndoRecordExpectation<'_>, Error>()
+            + returned::<UndoRecordOutline<'_>, UndoError>()
+            + size_of::<UndoRecordOutline<'_>>()
+            + cells_material()
+                .max(cells_expectation())
+                .max(ur_metadata_decode())
+    }
+    /// encode_release_step: the decoded view and the stepped record over the
+    /// MetadataOnly decode or encode.
+    pub(super) fn ur_release_step() -> usize {
+        size_of::<(&[u8], UndoRecordExpectation<'_>, &mut [u8])>()
+            + size_of::<R<usize, UndoError>>()
+            + returned::<UndoRecordView<'_>, UndoError>()
+            + size_of::<(UndoRecord<'_>, UndoCell<'_>)>()
+            + ur_decode(metadata_only()).max(ur_encode(metadata_only()))
+    }
+    /// `cells::delete_material` over `cells::material`.
+    fn cells_delete_material() -> usize {
+        size_of::<(
+            JobView<'_>,
+            UndoEdge,
+            u64,
+            VersionStamp,
+            LogicalRowVersion,
+            UndoPayload<'_>,
+        )>() + size_of::<R<UndoRecord<'_>, Error>>()
+            + returned::<UndoRecord<'_>, Error>()
+            + cells_material()
+    }
+    /// `delete_undo_live`: the before triple, the DELETE material in its Live
+    /// cell, the expectation and the header encode's length, over the
+    /// material, the expectation or entry (a)'s header encode.
+    pub(super) fn ur_delete_undo_live() -> usize {
+        type Before<'a> = (VersionStamp, LogicalRowVersion, &'a [u8]);
+        size_of::<(
+            Namespace,
+            JobView<'_>,
+            UndoEdge,
+            &RowSchemaInput<'_>,
+            Before<'_>,
+            &mut [u8; UNDO_RECORD_BYTES],
+        )>() + size_of::<R<Before<'_>, Error>>()
+            + size_of::<Before<'_>>()
+            + returned::<UndoRecord<'_>, Error>()
+            + size_of::<UndoCell<'_>>()
+            + returned::<UndoRecordExpectation<'_>, Error>()
+            + returned::<usize, UndoError>()
+            + size_of::<R<(), Error>>()
+            + cells_delete_material()
+                .max(cells_expectation())
+                .max(ur_encode_head())
+    }
+    /// `delete_before`: the decoded view and its Live record, the compared
+    /// material and the before triple, over the expectation, entry (a)'s
+    /// decode, `live_before` or the material.
+    pub(super) fn ur_delete_before() -> usize {
+        type Before<'a> = (VersionStamp, LogicalRowVersion, &'a [u8]);
+        let live_before =
+            size_of::<UndoRecordView<'_>>() + size_of::<R<UndoRecord<'_>, UndoError>>();
+        size_of::<(Namespace, JobView<'_>, UndoEdge, &RowSchemaInput<'_>, &[u8])>()
+            + size_of::<R<Before<'_>, Error>>()
+            + returned::<UndoRecordExpectation<'_>, Error>()
+            + returned::<UndoRecordView<'_>, UndoError>()
+            + returned::<UndoRecord<'_>, UndoError>()
+            + returned::<UndoRecord<'_>, Error>()
+            + size_of::<Before<'_>>()
+            + size_of::<R<(), Error>>()
+            + cells_expectation()
+                .max(ur_decode(row_schema()))
+                .max(live_before)
+                .max(cells_delete_material())
+    }
+    /// `delete_release`: the cut edge, the Releasing material in its cell and
+    /// the expectation, over the material, the expectation or entry (a)'s
+    /// encode.
+    pub(super) fn ur_delete_release() -> usize {
+        size_of::<(
+            Namespace,
+            JobView<'_>,
+            UndoEdge,
+            &RowSchemaInput<'_>,
+            (VersionStamp, LogicalRowVersion),
+            &mut [u8; UNDO_RECORD_BYTES],
+        )>() + size_of::<R<(), Error>>()
+            + size_of::<UndoEdge>()
+            + returned::<UndoRecord<'_>, Error>()
+            + size_of::<UndoCell<'_>>()
+            + returned::<UndoRecordExpectation<'_>, Error>()
+            + returned::<usize, UndoError>()
+            + cells_delete_material()
+                .max(cells_expectation())
+                .max(ur_encode(row_schema()))
     }
 
     // ---- framing ----
@@ -2392,7 +2650,7 @@ mod measured {
 
 /// Whole measured chains above `outer` (every frame live over the phases):
 /// a phase's own locals, one SHA closure and one measured callee chain.
-fn measured_chains(outer: usize) -> [(&'static str, usize); 15] {
+fn measured_chains(outer: usize) -> [(&'static str, usize); 20] {
     use super::source;
     use std::mem::size_of;
     let sha = frames::SHA;
@@ -2448,6 +2706,28 @@ fn measured_chains(outer: usize) -> [(&'static str, usize); 15] {
             prepared + measured::tp_prepare_leaf_edit(),
         ),
         ("prepare+undo_material", prepared + measured::ur_material()),
+        // DELETE's U (dev3-row-delete.md#delete-undo): the outline check,
+        // the release step and entry (a)'s header encode, decode and encode.
+        (
+            "prepare+undo_outline",
+            prepared + measured::ur_outline_check(),
+        ),
+        (
+            "prepare+undo_release_step",
+            prepared + measured::ur_release_step(),
+        ),
+        (
+            "prepare+delete_undo_live",
+            prepared + measured::ur_delete_undo_live(),
+        ),
+        (
+            "prepare+delete_before",
+            prepared + measured::ur_delete_before(),
+        ),
+        (
+            "prepare+delete_release",
+            prepared + measured::ur_delete_release(),
+        ),
         ("frame+callee", framing + measured::frame_callee()),
         (
             "write+aging_next",
@@ -2523,6 +2803,31 @@ fn n1_transition_source_bounds_cover_measured_frames() {
             source::material(),
         ),
         (
+            "undo_record_outline",
+            measured::ur_outline_check(),
+            source::material(),
+        ),
+        (
+            "undo_record_release_step",
+            measured::ur_release_step(),
+            source::material(),
+        ),
+        (
+            "delete_undo_live",
+            measured::ur_delete_undo_live(),
+            source::delete_undo(),
+        ),
+        (
+            "delete_before",
+            measured::ur_delete_before(),
+            source::delete_undo(),
+        ),
+        (
+            "delete_release",
+            measured::ur_delete_release(),
+            source::delete_undo(),
+        ),
+        (
             "frame_callee",
             measured::frame_callee(),
             source::frame_callee(),
@@ -2553,13 +2858,15 @@ fn n1_transition_source_bounds_cover_measured_frames() {
         source::slack(),
     );
     println!(
-        "N1_SOURCE_TERMS ledger={} tx_before={} descriptor_after={} status={} material={} leaf={} job_edit={} graph={} row_codec={} tree_codec={} leaf_edit={} frame_callee={}",
+        "N1_SOURCE_TERMS ledger={} tx_before={} descriptor_after={} status={} material={} leaf={} delete={} undo_row_codec={} job_edit={} graph={} row_codec={} tree_codec={} leaf_edit={} frame_callee={}",
         source::ledger(),
         prepare::tx_before_bytes(),
         prepare::descriptor_after_bytes(),
         source::status(),
         source::material(),
         source::leaf(),
+        source::delete(),
+        source::undo_row_codec(),
         source::job_edit(),
         source::graph(),
         source::row_codec(),
@@ -2788,6 +3095,7 @@ fn s1a_borrowed_observer_source_bound_covers_measured_frames() {
         ),
         ("material", source::material()),
         ("leaf", source::leaf()),
+        ("delete", source::delete()),
         ("row_census", row::source_bytes()),
         ("status", source::status()),
         ("job_edit", source::job_edit()),
@@ -3503,17 +3811,19 @@ fn mca04_v04_v08_issuer_max_is_exhausted_before_output() {
     }
 }
 
-/// Stage 2a boundary (dev3-row-delete.md#job-effect): the C rules shared by
-/// the producer and the whole-group observer (`prepare`, which replay also
-/// runs) refuse a valid DELETE root in the bank. noh-300's Reserved root 3
-/// becomes a DELETE root with C' = 2C: its delete cleanup 311608+C' equals
-/// the INSERT 311608+2C, so the budget census is unchanged and only Jobs
-/// page 0 and the Root job digest follow. The census over the edited bank
-/// verifies, so each refusal is the effect's: C's Cancel before its first
-/// output byte, and the observer over A's noh-301 Forward literal. Without
-/// the refusal, Cancel would run the INSERT rules (BudgetMismatch here).
+/// RDL-C (dev3-row-delete.md#job-effect): the effect byte is bound into the
+/// actor's ATT residual, so an INSERT descriptor cannot stand for a DELETE
+/// root. noh-300's Reserved root 3 becomes a DELETE root with C' = 2C: its
+/// delete cleanup 311608+C' equals the INSERT 311608+2C, so the Job budget
+/// census is unchanged and only Jobs page 0 and the Root job digest follow;
+/// the census over the edited bank verifies. The ATT's reserved row still
+/// holds the INSERT Forward debt at C, while the root's effect now names
+/// DeleteForward's at C', so C's Cancel (before its first output byte) and the
+/// observer over A's noh-301 Forward literal are both refused as
+/// BudgetMismatch. Stage 2a refused the root itself as Unsupported; 2b-1
+/// admits DELETE roots and leaves the binding to the ledger.
 #[test]
-fn rdl_f_insert_producer_refuses_delete_root_in_bank() {
+fn rdl_c_delete_effect_binds_the_att_forward_debt() {
     let noh = Pages {
         jobs: Some(0),
         status: Some(9),
@@ -3546,7 +3856,7 @@ fn rdl_f_insert_producer_refuses_delete_root_in_bank() {
         "Cancel of a DELETE root",
         &world.inputs(Change::Cancel { ordinal: 3 }, noh),
         FRAME_BYTES,
-        Error::Unsupported,
+        Error::BudgetMismatch,
     );
     let (forward, pages) = forward_301();
     let mut after = loans(0xa5);
@@ -3557,7 +3867,7 @@ fn rdl_f_insert_producer_refuses_delete_root_in_bank() {
             &mut after
         )
         .map(|_| ()),
-        Err(Error::Unsupported),
+        Err(Error::BudgetMismatch),
         "A's Forward over a DELETE root"
     );
 }

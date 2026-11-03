@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-11-03T15:18:08.259984+09:00",
+  "date": "2026-11-03T18:04:01.261035+09:00",
   "status": "PASS",
   "errors": [],
   "markdown_documents": [
@@ -289,9 +289,9 @@
     },
     {
       "file": "devdoc/contracts/dev3-row-delete.md",
-      "links": 26,
+      "links": 27,
       "duplicate_ids": 0,
-      "sha256": "cc55a2a6ec18c671b533a837b708fb36d365747bb6441fc63e90af80a5fd9127"
+      "sha256": "39945727636fa87abbfe493a8635e6261272f9214c1116cabdafe026a6e02368"
     },
     {
       "file": "devdoc/contracts/dev3-row-format.md",
@@ -459,7 +459,7 @@
       "file": "devdoc/contracts/dev3-undo-format.md",
       "links": 19,
       "duplicate_ids": 0,
-      "sha256": "a31fd9426baceb4e3025a4fc1e8d9ce1bd10c415d9a43515e9924e56f5b04f4f"
+      "sha256": "36463e806dc6e80b62696984dfaa3357159899a839381b6773d7b983d522ef17"
     },
     {
       "file": "devdoc/contracts/dev3-undo-model.md",

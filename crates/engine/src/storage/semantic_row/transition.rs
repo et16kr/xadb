@@ -89,6 +89,23 @@ pub(crate) struct ReservePlan<'a> {
     pub(crate) canonical: &'a [u8],
 }
 
+/// Plan of one delete RowReserve (dev3-row-delete.md#delete-states): the
+/// RowReserve of `ReservePlan` for an existing row instead of a new value.
+/// UndoSequence, mutation, slot and Job generations are issued from the stable
+/// Root/descriptor/page; no RowId is issued.
+#[derive(Clone, Copy)]
+pub(crate) struct DeletePlan {
+    /// Ordinal of the actor's TerminalLeased Job; actor and Status come from it.
+    pub(crate) terminal: usize,
+    /// Free Undo container chosen by the original allocator/provisioning owner.
+    pub(crate) container: PageRef,
+    pub(crate) table: ObjectHandle,
+    /// The caller's live statement sequence (nonzero, non-decreasing).
+    pub(crate) statement: u64,
+    /// The committed, pruned row to delete.
+    pub(crate) row: RowId,
+}
+
 /// Stable table observation: anchor proof, current RowLeaf and schema. This is
 /// not a CheckedTable, epoch or Catalog selection token.
 #[derive(Clone, Copy)]
@@ -112,10 +129,17 @@ pub(crate) enum Change<'a> {
     /// The live RowReserve producer (`reserve`, S2-b2); replay observes
     /// RowReserve through `ReserveAdopted`.
     Reserve(&'a ReservePlan<'a>),
+    /// The live delete RowReserve producer (dev3-row-delete.md#api).
+    #[cfg_attr(
+        not(test),
+        allow(dead_code, reason = "A's DELETE executor (stage 2b-2) constructs it")
+    )]
+    ReserveDelete(&'a DeletePlan),
     /// Replay-only RowReserve (contract row-reserve-replay): the three
     /// selectors the original owner chose, bound and checked by the Row
-    /// replay arm. C and the projection are adopted from the candidate's
-    /// single kind-9 after; every other byte is recomputed and compared.
+    /// replay arm. From the candidate's single kind-9 after, an INSERT root
+    /// adopts C and the projection, a DELETE root its effect byte and RowId
+    /// (dev3-row-delete.md#api); every other byte is recomputed and compared.
     /// Reached only through `observe_borrowed`.
     ReserveAdopted {
         terminal: usize,
@@ -154,6 +178,32 @@ pub(crate) enum Change<'a> {
     Prune {
         ordinal: usize,
     },
+    /// Observe only; A produces DeleteForward.
+    #[cfg_attr(
+        not(test),
+        allow(dead_code, reason = "A's DELETE executor (stage 2b-2) constructs it")
+    )]
+    DeleteForward {
+        ordinal: usize,
+        statement: StatementBoundary,
+    },
+    /// Observe only; A produces DeleteClr.
+    #[cfg_attr(
+        not(test),
+        allow(dead_code, reason = "A's DELETE executor (stage 2b-2) constructs it")
+    )]
+    DeleteClr {
+        ordinal: usize,
+        statement: Option<StatementBoundary>,
+    },
+    /// C produces DeletePrune, the live cleanup of a committed delete root.
+    #[cfg_attr(
+        not(test),
+        allow(dead_code, reason = "A's DELETE executor (stage 2b-2) constructs it")
+    )]
+    DeletePrune {
+        ordinal: usize,
+    },
     ReleaseRole {
         ordinal: usize,
     },
@@ -169,7 +219,9 @@ impl Change<'_> {
         match self {
             Self::AgingStart => Operation::AgingStart,
             Self::Begin { .. } => Operation::Begin,
-            Self::Reserve(_) | Self::ReserveAdopted { .. } => Operation::Reserve,
+            Self::Reserve(_) | Self::ReserveDelete(_) | Self::ReserveAdopted { .. } => {
+                Operation::Reserve
+            }
             Self::Forward { .. } => Operation::Forward,
             Self::Cancel { .. } => Operation::Cancel,
             Self::RollbackStart { .. } => Operation::RollbackStart,
@@ -178,6 +230,9 @@ impl Change<'_> {
             Self::Commit { .. } => Operation::Commit,
             Self::AbortEnd { .. } => Operation::AbortEnd,
             Self::Prune { .. } => Operation::Prune,
+            Self::DeleteForward { .. } => Operation::DeleteForward,
+            Self::DeleteClr { .. } => Operation::DeleteClr,
+            Self::DeletePrune { .. } => Operation::DeletePrune,
             Self::ReleaseRole { .. } => Operation::ReleaseRole,
             Self::RootFree { .. } => Operation::RootFree,
             Self::TerminalFinish { .. } => Operation::TerminalFinish,
@@ -251,7 +306,8 @@ enum LeafEdit<'a> {
     /// Forward: the candidate's sealed cell, already checked against the Job.
     Insert(&'a [u8]),
     Remove(RowId),
-    /// Prune: the restamped cell in `Prepared::cell`.
+    /// Prune's restamped cell, DeleteForward's tombstone or DeleteClr's
+    /// restored row, in `Prepared::cell`.
     Replace,
 }
 
@@ -272,6 +328,10 @@ struct Prepared<'a, 's> {
     root: &'s mut [u8; ROOT_BYTES],
     status: Option<StatusHome>,
     undo: &'s mut [u8; UNDO_RECORD_BYTES],
+    /// DeleteForward's Live U value: the old row's canonical bytes, borrowed
+    /// from the RowLeaf before image, placed right after the 432-byte header
+    /// in `undo` (dev3-row-delete.md#scratch). Empty for every other group.
+    undo_tail: &'a [u8],
     leaf: Option<(
         LeafEdit<'a>,
         crate::storage::tree_page::TreeExpectation,
@@ -291,8 +351,8 @@ struct Prepared<'a, 's> {
 
 /// Produce one complete C-owned group into caller loans. Every refusal that
 /// depends on the inputs returns before the first `after`/`frame` byte is
-/// written. Forward and CLR are A's and ReserveAdopted is replay-only; all
-/// three return Unsupported here.
+/// written. Forward, CLR, DeleteForward and DeleteClr are A's and
+/// ReserveAdopted is replay-only; all five return Unsupported here.
 #[allow(
     dead_code,
     reason = "owned-backing producer; the live Row install uses produce_borrowed"
@@ -334,13 +394,17 @@ pub(crate) fn reserve_job(
     cells::first_free(root, jobs, namespace)
 }
 
-/// Forward and CLR are A's; ReserveAdopted is replay-only. Both producers
-/// refuse them before writing any loan, `produce_borrowed` before clearing
-/// its scratch.
+/// Forward and CLR, DeleteForward and DeleteClr are A's; ReserveAdopted is
+/// replay-only. Both producers refuse them before writing any loan,
+/// `produce_borrowed` before clearing its scratch.
 fn refuse_unproduced(inputs: &Inputs<'_>) -> Result<()> {
     if matches!(
         inputs.change,
-        Change::Forward { .. } | Change::Clr { .. } | Change::ReserveAdopted { .. }
+        Change::Forward { .. }
+            | Change::Clr { .. }
+            | Change::DeleteForward { .. }
+            | Change::DeleteClr { .. }
+            | Change::ReserveAdopted { .. }
     ) {
         return Err(Error::Unsupported);
     }

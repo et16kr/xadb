@@ -2,7 +2,9 @@
 //! byte (consumers.md row-states/row-shape; create-group-format.md §queue).
 //! `write_pages` and `finish_aging` only place values whose inputs were
 //! checked here; their errors are broken internal invariants.
-use super::super::{Error, Operation, Result, ledger, status::StatementBoundary};
+use super::super::{
+    Error, Operation, Result, ledger, operation::TOMBSTONE_CELL, status::StatementBoundary,
+};
 use super::{
     AGGREGATE_BYTES, Change, Changed, Inputs, Issued, JOB, LEAF, LeafEdit, MAX_CELL, MAX_RECORD,
     Prepared, ROOT, ROW_REPLAY_SCRATCH_BYTES, STATUS, UNDO,
@@ -36,7 +38,7 @@ use crate::storage::{
         TransactionStatusCell, TxnRef, VersionStamp,
     },
     tree_page::{self, EntryPayload, TreeExpectation, edit},
-    undo_record::{self, UNDO_RECORD_BYTES, UndoCell, UndoEdge, UndoLink},
+    undo_record::{self, UNDO_RECORD_BYTES, UndoCell, UndoEdge, UndoLink, UndoPayload},
     undo_ref::UndoRef,
     wal_frame::WalFrameHeader,
 };
@@ -83,6 +85,7 @@ pub(super) fn new_prepared<'a, 's>(
         root,
         status: None,
         undo,
+        undo_tail: &[],
         leaf: None,
         cell,
         cell_len: 0,
@@ -121,6 +124,10 @@ fn is_tx(op: Operation) -> bool {
 fn has_root(op: Operation) -> bool {
     !op.status_patch()
 }
+/// A DELETE root (Job effect byte 1, dev3-row-delete.md#job-effect).
+fn is_delete(job: JobView<'_>) -> bool {
+    job.effect() == row::RowEffect::Delete
+}
 fn occupied(home: StatusHome, actor: TxnRef) -> Result<TransactionStatus> {
     let TransactionStatusCell::Occupied(status) = home.core() else {
         return Err(Error::OrderMismatch);
@@ -144,14 +151,12 @@ fn decode_job<'a>(inputs: &Inputs<'a>, ordinal: usize) -> Result<JobView<'a>> {
     if ordinal >= JOB_COUNT {
         return Err(Error::InvalidInput);
     }
-    let job = row::decode_job(&inputs.jobs[ordinal], inputs.profile.spec().namespace)?;
-    // Every rule below is an INSERT-root rule (Clr/Prune also clear the root's
-    // [280,320), effect byte included). A DELETE root
-    // (dev3-row-delete.md#job-effect) is refused until its own rules exist.
-    if job.effect() != row::RowEffect::Insert {
-        return Err(Error::Unsupported);
-    }
-    Ok(job)
+    // The effect byte (dev3-row-delete.md#job-effect) is checked by each
+    // arm: the Row-cell operations and the U material depend on it.
+    Ok(row::decode_job(
+        &inputs.jobs[ordinal],
+        inputs.profile.spec().namespace,
+    )?)
 }
 /// The actor's live TerminalLeased Job names the actor and its Status.
 fn terminal_actor(inputs: &Inputs<'_>, ordinal: usize) -> Result<(TxnRef, StatusSlotRef)> {
@@ -188,7 +193,13 @@ fn live_material(
     ))?;
     let bytes = inputs.previous.ok_or(Error::InvalidInput)?;
     let actor = job.source().ok_or(Error::IdentityMismatch)?;
-    let cell = cells::undo_before(bytes, namespace, link.reference.page(), inputs.frame)?;
+    let cell = cells::undo_cell(
+        bytes,
+        namespace,
+        link.reference.page(),
+        inputs.frame,
+        cells::live_undo_bytes(previous)?,
+    )?;
     require(cells::page_lsn(bytes) >= previous.last_step())?;
     let earlier = cells::predecessor(
         JobCells::original(inputs.jobs),
@@ -202,34 +213,43 @@ fn live_material(
         None => UndoEdge::Never,
     };
     // H is Live with its two persistent incoming edges: a removable one exists.
-    cells::check_material(
-        namespace,
-        previous,
-        UndoCell::Live(cells::material(previous, edge, 2, 0)?),
-        cell,
-    )?;
+    // A delete H is proved by its outline (dev3-row-delete.md#previous-proof).
+    cells::check_live(namespace, previous, edge, cell)?;
     Ok(UndoEdge::Linked(link))
 }
 
-/// Leaf observation of Forward/CLR/Prune: anchor re-search, all rows typed.
+/// Leaf observation of a Row-cell operation: anchor re-search, all rows typed.
 struct LeafSource<'a> {
     expected: TreeExpectation,
     schema: RowSchemaInput<'a>,
     before: &'a [u8; PAGE_BYTES],
+    /// D of the leaf reservation (dev3-row-delete.md#leaf-reservation).
+    reserved: usize,
 }
-fn leaf_source<'a>(inputs: &Inputs<'a>, job: JobView<'_>) -> Result<LeafSource<'a>> {
+fn leaf_source<'a>(
+    inputs: &Inputs<'a>,
+    job: JobView<'_>,
+    reserved: usize,
+) -> Result<LeafSource<'a>> {
     let table = inputs.table.ok_or(Error::InvalidInput)?;
     let pair = job.pair().ok_or(Error::IdentityMismatch)?;
     same(job.object() == Some(table.handle) && pair[0] == table.anchor)?;
     let leaf = table_leaf(inputs, table)?;
     same(leaf == pair[1])?;
-    typed_leaf(inputs, table, leaf)
+    typed_leaf(inputs, table, leaf, reserved)
 }
-/// The anchor's RowLeaf before image with every row typed by the schema.
+/// The anchor's RowLeaf before image with every row typed by the schema: an
+/// inline row, or a delete's tombstone (`Transaction` stamp with its U,
+/// dev3-row-delete.md#tombstone). The leaf reservation holds before every
+/// edit: its entries leave at least `reserved` (D, `cells::delete_reservation`
+/// over the original bank, which each leaf step computes first) of the
+/// capacity, which also keeps `ROW_EDIT_CELLS` the edit scratch bound
+/// (#leaf-reservation).
 fn typed_leaf<'a>(
     inputs: &Inputs<'a>,
     table: super::TableSource<'a>,
     leaf: PageRef,
+    reserved: usize,
 ) -> Result<LeafSource<'a>> {
     let namespace = inputs.profile.spec().namespace;
     let expected = TreeExpectation {
@@ -247,6 +267,7 @@ fn typed_leaf<'a>(
         false,
     )?;
     let view = tree_page::decode_tree_page(before, expected)?;
+    let mut used = 0usize;
     for index in 0..view.len() {
         let entry = view.entry(index)?;
         let key: [u8; 8] = entry.key.try_into().map_err(|_| Error::Corrupt)?;
@@ -259,14 +280,25 @@ fn typed_leaf<'a>(
             RecordExpectation { namespace, row },
             table.schema,
         )?;
-        if !matches!(record.payload(), RowPayload::Inline(_)) {
-            return Err(Error::Unsupported);
+        match record.payload() {
+            RowPayload::Inline(_) => {}
+            RowPayload::Deleted
+                if matches!(record.version().stamp, VersionStamp::Transaction(_))
+                    && record.version().undo.is_some() => {}
+            RowPayload::Deleted => return Err(Error::Corrupt),
+            RowPayload::Overflow(_) => return Err(Error::Unsupported),
         }
+        // Entry cost: the 12-byte cell head, the record and its 4-byte slot.
+        used += value.len() + 16;
+    }
+    if used + reserved > tree_page::TREE_ENTRY_CAPACITY {
+        return Err(Error::Corrupt);
     }
     Ok(LeafSource {
         expected,
         schema: table.schema,
         before,
+        reserved,
     })
 }
 /// RowReserve's leaf proof (consumers.md:73, :282): the stable RowLeaf types
@@ -280,7 +312,9 @@ fn reserve_leaf(
     record: &[u8],
     scratch: &mut [u8; MAX_CELL],
 ) -> Result<()> {
-    let source = typed_leaf(inputs, table, leaf)?;
+    let reserved =
+        cells::delete_reservation(inputs.jobs, inputs.profile.spec().namespace, table.handle)?;
+    let source = typed_leaf(inputs, table, leaf, reserved)?;
     let key = row.get().to_be_bytes();
     let view = tree_page::decode_tree_page(source.before, source.expected)?;
     let cell = tree_page::encode_leaf_cell(PageKind::RowLeaf, 0, &key, record, scratch)?;
@@ -288,7 +322,8 @@ fn reserve_leaf(
     let plan = view
         .prepare_leaf_edit(edit::LeafEdit::Insert(cell), &mut refs)
         .map_err(cells::edit_error)?;
-    require(!plan.needs_split())
+    // No split, and the leaf reservation still holds after the new row.
+    require(plan.entry_bytes() + source.reserved <= tree_page::TREE_ENTRY_CAPACITY)
 }
 /// The stable anchor's single level0 RowLeaf (the Job leaf is only a hint).
 fn table_leaf(
@@ -369,9 +404,10 @@ fn prepare_leaf<'a>(
     q: u64,
 ) -> Result<(Option<u16>, Option<u16>, [u8; 32], [u8; 32])> {
     let op = out.op;
-    let source = leaf_source(inputs, job)?;
-    require(op == Operation::Forward || cells::page_lsn(source.before) >= job.last_step())?;
     let table = job.object().ok_or(Error::IdentityMismatch)?;
+    let reserved = cells::delete_reservation(inputs.jobs, inputs.profile.spec().namespace, table)?;
+    let source = leaf_source(inputs, job, reserved)?;
+    require(op == Operation::Forward || cells::page_lsn(source.before) >= job.last_step())?;
     let row = job.row_id().ok_or(Error::IdentityMismatch)?;
     let key = row.get().to_be_bytes();
     let view = tree_page::decode_tree_page(source.before, source.expected)?;
@@ -393,7 +429,8 @@ fn prepare_leaf<'a>(
             let plan = view
                 .prepare_leaf_edit(edit::LeafEdit::Insert(cell), &mut refs)
                 .map_err(cells::edit_error)?;
-            require(!plan.needs_split())?;
+            // Reserve proved the fit under the leaf reservation; it holds still.
+            require(plan.entry_bytes() + source.reserved <= tree_page::TREE_ENTRY_CAPACITY)?;
             out.leaf = Some((LeafEdit::Insert(cell), source.expected, source.schema));
             (None, Some(slot), missing, *job.projection_digest())
         }
@@ -460,6 +497,342 @@ fn prepare_leaf<'a>(
         after_slot: result.1,
     });
     Ok(result)
+}
+
+/// The DELETE target a replayed RowReserve adopts from its Job after: none
+/// for an INSERT root (effect byte 0), the RowId at `@320` for a DELETE root
+/// (dev3-row-delete.md#job-effect). Any other effect byte is corrupt.
+fn adopted_target(adopted: &[u8]) -> Result<Option<RowId>> {
+    match adopted[284] {
+        0 => Ok(None),
+        1 => Ok(Some(
+            RowId::new(u64::from_le_bytes(
+                adopted[320..328].try_into().expect("RowId"),
+            ))
+            .map_err(|_| Error::Corrupt)?,
+        )),
+        _ => Err(Error::Corrupt),
+    }
+}
+
+/// The delete RowReserve's leaf proof (dev3-row-delete.md#delete-states): the
+/// stable RowLeaf types every row and holds the target committed and pruned
+/// (`Committed`, undo None) and inline. Returns its cell C and the projection
+/// of the tombstone `tombstone` that DeleteForward will write. `record` is
+/// the backing's record scratch, cleared again before return.
+fn reserve_delete(
+    inputs: &Inputs<'_>,
+    table: super::TableSource<'_>,
+    leaf: PageRef,
+    tombstone: RecordVersion,
+    record: &mut [u8; MAX_RECORD],
+) -> Result<(usize, [u8; 32])> {
+    let namespace = inputs.profile.spec().namespace;
+    let row = tombstone.row;
+    let reserved = cells::delete_reservation(inputs.jobs, namespace, table.handle)?;
+    let source = typed_leaf(inputs, table, leaf, reserved)?;
+    let view = tree_page::decode_tree_page(source.before, source.expected)?;
+    let key = row.get().to_be_bytes();
+    let position = view.lower_bound(&key)?;
+    same(position.equal)?;
+    let EntryPayload::Value(value) = view.entry(position.index)?.payload else {
+        return Err(Error::Unsupported);
+    };
+    let expected = RecordExpectation { namespace, row };
+    let old = row_record::decode_row_record_with_schema(value, expected, source.schema)?;
+    same(
+        matches!(old.payload(), RowPayload::Inline(_))
+            && matches!(old.version().stamp, VersionStamp::Committed(_))
+            && old.version().undo.is_none(),
+    )?;
+    let length = row_record::encode_row_record_with_schema(
+        expected,
+        source.schema,
+        tombstone,
+        RowPayload::Deleted,
+        record,
+    )?;
+    let projection = cells::projection(table.handle, row, Some(&record[..length]));
+    record.fill(0);
+    Ok((value.len() + 12, projection?))
+}
+
+/// The DELETE target's RowLeaf observation (dev3-row-delete.md#delete-states).
+struct DeleteSource<'a> {
+    leaf: LeafSource<'a>,
+    /// The row's 1-based native slot.
+    slot: u16,
+    /// The projection of the row's record before the change.
+    before: [u8; 32],
+    /// DeleteForward: the committed, pruned row's stamp, logical and value.
+    old: Option<(VersionStamp, LogicalRowVersion, &'a [u8])>,
+}
+
+/// DELETE's U and RowLeaf (dev3-row-delete.md#delete-states, #delete-undo).
+/// DeleteForward replaces the committed, pruned row with the actor's tombstone
+/// the Job projection sealed and makes U Live with the old value: the header
+/// in the U buffer, the value borrowed from the leaf before image (#scratch).
+/// DeleteClr and DeletePrune read U through entry (a) with the table schema;
+/// DeleteClr restores the old row from it (cell C) and DeletePrune removes the
+/// tombstone; both leave U Releasing without its value. `edge` is U's
+/// transaction edge while Live, `undo_cell` U's before cell. Returns the
+/// core's before and after projections. The leaf observation, U and leaf
+/// after are separate frames, so neither codec runs beside another's scratch.
+fn prepare_delete<'a>(
+    inputs: &Inputs<'a>,
+    out: &mut Prepared<'a, '_>,
+    job: JobView<'_>,
+    actor: TxnRef,
+    edge: UndoEdge,
+    undo_cell: &'a [u8],
+) -> Result<([u8; 32], [u8; 32])> {
+    let op = out.op;
+    let namespace = inputs.profile.spec().namespace;
+    let table = job.object().ok_or(Error::IdentityMismatch)?;
+    let reserved = cells::delete_reservation(inputs.jobs, namespace, table)?;
+    let source = delete_source(inputs, job, actor, op == Operation::DeleteForward, reserved)?;
+    let schema = &source.leaf.schema;
+    let (stamp, logical, old) = match source.old {
+        Some(old) => delete_undo_live(namespace, job, edge, schema, old, out.undo)?,
+        None => {
+            let before = delete_before(namespace, job, edge, schema, undo_cell)?;
+            delete_release(namespace, job, edge, schema, (before.0, before.1), out.undo)?;
+            before
+        }
+    };
+    let after = match op {
+        Operation::DeleteForward => {
+            out.undo_tail = old;
+            Some((current_version(job, actor)?, None))
+        }
+        // The restored row: Committed(q_old), the old logical, undo None.
+        Operation::DeleteClr => Some((
+            RecordVersion {
+                row: job.row_id().ok_or(Error::IdentityMismatch)?,
+                stamp,
+                logical,
+                undo: None,
+            },
+            Some(old),
+        )),
+        _ => None,
+    };
+    let digest = delete_leaf(namespace, out, job, &source.leaf, after)?;
+    // DeleteForward writes the tombstone the Job projection sealed; DeleteClr
+    // restores cell C.
+    same(match op {
+        Operation::DeleteForward => {
+            digest == *job.projection_digest() && out.cell_len == TOMBSTONE_CELL
+        }
+        Operation::DeleteClr => out.cell_len == job.cell_bytes() as usize,
+        _ => true,
+    })?;
+    out.pages[LEAF] = Some(Changed {
+        identity: source.leaf.expected.identity,
+        kind: PageKind::RowLeaf,
+        before: source.leaf.before,
+        before_slot: Some(source.slot),
+        after_slot: (op != Operation::DeletePrune).then_some(source.slot),
+    });
+    Ok((source.before, digest))
+}
+
+/// The typed RowLeaf and the DELETE target in it: DeleteForward's committed,
+/// pruned row of cell C (dev3-row-delete.md#scope), or the actor's tombstone
+/// that DeleteClr/DeletePrune find under the Job projection.
+fn delete_source<'a>(
+    inputs: &Inputs<'a>,
+    job: JobView<'_>,
+    actor: TxnRef,
+    forward: bool,
+    reserved: usize,
+) -> Result<DeleteSource<'a>> {
+    let leaf = leaf_source(inputs, job, reserved)?;
+    require(forward || cells::page_lsn(leaf.before) >= job.last_step())?;
+    let table = job.object().ok_or(Error::IdentityMismatch)?;
+    let row = job.row_id().ok_or(Error::IdentityMismatch)?;
+    let key = row.get().to_be_bytes();
+    let view = tree_page::decode_tree_page(leaf.before, leaf.expected)?;
+    let position = view.lower_bound(&key)?;
+    same(position.equal)?;
+    let EntryPayload::Value(value) = view.entry(position.index)?.payload else {
+        return Err(Error::Unsupported);
+    };
+    let record = row_record::decode_row_record_with_schema(
+        value,
+        RecordExpectation {
+            namespace: inputs.profile.spec().namespace,
+            row,
+        },
+        leaf.schema,
+    )?;
+    let before = cells::projection(table, row, Some(value))?;
+    let old = if forward {
+        let version = record.version();
+        let RowPayload::Inline(old) = record.payload() else {
+            return Err(Error::IdentityMismatch);
+        };
+        same(
+            matches!(version.stamp, VersionStamp::Committed(_))
+                && version.undo.is_none()
+                && value.len() + 12 == job.cell_bytes() as usize,
+        )?;
+        Some((version.stamp, version.logical, old.as_bytes()))
+    } else {
+        same(
+            record.version() == current_version(job, actor)?
+                && record.payload() == RowPayload::Deleted
+                && before == *job.projection_digest(),
+        )?;
+        None
+    };
+    Ok(DeleteSource {
+        leaf,
+        slot: (position.index + 1) as u16,
+        before,
+        old,
+    })
+}
+
+/// DeleteForward's U: Live with the old row's stamp, logical and value
+/// (dev3-row-delete.md#delete-undo), its header in `undo` (the value follows
+/// from the leaf, #scratch). Returns the same before.
+fn delete_undo_live<'a>(
+    namespace: crate::api::Namespace,
+    job: JobView<'_>,
+    edge: UndoEdge,
+    schema: &RowSchemaInput<'_>,
+    old: (VersionStamp, LogicalRowVersion, &'a [u8]),
+    undo: &mut [u8; UNDO_RECORD_BYTES],
+) -> Result<(VersionStamp, LogicalRowVersion, &'a [u8])> {
+    let (stamp, logical, value) = old;
+    let length = undo_record::encode_undo_record_head(
+        UndoCell::Live(cells::delete_material(
+            job,
+            edge,
+            2,
+            stamp,
+            logical,
+            UndoPayload::Inline(value),
+        )?),
+        cells::expectation(namespace, job)?,
+        schema,
+        undo,
+    )?;
+    same(length == UNDO_RECORD_BYTES + value.len())?;
+    Ok(old)
+}
+
+/// DeleteClr/DeletePrune's U before: read Live through entry (a) with the
+/// table schema (dev3-row-delete.md#delete-undo) and equal to the Job's
+/// material with its RowValue before. Returns that before's stamp, logical
+/// and value.
+fn delete_before<'a>(
+    namespace: crate::api::Namespace,
+    job: JobView<'_>,
+    edge: UndoEdge,
+    schema: &RowSchemaInput<'_>,
+    undo_cell: &'a [u8],
+) -> Result<(VersionStamp, LogicalRowVersion, &'a [u8])> {
+    let live =
+        undo_record::decode_undo_record(undo_cell, cells::expectation(namespace, job)?, schema)?
+            .live_before()?;
+    let (Some(stamp @ VersionStamp::Committed(_)), Some(logical), UndoPayload::Inline(value)) =
+        (live.before_stamp, live.before_logical, live.payload)
+    else {
+        return Err(Error::IdentityMismatch);
+    };
+    same(
+        live == cells::delete_material(job, edge, 2, stamp, logical, live.payload)?
+            && value.len() + TOMBSTONE_CELL == job.cell_bytes() as usize,
+    )?;
+    Ok((stamp, logical, value))
+}
+
+/// DeleteClr/DeletePrune's U after: Releasing without its value, its
+/// RowValue before's stamp and logical kept (dev3-row-delete.md#delete-undo),
+/// the transaction edge cut, in `undo`.
+fn delete_release(
+    namespace: crate::api::Namespace,
+    job: JobView<'_>,
+    edge: UndoEdge,
+    schema: &RowSchemaInput<'_>,
+    before: (VersionStamp, LogicalRowVersion),
+    undo: &mut [u8; UNDO_RECORD_BYTES],
+) -> Result<()> {
+    let cut = if matches!(edge, UndoEdge::Linked(_)) {
+        UndoEdge::Cut
+    } else {
+        UndoEdge::Never
+    };
+    undo_record::encode_undo_record(
+        UndoCell::Releasing(cells::delete_material(
+            job,
+            cut,
+            0,
+            before.0,
+            before.1,
+            UndoPayload::None,
+        )?),
+        cells::expectation(namespace, job)?,
+        schema,
+        &mut undo[..],
+    )?;
+    Ok(())
+}
+
+/// DELETE's RowLeaf after (dev3-row-delete.md#delete-states): `after` is the
+/// record version that replaces the row, with the restored canonical value
+/// (DeleteClr) or none (the tombstone, DeleteForward); no `after` removes the
+/// row (DeletePrune). The replacing cell goes to `out.cell`; the leaf
+/// reservation kept its room (#leaf-reservation). Returns the after
+/// projection.
+fn delete_leaf<'a>(
+    namespace: crate::api::Namespace,
+    out: &mut Prepared<'a, '_>,
+    job: JobView<'_>,
+    source: &LeafSource<'a>,
+    after: Option<(RecordVersion, Option<&[u8]>)>,
+) -> Result<[u8; 32]> {
+    let table = job.object().ok_or(Error::IdentityMismatch)?;
+    let row = job.row_id().ok_or(Error::IdentityMismatch)?;
+    let key = row.get().to_be_bytes();
+    let view = tree_page::decode_tree_page(source.before, source.expected)?;
+    let mut refs: [&[u8]; ROW_EDIT_CELLS] = [&[]; ROW_EDIT_CELLS];
+    let Some((version, value)) = after else {
+        view.prepare_leaf_edit(edit::LeafEdit::Remove(&key), &mut refs)
+            .map_err(cells::edit_error)?;
+        out.leaf = Some((LeafEdit::Remove(row), source.expected, source.schema));
+        return cells::projection(table, row, None);
+    };
+    let payload = match value {
+        Some(value) => RowPayload::Inline(row_record::decode_canonical_row_with_schema(
+            value,
+            source.schema,
+        )?),
+        None => RowPayload::Deleted,
+    };
+    let record = record_scratch(out.descriptors);
+    let length = row_record::encode_row_record_with_schema(
+        RecordExpectation { namespace, row },
+        source.schema,
+        version,
+        payload,
+        record,
+    )?;
+    let digest = cells::projection(table, row, Some(&record[..length]))?;
+    out.cell_len =
+        tree_page::encode_leaf_cell(PageKind::RowLeaf, 0, &key, &record[..length], out.cell)?.len();
+    record.fill(0);
+    let plan = view
+        .prepare_leaf_edit(
+            edit::LeafEdit::Replace(&out.cell[..out.cell_len]),
+            &mut refs,
+        )
+        .map_err(cells::edit_error)?;
+    require(!plan.needs_split())?;
+    out.leaf = Some((LeafEdit::Replace, source.expected, source.schema));
+    Ok(digest)
 }
 
 /// What prepare keeps of the validated original ATT: its apply LSN (the
@@ -561,7 +934,7 @@ fn descriptor_after(
             .consumed_wal
             .checked_add(after.frame_bytes)
             .ok_or(Error::Exhausted)?;
-        match inputs.change.operation() {
+        match inputs.change.operation().role() {
             Operation::Reserve => {
                 let issued = after.issued.expect("reserve");
                 let reserved = row::decode_job(after.job, profile.spec().namespace)?;
@@ -634,13 +1007,16 @@ pub(super) fn prepare<'a>(
             }
             Some(cells::first_free(root, inputs.jobs, namespace)?)
         }
-        Change::Reserve(_) | Change::ReserveAdopted { .. } => {
+        Change::Reserve(_) | Change::ReserveDelete(_) | Change::ReserveAdopted { .. } => {
             Some(cells::first_free(root, inputs.jobs, namespace)?)
         }
         Change::Forward { ordinal, .. }
         | Change::Cancel { ordinal }
         | Change::Clr { ordinal, .. }
         | Change::Prune { ordinal }
+        | Change::DeleteForward { ordinal, .. }
+        | Change::DeleteClr { ordinal, .. }
+        | Change::DeletePrune { ordinal }
         | Change::ReleaseRole { ordinal }
         | Change::RootFree { ordinal }
         | Change::TerminalFinish { ordinal } => Some(ordinal),
@@ -653,6 +1029,10 @@ pub(super) fn prepare<'a>(
         Change::AgingStart => (None, None),
         Change::Begin { actor, status, .. } => (Some(actor), Some(status)),
         Change::Reserve(plan) => {
+            let (actor, status) = terminal_actor(inputs, plan.terminal)?;
+            (Some(actor), Some(status))
+        }
+        Change::ReserveDelete(plan) => {
             let (actor, status) = terminal_actor(inputs, plan.terminal)?;
             (Some(actor), Some(status))
         }
@@ -768,15 +1148,27 @@ pub(super) fn prepare<'a>(
             set_budget(out.job, 1, TERMINAL_BYTES);
             out.status = Some(home(actor, TransactionState::Active, None, 0)?);
         }
-        Change::Reserve(_) | Change::ReserveAdopted { .. } => {
+        Change::Reserve(_) | Change::ReserveDelete(_) | Change::ReserveAdopted { .. } => {
             // Live passes its plan and no cell. Replay passes the candidate's
-            // kind-9 Job after and adopts only its C and projection; every
-            // other step below runs for both (contract row-reserve-replay).
-            // The selectors are bound by reference, never copied.
-            let (plan, container, handle, statement) = match (&inputs.change, inserted) {
-                (Change::Reserve(plan), None) => {
-                    (Some(*plan), &plan.container, &plan.table, &plan.statement)
-                }
+            // kind-9 Job after and adopts only its C and projection (INSERT)
+            // or its effect byte and RowId (DELETE, dev3-row-delete.md#api);
+            // every other step below runs for all (contract
+            // row-reserve-replay). The selectors are bound by reference.
+            let (plan, container, handle, statement, target) = match (&inputs.change, inserted) {
+                (Change::Reserve(plan), None) => (
+                    Some(*plan),
+                    &plan.container,
+                    &plan.table,
+                    &plan.statement,
+                    None,
+                ),
+                (Change::ReserveDelete(plan), None) => (
+                    None,
+                    &plan.container,
+                    &plan.table,
+                    &plan.statement,
+                    Some(plan.row),
+                ),
                 (
                     Change::ReserveAdopted {
                         container,
@@ -784,8 +1176,8 @@ pub(super) fn prepare<'a>(
                         statement,
                         ..
                     },
-                    Some(_),
-                ) => (None, container, table, statement),
+                    Some(adopted),
+                ) => (None, container, table, statement, adopted_target(adopted)?),
                 _ => return Err(Error::InvalidInput),
             };
             let actor = actor.expect("actor");
@@ -803,7 +1195,8 @@ pub(super) fn prepare<'a>(
             same(table.handle == *handle)?;
             let leaf = table_leaf(inputs, table)?;
             // The value: A's canonical row, or the adopted C read again
-            // against the Job3 Row range.
+            // against the Job3 Row range. A DELETE's C is its row's, read
+            // from the leaf below.
             let canonical = plan
                 .map(|plan| {
                     row_record::decode_canonical_row_with_schema(plan.canonical, table.schema)
@@ -818,6 +1211,7 @@ pub(super) fn prepare<'a>(
                     }
                     180 + plan.canonical.len()
                 }
+                _ if target.is_some() => 0,
                 (None, adopted) => {
                     let adopted = adopted.ok_or(Error::InvalidInput)?;
                     let bytes = u32::from_le_bytes(adopted[280..284].try_into().expect("C"));
@@ -839,48 +1233,69 @@ pub(super) fn prepare<'a>(
             let old = undo_record::decode_free_undo_record(cell, cells::undo_generation(cell)?)?;
             let generation = old.next().map_err(|_| Error::Exhausted)?;
             let undo = UndoRef::new(*container, 0, generation)?;
-            let row = RowId::new(root.row_high().checked_add(1).ok_or(Error::Exhausted)?)
-                .map_err(|_| Error::Exhausted)?;
+            // INSERT issues `row_high+1`; DELETE names its row and issues none.
+            let row = match target {
+                Some(row) => row,
+                None => RowId::new(root.row_high().checked_add(1).ok_or(Error::Exhausted)?)
+                    .map_err(|_| Error::Exhausted)?,
+            };
             let sequence = root.undo_high().checked_add(1).ok_or(Error::Exhausted)?;
             let mutation = last_mutation.checked_add(1).ok_or(Error::Exhausted)?;
             let h = head.is_some();
             let record = record_scratch(out.descriptors);
-            let length = match canonical {
-                Some(canonical) => {
-                    let length = row_record::encode_row_record_with_schema(
-                        RecordExpectation { namespace, row },
-                        table.schema,
-                        RecordVersion {
-                            row,
-                            stamp: VersionStamp::Transaction(actor),
-                            logical: LogicalRowVersion::new(actor.id(), mutation)?,
-                            undo: Some(undo),
-                        },
-                        RowPayload::Inline(canonical),
-                        record,
-                    )?;
-                    same(length + 12 == cell_bytes)?;
-                    length
-                }
+            let (cell_bytes, projection) = match target {
+                Some(row) => reserve_delete(
+                    inputs,
+                    table,
+                    leaf,
+                    RecordVersion {
+                        row,
+                        stamp: VersionStamp::Transaction(actor),
+                        logical: LogicalRowVersion::new(actor.id(), mutation)?,
+                        undo: Some(undo),
+                    },
+                    record,
+                )?,
                 None => {
-                    // The version check the record encode would make. The
-                    // leaf fit depends only on the key and the record length
-                    // (tree_page.rs:399-424, tree_page/edit.rs:48-90), so a
-                    // zero placeholder of length C-12 stands for the record.
-                    LogicalRowVersion::new(actor.id(), mutation)?;
-                    record[..cell_bytes - 12].fill(0);
-                    cell_bytes - 12
+                    let length = match canonical {
+                        Some(canonical) => {
+                            let length = row_record::encode_row_record_with_schema(
+                                RecordExpectation { namespace, row },
+                                table.schema,
+                                RecordVersion {
+                                    row,
+                                    stamp: VersionStamp::Transaction(actor),
+                                    logical: LogicalRowVersion::new(actor.id(), mutation)?,
+                                    undo: Some(undo),
+                                },
+                                RowPayload::Inline(canonical),
+                                record,
+                            )?;
+                            same(length + 12 == cell_bytes)?;
+                            length
+                        }
+                        None => {
+                            // The version check the record encode would make. The
+                            // leaf fit depends only on the key and the record length
+                            // (tree_page.rs:399-424, tree_page/edit.rs:48-90), so a
+                            // zero placeholder of length C-12 stands for the record.
+                            LogicalRowVersion::new(actor.id(), mutation)?;
+                            record[..cell_bytes - 12].fill(0);
+                            cell_bytes - 12
+                        }
+                    };
+                    reserve_leaf(inputs, table, leaf, row, &record[..length], out.cell)?;
+                    out.cell.fill(0);
+                    let projection = match (canonical, inserted) {
+                        (Some(_), _) => cells::projection(*handle, row, Some(&record[..length]))?,
+                        (None, adopted) => adopted.ok_or(Error::InvalidInput)?[288..320]
+                            .try_into()
+                            .expect("projection"),
+                    };
+                    record.fill(0);
+                    (cell_bytes, projection)
                 }
             };
-            reserve_leaf(inputs, table, leaf, row, &record[..length], out.cell)?;
-            out.cell.fill(0);
-            let projection = match (canonical, inserted) {
-                (Some(_), _) => cells::projection(*handle, row, Some(&record[..length]))?,
-                (None, adopted) => adopted.ok_or(Error::InvalidInput)?[288..320]
-                    .try_into()
-                    .expect("projection"),
-            };
-            record.fill(0);
             let job = &mut *out.job;
             cells::lease(job, before.expect("free"), actor, location, lsn, 3)?;
             undo.encode(&mut job[128..168])?;
@@ -893,12 +1308,23 @@ pub(super) fn prepare<'a>(
             put(job, 248, *statement);
             put(job, 256, mutation);
             cells::put32(job, 280, cell_bytes as u32);
+            // The effect byte (dev3-row-delete.md#job-effect): DELETE names
+            // its target, INSERT issues `row_high+1`.
+            job[284] = u8::from(target.is_some());
             job[288..320].copy_from_slice(&projection);
             put(job, 320, row.get());
             set_budget(
                 job,
                 5,
-                row::row_cleanup_wal(row::RowEffect::Insert, cell_bytes as u32, h),
+                row::row_cleanup_wal(
+                    if target.is_some() {
+                        row::RowEffect::Delete
+                    } else {
+                        row::RowEffect::Insert
+                    },
+                    cell_bytes as u32,
+                    h,
+                ),
             );
             undo_record::encode_free_undo_record(generation, out.undo)?;
             out.issued = Some(Issued {
@@ -986,14 +1412,15 @@ pub(super) fn prepare<'a>(
                     None => UndoEdge::Never,
                 };
                 let bytes = inputs.undo.ok_or(Error::InvalidInput)?;
-                let cell = cells::undo_before(bytes, namespace, undo.page(), frame)?;
-                require(cells::page_lsn(bytes) >= job.last_step())?;
-                cells::check_material(
+                let cell = cells::undo_cell(
+                    bytes,
                     namespace,
-                    job,
-                    UndoCell::Live(cells::material(job, edge, 2, 0)?),
-                    cell,
+                    undo.page(),
+                    frame,
+                    cells::live_undo_bytes(job)?,
                 )?;
+                require(cells::page_lsn(bytes) >= job.last_step())?;
+                cells::check_live(namespace, job, edge, cell)?;
             } else {
                 same(inputs.undo.is_none())?;
             }
@@ -1078,8 +1505,17 @@ pub(super) fn prepare<'a>(
             out.status = Some(after);
             core.q = q;
         }
-        Change::Forward { .. } | Change::Clr { .. } | Change::Prune { .. } => {
+        Change::Forward { .. }
+        | Change::Clr { .. }
+        | Change::Prune { .. }
+        | Change::DeleteForward { .. }
+        | Change::DeleteClr { .. }
+        | Change::DeletePrune { .. } => {
+            // DELETE's three operations share INSERT's chain, Status and Job
+            // rules (`Operation::role`); their U and RowLeaf are
+            // `prepare_delete`'s (dev3-row-delete.md#delete-states).
             let job = before.expect("selected");
+            same(is_delete(job) == (op != op.role()))?;
             let actor = actor.expect("actor");
             let home_before = status_before.expect("status");
             let status = occupied(home_before, actor)?;
@@ -1091,10 +1527,23 @@ pub(super) fn prepare<'a>(
             let incoming = home_before.incoming();
             let edge = live_material(inputs, job, previous)?;
             let undo_bytes = inputs.undo.ok_or(Error::InvalidInput)?;
-            let undo_cell = cells::undo_before(undo_bytes, namespace, undo.page(), frame)?;
-            let (state, new_head, count) = match op {
+            // U before: Free at Forward, else Live (`432+L` for a DELETE).
+            let undo_cell = cells::undo_cell(
+                undo_bytes,
+                namespace,
+                undo.page(),
+                frame,
+                if op.role() == Operation::Forward {
+                    UNDO_RECORD_BYTES
+                } else {
+                    cells::live_undo_bytes(job)?
+                },
+            )?;
+            let (state, new_head, count) = match op.role() {
                 Operation::Forward => {
-                    let Change::Forward { statement, .. } = inputs.change else {
+                    let (Change::Forward { statement, .. }
+                    | Change::DeleteForward { statement, .. }) = inputs.change
+                    else {
                         unreachable!("matched Forward");
                     };
                     require(
@@ -1105,12 +1554,14 @@ pub(super) fn prepare<'a>(
                     )?;
                     require(cells::page_lsn(undo_bytes) == job.lease_lsn())?;
                     undo_record::decode_free_undo_record(undo_cell, undo.generation())?;
-                    cells::encode_material(
-                        namespace,
-                        job,
-                        UndoCell::Live(cells::material(job, edge, 2, 0)?),
-                        out.undo,
-                    )?;
+                    if !is_delete(job) {
+                        cells::encode_material(
+                            namespace,
+                            job,
+                            UndoCell::Live(cells::material(job, edge, 2, 0)?),
+                            out.undo,
+                        )?;
+                    }
                     item = Some(cells::undo_item(job)?);
                     let jobs = &mut *out.job;
                     jobs[6] = 2;
@@ -1126,21 +1577,25 @@ pub(super) fn prepare<'a>(
                 _ => {
                     require(job.state() == JobState::RootRetained && head == Some(undo))?;
                     require(cells::page_lsn(undo_bytes) >= job.last_step())?;
-                    cells::check_material(
-                        namespace,
-                        job,
-                        UndoCell::Live(cells::material(job, edge, 2, 0)?),
-                        undo_cell,
-                    )?;
-                    let cut = if h { UndoEdge::Cut } else { UndoEdge::Never };
-                    cells::encode_material(
-                        namespace,
-                        job,
-                        UndoCell::Releasing(cells::material(job, cut, 0, 0)?),
-                        out.undo,
-                    )?;
-                    let state = if op == Operation::Clr {
-                        let Change::Clr { statement, .. } = inputs.change else {
+                    if !is_delete(job) {
+                        cells::check_material(
+                            namespace,
+                            job,
+                            UndoCell::Live(cells::material(job, edge, 2, 0)?),
+                            undo_cell,
+                        )?;
+                        let cut = if h { UndoEdge::Cut } else { UndoEdge::Never };
+                        cells::encode_material(
+                            namespace,
+                            job,
+                            UndoCell::Releasing(cells::material(job, cut, 0, 0)?),
+                            out.undo,
+                        )?;
+                    }
+                    let state = if op.role() == Operation::Clr {
+                        let (Change::Clr { statement, .. } | Change::DeleteClr { statement, .. }) =
+                            inputs.change
+                        else {
                             unreachable!("matched CLR");
                         };
                         match status.state() {
@@ -1187,11 +1642,14 @@ pub(super) fn prepare<'a>(
                         status.state()
                     };
                     let jobs = &mut *out.job;
-                    jobs[6] = if op == Operation::Prune { 3 } else { 4 };
+                    jobs[6] = if op.role() == Operation::Prune { 3 } else { 4 };
                     jobs[200..248].fill(0);
-                    jobs[280..320].fill(0);
+                    // Releasing keeps the effect byte @284 (#job-effect); an
+                    // INSERT root's is zero.
+                    jobs[280..284].fill(0);
+                    jobs[285..320].fill(0);
                     put(jobs, 272, lsn);
-                    if op == Operation::Prune {
+                    if op.role() == Operation::Prune {
                         put(jobs, 264, q);
                     }
                     set_budget(jobs, 4, 4 * RELEASE_BYTES);
@@ -1210,8 +1668,12 @@ pub(super) fn prepare<'a>(
                 before_slot: Some(0),
                 after_slot: Some(0),
             });
-            let (_, _, before_digest, after_digest) =
-                prepare_leaf(inputs, out, job, actor, inserted, q)?;
+            let (before_digest, after_digest) = if is_delete(job) {
+                prepare_delete(inputs, out, job, actor, edge, undo_cell)?
+            } else {
+                let (_, _, before, after) = prepare_leaf(inputs, out, job, actor, inserted, q)?;
+                (before, after)
+            };
             out.row_cell = job.cell_bytes() as usize;
             out.predecessor = h;
             graph_links = Some((
@@ -1223,12 +1685,12 @@ pub(super) fn prepare<'a>(
                 incoming,
             ));
             core = Core {
-                statement: if op == Operation::Prune {
+                statement: if op.role() == Operation::Prune {
                     0
                 } else {
                     job.statement()
                 },
-                mutation: if op == Operation::Prune {
+                mutation: if op.role() == Operation::Prune {
                     0
                 } else {
                     job.mutation()
@@ -1263,32 +1725,47 @@ pub(super) fn prepare<'a>(
                 (2 | 3, 3) => UndoEdge::Released,
                 _ => return Err(Error::OrderMismatch),
             };
-            cells::check_material(
-                namespace,
-                job,
-                UndoCell::Releasing(cells::material(job, transaction, 0, cursor)?),
-                cell,
-            )?;
+            // A delete U keeps its RowValue before's stamp (until cursor 3) and
+            // logical, which its Job lacks: its outline is checked and the
+            // codec's release step carries them (dev3-row-delete.md#delete-undo).
+            if is_delete(job) {
+                cells::check_outline(namespace, job, false, transaction, cursor, cell)?;
+            } else {
+                cells::check_material(
+                    namespace,
+                    job,
+                    UndoCell::Releasing(cells::material(job, transaction, 0, cursor)?),
+                    cell,
+                )?;
+            }
             if op == Operation::RootFree {
                 undo_record::encode_free_undo_record(undo.generation(), out.undo)?;
                 row::free_job(job.generation(), out.job);
             } else {
                 let next = cursor + 1;
-                cells::encode_material(
-                    namespace,
-                    job,
-                    UndoCell::Releasing(cells::material(
+                if is_delete(job) {
+                    undo_record::encode_release_step(
+                        cell,
+                        cells::expectation(namespace, job)?,
+                        &mut out.undo[..],
+                    )?;
+                } else {
+                    cells::encode_material(
+                        namespace,
                         job,
-                        if next >= 2 {
-                            UndoEdge::Released
-                        } else {
-                            transaction
-                        },
-                        0,
-                        next,
-                    )?),
-                    out.undo,
-                )?;
+                        UndoCell::Releasing(cells::material(
+                            job,
+                            if next >= 2 {
+                                UndoEdge::Released
+                            } else {
+                                transaction
+                            },
+                            0,
+                            next,
+                        )?),
+                        out.undo,
+                    )?;
+                }
                 out.job[121] = next;
                 set_budget(
                     out.job,
@@ -1368,7 +1845,10 @@ pub(super) fn prepare<'a>(
                 let issued = out.issued.expect("reserve");
                 put(root_cell, 88, next(root.issued())?);
                 put(root_cell, 392, issued.sequence);
-                put(root_cell, 432, issued.row.get());
+                // An INSERT root (effect byte 0) issued `row_high+1`.
+                if out.job[284] == 0 {
+                    put(root_cell, 432, issued.row.get());
+                }
             }
             Operation::Cancel => put(root_cell, 384, next(root.canceled())?),
             Operation::Commit => put(root_cell, 408, q),
@@ -1403,7 +1883,7 @@ pub(super) fn prepare<'a>(
         let after_root = row::decode_root(out.root, namespace)?;
         row::verify_selected_census(after_root, namespace, cells_after, out.aggregate)?;
         if matches!(
-            op,
+            op.role(),
             Operation::Prune
                 | Operation::ReleaseRole
                 | Operation::RootFree
@@ -1490,7 +1970,7 @@ pub(super) fn prepare<'a>(
 
     // Prune keeps its actor live without a Tx descriptor: the after Status
     // must close over the after Job census as the ledger observer reads it.
-    if op == Operation::Prune {
+    if op.role() == Operation::Prune {
         ledger::validate_actor(
             profile,
             out.status.ok_or(Error::InvalidInput)?,
@@ -1523,7 +2003,7 @@ pub(super) fn prepare<'a>(
         )?;
     }
     if matches!(
-        op,
+        op.role(),
         Operation::Reserve | Operation::Forward | Operation::Cancel
     ) {
         let item = match item {
@@ -1601,8 +2081,22 @@ pub(super) fn write_pages(
                 .ok_or(Error::InvalidInput)?
                 .encode(&mut cell)?;
             page::encode_page(header, &[&cell], &mut after[STATUS])?;
-        } else {
+        } else if prepared.undo_tail.is_empty() {
             page::encode_page(header, &[&prepared.undo[..]], &mut after[UNDO])?;
+        } else {
+            // DeleteForward's Live U is the 432-byte header and the old value,
+            // longer than the U buffer (dev3-row-delete.md#scratch). The
+            // LEAF after page is the one contiguous cell's scratch until the
+            // leaf edit below encodes that whole page.
+            if prepared.pages[LEAF].is_none() || prepared.leaf.is_none() {
+                return Err(Error::InvalidInput);
+            }
+            let (head, tail) = after.split_at_mut(LEAF);
+            let length = UNDO_RECORD_BYTES + prepared.undo_tail.len();
+            let cell = &mut tail[0][..length];
+            cell[..UNDO_RECORD_BYTES].copy_from_slice(&prepared.undo[..]);
+            cell[UNDO_RECORD_BYTES..].copy_from_slice(prepared.undo_tail);
+            page::encode_page(header, &[&*cell], &mut head[UNDO])?;
         }
     }
     if let (Some(page), Some((leaf_edit, expected, _))) = (prepared.pages[LEAF], prepared.leaf) {
@@ -1693,6 +2187,8 @@ pub(super) fn locals_bytes() -> usize {
         + 2 * size_of::<[u8; 96]>()
         + 3 * size_of::<[u8; 32]>()
         + size_of::<[Option<usize>; 5]>()
+        // The Reserve's DELETE target.
+        + size_of::<Option<RowId>>()
         + 32 * size_of::<usize>()
         + source::slack()
 }
@@ -1744,8 +2240,9 @@ pub(super) fn descriptor_after_bytes() -> usize {
 /// Deepest nested callee of prepare, each a counted chain: Row census and
 /// cells, the Aging decode closure, the actor ledger over the descriptor
 /// codec, the ATT before/after helpers, the Status proof, Undo material, the
-/// RowLeaf proof/edit with the record codec and projection, Job edits and
-/// the graph.
+/// RowLeaf proof/edit with the record codec and projection (the leaf
+/// reservation scan under it), DELETE's RowLeaf and U, Job edits and the
+/// graph.
 pub(super) fn callee_bytes() -> usize {
     row::source_bytes()
         .max(crate::storage::retention_obligation::row::source_bytes())
@@ -1755,6 +2252,7 @@ pub(super) fn callee_bytes() -> usize {
         .max(source::status())
         .max(source::material())
         .max(source::leaf())
+        .max(source::delete())
         .max(source::job_edit())
         .max(source::graph())
 }
@@ -1775,11 +2273,18 @@ pub(super) fn split_bytes() -> usize {
 }
 /// `write_pages` then `finish_aging`: their scratch, the Aging successor over
 /// the Job3 census (its aggregate is the backing's), Root/Jobs/Status/Undo
-/// page encode or the RowLeaf edit.
+/// page encode or the RowLeaf edit. DeleteForward's U cell is placed in the
+/// LEAF after page (its split halves, length and cell reference).
 pub(super) fn write_source_bytes() -> usize {
     use std::mem::size_of;
     size_of::<[&[u8]; ROW_EDIT_CELLS]>()
         + size_of::<[&[u8]; 15]>()
+        + size_of::<(
+            &mut [[u8; PAGE_BYTES]],
+            &mut [[u8; PAGE_BYTES]],
+            usize,
+            &mut [u8],
+        )>()
         + STATUS_HOME_BYTES
         + size_of::<(JobCells<'_>, usize, &mut [u8; 1536], &mut [u8; 1536])>()
         + size_of::<AgingTransition<'_>>()

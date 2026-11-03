@@ -24,7 +24,7 @@ use crate::{
         overflow::{OVERFLOW_HEAD_BYTES, OverflowError, OverflowHead},
         page::{PAGE_BYTES, PageError, PageHeader, PageIdentity, PageRef, PageView},
         retention_page::{
-            RetentionError,
+            JOB_BYTES, JOB_COUNT, RetentionError,
             row::{self, JobCells, JobView},
         },
         row_record::{
@@ -41,8 +41,8 @@ use crate::{
             edit::{LeafEdit, LeafEditError, LeafEditPlan},
         },
         undo_record::{
-            UNDO_RECORD_BYTES, UndoCell, UndoError, UndoLink, UndoRecord, UndoRecordExpectation,
-            UndoRecordView, UndoTargetView,
+            UNDO_RECORD_BYTES, UndoCell, UndoEdge, UndoError, UndoLink, UndoPayload, UndoRecord,
+            UndoRecordExpectation, UndoRecordOutline, UndoRecordView, UndoTargetView,
         },
         undo_ref::UndoRef,
         wal_frame::{
@@ -95,12 +95,15 @@ pub(super) fn status_codec() -> usize {
 /// `undo_codec` inventory (header copy, records, cells, view, expectations,
 /// target, version identities, edge/stamp scratch, hashers, results) with the
 /// Row before parse instead of its CatalogValue one. Every Row material
-/// call names `cells::row_target`, and `validate_record` refuses any record
-/// whose target differs (undo_record.rs:498) or whose before kind a Row target
-/// does not admit (:534-550) before its payload match (:589), so the
-/// CatalogValue arm with `decode_catalog_before` (:612) is unreachable here
-/// for any input, valid or malformed. The RowValue arm's canonical parse
-/// (:606, `decode_canonical_row` over its schema form) stays charged.
+/// call names `cells::row_target` (through `cells::expectation` for a DELETE
+/// U), and `validate_record` refuses any record whose target differs or whose
+/// before kind a Row target does not admit before its payload match, so the
+/// CatalogValue arm with `decode_catalog_before` is unreachable here for any
+/// input, valid or malformed. The RowValue arm's canonical check
+/// (`BeforeSchema::check_row_before`) stays charged at its widest instance,
+/// C's `&[Column]` over `decode_canonical_row`: entry (a)'s `&RowSchemaInput`
+/// calls `decode_canonical_row_with_schema` directly, one frame less, and
+/// entry (b)'s `MetadataOnly` parses nothing.
 pub(super) fn undo_row_codec() -> usize {
     size_of::<[u8; UNDO_RECORD_BYTES]>()
         + 3 * size_of::<UndoRecord<'_>>()
@@ -113,6 +116,10 @@ pub(super) fn undo_row_codec() -> usize {
         + size_of::<(&[u8], &[u8], &mut [u8], [usize; 8], [u64; 4])>()
         + 2 * size_of::<ContentHasher>()
         + 4 * size_of::<CodecResult<(), UndoError>>()
+        // `BeforeSchema::check_row_before` (C's `&[Column]` instance) over
+        // decode_canonical_row: its arguments and result, then the parse.
+        + size_of::<(&[Column], &[u8])>()
+        + size_of::<CodecResult<(), UndoError>>()
         + size_of::<(&[u8], &[Column])>()
         + returned::<CanonicalRowView<'_>, RowError>()
         + canonical_codec()
@@ -289,18 +296,62 @@ pub(super) fn transaction_remaining() -> usize {
         + ledger_observe().max(ledger_remaining())
 }
 
-/// U material: `check_material`'s canonical cell over `encode_material`, then
-/// the Row-target Undo codec or a proof-page decode.
+/// `cells::undo_cell` (and `undo_before` over it): the one-slot Undo page
+/// proof with its cell length, over a proof-page decode.
+fn undo_page() -> usize {
+    size_of::<(&[u8; PAGE_BYTES], Namespace, PageRef, FrameExpectation)>()
+        + returned::<&[u8], Error>()
+        + size_of::<(
+            &[u8; PAGE_BYTES],
+            Namespace,
+            PageRef,
+            FrameExpectation,
+            usize,
+        )>()
+        + returned::<&[u8], Error>()
+        + returned::<PageView<'_>, Error>()
+        + size_of::<(usize, Option<Range<usize>>)>()
+        + before_page()
+}
+
+/// `cells::material`: the Job's identities and the record it returns.
+fn job_material() -> usize {
+    size_of::<(JobView<'_>, UndoEdge, u64, u8)>()
+        + returned::<UndoRecord<'static>, Error>()
+        + size_of::<(TxnRef, ObjectHandle, RowId)>()
+        + size_of::<UndoRecord<'static>>()
+}
+
+/// U material: `check_live` over `check_material`'s canonical cell over
+/// `encode_material`, or over a DELETE U's `check_outline` (entry (b)
+/// against the Job's material, dev3-row-delete.md#previous-proof), or a
+/// DELETE U's release step (`encode_release_step`, decode then encode of one
+/// record); then the Row-target Undo codec, the Job material or the Undo
+/// page proof.
 pub(super) fn material() -> usize {
-    size_of::<[u8; UNDO_RECORD_BYTES]>()
+    let live = size_of::<(Namespace, JobView<'_>, UndoEdge, &[u8])>() + size_of::<Result<()>>();
+    let check = size_of::<[u8; UNDO_RECORD_BYTES]>()
         + size_of::<(Namespace, JobView<'_>, UndoCell<'_>, &[u8])>()
         + size_of::<(UndoRef, ObjectHandle, RowId, UndoRecordExpectation<'_>)>()
         + 2 * size_of::<UndoCell<'_>>()
         + returned::<UndoRecord<'static>, Error>()
         + returned::<usize, UndoError>()
         + returned::<UndoRecordView<'_>, UndoError>()
-        + returned::<Generation, UndoError>()
-        + undo_row_codec().max(before_page())
+        + returned::<Generation, UndoError>();
+    let outline = size_of::<(Namespace, JobView<'_>, bool, UndoEdge, u8, &[u8])>()
+        + size_of::<Result<()>>()
+        + returned::<UndoRecord<'static>, Error>()
+        + returned::<usize, Error>()
+        + returned::<UndoRecordExpectation<'static>, Error>()
+        + returned::<UndoRecordOutline<'_>, UndoError>()
+        + size_of::<UndoRecordOutline<'_>>()
+        + returned::<UndoRecordView<'_>, UndoError>();
+    let release = size_of::<(&[u8], UndoRecordExpectation<'_>, &mut [u8])>()
+        + returned::<UndoRecordExpectation<'static>, Error>()
+        + returned::<usize, UndoError>()
+        + returned::<UndoRecordView<'_>, UndoError>()
+        + size_of::<(UndoRecord<'_>, UndoCell<'_>)>();
+    (live + check.max(outline)).max(release) + undo_row_codec().max(job_material()).max(undo_page())
 }
 
 /// Job cell edits: lease, Undo item and the budget rows of `set_budget`.
@@ -332,11 +383,20 @@ fn anchor() -> usize {
         + before_page()
 }
 
-/// Every row of the RowLeaf typed (`typed_leaf`), then search/edit/record
-/// work of `prepare_leaf` (Forward/CLR/Prune) or `reserve_leaf`.
-pub(super) fn leaf() -> usize {
-    type LeafSource<'a> = (TreeExpectation, RowSchemaInput<'a>, &'a [u8; PAGE_BYTES]);
-    let typed = size_of::<(TableSource<'_>, PageRef, TreeExpectation, TreePageView<'_>)>()
+/// `LeafSource`: expectation, schema, before image and the reservation D.
+type LeafSource<'a> = (
+    TreeExpectation,
+    RowSchemaInput<'a>,
+    &'a [u8; PAGE_BYTES],
+    usize,
+);
+
+/// Every row of the RowLeaf typed (`typed_leaf`) against the caller's leaf
+/// reservation D with its running sum, over the anchor proof, a page proof,
+/// the tree codec or a record decode.
+fn typed() -> usize {
+    size_of::<(TableSource<'_>, PageRef, TreeExpectation, TreePageView<'_>)>()
+        + size_of::<(usize, usize)>()
         + returned::<LeafSource<'_>, Error>()
         + returned::<TreeEntry<'_>, TreeError>()
         + size_of::<([u8; 8], RowId, Range<usize>)>()
@@ -344,7 +404,15 @@ pub(super) fn leaf() -> usize {
         + anchor()
             .max(before_page())
             .max(tree_codec())
-            .max(row_codec());
+            .max(row_codec())
+}
+
+/// The leaf reservation D (`cells::delete_reservation`, each leaf step's
+/// first call), then every row of the RowLeaf typed (`typed_leaf`), then
+/// search/edit/record work of `prepare_leaf` (Forward/CLR/Prune) or
+/// `reserve_leaf`.
+pub(super) fn leaf() -> usize {
+    let typed = typed();
     let edit = size_of::<LeafSource<'_>>()
         + size_of::<(
             [u8; 8],
@@ -366,8 +434,181 @@ pub(super) fn leaf() -> usize {
         + 2 * size_of::<RowRecordView<'_>>()
         + returned::<LeafEditPlan<'_, '_>, LeafEditError>()
         + returned::<&[u8], TreeError>()
-        + returned::<(Option<u16>, Option<u16>, [u8; 32], [u8; 32]), Error>();
-    edit + typed.max(leaf_edit()).max(row_codec()).max(projection())
+        + returned::<(Option<u16>, Option<u16>, [u8; 32], [u8; 32]), Error>()
+        + returned::<usize, Error>();
+    edit + reservation()
+        .max(typed)
+        .max(leaf_edit())
+        .max(row_codec())
+        .max(projection())
+}
+
+/// `cells::delete_material`: its before, the record it returns and the Job
+/// material under it.
+fn delete_material() -> usize {
+    size_of::<(JobView<'_>, UndoEdge, u64, VersionStamp, LogicalRowVersion)>()
+        + size_of::<UndoPayload<'_>>()
+        + returned::<UndoRecord<'_>, Error>()
+        + size_of::<UndoRecord<'_>>()
+        + job_material()
+}
+
+/// `delete_source`: the typed leaf, its search, the target's record and
+/// projection, the old row's before, over the typed leaf, the tree codec,
+/// the record codec or a projection.
+fn delete_source() -> usize {
+    type Old<'a> = Option<(VersionStamp, LogicalRowVersion, &'a [u8])>;
+    size_of::<(&(), JobView<'_>, TxnRef, bool, usize)>()
+        + size_of::<(LeafSource<'_>, ObjectHandle, RowId, [u8; 8])>()
+        + size_of::<(TreePageView<'_>, SearchPosition, &[u8], RowRecordView<'_>)>()
+        + 2 * size_of::<RecordVersion>()
+        + size_of::<([u8; 32], Old<'_>, CanonicalRowView<'_>)>()
+        + returned::<LeafSource<'_>, Error>()
+        + returned::<TreePageView<'_>, TreeError>()
+        + returned::<SearchPosition, TreeError>()
+        + returned::<TreeEntry<'_>, TreeError>()
+        + returned::<RowRecordView<'_>, RowError>()
+        + returned::<[u8; 32], Error>()
+        + returned::<RecordVersion, Error>()
+        + size_of::<CodecResult<(), Error>>()
+        + typed().max(tree_codec()).max(row_codec()).max(projection())
+}
+
+/// The DELETE U frames, each over the DELETE material or the Row-target Undo
+/// codec (dev3-row-delete.md#delete-undo): `delete_undo_live` (the before
+/// triple, the Live record in its cell, the expectation, entry (a)'s header
+/// encode), `delete_before` (the expectation, entry (a)'s decoded view and
+/// Live record, the compared material, the before triple) or
+/// `delete_release` (the cut edge, the Releasing record in its cell, the
+/// expectation, entry (a)'s encode).
+pub(super) fn delete_undo() -> usize {
+    type Before<'a> = (VersionStamp, LogicalRowVersion, &'a [u8]);
+    let live = size_of::<(Namespace, JobView<'_>, UndoEdge, &RowSchemaInput<'_>)>()
+        + size_of::<(Before<'_>, &mut [u8; UNDO_RECORD_BYTES])>()
+        + size_of::<CodecResult<Before<'_>, Error>>()
+        + size_of::<Before<'_>>()
+        + returned::<UndoRecord<'_>, Error>()
+        + size_of::<UndoCell<'_>>()
+        + returned::<UndoRecordExpectation<'static>, Error>()
+        + returned::<usize, UndoError>()
+        + size_of::<CodecResult<(), Error>>();
+    let before = size_of::<(Namespace, JobView<'_>, UndoEdge, &RowSchemaInput<'_>, &[u8])>()
+        + size_of::<CodecResult<Before<'_>, Error>>()
+        + returned::<UndoRecordExpectation<'static>, Error>()
+        + returned::<UndoRecordView<'_>, UndoError>()
+        + returned::<UndoRecord<'_>, UndoError>()
+        + returned::<UndoRecord<'_>, Error>()
+        + size_of::<Before<'_>>()
+        + size_of::<CodecResult<(), Error>>();
+    let release = size_of::<(Namespace, JobView<'_>, UndoEdge, &RowSchemaInput<'_>)>()
+        + size_of::<(
+            (VersionStamp, LogicalRowVersion),
+            &mut [u8; UNDO_RECORD_BYTES],
+        )>()
+        + size_of::<CodecResult<(), Error>>()
+        + size_of::<UndoEdge>()
+        + returned::<UndoRecord<'_>, Error>()
+        + size_of::<UndoCell<'_>>()
+        + returned::<UndoRecordExpectation<'static>, Error>()
+        + returned::<usize, UndoError>();
+    live.max(before).max(release) + undo_row_codec().max(delete_material())
+}
+
+/// `delete_leaf`: the edit scratch, the after record's version and payload,
+/// the record scratch call, the cell length and projection, over the tree
+/// codec, the record codec, a projection or the leaf edit.
+fn delete_leaf() -> usize {
+    size_of::<(
+        Namespace,
+        &mut (),
+        JobView<'_>,
+        &LeafSource<'_>,
+        Option<(RecordVersion, Option<&[u8]>)>,
+    )>() + size_of::<CodecResult<[u8; 32], Error>>()
+        + size_of::<(ObjectHandle, RowId, [u8; 8], TreePageView<'_>)>()
+        + size_of::<[&[u8]; ROW_EDIT_CELLS]>()
+        + size_of::<(RecordVersion, RowPayload<'_>, [u8; 32])>()
+        + size_of::<&mut [u8; MAX_RECORD]>()
+        + size_of::<(
+            &mut [[u8; 1536]; 2],
+            &mut [u8],
+            Option<&mut [u8; MAX_RECORD]>,
+        )>()
+        + returned::<TreePageView<'_>, TreeError>()
+        + returned::<CanonicalRowView<'_>, RowError>()
+        + returned::<usize, RowError>()
+        + returned::<[u8; 32], Error>()
+        + returned::<&[u8], TreeError>()
+        + returned::<LeafEditPlan<'_, '_>, LeafEditError>()
+        + tree_codec()
+            .max(row_codec())
+            .max(projection())
+            .max(leaf_edit())
+}
+
+/// The delete RowReserve's leaf proof (`reserve_delete`): the reservation D,
+/// the typed leaf,
+/// its search, the old row, the tombstone it encodes into the record scratch
+/// and its projection, over the typed leaf, the tree or record codec or a
+/// projection.
+fn reserve_delete() -> usize {
+    size_of::<(&(), TableSource<'_>, PageRef, RecordVersion, &mut ())>()
+        + size_of::<(Namespace, RowId, LeafSource<'_>, TreePageView<'_>)>()
+        + size_of::<([u8; 8], SearchPosition, &[u8], RecordExpectation)>()
+        + size_of::<(RowRecordView<'_>, usize)>()
+        + returned::<([u8; 32], usize), Error>()
+        + returned::<LeafSource<'_>, Error>()
+        + returned::<TreePageView<'_>, TreeError>()
+        + returned::<SearchPosition, TreeError>()
+        + returned::<TreeEntry<'_>, TreeError>()
+        + returned::<RowRecordView<'_>, RowError>()
+        + returned::<usize, RowError>()
+        + returned::<[u8; 32], Error>()
+        + returned::<usize, Error>()
+        + reservation()
+            .max(typed())
+            .max(tree_codec())
+            .max(row_codec())
+            .max(projection())
+}
+
+/// DELETE's prepare callees: `prepare_delete` (its arguments, the table and
+/// its reservation D, the leaf observation, the before triple, the after
+/// version and digest, over the reservation scan, `delete_source`, a DELETE U
+/// frame, `delete_leaf` or `current_version`) or
+/// the delete RowReserve's `reserve_delete`
+/// (dev3-row-delete.md#delete-states).
+pub(super) fn delete() -> usize {
+    type Before<'a> = (VersionStamp, LogicalRowVersion, &'a [u8]);
+    let prepare = size_of::<(&(), &mut (), JobView<'_>, TxnRef, UndoEdge, &[u8])>()
+        + size_of::<(Operation, Namespace, ObjectHandle, &RowSchemaInput<'_>)>()
+        + returned::<usize, Error>()
+        + returned::<([u8; 32], [u8; 32]), Error>()
+        + size_of::<(LeafSource<'_>, u16, [u8; 32], Option<Before<'_>>)>()
+        + size_of::<CodecResult<(LeafSource<'_>, u16, [u8; 32], Option<Before<'_>>), Error>>()
+        + returned::<Before<'_>, Error>()
+        + size_of::<Option<(RecordVersion, Option<&[u8]>)>>()
+        + returned::<RecordVersion, Error>()
+        + returned::<[u8; 32], Error>()
+        + size_of::<CodecResult<(), Error>>()
+        + reservation()
+            .max(delete_source())
+            .max(delete_undo())
+            .max(delete_leaf())
+            .max(
+                size_of::<(JobView<'_>, TxnRef)>() + size_of::<CodecResult<RecordVersion, Error>>(),
+            );
+    prepare.max(reserve_delete())
+}
+
+/// `cells::delete_reservation`: the Jobs it scans, the sum, one decoded Job,
+/// over the Row census Job decode.
+fn reservation() -> usize {
+    size_of::<(&[[u8; JOB_BYTES]; JOB_COUNT], Namespace, ObjectHandle)>()
+        + size_of::<(usize, Iter<'_, [u8; JOB_BYTES]>, &[u8; JOB_BYTES])>()
+        + returned::<JobView<'_>, RetentionError>()
+        + returned::<usize, Error>()
+        + row::source_bytes()
 }
 
 /// wal_frame envelope/redo codec (`resources::wal_codec` over the same types).

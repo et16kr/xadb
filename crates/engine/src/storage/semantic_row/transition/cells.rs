@@ -1,6 +1,6 @@
 //! Small exact recipes shared by every Row transition: identities, before
 //! page checks, Undo material, projection, predecessor and budget rows.
-use super::super::{Error, Result};
+use super::super::{Error, Result, operation::TOMBSTONE_CELL};
 use crate::{
     api::Namespace,
     storage::{
@@ -10,14 +10,16 @@ use crate::{
         retention_obligation::AgingObligationError,
         retention_page::{
             JOB_BYTES, JOB_COUNT,
-            row::{self, JobCells, JobScope, JobState, JobView, RootView},
+            row::{self, JobCells, JobScope, JobState, JobView, RootView, RowEffect},
         },
         status_home::StatusHome,
-        transaction_record::{StatusSlotRef, TxnRef},
+        transaction_record::{LogicalRowVersion, StatusSlotRef, TxnRef, VersionStamp},
         tree_page::edit::LeafEditError,
         undo_record::{
-            self, UndoBeforeKind, UndoCell, UndoCreator, UndoEdge, UndoLink, UndoPayload,
-            UndoRecord, UndoRecordExpectation, UndoRelease, UndoTargetKind, UndoTargetView,
+            self, UNDO_RECORD_BYTES, UndoBeforeKind, UndoCell, UndoCreator, UndoEdge, UndoLink,
+            UndoPayload, UndoPayloadForm, UndoRecord, UndoRecordExpectation, UndoRecordMetadata,
+            UndoRecordOutline, UndoRecordState, UndoRelease, UndoStampKind, UndoTargetKind,
+            UndoTargetView,
         },
         wal_frame::FrameExpectation,
     },
@@ -148,6 +150,18 @@ pub(super) fn undo_before(
     page: PageRef,
     frame: FrameExpectation,
 ) -> Result<&[u8]> {
+    undo_cell(bytes, namespace, page, frame, UNDO_RECORD_BYTES)
+}
+/// One-slot Undo page before image whose one cell is the last `len` bytes of
+/// the cell area: 432 is `INITIAL_UNDO_CELL`, a Live delete U is `432+L`
+/// (dev3-row-delete.md#delete-undo).
+pub(super) fn undo_cell(
+    bytes: &[u8; PAGE_BYTES],
+    namespace: Namespace,
+    page: PageRef,
+    frame: FrameExpectation,
+    len: usize,
+) -> Result<&[u8]> {
     same(dynamic(page))?;
     let view = before_page(
         bytes,
@@ -156,8 +170,23 @@ pub(super) fn undo_before(
         frame,
         false,
     )?;
-    same(view.len() == 1 && view.cell_range(0) == Some(undo_record::INITIAL_UNDO_CELL))?;
-    Ok(&bytes[undo_record::INITIAL_UNDO_CELL])
+    let start = page::DIGEST_OFFSET
+        .checked_sub(len)
+        .ok_or(Error::InvalidInput)?;
+    same(view.len() == 1 && view.cell_range(0) == Some(start..page::DIGEST_OFFSET))?;
+    Ok(&bytes[start..page::DIGEST_OFFSET])
+}
+/// The U cell of a Retained root: 432 for INSERT, `432+(C-180)` for DELETE.
+pub(super) fn live_undo_bytes(job: JobView<'_>) -> Result<usize> {
+    Ok(match job.effect() {
+        RowEffect::Insert => UNDO_RECORD_BYTES,
+        RowEffect::Delete => {
+            UNDO_RECORD_BYTES
+                + (job.cell_bytes() as usize)
+                    .checked_sub(TOMBSTONE_CELL)
+                    .ok_or(Error::Corrupt)?
+        }
+    })
 }
 pub(super) fn page_lsn(bytes: &[u8; PAGE_BYTES]) -> u64 {
     u64::from_le_bytes(bytes[64..72].try_into().expect("page LSN"))
@@ -341,17 +370,24 @@ pub(super) fn encode_material(
     cell: UndoCell<'_>,
     output: &mut [u8; undo_record::UNDO_RECORD_BYTES],
 ) -> Result<()> {
-    let reference = job.undo().ok_or(Error::IdentityMismatch)?;
-    let object = job.object().ok_or(Error::IdentityMismatch)?;
-    let row = job.row_id().ok_or(Error::IdentityMismatch)?;
-    let expected = UndoRecordExpectation {
-        namespace,
-        reference,
-        target: row_target(object, row),
-    };
+    let expected = expectation(namespace, job)?;
     undo_record::encode_undo_record(cell, expected, &[], output)?;
     undo_record::decode_undo_record(output, expected, &[])?;
     Ok(())
+}
+/// The Undo expectation of a Row root's U: its reference and Row target.
+pub(super) fn expectation(
+    namespace: Namespace,
+    job: JobView<'_>,
+) -> Result<UndoRecordExpectation<'static>> {
+    let reference = job.undo().ok_or(Error::IdentityMismatch)?;
+    let object = job.object().ok_or(Error::IdentityMismatch)?;
+    let row = job.row_id().ok_or(Error::IdentityMismatch)?;
+    Ok(UndoRecordExpectation {
+        namespace,
+        reference,
+        target: row_target(object, row),
+    })
 }
 /// Exact equality of an actual U cell with its canonical material.
 pub(super) fn check_material(
@@ -363,6 +399,118 @@ pub(super) fn check_material(
     let mut canonical = [0; undo_record::UNDO_RECORD_BYTES];
     encode_material(namespace, job, cell, &mut canonical)?;
     same(actual == canonical)
+}
+
+/// The Live U `actual` of a Retained root with transaction edge `edge` and
+/// its two incoming: INSERT's exact Missing material, or a delete U's outline
+/// through entry (b) (dev3-row-delete.md#previous-proof).
+pub(super) fn check_live(
+    namespace: Namespace,
+    job: JobView<'_>,
+    edge: UndoEdge,
+    actual: &[u8],
+) -> Result<()> {
+    match job.effect() {
+        RowEffect::Insert => check_material(
+            namespace,
+            job,
+            UndoCell::Live(material(job, edge, 2, 0)?),
+            actual,
+        ),
+        RowEffect::Delete => check_outline(namespace, job, true, edge, 0, actual),
+    }
+}
+/// A delete root's U through entry (b) (dev3-row-delete.md#previous-proof):
+/// every field its Job holds, a RowValue before with a Committed stamp until
+/// cursor 3 and an old logical, and while Live the old value's length L. The
+/// stamp value, old logical and value are not in the Job and are not compared.
+pub(super) fn check_outline(
+    namespace: Namespace,
+    job: JobView<'_>,
+    live: bool,
+    transaction: UndoEdge,
+    cursor: u8,
+    actual: &[u8],
+) -> Result<()> {
+    let material = material(job, transaction, if live { 2 } else { 0 }, cursor)?;
+    let payload_bytes = if live {
+        live_undo_bytes(job)? - UNDO_RECORD_BYTES
+    } else {
+        0
+    };
+    let outline = undo_record::decode_undo_record_metadata(actual, expectation(namespace, job)?)?;
+    same(
+        outline
+            == UndoRecordOutline {
+                state: if live {
+                    UndoRecordState::Live
+                } else {
+                    UndoRecordState::Releasing
+                },
+                metadata: UndoRecordMetadata {
+                    creator: material.creator,
+                    sequence: material.sequence,
+                    mutation_sequence: material.mutation_sequence,
+                    incoming: material.incoming,
+                    target: material.target,
+                },
+                edges: material.edges,
+                before_kind: UndoBeforeKind::RowValue,
+                before_stamp: (cursor < 3).then_some(UndoStampKind::Committed),
+                before_logical: true,
+                // The Releasing delete U has no body (#delete-undo).
+                payload_form: if live {
+                    UndoPayloadForm::Inline
+                } else {
+                    UndoPayloadForm::None
+                },
+                payload_bytes,
+                release: material.release,
+            },
+    )
+}
+/// A delete root's U record (dev3-row-delete.md#delete-undo): the Job's
+/// material with the RowValue before `stamp`, `logical` and `payload` (the old
+/// value while Live, none once Releasing).
+pub(super) fn delete_material<'a>(
+    job: JobView<'_>,
+    transaction: UndoEdge,
+    incoming: u64,
+    stamp: VersionStamp,
+    logical: LogicalRowVersion,
+    payload: UndoPayload<'a>,
+) -> Result<UndoRecord<'a>> {
+    let mut record: UndoRecord<'a> = material(job, transaction, incoming, 0)?;
+    record.before_kind = UndoBeforeKind::RowValue;
+    record.before_stamp = Some(stamp);
+    record.before_logical = Some(logical);
+    record.payload = payload;
+    Ok(record)
+}
+
+/// D of the leaf reservation (dev3-row-delete.md#leaf-reservation): the bytes
+/// `C-180` that the Retained delete roots of `table`, of every actor, must
+/// be able to restore without a split.
+pub(super) fn delete_reservation(
+    jobs: &[[u8; JOB_BYTES]; JOB_COUNT],
+    namespace: Namespace,
+    table: ObjectHandle,
+) -> Result<usize> {
+    let mut total = 0usize;
+    for cell in jobs {
+        let job = row::decode_job(cell, namespace)?;
+        if job.state() == JobState::RootRetained
+            && job.effect() == RowEffect::Delete
+            && job.object().is_some_and(|object| {
+                object.object == table.object && object.generation == table.generation
+            })
+        {
+            total += (job.cell_bytes() as usize)
+                .checked_sub(TOMBSTONE_CELL)
+                .ok_or(Error::Corrupt)?;
+        }
+    }
+    Ok(total)
 }
 
 /// The normalized UndoSlot Item96 of a Reserved root.
