@@ -329,6 +329,14 @@ fn cell(page: &[u8], slot: usize) -> &[u8] {
     &page[offset..offset + length]
 }
 
+/// The tree cell of `row` in a RowLeaf (its directory order is key order).
+fn leaf_cell(leaf: &Page, row: RowId) -> &[u8] {
+    let count = usize::from(u16::from_le_bytes([leaf[72], leaf[73]]));
+    (1..count)
+        .map(|slot| cell(leaf, slot))
+        .find(|c| c[4..12] == row.get().to_be_bytes())
+        .expect("row in leaf")
+}
 /// The RowLeaf's own page reference from its header (file, page, incarnation).
 fn leaf_ref(leaf: &Page) -> PageRef {
     PageRef::decode(&leaf[24..48]).unwrap()
@@ -676,10 +684,11 @@ impl World {
         let (Some(actor), Some(location)) = (observed.actor, observed.status) else {
             return;
         };
-        // The scope3 local Undo and Job observers learn the DELETE effect in
-        // stage 2b-2 (dev3-row-delete.md#files: semantic_row/{undo,leaf,jobs}.rs).
-        // Until then they skip a group of an actor with an effect-1 root,
-        // before or after; status.rs skips only the DELETE opcodes themselves.
+        // The scope3 local Undo observer learns the DELETE effect in stage
+        // 2b-2 (dev3-row-delete.md#files: semantic_row/{undo,leaf}.rs). Until
+        // then it skips a group of an actor with an effect-1 root, before or
+        // after; status.rs skips only the DELETE opcodes themselves; jobs.rs
+        // observes every group.
         let delete_actor = |bank: &[[u8; JOB_BYTES]; JOB_COUNT]| {
             bank.iter().any(|cell| {
                 row::decode_job(cell, namespace()).is_ok_and(|job| {
@@ -723,7 +732,7 @@ impl World {
                 TransactionStatusCell::Free(_) => None,
             }
         });
-        let commit = match op {
+        let commit = match op.role() {
             Operation::Commit => Some(CommitSeq::new(layout.core().q()).unwrap()),
             Operation::Prune => match StatusHome::decode(cell(status_before.unwrap(), 0))
                 .unwrap()
@@ -755,15 +764,8 @@ impl World {
             )
             .unwrap_or_else(|error| panic!("{name}: status.rs {error:?}"));
         }
-        if deferred {
-            println!(
-                "N1_CROSS\t{name}\tstatus={}\tundo/jobs deferred to 2b-2 (effect-1 actor)",
-                present(STATUS) && op == op.role()
-            );
-            return;
-        }
         let ordinal = observed.job_ordinal;
-        if present(UNDO) {
+        if present(UNDO) && !deferred {
             let row = matches!(op, Operation::Forward | Operation::Clr | Operation::Prune);
             let source = match (change, observed.issued) {
                 (Change::Reserve(plan), Some(issued)) => undo::UndoSource::Reserve {
@@ -816,12 +818,31 @@ impl World {
                         // the after Job against it, not its derivation.
                         projection: job[288..320].try_into().unwrap(),
                         predecessor: head_before.is_some(),
+                        effect: row::RowEffect::Insert,
+                    })
+                }
+                (Change::ReserveDelete(plan), Some(issued)) => {
+                    let job = cell(&after[JOB], ordinal % 15);
+                    let leaf = self.leaf.as_ref().unwrap();
+                    Some(jobs::ReservePlan {
+                        undo: issued.undo,
+                        sequence: issued.sequence,
+                        table: plan.table,
+                        pair: [page_ref(12, 2), leaf_ref(leaf)],
+                        statement: plan.statement,
+                        mutation: issued.mutation,
+                        row: plan.row,
+                        // The old row's cell, from the leaf before image.
+                        cell_bytes: leaf_cell(leaf, plan.row).len() as u32,
+                        projection: job[288..320].try_into().unwrap(),
+                        predecessor: head_before.is_some(),
+                        effect: row::RowEffect::Delete,
                     })
                 }
                 _ => None,
             };
             let sender = matches!(
-                op,
+                op.role(),
                 Operation::Forward | Operation::Commit | Operation::AbortEnd
             )
             .then(|| self.transaction.as_ref().unwrap());
@@ -844,8 +865,14 @@ impl World {
         }
         println!(
             "N1_CROSS\t{name}\tstatus={}\tundo={}\tjobs={}",
-            present(STATUS),
-            present(UNDO),
+            present(STATUS) && op == op.role(),
+            if deferred {
+                "deferred"
+            } else if present(UNDO) {
+                "true"
+            } else {
+                "false"
+            },
             present(JOB)
         );
     }
