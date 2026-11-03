@@ -288,6 +288,11 @@ pub(in super::super) fn apply(
             | Operation::ReleaseRole
             | Operation::RootFree
             | Operation::TerminalFinish => Some(native_before(view, jobs)?),
+            // The DELETE first path (dev3-row-delete.md) has a wire format but
+            // no observer yet; its replay arm arrives with the observer.
+            Operation::DeleteForward | Operation::DeleteClr | Operation::DeletePrune => {
+                return Err(sem(semantic::Error::Unsupported));
+            }
         };
         // Reserve: the actor's TerminalLeased Job (its Status) and the
         // adopted Job after, a Row RootReserved cell of the same actor whose
@@ -408,6 +413,9 @@ pub(in super::super) fn apply(
             Operation::TerminalFinish => Change::TerminalFinish {
                 ordinal: ordinal_of()?,
             },
+            Operation::DeleteForward | Operation::DeleteClr | Operation::DeletePrune => {
+                unreachable!("refused at ordinal selection above")
+            }
         };
         let undo = match op {
             Operation::Cancel

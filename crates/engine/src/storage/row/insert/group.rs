@@ -63,8 +63,6 @@ const ROOT_CELL: (u16, u16, u16) = (0, 15_840, 512);
 const STATUS_CELL: (u16, u16, u16) = (0, 16_128, 224);
 const UNDO_CELL: (u16, u16, u16) = (0, 15_920, 432);
 const ANCHOR_CELL: (u16, u16, u16) = (0, 16_304, 48);
-const FORWARD_FIXED: u64 = 91_304;
-const CLR_FIXED: u64 = 91_096;
 
 /// Plain value mirror of one `RowSourceBinding`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -453,9 +451,9 @@ fn encode_material(observed: &Observed<'_>, live: bool, output: &mut [u8]) -> Re
     Ok(())
 }
 
-/// Exact Row debt rows of the RootJob: Forward (structural) and CLR.
-fn debt(fixed: u64, cell: usize, h: bool, undo_slots: u64) -> RemainingBudget {
-    let wal = fixed + cell as u64 + 128 * u64::from(h);
+/// Exact Row debt rows of the RootJob: Forward (structural) and CLR. The
+/// WAL is the root's own effect recipe (`row_forward_wal`/`row_clr_wal`).
+fn debt(wal: u64, undo_slots: u64) -> RemainingBudget {
     RemainingBudget {
         steps: 1,
         wal,
@@ -542,6 +540,12 @@ fn observe<'a>(
     // Selected RootJob, TerminalJob and the census-derived predecessor H.
     let ordinal = input.root_job;
     let job = row::decode_job(&input.jobs[ordinal], namespace)?;
+    // This producer makes INSERT groups only; a DELETE root
+    // (dev3-row-delete.md#job-effect) has its own producer.
+    require(
+        job.effect() == row::RowEffect::Insert,
+        InsertError::Unsupported,
+    )?;
     let h = input.predecessor.is_some();
     require(
         job.state()
@@ -591,7 +595,10 @@ fn observe<'a>(
             let recipe = candidate
                 .has_previous_transaction()
                 .ok_or(InsertError::IdentityMismatch)?;
-            let owed = debt(CLR_FIXED, candidate.cell_bytes() as usize, recipe, 0);
+            let owed = debt(
+                row::row_clr_wal(candidate.effect(), candidate.cell_bytes(), recipe),
+                0,
+            );
             clr_steps = clr_steps
                 .checked_add(1)
                 .ok_or(InsertError::BudgetMismatch)?;
@@ -773,7 +780,8 @@ fn observe<'a>(
                 }
                 && transaction.chain.apply == job.lease_lsn()
                 && transaction.last_mutation_sequence == job.mutation()
-                && transaction.remaining[1] == debt(FORWARD_FIXED, cell, h, 1),
+                && transaction.remaining[1]
+                    == debt(row::row_forward_wal(job.effect(), cell as u32, h), 1),
             InsertError::BudgetMismatch,
         )?;
     } else {

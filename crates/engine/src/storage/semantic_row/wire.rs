@@ -249,23 +249,9 @@ pub(crate) fn decode_layout(
         return Err(Error::Corrupt);
     }
     let native_bytes = u32_at(payload, if operation.handoff() { 228 } else { 136 }) as usize;
-    let c = match operation {
-        Operation::Forward => native_bytes.checked_sub(5024).ok_or(Error::Corrupt)?,
-        Operation::Clr => native_bytes.checked_sub(5024).ok_or(Error::Corrupt)?,
-        Operation::Prune => {
-            let twice = native_bytes.checked_sub(5024).ok_or(Error::Corrupt)?;
-            if twice % 2 != 0 {
-                return Err(Error::Corrupt);
-            }
-            twice / 2
-        }
-        _ => 0,
-    };
+    let c = super::operation::cell_from_native(operation, native_bytes)?;
     let edges = u16_at(payload, if operation.handoff() { 244 } else { 126 });
-    let row = matches!(
-        operation,
-        Operation::Forward | Operation::Clr | Operation::Prune
-    );
+    let row = operation.row();
     if row && !matches!(edges, 3 | 4) {
         return Err(Error::Corrupt);
     }
@@ -395,31 +381,18 @@ fn validate_native_shape(view: LayoutView<'_>) -> Result<()> {
         if u16_at(bytes, 2) != ordinal {
             return Err(Error::OrderMismatch);
         }
-        let size = match kind {
-            1 => view.shape.cell,
-            3 => 432,
-            5 => 224,
-            8 => 512,
-            9 => 1024,
-            _ => unreachable!(),
-        };
-        let presence = if kind == 1 {
-            match view.operation {
-                Operation::Forward => 2,
-                Operation::Clr => 1,
-                Operation::Prune => 3,
-                _ => return Err(Error::Corrupt),
-            }
-        } else {
-            3
-        };
+        // Per-operation sides (dev3-row-delete.md#delete-shape): a DELETE
+        // leaf and U change size; every other native keeps its fixed size.
+        let (presence, before_size, after_size) =
+            super::operation::native_sides(view.operation, kind, view.shape.cell)
+                .ok_or(Error::Corrupt)?;
         if bytes[1] != presence {
             return Err(Error::Corrupt);
         }
         let before = u32_at(bytes, 12) as usize;
         let after = u32_at(bytes, 16) as usize;
-        if before != if presence & 1 != 0 { size } else { 0 }
-            || after != if presence & 2 != 0 { size } else { 0 }
+        if before != if presence & 1 != 0 { before_size } else { 0 }
+            || after != if presence & 2 != 0 { after_size } else { 0 }
         {
             return Err(Error::Corrupt);
         }

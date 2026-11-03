@@ -162,13 +162,9 @@ fn observe<'a>(
         if !is_terminal(status)
             && matches!(job.state(), JobState::RootReserved | JobState::RootRetained)
         {
-            let wal = 91_096
-                + u64::from(job.cell_bytes())
-                + 128
-                    * u64::from(
-                        job.has_previous_transaction()
-                            .ok_or(Error::IdentityMismatch)?,
-                    );
+            // INSERT `91096+C+128h`, DELETE `91096+2C+128h` (row-delete
+            // #delete-costs): the root's own effect recipe.
+            let wal = job.clr_wal().ok_or(Error::IdentityMismatch)?;
             clr_steps = clr_steps.checked_add(1).ok_or(Error::Exhausted)?;
             clr_wal = clr_wal.checked_add(wal).ok_or(Error::Exhausted)?;
         }
@@ -239,16 +235,7 @@ fn remaining(
     let mut rows = [RemainingBudget::default(); 5];
     rows[0] = debt(observed.clr_steps, observed.clr_wal);
     if let Some(job) = observed.reserved {
-        rows[1] = debt(
-            1,
-            91_304
-                + u64::from(job.cell_bytes())
-                + 128
-                    * u64::from(
-                        job.has_previous_transaction()
-                            .ok_or(Error::IdentityMismatch)?,
-                    ),
-        );
+        rows[1] = debt(1, job.forward_wal().ok_or(Error::IdentityMismatch)?);
         rows[1].undo_slots = 1;
     }
     if !is_terminal(status) {

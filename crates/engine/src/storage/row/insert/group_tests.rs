@@ -16,7 +16,10 @@ use crate::{
         obligation,
         page::{FileId, PAGE_BYTES, PageIdentity, PageKind, PageRef},
         retention_obligation::{self, AgingObligationError, profile_reference},
-        retention_page::{JOB_BYTES, JOB_COUNT, row::JobCells},
+        retention_page::{
+            JOB_BYTES, JOB_COUNT,
+            row::{self, JobCells},
+        },
         row_record::RowSchemaInput,
         semantic_row::{self, jobs, ledger, status, undo},
         status_home::StatusHome,
@@ -911,4 +914,27 @@ fn mca05_v29_h_net0_with_before_count_zero_is_refused() {
     refuses(Case::ForwardH, InsertError::OrderMismatch, |f| {
         h_incoming(f, 0)
     });
+}
+
+/// Stage 2a boundary (dev3-row-delete.md#job-effect): the INSERT group
+/// producer refuses a valid DELETE root (effect 1, delete cleanup budget) as
+/// its selected RootJob, before the first output byte.
+#[test]
+fn rdl_f_insert_producer_refuses_delete_root() {
+    for case in [Case::ForwardNoH, Case::ForwardH, Case::ClrNoH, Case::ClrH] {
+        refuses(case, InsertError::Unsupported, |f| {
+            let job = &mut f.bank[f.ordinal];
+            let cell = u64::from(u32::from_le_bytes(job[280..284].try_into().unwrap()));
+            let wal = u64::from_le_bytes(job[784..792].try_into().unwrap());
+            let h = wal - (311_608 + 2 * cell);
+            assert!(h == 0 || h == 128);
+            job[284] = 1;
+            job[784..792].copy_from_slice(&(311_608 + cell + h).to_le_bytes());
+            job[880..888].copy_from_slice(&(311_608 + cell + h).to_le_bytes());
+            assert_eq!(
+                row::decode_job(job, namespace()).unwrap().effect(),
+                row::RowEffect::Delete
+            );
+        });
+    }
 }

@@ -720,3 +720,47 @@ fn jobs_cell_size_and_predecessor_match_same_frame() {
         assert_eq!(jobs::observe(c.layout(), input), Err(Error::Unsupported));
     }
 }
+
+/// Stage 2a boundary (dev3-row-delete.md#job-effect): until the DELETE
+/// observers exist, the Job observer refuses a valid DELETE root (effect 1,
+/// delete cleanup budget) before any INSERT-root step and as a Reserve after.
+#[test]
+fn rdl_f_insert_job_observer_refuses_delete_roots() {
+    fn delete(b: &mut [u8], namespace: crate::api::Namespace) {
+        let job = row::decode_job(b, namespace).unwrap();
+        let (cell, h) = (job.cell_bytes(), job.has_previous_transaction());
+        b[284] = 1;
+        if let Some(h) = h {
+            let wal = 311_608 + u64::from(cell) + 128 * u64::from(h);
+            put(b, 784, wal, 8);
+            put(b, 880, wal, 8);
+        }
+        assert_eq!(
+            row::decode_job(b, namespace).unwrap().effect(),
+            row::RowEffect::Delete
+        );
+    }
+    for name in [
+        "forward",
+        "cancel",
+        "clr",
+        "clr-h",
+        "prune",
+        "prune-h",
+        "release-committed-0",
+        "release-compensated-2",
+        "rootfree-committed",
+    ] {
+        let mut c = case(name);
+        let namespace = c.context.profile.spec().namespace;
+        assert!(c.observe().is_ok(), "{name}");
+        let mut b = c.jobs[c.ordinal];
+        delete(&mut b, namespace);
+        c.original(c.ordinal, b);
+        assert_eq!(c.observe(), Err(Error::Unsupported), "{name}");
+    }
+    let mut c = case("reserve");
+    let namespace = c.context.profile.spec().namespace;
+    c.edit_after(|b| delete(b, namespace));
+    assert_eq!(c.observe(), Err(Error::Unsupported));
+}

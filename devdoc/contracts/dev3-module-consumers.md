@@ -130,6 +130,8 @@ row logical projection 후보는 `XRP1`, version1, kindRow1, UndoTargetCore32(ta
 <a id="job3-census"></a>
 #### Job3 순수 cell·64행 census 구체화 — 2026-10-27
 
+**2026-11-03 개정([Job 효과 byte](dev3-row-delete.md#job-effect)).** Row root의 @284는 효과 byte(0 INSERT, 1 DELETE)이며 C는 280..284다. h는 효과별 cleanup WAL(INSERT `311608+2C`, DELETE `311608+C`) 또는 그 값에 정확히128을 더한 두 recipe로 관찰한다. Releasing과 CLR/Prune가 지우는 범위는 280..284와 285..320이고 효과 byte는 Free까지 보존한다. 이 절의 h·Releasing 줄, §6.1의 Row 필드 목록과 format 표의 "Job kind3/RowId@320만 새 의미", Job 전이 문단의 CLR/Prune "pair/C/projection을 비우되"는 효과 byte를 더하고 이 예외를 뺀 뜻으로 읽는다.
+
 기준 `2c9964d`의 후속 D2 구체화다. 별도 `row::decode_job/encode_job`은 exact version3만 읽고 원 bytes를 빌린다. Free generation recipe는 그대로 유지하며 kind2 Catalog와 kind3 Row의 의미를 별도로 검산한다. 이 단위는 current Profile 선택·page wrapper·issuer·actual graph/descriptor 권한이 아니다.
 
 - Terminal kind1의 Catalog/Row 구분은 기존 budget5행의 **완전 검산된** peak registry9/16 recipe로 관찰한다. 새 persistent flag는 없다. Row peak는 `{frames9,memory425984,locks0,registry16,files5,doublewrite1}`, Catalog peak는 기존9/425984/0/9/5/1이다. root kind와 actor Terminal recipe가 일치해야 한다. actual Tx descriptor scope의 일치는 후속 의미 observer 의무다.
@@ -263,6 +265,14 @@ Prune는 오래된 root부터 임의 제거하지 않는다. 같은 actor의 hea
 | ReleaseRole·RootFree | Root·RootJob·U, native합4320;3page |0/0/0,3P, single Aging|각`55528`|
 | TerminalFinish | Root·TerminalJob·Status, native합3904;3page |0/0/0,3P, single Aging|`55112`|
 
+2026-11-03 개정([DELETE 첫 경로](dev3-row-delete.md#delete-shape), C는 지우는 옛 행의 cell, L=C−180): 다음 세 행을 더한다. 위 표의 행은 바뀌지 않는다.
+
+| operation | 변경 native·page | E/K/I·redo | 전체 WAL frame bytes 제안 |
+| --- | --- | --- | --- |
+| DeleteForward(8, XHG Update) | Root·RootJob·Status·U(432→432+L)·RowLeaf(C→180), native합5024+2C;5page |`(3+h)/2/1`,5P|`91304+2C+128h`(최대95888)|
+| DeleteClr(9, XHG Clr) | Root·RootJob·Status·U(432+L→432)·RowLeaf(180→C), native합5024+2C;5page |`(3+h)/2/0`,5P|`91096+2C+128h`(최대95680)|
+| DeletePrune(23, XSG System) | Root·RootJob·Status·U(432+L→432)·RowLeaf(180→없음), native합5024+C;5page |`(3+h)/2/0`,5P, single Aging|`89496+C+128h`(최대91852)|
+
 성공 statement의 끝은 F02 token/mark의 정상 해제이며 status state가 바뀌지 않는다면 가짜 동일 before/after Native를 만들지 않는다. 위 StatementFinish3040은 AbortingStatement→Active 복귀다. 성공 statement 종료의 별도 영속 operation이 실제 owner 계약에 필요하다고 결정되면 exact 변화를 명시하여 표를 갱신해야 한다. Cancel/CLR에서 이미 소비한 row reserve/발급 bytes를 반환하지 않는다.
 
 2026-10-29 결정(S2-0, Q1): 성공 statement 종료의 별도 영속 operation은 필요 없다. 성공 종료는 WAL0으로 slot의 sequence·mark를 닫고 쓰지 않은 6080B를 다음 statement로 넘긴다. 바뀌는 영속 상태가 없고, 복구에는 live statement가 없으며, 다음 mark는 다음 statement 시작의 ATT `undo_head`이고, 넘긴 credit은 descriptor 잔여에 이미 있다. 위 표는 갱신하지 않는다. savepoint나 영속 statement 경계를 도입하면 이 결정을 다시 연다.
@@ -273,7 +283,7 @@ Prune는 오래된 root부터 임의 제거하지 않는다. 같은 actor의 hea
 
 statement 실패와 full abort의 같은3040B를 두 번 배정하지 않는다. Active transaction은 기존 retained root 각각의 남은 CLR `ΣL_i`, terminal56712, 필수 full RollbackStart3040을 보존한다. 변경하는 statement의 첫 효과 전에는 추가로 StatementRollbackStart3040+StatementFinish3040=`6080`을 확보한다. current Reserved root에는 앞으로의 Forward와 해당 CLR, 별도 Aging cleanup debt도 남는다. 성공 statement 끝의 WAL0이면 미소비6080을 다음 mark로 인계할 수 있다. 실패 statement는 추가6080과 그 suffix CLR를 소비하고, 앞선 root CLR+full-abort3040+terminal을 남긴다. 이후 새 statement의 첫 Reserve는 소진한6080을 같은 adopted descriptor에서 보충하며, 보충 admission 실패가 기존 full abort를 막아서는 안 된다.
 
-Root cleanup debt 후보는 `Prune(C,h)+4×55528=311608+2C+128h`이며 C2228/h1의 최대는316192B다. CLR는 미사용 Prune 몫만 반환하고 ReleaseRole3+RootFree의222112B를 남긴다. Commit 뒤 미사용 CLR/rollback 반환과 retained Aging debt는 구별한다. Tx 사이 consumable/동시 peak를 sum해야 하는 부분과 원 Aging의 순차 shared peak max를 나누며, Job budget 합을 전역 ATTsum+Aging에 다시 더하지 않는다. 이 식은 실제 opcode source·기존 자원 한도의 수용 여부가 확인되기 전 grant가 아니다.
+Root cleanup debt 후보는 `Prune(C,h)+4×55528=311608+2C+128h`이며 C2228/h1의 최대는316192B다. 2026-11-03부터 DELETE root(Job 효과 byte 1)는 `DeletePrune(C,h)+4×55528=311608+C+128h`(최대313964B)이고 Job의 효과 byte가 식을 고른다([row-delete](dev3-row-delete.md#job-effect)). CLR는 미사용 Prune 몫만 반환하고 ReleaseRole3+RootFree의222112B를 남긴다. Commit 뒤 미사용 CLR/rollback 반환과 retained Aging debt는 구별한다. Tx 사이 consumable/동시 peak를 sum해야 하는 부분과 원 Aging의 순차 shared peak max를 나누며, Job budget 합을 전역 ATTsum+Aging에 다시 더하지 않는다. 이 식은 실제 opcode source·기존 자원 한도의 수용 여부가 확인되기 전 grant가 아니다.
 
 <a id="api-flow"></a>
 ## 7. API·오류와 권한 흐름
@@ -336,7 +346,7 @@ Missing Undo는 실제 `undo_record::validate_record`의 `before_kind=Missing/pa
 | `table`/`values` | TableSpec의1..32열·typed bool/int64/UTF8/binary/null; canonical row length5..2048, 실제 schema SHA | raw target bytes에서 expected table/namespace를 추출하지 않음 |
 | `actors`/`history` | 기호 T0..T2 최대3actor, S1..S8 최대8statement/actor, 일반 semantic case≤12행, 단계≤128; capacity case만 admission 성공 누적≤52행·다음1실패 시도 | 값·논리 expected set·own/snapshot 가시성은 독립 typed history에 고정. grant를 요구하는52행 약속이 아님 |
 | `bindings` | 실제 CREATE/recovery에서 받은 DB/timeline/open/table/generation/schema/anchor; actual Begin/Reserve의 Txn/Status/U/RowId/Job/sequence/mark·LSN 및 digest | C가 만든 비복제 capability는 worker 안에만 존재. controller에는 관측 scalar/trace만 전달, scalar를 capability로 되돌리는 constructor 없음 |
-| `candidate_template` | literal native/edge/count/inventory/core/redo recipe, 기호 binding 위치·길이의 whitelist, group≤94080B; 실제 ID 결합 뒤 exact frame SHA | A producer/B reader를 expected 생성기로 사용하지 않음. late binding은 identity·actual prefix/previous digest·그에 종속된 checksum만 허용, 값/outcome/연산/cut 변경 금지 |
+| `candidate_template` | literal native/edge/count/inventory/core/redo recipe, 기호 binding 위치·길이의 whitelist, group≤95888B(2026-11-03 DeleteForward 최대, 이전 94080B; [row-delete](dev3-row-delete.md#delete-shape)); 실제 ID 결합 뒤 exact frame SHA | A producer/B reader를 expected 생성기로 사용하지 않음. late binding은 identity·actual prefix/previous digest·그에 종속된 checksum만 허용, 값/outcome/연산/cut 변경 금지 |
 | `schedule`/`fault` | 아래 fixed barrier 이름, 발생 ordinal, before/after 또는 정확 first-byte/complete-boundary, 단일 cut | 도달 trace가 없으면 NOT_REACHED/미완료. 예상값에 맞출 때까지 seed/cut를 바꾸지 않음 |
 | `expected`/`budget` | ordered `(table,RowId symbol,typed value,logical version)`·visible/absent·count/owner/high-water·효과/certainty·선택 closure·자원 상한·시간 | 독립 reader/checker와 외부 ACK witness. 제품의 encode/visibility/observer 함수를 oracle에 호출하지 않음 |
 | `provenance` | input/template/oracle hash, source/tree/ELF SHA, dependency file list, adapter feature, controller/worker argv, 원 결과 경로 | 실행 직전에 원자료 identity로 채움. native 정상 produce/recover/reenter는 같은 ELF의 서로 다른3PID |
@@ -529,6 +539,8 @@ core의 기존 offset/flag 폭은 유지하고 아래 presence를 명시한다. 
 - StatementFinish는 current=next=target(M 또는None)이다. Prune는 current필수·nextH선택·targetNone이며 current≠next다. Begin/Commit/AbortEnd/AgingStart/TerminalFinish는 ref없음이다.
 
 이 core는 statement/mark 권한이나 다중 Undo의 실제 순서를 입증하지 않는다. Row native는 kind1/3/5/8/9의 opcode별 정확 inventory·body 길이·presence를 요구하고, Row insert는 absent→present/CLR는 present→absent/Prune는 present→present이며 나머지는 양쪽 presence다. Native/redo는 원 address/slot 순서·hash·범위와 page kind를 대조하고 각 변경 page를 정확히 한 번 사용한다. present slot은 원 MAX_PAGE_SLOTS 미만이고 offset은 최소 directory 종단 HEADER_BYTES+4×(slot+1) 이상이다. actual 전체 slots/다른 cell 의미는 후속 page 검산 의무다. 유효 envelope의 Profile/dialect/op/outer 조합 불일치는 Unsupported로 반환하며 다른 observer를 재시도하지 않는다. 모든 Row redo는 Patch이며 RollbackStart/StatementFinish만 Status224 구간, 나머지는 whole body다. h는 Forward/CLR/Prune의 edge 수3/4에서 얻고 Forward/CLR/Prune의 core.next 존재와 같다. E/K/I의 의미와 실제 before/after byte 일치는 후속 semantic observer가 검사한다. current dispatch·source 비용/admission·실제 복구 및 M4/M5는 미완료다. 후속 적용에서 다중 mark 계약과 불일치하거나 원 한도를 넘으면 이 결정의 영향 행을 다시 검토한다.
+
+**2026-11-03 개정(DELETE 첫 경로, [row-delete](dev3-row-delete.md#delete-shape)).** opcode DeleteForward=8(XHG Update)·DeleteClr=9(XHG Clr)·DeletePrune=23(XSG System)을 더해 17opcode다. 세 opcode는 core에서 INSERT의 Forward·CLR·Prune과 같은 ref·plan·projection·cursor 규칙을 따르고 native mask도 같다. 존재 규칙에 RowLeaf kind1의 DeleteForward present(C)→present(180), DeleteClr present(180)→present(C), DeletePrune present(180)→absent를 더하고, U kind3은 DeleteForward 432→432+L, DeleteClr·DeletePrune 432+L→432다(L=C−180). wire decode는 DeleteForward·DeleteClr의 C를 `(native−5024)/2`, DeletePrune의 C를 `native−5024`로 유도하고 홀수나 185..2228 밖은 Corrupt다. 허용 frame 상한98304B는 그대로이며 가장 큰 Row frame은 DeleteForward 95888B다. 8·9·23 밖의 미지 opcode는 계속 Unsupported다.
 
 [source별 선택 증거](../evidence/module-independence-survey-20261026.md#row-scope3-wire)는 r1의8개·r2의신규2개로 고유10개를 기록한다. 최종 source에서 전체10개를 반복한 증거가 아니며 순수 framing을 actual 권한/복구 인수로 올리지 않는다.
 

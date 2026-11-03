@@ -144,10 +144,14 @@ fn decode_job<'a>(inputs: &Inputs<'a>, ordinal: usize) -> Result<JobView<'a>> {
     if ordinal >= JOB_COUNT {
         return Err(Error::InvalidInput);
     }
-    Ok(row::decode_job(
-        &inputs.jobs[ordinal],
-        inputs.profile.spec().namespace,
-    )?)
+    let job = row::decode_job(&inputs.jobs[ordinal], inputs.profile.spec().namespace)?;
+    // Every rule below is an INSERT-root rule (Clr/Prune also clear the root's
+    // [280,320), effect byte included). A DELETE root
+    // (dev3-row-delete.md#job-effect) is refused until its own rules exist.
+    if job.effect() != row::RowEffect::Insert {
+        return Err(Error::Unsupported);
+    }
+    Ok(job)
 }
 /// The actor's live TerminalLeased Job names the actor and its Status.
 fn terminal_actor(inputs: &Inputs<'_>, ordinal: usize) -> Result<(TxnRef, StatusSlotRef)> {
@@ -891,7 +895,11 @@ pub(super) fn prepare<'a>(
             cells::put32(job, 280, cell_bytes as u32);
             job[288..320].copy_from_slice(&projection);
             put(job, 320, row.get());
-            set_budget(job, 5, 311_608 + 2 * cell_bytes as u64 + 128 * u64::from(h));
+            set_budget(
+                job,
+                5,
+                row::row_cleanup_wal(row::RowEffect::Insert, cell_bytes as u32, h),
+            );
             undo_record::encode_free_undo_record(generation, out.undo)?;
             out.issued = Some(Issued {
                 row,

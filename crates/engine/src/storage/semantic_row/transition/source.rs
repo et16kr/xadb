@@ -98,9 +98,9 @@ pub(super) fn status_codec() -> usize {
 /// call names `cells::row_target`, and `validate_record` refuses any record
 /// whose target differs (undo_record.rs:498) or whose before kind a Row target
 /// does not admit (:534-550) before its payload match (:589), so the
-/// CatalogValue arm with `decode_catalog_before` (:608) is unreachable here
+/// CatalogValue arm with `decode_catalog_before` (:612) is unreachable here
 /// for any input, valid or malformed. The RowValue arm's canonical parse
-/// (:602, `decode_canonical_row` over its schema form) stays charged.
+/// (:606, `decode_canonical_row` over its schema form) stays charged.
 pub(super) fn undo_row_codec() -> usize {
     size_of::<[u8; UNDO_RECORD_BYTES]>()
         + 3 * size_of::<UndoRecord<'_>>()

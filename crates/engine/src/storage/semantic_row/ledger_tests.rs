@@ -472,3 +472,48 @@ fn row_ledger_full_abort_next_must_match_head() {
         );
     }
 }
+
+/// RDL-F09 (dev3-row-delete.md#delete-costs): the ledger's Forward row and
+/// each live root's CLR term follow that root's effect. Turning every
+/// Reserved/Retained literal root into a DELETE root (effect 1, cleanup
+/// `311608+C+128h`) adds exactly C to the Forward row (`91304+2C+128h`) and C
+/// per root to a non-terminal CLR row (`91096+2C+128h`); nothing else moves.
+#[test]
+fn rdl_f09_ledger_rows_follow_each_root_effect() {
+    let namespace = profile().spec().namespace;
+    let mut converted = 0;
+    for n in 0..COUNT {
+        let Ok(base) = residual(n, jobs(n)) else {
+            continue;
+        };
+        let mut bank = *jobs(n);
+        let (mut forward, mut clr) = (0, 0);
+        for cell in bank.iter_mut() {
+            let job = row::decode_job(cell, namespace).unwrap();
+            let state = job.state();
+            if !matches!(state, JobState::RootReserved | JobState::RootRetained) {
+                continue;
+            }
+            let c = u64::from(job.cell_bytes());
+            let h = job.has_previous_transaction().unwrap();
+            assert_eq!(get(cell, 784), 311_608 + 2 * c + 128 * u64::from(h));
+            cell[284] = 1;
+            put(cell, 784, 311_608 + c + 128 * u64::from(h));
+            put(cell, 880, 311_608 + c + 128 * u64::from(h));
+            if state == JobState::RootReserved {
+                forward += c;
+            }
+            clr += c;
+            converted += 1;
+        }
+        let mut expected = base;
+        if base[0].steps > 0 {
+            expected[0].wal += clr;
+            expected[0].protected += clr;
+        }
+        expected[1].wal += forward;
+        expected[1].protected += forward;
+        assert_eq!(residual(n, &bank), Ok(expected), "case {n}");
+    }
+    assert!(converted > 0);
+}

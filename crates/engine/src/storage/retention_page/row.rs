@@ -28,7 +28,10 @@ pub(crate) use census::{JobCells, summarize_jobs, verify_census, verify_selected
     unused_imports,
     reason = "pure Job3 supply awaits the closed current-profile owner"
 )]
-pub(crate) use job::{JobScope, JobState, JobView, decode_job, encode_job};
+pub(crate) use job::{
+    JobScope, JobState, JobView, RowEffect, decode_job, encode_job, row_cleanup_wal, row_clr_wal,
+    row_forward_wal,
+};
 #[allow(
     unused_imports,
     reason = "pure Row page supply awaits the closed current-profile owner"
