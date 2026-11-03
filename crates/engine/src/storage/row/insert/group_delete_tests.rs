@@ -726,7 +726,12 @@ fn rdl_a_groups_at_the_leaf_reservation_boundary() {
                 "{group} free {free}"
             );
             println!(
-                "RDL_A_LEAF_BOUNDARY\t{group}\tentries+cell+D={}\t{expected:?}",
+                "RDL_A_LEAF_BOUNDARY\t{group}\t{}={}\t{expected:?}",
+                if entry == 0 {
+                    "entries+D"
+                } else {
+                    "entries+cell+D"
+                },
                 TREE_ENTRY_CAPACITY - free + entry + reserved
             );
         }

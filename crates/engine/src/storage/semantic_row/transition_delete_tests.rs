@@ -557,9 +557,10 @@ fn retained_d(world: &World) -> usize {
         .sum()
 }
 
-/// `leaf` with committed filler rows (keys from 1000, row 9's version, text
-/// values) added until `TREE_ENTRY_CAPACITY - entry bytes == free`. Each
-/// entry costs its record, the 12-byte cell head and the 4-byte slot.
+/// `leaf` with committed filler rows (keys from 1000, the version of row 9
+/// or, while row 9 is a tombstone, of row 4, text values) added until
+/// `TREE_ENTRY_CAPACITY - entry bytes == free`. Each entry costs its record,
+/// the 12-byte cell head and the 4-byte slot.
 pub(crate) fn padded_leaf(leaf: &Page, free: usize) -> Box<Page> {
     let expected = TreeExpectation {
         identity: PageIdentity {
