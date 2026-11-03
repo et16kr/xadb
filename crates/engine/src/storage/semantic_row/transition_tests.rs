@@ -12,8 +12,11 @@ use super::{
     prepare, produce, produce_borrowed,
 };
 use crate::{
-    api::{Column, DataType, DatabaseId, Namespace},
+    api::{Column, DataType, DatabaseId, Namespace, TableSpec},
     storage::{
+        catalog_record::{
+            CatalogDefinition, CatalogExpectation, CatalogHeader, encode_catalog_record,
+        },
         control::{Profile, row_profile},
         obligation,
         page::{DIGEST_OFFSET, FileId, PAGE_BYTES, PageIdentity, PageKind, PageLsn, PageRef},
@@ -25,11 +28,14 @@ use crate::{
         },
         row_record::{self, RecordExpectation, RecordVersion, RowSchemaInput},
         semantic_row::{
-            Error, FRAME_BYTES, Operation, decode_layout, jobs, status, status::StatementBoundary,
-            undo,
+            Error, FRAME_BYTES, Operation, decode_layout, jobs, leaf, status,
+            status::StatementBoundary, undo,
         },
         status_home::StatusHome,
-        transaction_record::{StatusSlotRef, TransactionState, TransactionStatusCell, TxnRef},
+        transaction_record::{
+            LogicalRowVersion, StatusSlotRef, TransactionState, TransactionStatusCell, TxnRef,
+            VersionStamp,
+        },
         tree_page::{
             self, EntryPayload, TreeExpectation,
             edit::{LeafEdit, MAX_LEAF_EDIT_CELLS},
@@ -341,6 +347,91 @@ fn leaf_cell(leaf: &Page, row: RowId) -> &[u8] {
 fn leaf_ref(leaf: &Page) -> PageRef {
     PageRef::decode(&leaf[24..48]).unwrap()
 }
+/// `frame` and its after page `page` of native kind `kind` with `patch`
+/// applied to the native's after cell in the page: the native after body and
+/// its digest, the redo page image and the page and frame digests follow
+/// it, so the group stays framed and bound. Every observer that reads the
+/// patched bytes sees one consistent candidate.
+fn rebind(
+    frame: &[u8],
+    previous_lsn: u64,
+    kind: u8,
+    page: &Page,
+    patch: impl FnOnce(&mut [u8]),
+) -> (Vec<u8>, Box<Page>) {
+    let layout = decode_layout(frame, expectation(previous_lsn), profile()).unwrap();
+    let native = layout.native_records().find(|n| n.kind() == kind).unwrap();
+    let slot = usize::from(native.after_slot().unwrap());
+    let mut page = Box::new(*page);
+    let start = usize::from(u16::from_le_bytes([
+        page[128 + 4 * slot],
+        page[129 + 4 * slot],
+    ]));
+    let length = usize::from(u16::from_le_bytes([
+        page[130 + 4 * slot],
+        page[131 + 4 * slot],
+    ]));
+    patch(&mut page[start..start + length]);
+    let digest = content_digest(&page[..DIGEST_OFFSET]);
+    page[DIGEST_OFFSET..].copy_from_slice(&digest);
+    let body = native.after().unwrap();
+    assert_eq!(body.len(), length);
+    let body = body.as_ptr() as usize - frame.as_ptr() as usize;
+    let header = body - native.before().map_or(0, <[u8]>::len) - 128;
+    let mut redo = layout.redo().as_ptr() as usize - frame.as_ptr() as usize;
+    for _ in 0..native.redo_index() {
+        redo += u32_at(frame, redo + 4);
+    }
+    let mut out = frame.to_vec();
+    out[body..body + length].copy_from_slice(&page[start..start + length]);
+    out[header + 56..header + 88].copy_from_slice(&content_digest(&page[start..start + length]));
+    let end = redo + u32_at(frame, redo + 4);
+    out[redo + 64..end].copy_from_slice(&page[72..DIGEST_OFFSET]);
+    let digest = content_digest(&out[..128]);
+    out[128..160].copy_from_slice(&digest);
+    let end = out.len() - 32;
+    let digest = content_digest(&out[..end]);
+    out[end..].copy_from_slice(&digest);
+    (out, page)
+}
+/// `frame` and its U after page with the U record's before logical mutation
+/// sequence +1 (header @312, dev3-row-delete.md#delete-undo).
+fn relogical(frame: &[u8], previous_lsn: u64, undo_after: &Page) -> (Vec<u8>, Box<Page>) {
+    rebind(frame, previous_lsn, 3, undo_after, |cell| {
+        let mutation = u64_at(cell, 312) + 1;
+        cell[312..320].copy_from_slice(&mutation.to_le_bytes());
+    })
+}
+fn u32_at(bytes: &[u8], at: usize) -> usize {
+    u32::from_le_bytes(bytes[at..at + 4].try_into().unwrap()) as usize
+}
+/// The table's committed Catalog record (object 6, anchor page 12) with
+/// `columns`, the schema leaf.rs types every row with.
+fn catalog_record(columns: &[Column]) -> Vec<u8> {
+    let mut record = vec![0; 4096];
+    let length = encode_catalog_record(
+        CatalogExpectation {
+            namespace: namespace(),
+            object: table().object,
+        },
+        CatalogHeader {
+            identity: table(),
+            retired: false,
+            stamp: VersionStamp::Committed(CommitSeq::new(1).unwrap()),
+            logical: LogicalRowVersion::new(actor(1, 1).id(), 1).unwrap(),
+            undo: None,
+            anchor: page_ref(12, 2),
+        },
+        CatalogDefinition::Table(&TableSpec {
+            name: "row_table".into(),
+            columns: columns.to_vec(),
+        }),
+        &mut record,
+    )
+    .unwrap();
+    record.truncate(length);
+    record
+}
 
 /// A's full noh-300 RowLeaf with row 10 removed and row 11's record copied to
 /// row 18: row 10 is absent and its Reserve cell (201B) no longer fits.
@@ -430,7 +521,17 @@ struct Pages {
     table: bool,
 }
 
+/// The U, Status and RowLeaf after images of one Row group, as leaf.rs reads
+/// them.
+#[derive(Clone, Copy)]
+pub(crate) struct RowAfters<'a> {
+    pub(crate) undo: &'a Page,
+    pub(crate) status: &'a Page,
+    pub(crate) leaf: &'a Page,
+}
+
 /// The simulated stabilized state between groups (test-only bookkeeping).
+#[derive(Clone)]
 struct World {
     lsn: u64,
     root: Page,
@@ -442,6 +543,9 @@ struct World {
     transaction: Option<Descriptor>,
     aging: Option<Descriptor>,
     columns: [Column; 2],
+    /// Each produced INSERT RowReserve's RowId and sealed canonical value, for
+    /// leaf.rs's Forward observation.
+    sealed: Vec<(RowId, Vec<u8>)>,
     /// Counts R- variants checked against the before state of their base.
     rejects: Option<Cell<usize>>,
 }
@@ -459,6 +563,7 @@ impl World {
             transaction: None,
             aging: None,
             columns: columns(),
+            sealed: Vec::new(),
             rejects: None,
         })
     }
@@ -620,6 +725,9 @@ impl World {
             self.check_rejects(name, &inputs);
             observation
         };
+        if let (Change::Reserve(plan), Some(issued)) = (change, observation.issued) {
+            self.sealed.push((issued.row, plan.canonical.to_vec()));
+        }
         self.install(name, &observation, &after, expected);
         println!(
             "N1_GROUP\t{name}\t{:?}\tbytes={}\torder={:?}",
@@ -634,7 +742,7 @@ impl World {
     fn observe(
         &mut self,
         name: &str,
-        bytes: &'static [u8],
+        bytes: &[u8],
         change: Change<'_>,
         pages: Pages,
     ) -> Observation {
@@ -667,11 +775,12 @@ impl World {
         observation
     }
 
-    /// The existing scope3 local observers (status.rs, undo.rs, jobs.rs) over
-    /// the same frame, before pages and computed afters, so the transition's
-    /// rules and theirs cannot drift. leaf.rs needs a Catalog record, which
-    /// the transition inputs do not carry; its Row rules are compared through
-    /// A's literals instead.
+    /// The existing scope3 local observers (status.rs, undo.rs, leaf.rs,
+    /// jobs.rs) over the same frame, before pages and computed afters, so the
+    /// transition's rules and theirs cannot drift. leaf.rs reads the table's
+    /// Catalog record, which `catalog_record` encodes from the World's
+    /// columns; its INSERT Forward needs the sealed value, so a Forward whose
+    /// RowReserve this World did not produce is not leaf-observed.
     fn cross_check(
         &self,
         name: &str,
@@ -684,27 +793,8 @@ impl World {
         let (Some(actor), Some(location)) = (observed.actor, observed.status) else {
             return;
         };
-        // The scope3 local Undo observer learns the DELETE effect in stage
-        // 2b-3 (dev3-row-delete.md#implementation-2b2: semantic_row/{undo,
-        // leaf}.rs). Until
-        // then it skips a group of an actor with an effect-1 root, before or
-        // after; status.rs skips only the DELETE opcodes themselves; jobs.rs
-        // observes every group.
-        let delete_actor = |bank: &[[u8; JOB_BYTES]; JOB_COUNT]| {
-            bank.iter().any(|cell| {
-                row::decode_job(cell, namespace()).is_ok_and(|job| {
-                    job.state().is_root()
-                        && job.source() == Some(actor)
-                        && job.effect() == row::RowEffect::Delete
-                })
-            })
-        };
-        let job_changed = observed.order[..usize::from(observed.count)].contains(&(JOB as u8));
-        let after_effect = observed
-            .job_ordinal
-            .filter(|_| job_changed)
-            .is_some_and(|ordinal| cell(&after[JOB], ordinal % 15)[284] == 1);
-        let deferred = delete_actor(&self.bank) || after_effect;
+        // Every observer sees every group, INSERT and DELETE alike
+        // (dev3-row-delete.md#implementation-2b3).
         let layout = decode_layout(frame, expectation(self.lsn), profile()).unwrap();
         let op = observed.operation;
         let present =
@@ -716,10 +806,12 @@ impl World {
         };
         let jobs = JobCells::original(&self.bank);
         let statement = match change {
-            Change::Forward { statement, .. } | Change::StatementFinish { statement, .. } => {
-                Some(statement)
-            }
-            Change::RollbackStart { statement, .. } | Change::Clr { statement, .. } => statement,
+            Change::Forward { statement, .. }
+            | Change::DeleteForward { statement, .. }
+            | Change::StatementFinish { statement, .. } => Some(statement),
+            Change::RollbackStart { statement, .. }
+            | Change::Clr { statement, .. }
+            | Change::DeleteClr { statement, .. } => statement,
             _ => None,
         };
         let status_before = self
@@ -751,7 +843,7 @@ impl World {
             before: status_before.unwrap(),
             after: &after[STATUS],
         });
-        if let Some(images) = status_images.filter(|_| op == op.role()) {
+        if let Some(images) = status_images {
             status::observe(
                 layout,
                 status::StatusContext {
@@ -766,15 +858,23 @@ impl World {
             .unwrap_or_else(|error| panic!("{name}: status.rs {error:?}"));
         }
         let ordinal = observed.job_ordinal;
-        if present(UNDO) && !deferred {
-            let row = matches!(op, Operation::Forward | Operation::Clr | Operation::Prune);
-            let source = match (change, observed.issued) {
-                (Change::Reserve(plan), Some(issued)) => undo::UndoSource::Reserve {
+        if present(UNDO) {
+            let row = matches!(
+                op.role(),
+                Operation::Forward | Operation::Clr | Operation::Prune
+            );
+            let planned = match change {
+                Change::Reserve(plan) => Some(plan.statement),
+                Change::ReserveDelete(plan) => Some(plan.statement),
+                _ => None,
+            };
+            let source = match (planned, observed.issued) {
+                (Some(statement), Some(issued)) => undo::UndoSource::Reserve {
                     ordinal: ordinal.unwrap(),
                     planned: undo::UndoReservation {
                         reference: issued.undo,
                         sequence: issued.sequence,
-                        statement: plan.statement,
+                        statement,
                         mutation: issued.mutation,
                     },
                 },
@@ -800,6 +900,94 @@ impl World {
             });
             undo::observe(layout, context, jobs, source, images, proof)
                 .unwrap_or_else(|error| panic!("{name}: undo.rs {error:?}"));
+            // The H proof over a delete predecessor is entry (b) against its
+            // Job (dev3-row-delete.md#previous-proof): that Job's cell length
+            // or effect no longer matching its Live U is refused.
+            let h = pages.previous.filter(|_| row).and_then(|previous| {
+                (0..JOB_COUNT).find(|&at| {
+                    row::decode_job(&self.bank[at], namespace()).is_ok_and(|job| {
+                        job.state().is_root()
+                            && job.effect() == row::RowEffect::Delete
+                            && job.undo().is_some_and(|u| u.page().page_no == previous)
+                    })
+                })
+            });
+            if let Some(h) = h {
+                for (what, at, edit) in [("cell length", 280, 1u8), ("effect", 284, 1u8)] {
+                    let mut bank = Box::new(self.bank);
+                    bank[h][at] ^= edit;
+                    assert!(
+                        undo::observe(
+                            layout,
+                            context,
+                            JobCells::original(&bank),
+                            source,
+                            images,
+                            proof
+                        )
+                        .is_err(),
+                        "{name}: H {what}"
+                    );
+                }
+                println!("N1_H_DELETE\t{name}\trefused=cell length,effect");
+            }
+        }
+        let mut leaf_observed = false;
+        let afters = RowAfters {
+            undo: &after[UNDO],
+            status: &after[STATUS],
+            leaf: &after[LEAF],
+        };
+        if present(LEAF)
+            && let Some(result) = self.observe_leaf(frame, change, pages, afters)
+        {
+            result.unwrap_or_else(|error| panic!("{name}: leaf.rs {error:?}"));
+            leaf_observed = true;
+            if op != op.role() {
+                // What only leaf.rs checks of a DELETE (#delete-undo): U's
+                // before logical against the old or restored row (Live) or
+                // the before it keeps (Releasing). Entry (b) in undo.rs takes
+                // that logical as present only, so it accepts the mutant. (A
+                // Job mutant does not reach leaf.rs: undo.rs binds the
+                // selected Job to the frame first.)
+                let (mutant, undo_after) = relogical(frame, self.lsn, &after[UNDO]);
+                undo::observe(
+                    decode_layout(&mutant, expectation(self.lsn), profile()).unwrap(),
+                    context,
+                    jobs,
+                    undo::UndoSource::Existing {
+                        ordinal: ordinal.unwrap(),
+                    },
+                    undo::UndoImages {
+                        before: World::find(&self.undo, u64_at(&after[UNDO], 32)),
+                        after: &undo_after,
+                        predecessor: pages
+                            .previous
+                            .map(|page_no| World::find(&self.undo, page_no)),
+                    },
+                    Some(undo::StatusProof {
+                        statement,
+                        commit,
+                        images: status_images.unwrap(),
+                    }),
+                )
+                .unwrap_or_else(|error| panic!("{name}: undo.rs logical {error:?}"));
+                let refused = self.observe_leaf(
+                    &mutant,
+                    change,
+                    pages,
+                    RowAfters {
+                        undo: &undo_after,
+                        ..afters
+                    },
+                );
+                assert_eq!(
+                    refused.unwrap().map(|_| ()),
+                    Err(Error::IdentityMismatch),
+                    "{name}: leaf.rs logical"
+                );
+                println!("N1_LEAF_DELETE\t{name}\trefused=logical");
+            }
         }
         if present(JOB) {
             let ordinal = ordinal.unwrap();
@@ -865,17 +1053,97 @@ impl World {
             .unwrap_or_else(|error| panic!("{name}: jobs.rs {error:?}"));
         }
         println!(
-            "N1_CROSS\t{name}\tstatus={}\tundo={}\tjobs={}",
-            present(STATUS) && op == op.role(),
-            if deferred {
-                "deferred"
-            } else if present(UNDO) {
-                "true"
-            } else {
-                "false"
-            },
+            "N1_CROSS\t{name}\tstatus={}\tundo={}\tleaf={leaf_observed}\tjobs={}",
+            present(STATUS),
+            present(UNDO),
             present(JOB)
         );
+    }
+
+    /// leaf.rs over the Row group `frame` (`change`) at this World's state,
+    /// with the U, Status and RowLeaf after images `after`: the transition's
+    /// own in `cross_check`, or another producer's. The RowLeaf before is
+    /// the World's and the Catalog record is encoded from its columns. None
+    /// for an INSERT Forward whose RowReserve this World did not produce: its
+    /// sealed value is the reservation's, not the after's.
+    fn observe_leaf(
+        &self,
+        frame: &[u8],
+        change: Change<'_>,
+        pages: Pages,
+        after: RowAfters<'_>,
+    ) -> Option<std::result::Result<leaf::LeafObservation, Error>> {
+        let layout = decode_layout(frame, expectation(self.lsn), profile()).unwrap();
+        let (ordinal, statement) = match change {
+            Change::Forward { ordinal, statement }
+            | Change::DeleteForward { ordinal, statement } => (ordinal, Some(statement)),
+            Change::Clr { ordinal, statement } | Change::DeleteClr { ordinal, statement } => {
+                (ordinal, statement)
+            }
+            Change::Prune { ordinal } | Change::DeletePrune { ordinal } => (ordinal, None),
+            _ => panic!("not a Row change"),
+        };
+        let job = row::decode_job(&self.bank[ordinal], namespace()).unwrap();
+        let location = job.status().unwrap();
+        let status_before = World::find(&self.status, location.page().page_no);
+        let commit = (layout.operation().role() == Operation::Prune).then(|| {
+            match StatusHome::decode(cell(status_before, 0)).unwrap().core() {
+                TransactionStatusCell::Occupied(status) => match status.state() {
+                    TransactionState::Committed(q) => q,
+                    _ => panic!("Prune before Commit"),
+                },
+                TransactionStatusCell::Free(_) => panic!("free Status"),
+            }
+        });
+        let sealed = if layout.operation() == Operation::Forward {
+            let row = job.row_id().unwrap();
+            let (_, value) = self.sealed.iter().find(|(sealed, _)| *sealed == row)?;
+            Some(leaf::SealedValue {
+                length: value.len(),
+                digest: content_digest(value),
+            })
+        } else {
+            None
+        };
+        let catalog = catalog_record(&self.columns);
+        Some(leaf::observe(
+            layout,
+            leaf::Inputs {
+                context: undo::UndoContext {
+                    profile: profile(),
+                    actor: job.source().unwrap(),
+                    location,
+                },
+                jobs: JobCells::original(&self.bank),
+                ordinal,
+                undo: undo::UndoImages {
+                    before: World::find(&self.undo, job.undo().unwrap().page().page_no),
+                    after: after.undo,
+                    predecessor: pages
+                        .previous
+                        .map(|page_no| World::find(&self.undo, page_no)),
+                },
+                status: undo::StatusProof {
+                    statement,
+                    commit,
+                    images: status::StatusImages {
+                        before: status_before,
+                        after: after.status,
+                    },
+                },
+                table: leaf::TableInput {
+                    handle: table(),
+                    anchor: page_ref(12, 2),
+                    catalog: &catalog,
+                    anchor_image: scope3!("anchor.bin"),
+                },
+                leaf: leaf::LeafImages {
+                    before: self.leaf.as_ref().unwrap(),
+                    after: after.leaf,
+                },
+                sealed,
+            },
+        ))
     }
 
     /// Replay each redo record over the current before page, require the

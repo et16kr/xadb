@@ -373,3 +373,200 @@ fn rdl_b07_b09_broken_delete_states_are_fatal() {
         }
     });
 }
+
+/// RDL-B06 (dev3-row-delete.md#read, #tests): a DeleteClr waits at the
+/// terminal read gate for a read that has captured the tombstone, as an
+/// INSERT CLR does (MCB03-V02, MCI03-V01). Rows 100 and 101 are committed
+/// and pruned, then an explicit transaction deletes the first (Active, its
+/// root Retained). B1's foreign ReadCommitted read of that row is paused
+/// after its capture (`Point::RowReadCaptured`), holding the tombstone's
+/// Txn and U pins. The caller's rollback of the transaction closes the
+/// gate when it starts, before its RollbackStart and DeleteClr, and waits
+/// for B1 (`Point::ReadGateWaiting`): no WAL while B1 holds its pins, and a
+/// late reader B2 is refused Unchanged InstallationPending. When B1 resumes
+/// it reads the old value 100 through U's before; the rollback then writes
+/// its groups and ends RolledBack, and B2's retry reads the restored row
+/// 100. The drain cleans the compensated root and the Terminal (5 groups)
+/// and a new statement reads both rows.
+#[test]
+fn rdl_b06_delete_clr_waits_for_a_captured_read() {
+    use super::super::super::super::{WAIT, installation_pending, thread_point};
+    use crate::transaction::concurrency::catalog_test_support::{self as hook, Point, Resume};
+    use std::{
+        sync::{Mutex, mpsc::sync_channel},
+        time::Duration,
+    };
+
+    case_within("RDL-B06", Duration::from_secs(300), || {
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 28,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let (row_status, _) =
+                    create_table(live, owner, flusher, status, undo, private, true);
+                for _ in 1..3 {
+                    system_init(live, owner, flusher, true);
+                }
+                let (mut writer, reader, mut flush) = live.split();
+                let (out, slots) = autocommit!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    reader,
+                    reader_private,
+                    &row_status,
+                    private,
+                    6,
+                    ints(&[100, 101])
+                );
+                assert_eq!(committed(out), (2, 2));
+                let rows = applied(slots, &[100, 101]);
+                assert_eq!(
+                    drains!(&mut writer, owner, flush, flusher, private),
+                    [drain(11, true)]
+                );
+                let (target, kept) = (rows[0].0, rows[1]);
+                let mut holder = None;
+                begun(begin!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    &row_status,
+                    private,
+                    &mut holder
+                ));
+                let (out, slot) = delete_statement!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    reader,
+                    reader_private,
+                    &mut holder,
+                    private,
+                    6,
+                    target
+                );
+                assert_eq!(done(out), 1);
+                assert_eq!(slot.expect("deleted row").row(), target);
+                let mut b1_private = boxed::<PRIVATE_BYTES>();
+                let mut b2_private = boxed::<PRIVATE_BYTES>();
+                let cell = Mutex::new(&mut writer);
+                std::thread::scope(|scope| {
+                    let (cell, reader) = (&cell, &reader);
+                    let (b1_in, b1_captured) = sync_channel(1);
+                    let (b1_go, b1_release) = sync_channel(1);
+                    let (gate_in, gate_waiting) = sync_channel(1);
+                    let (gate_go, gate_release) = sync_channel(1);
+                    let (ready_tx, ready) = sync_channel(1);
+                    let (done_tx, done) = sync_channel::<()>(1);
+                    // B2 issues its table before B1's read is admitted.
+                    let b2_private = &mut *b2_private;
+                    let b2 = scope.spawn(move || {
+                        let mut o = core.try_owner(OwnerRole::Foreground).unwrap();
+                        let tx = read_only!(
+                            cell.lock().unwrap(),
+                            &mut o,
+                            IsolationLevel::ReadCommitted,
+                            b2_private
+                        );
+                        let view = cell.lock().unwrap().begin_statement(&mut o, &tx).unwrap();
+                        let table = thread_table!(reader, &mut o, &view, b2_private);
+                        ready_tx.send(()).unwrap();
+                        gate_waiting.recv_timeout(WAIT).unwrap();
+                        let at_wait = hook::observe(core);
+                        assert_eq!(at_wait.active_read_operations, 1);
+                        assert!(at_wait.read_gate_closed && !at_wait.fenced);
+                        let late = thread_point(reader, &mut o, b2_private, &view, &table, target)
+                            .err()
+                            .unwrap();
+                        assert!(installation_pending(&late), "{late:?}");
+                        gate_go.send(Resume::Continue).unwrap();
+                        // The rollback keeps waiting while B1 is admitted: no
+                        // WAL, the gate closed, B1's operation still counted.
+                        let wal = files(state).0;
+                        std::thread::sleep(Duration::from_millis(200));
+                        assert_eq!(files(state).0, wal, "the DeleteClr waits for B1");
+                        let still = hook::observe(core);
+                        assert!(still.read_gate_closed && still.active_read_operations == 1);
+                        b1_go.send(Resume::Continue).unwrap();
+                        done.recv_timeout(WAIT).unwrap();
+                        assert!(files(state).0 != wal, "the rollback wrote after B1");
+                        // The retry after the rollback: the restored row.
+                        let retry = thread_point(reader, &mut o, b2_private, &view, &table, target);
+                        assert!(matches!(retry, Ok(Some(100))), "{retry:?}");
+                        let mut w = cell.lock().unwrap();
+                        assert!(w.finish_statement(&mut o, view).is_ok());
+                        assert!(w.finish_read_only(&mut o, tx).is_ok());
+                        o.check_idle().unwrap();
+                        at_wait
+                    });
+                    ready.recv_timeout(WAIT).unwrap();
+                    hook::install(core, Point::RowReadCaptured, b1_in, b1_release);
+                    let b1_private = &mut *b1_private;
+                    let b1 = scope.spawn(move || {
+                        let mut o = core.try_owner(OwnerRole::Foreground).unwrap();
+                        let tx = read_only!(
+                            cell.lock().unwrap(),
+                            &mut o,
+                            IsolationLevel::ReadCommitted,
+                            b1_private
+                        );
+                        let view = cell.lock().unwrap().begin_statement(&mut o, &tx).unwrap();
+                        let table = thread_table!(reader, &mut o, &view, b1_private);
+                        // Paused at RowReadCaptured; the deleter is Active,
+                        // so the read is U's before.
+                        let read = thread_point(reader, &mut o, b1_private, &view, &table, target);
+                        assert!(matches!(read, Ok(Some(100))), "{read:?}");
+                        let mut w = cell.lock().unwrap();
+                        assert!(w.finish_statement(&mut o, view).is_ok());
+                        assert!(w.finish_read_only(&mut o, tx).is_ok());
+                        o.check_idle().unwrap();
+                    });
+                    b1_captured.recv_timeout(WAIT).unwrap();
+                    let at_capture = hook::observe(core);
+                    assert_eq!(at_capture.active_read_operations, 1);
+                    assert!(!at_capture.read_gate_closed);
+                    let pins = reader.catalog_test_references();
+                    assert_ne!(pins.0, (0, 0, 0), "B1 holds the tombstone's pins");
+                    hook::install(core, Point::ReadGateWaiting, gate_in, gate_release);
+                    {
+                        let mut w = cell.lock().unwrap();
+                        let out = rollback!(&mut **w, owner, flush, flusher, &mut holder, private);
+                        assert!(
+                            matches!(out, Explicit::RolledBack),
+                            "expected RolledBack, got {out:?}"
+                        );
+                        assert!(!hook::observe(core).read_gate_closed);
+                    }
+                    done_tx.send(()).unwrap();
+                    b1.join().unwrap();
+                    let at_wait = b2.join().unwrap();
+                    println!("RDL_B06 pins={pins:?} at_wait={at_wait:?}");
+                });
+                assert!(holder.is_none());
+                assert_eq!(
+                    drains!(&mut writer, owner, flush, flusher, private),
+                    [drain(5, true)]
+                );
+                assert_row_jobs_free(writer.catalog_test_jobs());
+                assert_eq!(
+                    read_rows!(
+                        writer,
+                        reader,
+                        core,
+                        reader_private,
+                        flush,
+                        flusher,
+                        [target, kept.0]
+                    ),
+                    [Some(100), Some(101)]
+                );
+                assert!(!fence.is_fenced());
+            }
+        );
+    });
+}

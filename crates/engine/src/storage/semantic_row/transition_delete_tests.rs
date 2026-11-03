@@ -560,7 +560,7 @@ fn retained_d(world: &World) -> usize {
 /// `leaf` with committed filler rows (keys from 1000, row 9's version, text
 /// values) added until `TREE_ENTRY_CAPACITY - entry bytes == free`. Each
 /// entry costs its record, the 12-byte cell head and the 4-byte slot.
-fn padded_leaf(leaf: &Page, free: usize) -> Box<Page> {
+pub(crate) fn padded_leaf(leaf: &Page, free: usize) -> Box<Page> {
     let expected = TreeExpectation {
         identity: PageIdentity {
             database: namespace().database,
@@ -721,6 +721,101 @@ fn rdl_c_leaf_reservation_bounds_every_leaf_step() {
     });
     let names: Vec<&str> = seen.iter().map(|(name, _)| name.as_str()).collect();
     assert_eq!(names, ["D-524", "D-526", "D-529", "D-537"]);
+}
+
+/// C's whole-group observer and leaf.rs over `frame`, an INSERT Forward of
+/// row r (D-531's change) whose producer wrote the U, Status and RowLeaf
+/// afters `after`, at the D-530 state of history D with the RowLeaf `leaf`
+/// in place of the World's (#leaf-reservation). A group C accepts then goes
+/// through the World's observation over its own afters, so status.rs,
+/// undo.rs, leaf.rs and jobs.rs see it over the same leaf too.
+pub(crate) fn d531_over(
+    leaf: &Page,
+    frame: &[u8],
+    after: RowAfters<'_>,
+) -> (Result<(), Error>, Result<(), Error>) {
+    let mut result = None;
+    history_d_with(false, |name, world| {
+        if name != "D-530" {
+            return;
+        }
+        let change = Change::Forward {
+            ordinal: 20,
+            statement: boundary(4, None),
+        };
+        let pages = row_pages(15, Some(11));
+        let mut world = Box::new(world.clone());
+        world.leaf = Some(*leaf);
+        let local = world
+            .observe_leaf(frame, change, pages, after)
+            .expect("D-530 produced r's RowReserve")
+            .map(|_| ());
+        let mut computed = loans(0xa5);
+        let observed = observe(&world.inputs(change, pages), frame, &mut computed);
+        if observed.is_ok() {
+            world.observe("D-531-padded", frame, change, pages);
+        } else {
+            assert!(computed.iter().flatten().all(|byte| *byte == 0xa5));
+        }
+        result = Some((observed.map(|_| ()), local));
+    });
+    result.expect("history D reaches D-530")
+}
+
+/// RDL-C (#delete-states): a DeleteForward candidate that tombstones another
+/// RowId than its Job's. A's D-524 group (Job row 2) with the tombstone's key
+/// and record RowId changed to 3, which the D-523 leaf does not hold (row 4
+/// follows), and its native after, redo page image and digests rebound, so
+/// the frame is framed and bound and its leaf after is a valid page. C's
+/// whole-group observer refuses it (its recomputed group differs), and
+/// leaf.rs, which no longer finds the Job's row 2 in the after leaf, refuses
+/// it too.
+/// A refuses the same change of RowId before output (RDL-A,
+/// `group_delete_tests.rs`).
+#[test]
+fn rdl_c_delete_forward_of_another_row_is_refused() {
+    let mut seen = false;
+    history_d_with(false, |name, world| {
+        if name != "D-523" {
+            return;
+        }
+        let rows = leaf_rows(world);
+        assert!(rows.contains(&2) && !rows.contains(&3) && rows.contains(&4));
+        let change = Change::DeleteForward {
+            ordinal: 16,
+            statement: boundary(2, None),
+        };
+        let pages = row_pages(11, None);
+        let inputs = world.inputs(change, pages);
+        let mut after = loans(0);
+        observe(&inputs, blob("D-524"), &mut after).unwrap();
+        let (mutant, leaf_after) = rebind(blob("D-524"), world.lsn, 1, &after[LEAF], |cell| {
+            assert_eq!(cell.len(), 180, "the tombstone cell");
+            cell[4..12].copy_from_slice(&3u64.to_be_bytes());
+            cell[20..28].copy_from_slice(&3u64.to_le_bytes());
+        });
+        let mut computed = loans(0xa5);
+        assert_eq!(
+            observe(&inputs, &mutant, &mut computed).map(|_| ()),
+            Err(Error::Corrupt),
+            "C's observer"
+        );
+        let local = world
+            .observe_leaf(
+                &mutant,
+                change,
+                pages,
+                RowAfters {
+                    undo: &after[UNDO],
+                    status: &after[STATUS],
+                    leaf: &leaf_after,
+                },
+            )
+            .unwrap();
+        assert_eq!(local.map(|_| ()), Err(Error::IdentityMismatch), "leaf.rs");
+        seen = true;
+    });
+    assert!(seen);
 }
 
 /// RDL-C: the leaf reservation in the leaf steps after a Reserve. A's INSERT

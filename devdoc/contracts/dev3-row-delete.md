@@ -370,9 +370,55 @@ base4의 지금 `rows()`·`undo()`는 Missing 전용이라 효과1 Job의 상태
   - RDL-B06(읽기 중 DeleteClr의 gate 대기)은 이 PR에 시험이 없다. 배제 자체는 INSERT와 같은 gate(MCB03-V02)이며, DELETE용 시험은 2-b-3에서 더한다.
   - **per-native 관찰자 `semantic_row/{undo,leaf}.rs`는 이 PR에서 켜지 않았다.** 2-b-1 기록은 undo 관찰자를 2-b-2에서 켠다고 했고, 이 PR은 jobs.rs만 켰다. 두 관찰자는 제품 호출자가 없는 시험 전용 oracle이다(`dead_code` 허용, N1 cross-check만 부름). DELETE를 가르치려면 옛 행 before를 빌려 받는 입력과 스키마 진입이 더 필요하다. 제품 경로는 C transition(독립 저자 literal과 바이트 비교)과 실제 C 위 RDL-J가 덮는다. 다음 PR(2-b-3)이 undo.rs·leaf.rs의 DELETE 대조(undo.rs의 H 증명 `proof_page` 포함)와 N1 cross-check의 효과1 skip 제거, status.rs의 DELETE opcode skip 제거를 한다. 2-b-1이 넘긴 RDL-C mutant 가운데 "후보 frame의 다른 RowId"와, A frame으로 본 "INSERT Forward가 정확히 `entries+cell+D = 16188`인 leaf에서 받아들여짐"도 그 PR에서 본다. release cursor 3에서 U의 before stamp가 지워진 ReleasingCompensated 행을 base4가 확인하는 갈래의 시험도 그 PR에 둔다. "후보 frame의 cell 크기"는 RDL-A의 "another sealed cell"이 본다.
 
+<a id="implementation-2b3"></a>
+## 18. 2-b-3 구현 기록
+
+2-b-3은 시험 전용 per-native 관찰자 `semantic_row/{status,undo,leaf}.rs`가 DELETE를 보게 하고, 2-b-1·2-b-2가 넘긴 시험을 채운다. 제품 경로는 바뀌지 않는다. 세 관찰자는 제품 호출자가 없고 N1 cross-check와 시험만 부른다. native fault cut은 3단계다.
+
+- **status.rs.** DeleteForward·DeleteClr·DeletePrune은 INSERT 역할(Forward·Clr·Prune)과 같은 Status 전이를 밟는다. commit Q를 받는 것은 Commit과 Prune 역할(DeletePrune 포함)이다.
+- **undo.rs.** 공유 Row 연산은 선택한 Job의 효과와 opcode가 맞아야 한다. 어긋나면 IdentityMismatch이며, 2-b-1 C 전이와 같은 규칙이다. 효과1 root의 U는 진입 (b)로 본다(`validate_outline`).
+  - Live는 `432+L` B이고(L=`cell_bytes`−180, 5..=2048), before가 RowValue·`Committed` stamp·logical 있음·Inline이다.
+  - Releasing은 432 B·payload None이다. before stamp는 cursor 3부터 없다.
+  - metadata·edge·release는 INSERT와 같은 `material`에서 온다.
+  - U page의 한 칸 검사는 "cell 끝이 `INITIAL_UNDO_CELL`의 끝과 같고 길이가 432 B 이상"으로 넓혔다. 정확한 길이는 record 검사가 본다.
+  - H 증명은 DELETE 선행 root의 Live U를 같은 진입 (b)로 그 Job과 대조한다(§4.4).
+- **leaf.rs.**
+  - **예약(§4.3).** 원래 bank에서 table의 Retained DELETE root가 쥔 D를 센다. before leaf는 entries+D ≤ 16188이어야 하고, 어기면 Corrupt다. after leaf는 그 group이 바꾼 D(DeleteForward +(C−180), DeleteClr·DeletePrune −(C−180))로 같은 식을 만족해야 하고, 어기면 OrderMismatch다. C `typed_leaf`와 같은 식이다.
+  - **행.** 모든 행을 table 스키마로 읽는다. tombstone은 `Transaction` stamp와 U가 있을 때만 받고, 그 밖은 Corrupt다.
+  - **actor 행.** actor의 record는 `{row, Transaction(actor), logical(actor, mutation), U}`여야 한다. 길이는 INSERT면 `cell_bytes`, DELETE면 tombstone 180 B다. projection은 Job의 것과 같아야 한다.
+  - **DeleteForward.** committed 행(`Committed(q_old)`, 옛 logical, undo None, 같은 값, cell C)이 actor의 tombstone이 된다. U after의 Live record를 진입 (a)로 읽는다. 그 record가 Job에서 계산한 delete record와 같아야 하고, 값은 옛 행 값과 같아야 한다.
+  - **DeleteClr.** tombstone이 같은 committed 행으로 돌아간다. U before의 Live를 (a)로 읽어 복원 행과 대조한다. U after는 같은 stamp·logical을 가진 Releasing record와 바이트가 같아야 한다.
+  - **DeletePrune.** tombstone이 사라진다. U before의 Live와 U after의 Releasing을 DeleteClr과 같은 식으로 본다.
+  - U before의 logical을 옛 행이나 복원 행과 대조하는 곳은 이 관찰자뿐이다. undo.rs의 진입 (b)는 logical이 있는지만 본다.
+- **N1 cross-check.** 2-b-1·2-b-2의 효과1 skip과 status.rs의 DELETE opcode skip을 걷었다. status·undo·jobs 관찰자는 이력 D의 모든 group을 본다.
+  - leaf.rs는 이번에 처음 cross-check에 들어왔다. World가 table의 Catalog record를 만들어 넘기고, INSERT Forward의 봉인 값은 World가 만든 RowReserve에서 가져온다.
+  - leaf를 바꾸는 group 15개를 본다: INSERT Forward 2, Clr 4, Prune 3, DeleteForward 3, DeleteClr 1, DeletePrune 2.
+  - A literal의 INSERT Forward 셋(A-h-501, A-noh-301, A-ord-301)은 이 World가 RowReserve를 만들지 않아 봉인 값이 없다. 그래서 leaf.rs를 건너뛰고, A literal 대조가 덮는다.
+  - DELETE group 여섯(D-524·526·528·533·535·537)마다 후보를 하나 더 만든다. U after record의 before logical mutation을 +1하고 frame째 다시 묶는다(native after body·digest, redo page image, page·frame digest). undo.rs는 이 후보를 받고(진입 b), leaf.rs는 IdentityMismatch로 거절한다.
+  - DELETE 선행 root의 U를 H로 읽는 group 넷(D-526·528·531·536)에서는 그 Job의 cell 길이나 효과 byte를 한 곳 바꾼 bank를 undo.rs가 거절한다.
+  - Job을 바꾼 mutant는 leaf.rs까지 가지 않는다. undo.rs가 선택한 Job을 frame에 먼저 묶기 때문이다.
+- **2-b-1·2-b-2가 넘긴 시험.**
+  - **다른 RowId(RDL-C).** D-523 상태에서 D-524 DeleteForward의 tombstone key와 record row를 2에서 3으로 바꾼 frame을 만든다(`transition_delete_tests.rs`). C 관찰자는 Corrupt, leaf.rs는 IdentityMismatch로 거절한다. A producer는 같은 leaf의 다른 committed 행(9)의 봉인 cell·projection을 받으면 출력 전에 IdentityMismatch로 거절한다(RDL-A, `group_delete_tests.rs`).
+  - **A frame의 leaf 예약 경계(RDL-A).** D-531(효과1 H 위 INSERT Forward, T2의 Retained delete root가 D=19를 쥠)의 RowLeaf를 committed 행으로 채운다. entries+cell+D가 정확히 16188이면 A가 만든 frame을 C 관찰자와 leaf.rs가 둘 다 받는다. 16189이면 둘 다 OrderMismatch다. A는 두 경우 모두 frame을 만든다. 맞음은 같은 gate 아래 Reserve가 이미 증명했기 때문이다.
+  - **RDL-B06**(`row_join/retire/delete_read.rs`). MCI03-V01과 같은 thread 시험이다. committed·Prune된 행 100·101 가운데 100을 명시 거래가 지운다. 다른 거래의 읽기 B1을 capture 뒤(`RowReadCaptured`)에 멈춰 tombstone의 Txn·U pin을 쥐게 한다. 그동안 rollback이 다음 순서로 진행된다.
+    1. rollback은 시작에서 terminal read gate를 닫고 B1을 기다린다. RollbackStart·DeleteClr보다 앞이다.
+    2. B1이 pin을 쥐는 동안 WAL이 없다. 늦은 읽기 B2는 Unchanged `InstallationPending`으로 거절된다.
+    3. B1이 이어 가면 U의 before로 옛 값 100을 읽는다.
+    4. rollback은 RolledBack으로 끝나고, B2의 재시도는 복원된 100을 읽는다.
+    5. 정리는 5 group이고, 새 statement는 두 행을 읽는다.
+  - **RDL-R07**(`row_join/retire/delete_base.rs`). release cursor 3에서 U의 before stamp가 없어진 ReleasingCompensated 행을 base4가 확인하는 갈래다. RolledBack 파일의 재시작을 정리가 root를 cursor 3으로 옮긴 곳에서 멈추고, 다음 재시작이 잡은 base를 쓴다.
+    - cursor 0과 3의 base는 둘 다 그대로 받는다.
+    - 복원 행의 logical을 바꾸면 두 cursor 모두 actor 대조가 거절한다(Identity).
+    - 복원 행을 `Committed(1)`로 재stamp하면, cursor 0은 U stamp 대조가 거절한다(Identity). cursor 3에는 대조할 stamp가 없고, graph의 committed 행 순서(creator q < q)가 거절한다(Order). 이 world에서 행이 가질 수 있는 committed q는 2뿐이라, 다른 stamp도 두 갈래 어느 쪽에서도 통과하지 못한다.
+- **한계.**
+  - leaf.rs의 before 예약 거절(Corrupt)에는 이 관찰자의 시험이 없다. A INSERT Forward frame으로는 그 상태를 만들 수 없다. 같은 식(C `typed_leaf`)의 before 거절은 C transition의 RDL-C 예약 시험(`rdl_c_leaf_reservation_*`, §16)과 base4의 RDL-R06이 본다.
+  - A literal의 INSERT Forward 셋은 leaf.rs를 거치지 않는다(위).
+  - 세 관찰자는 여전히 제품 호출자가 없는 시험 전용 oracle이다.
+
 ## 작성 기록
 
 - 2026-11-03 r1 초안. main `c7a6425`의 source를 읽고 썼다(operation.rs, job.rs, undo_record.rs, undo.rs, transition/prepare.rs, ledger.rs, read.rs, retirement.rs, tree_page/edit.rs, row_record.rs).
 - 2026-11-03 D2 1회차 **REJECT**(독립 검토). 산술(shape·frame·ledger·cleanup·scratch)은 모두 맞다고 확인됐다. 지적과 r2 반영: (1) blocker — RowId는 모든 root Job 사이에서 유일해야 하는데 정리 전 INSERT root·own compensated root가 쥔 행의 삭제가 census를 깬다 → §5 Busy 행, §4.1. (2) 효과1 H의 증명이 Missing·`INITIAL_UNDO_CELL`만 알고 codec이 스키마 없이 RowValue를 못 본다 → §4.4, §3.2 진입 둘. (3) Releasing RowValue Inline은 지금 허용되고 U09–U12가 그 예다 → codec 변경을 추가형으로, Undo 형식 개정 표시. (4) Row 쓰기가 read gate로 reader를 배제하므로 stale capture는 일어나지 않는다 → §7·§8에서 제거, Releasing U는 Fatal. (5) 2단계가 자기 읽기·복구가 거절하는 상태를 쓴다 → B·loser·base4를 2단계로(§1, §13). 그 밖에 native 크기 규칙(§3.4), F4 목록(§10), 식 자리(§3.5), scratch 87 전제(§4.3), §4.3 문구, §7 불가능 상태, 작은 정정들을 반영했다.
 - 2026-11-03 D2 2회차 **CONDITIONAL ACCEPT**(같은 검토자). r2가 1회차 지적을 바르게 고쳤음을 확인했다. 남은 것은 문서 보강이며 r3에 반영했다: (1) Undo 형식이 스키마 검증을 요구하므로 두 진입을 형식 개정에 적고, metadata 진입은 before 값을 내주지 않는 타입으로(§3.2). (2) base4는 스키마를 가지므로 (a), DeletePrune의 before U도 (a)(§3.2, §9). (3) base4의 효과1 상태별 규칙과 역방향 scan(§9). (4) `value_before` 읽기 census(§10). (5) 최대 frame에서 유도한 자리 추가(§3.5, §11). (6) Aborted 판정의 C·B 차이 설명(§5). (7) leaf 예약 Capacity는 INSERT 전용(§5). (8) RDL-B 보강(§12).
 - 2026-11-03 D2 3회차 **ACCEPT**(같은 검토자). 문구 nit 넷(metadata 진입의 길이 표현, 옛 이름 "header 진입", ReleasingCompensated의 logical은 모든 cursor, RDL-R 번호 범위)을 반영했다.
+- 2026-11-03 §18(2-b-3 구현 기록) 추가. 관찰자 status.rs·undo.rs·leaf.rs의 DELETE, N1 cross-check의 효과1 skip 제거, 넘겨받은 시험(다른 RowId, A frame 예약 경계, RDL-B06, RDL-R07)을 적었다.

@@ -337,3 +337,101 @@ fn rdl_r02_to_r06_base4_refuses_broken_delete_states() {
         assert_eq!(held, Err(RowBaseError::Order));
     });
 }
+
+/// The RowLeaf of a base whose leaf holds the restored row and the kept
+/// row: (arena index, metadata cell, restored record, kept record).
+fn restored_leaf(bytes: &[u8; BASE]) -> (usize, Vec<u8>, Vec<u8>, Vec<u8>) {
+    let n = find(bytes, 1, |_| true);
+    let cells = page_cells(&bytes[ARENA + n * PAGE_BYTES..ARENA + (n + 1) * PAGE_BYTES]);
+    assert_eq!(cells.len(), 3, "metadata, the restored row, the kept row");
+    let (restored, kept) = (record(&cells[1]).to_vec(), record(&cells[2]).to_vec());
+    assert_eq!((restored.len(), kept.len()), (ROW_RECORD, ROW_RECORD));
+    assert_eq!(restored[FLAGS], 0, "committed, pruned");
+    (n, cells[0].clone(), restored, kept)
+}
+
+/// RDL-R07 (dev3-row-delete.md#recovery, the release cursor 3 branch): a
+/// ReleasingCompensated delete root keeps no cell length, so base4 checks
+/// the restored row against U's before. At release cursor 0 that before
+/// holds the stamp and the logical; at cursor 3 the codec has dropped the
+/// stamp (#delete-undo), and only the logical is left to check. The
+/// rolled-back files' restart is stopped once its cleanup has moved the
+/// root to cursor 3, and the base the next restart captures is taken.
+/// - Both bases are accepted as captured.
+/// - The restored row's logical changed (a mutation no root names) is
+///   refused at either cursor by the actor's comparison with U (Identity).
+/// - The restored row restamped `Committed(1)` (the table's own CREATE q):
+///   at cursor 0 the actor's comparison with U's stamp refuses it
+///   (Identity); at cursor 3 that comparison has no stamp, and the row is
+///   refused later by the graph's committed-row order, q above the
+///   table's creator q (Order). In this world q 2 is the only committed q
+///   a row can carry, so no other stamp passes either branch.
+#[test]
+fn rdl_r07_base4_takes_the_cursor_three_compensated_row_by_its_logical() {
+    case_within("RDL-R07", std::time::Duration::from_secs(600), || {
+        let rolled = crash_images(Crash::RolledBack).0;
+        let mut cursor_three = None;
+        for cells in 1..8 {
+            let stopped = restart_with(
+                &rolled,
+                Some(RowRecoveryPolicy::WithRowClr),
+                Drive::CrashAfterCells(cells),
+                0,
+                &PageRead,
+            );
+            let last = stopped.trace.last().unwrap().clone();
+            println!("RDL_R07 cells={cells} trace={last:?}");
+            if last.iter().any(|(_, state, cursor)| {
+                *state == JobState::RootReleasingCompensated && *cursor == 3
+            }) {
+                cursor_three = Some(stopped.images);
+                break;
+            }
+        }
+        let cursor_three = cursor_three.expect("the cleanup reaches cursor 3");
+        for (cursor, images, with_stamp) in [(0, rolled, true), (3, cursor_three, false)] {
+            let (bytes, expected) = rebased(&images);
+            let accepted = census(&bytes, expected).unwrap_or_else(|e| panic!("{cursor}: {e:?}"));
+            assert_eq!(
+                (accepted.actors, accepted.releasing, accepted.rows),
+                (1, 1, 2),
+                "cursor {cursor}"
+            );
+            let (n, metadata, restored, kept) = restored_leaf(&bytes);
+            let edited = |row: Vec<u8>| {
+                let mut copy = bytes.clone();
+                rewrite(
+                    &mut copy,
+                    n,
+                    &[metadata.clone(), leaf_cell(1, &row), leaf_cell(2, &kept)],
+                );
+                census(&copy, expected)
+            };
+            assert!(
+                edited(restored.clone()).is_ok(),
+                "cursor {cursor}: relayout"
+            );
+            let mut relogged = restored.clone();
+            relogged[MUTATION].copy_from_slice(&77u64.to_le_bytes());
+            let logical = edited(relogged);
+            assert_eq!(
+                logical,
+                Err(RowBaseError::Actor(ActorError::Identity)),
+                "cursor {cursor}: logical"
+            );
+            let mut restamped = restored.clone();
+            restamped[STAMP].copy_from_slice(&committed_stamp(1));
+            let stamp = edited(restamped);
+            assert_eq!(
+                stamp,
+                Err(if with_stamp {
+                    RowBaseError::Actor(ActorError::Identity)
+                } else {
+                    RowBaseError::Order
+                }),
+                "cursor {cursor}: stamp"
+            );
+            println!("RDL_R07 cursor={cursor} logical={logical:?} stamp={stamp:?}");
+        }
+    });
+}
