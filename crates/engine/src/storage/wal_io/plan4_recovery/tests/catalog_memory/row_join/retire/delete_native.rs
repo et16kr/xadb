@@ -85,6 +85,52 @@ impl Cut {
     }
 }
 
+/// The controller's frozen inventory, its only oracle: it must state this
+/// module's table.
+const INVENTORY: &str = include_str!(
+    "../../../../../../../../../../tests/fixtures/module-row-delete/native-inventory.json"
+);
+
+/// `id`'s three phases in [`INVENTORY`] are `cut`'s expectations (with the
+/// RowIds 1 and 2 of rows 100 and 101, and A's new row `NEW`).
+fn inventory_states(id: &str, cut: Cut) {
+    assert!(INVENTORY.contains(&format!("\"new_value\": {NEW},")));
+    let start = INVENTORY
+        .find(&format!("\"{id}\": {{"))
+        .unwrap_or_else(|| panic!("{id} in the inventory"));
+    let rest = &INVENTORY[start + 1..];
+    let case = &rest[..rest.find("\"RDL-N").unwrap_or(rest.len())];
+    let (q, clrs, values) = cut.expected();
+    let list = |values: &[i64]| {
+        values
+            .iter()
+            .map(i64::to_string)
+            .collect::<Vec<_>>()
+            .join(", ")
+    };
+    let result = match cut {
+        Cut::Committed | Cut::Pruned => "acked",
+        _ => "crashed",
+    };
+    let mut reentered = values.clone();
+    reentered.push(NEW);
+    for line in [
+        format!("\"produce\": {{\"result\": \"{result}\", \"q\": {q}, \"rows\": [1, 2]}}"),
+        format!(
+            "\"recover\": {{\"q_ready\": {q}, \"clrs\": {clrs}, \"values\": [{}], \"ack_q\": {}}}",
+            list(&values),
+            q + 1
+        ),
+        format!(
+            "\"reenter\": {{\"q_ready\": {}, \"clrs\": 0, \"values\": [{}]}}",
+            q + 1,
+            list(&reentered)
+        ),
+    ] {
+        assert!(case.contains(&line), "{id}: {line}");
+    }
+}
+
 /// The last WAL file of memory `images`, as `wal_witness` reads a native
 /// one: (hex, bytes).
 fn memory_witness(images: &Images) -> (String, usize) {
@@ -376,6 +422,7 @@ fn restart<D: DirectoryPort>(cut: Cut, phase: &str, directory: &D) -> String {
 /// left, each with the native worker's expectations.
 fn memory_twin(id: &str) {
     let cut = Cut::of(id);
+    inventory_states(id, cut);
     case_within(id, Duration::from_secs(300), || {
         let directory = port::Directory::fresh();
         {
@@ -388,6 +435,7 @@ fn memory_twin(id: &str) {
         let produced = produce(cut, &directory, &|| {
             memory_witness(&state.lock().unwrap().images())
         });
+        assert!(produced.contains("\nrows\t1,2\n"), "{produced}");
         let mut images = state.lock().unwrap().images();
         drop(directory);
         let mut receipts = vec![produced];
