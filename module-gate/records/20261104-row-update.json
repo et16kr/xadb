@@ -458,6 +458,34 @@
           "sources": [
             "head"
           ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/group_update_tests.rs",
+          "case": "storage::row::insert::group_update_tests::rup_a_update_forward_needs_only_its_growth",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/group_update_tests.rs",
+          "case": "storage::row::insert::group_update_tests::rup_a_growing_update_forward_beside_d",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/group_update_tests.rs",
+          "case": "storage::row::insert::group_update_tests::rup_a_update_groups_at_the_leaf_reservation_boundary",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/group_delete_tests.rs",
+          "case": "storage::row::insert::group_delete_tests::rdl_a_groups_at_the_leaf_reservation_boundary",
+          "sources": [
+            "head"
+          ]
         }
       ]
     },
