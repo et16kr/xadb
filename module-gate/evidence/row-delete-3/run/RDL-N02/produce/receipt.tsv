@@ -1,0 +1,11 @@
+case	RDL-N02
+phase	produce
+pid	8784
+source	8cab873a7c264be7978e1a2f0436e70232b279eaa7a70a8e5ac87ea97a10aab9
+elf	bb0e74a3e6aaeba04d944a33467915813eeaad2f91f1bc678875382bb4263360
+result	acked
+q	3
+rows	1,2
+wal_before	d711f9f79cf82cc2f724c3139105a04a28b1eda9ca6100934e59ffd5db6ebf60
+wal_cut	dfe4e3045739bd3c61791f541b6724bf9e372b4404c26dd2081a1980c3431fac
+wal_cut_bytes	2117135

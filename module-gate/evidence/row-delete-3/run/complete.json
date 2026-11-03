@@ -1,0 +1,77 @@
+{
+  "RDL-N01": {
+    "pids": [
+      "8773",
+      "8780",
+      "8782"
+    ],
+    "acks": [
+      3,
+      4
+    ],
+    "result": "PASS"
+  },
+  "RDL-N02": {
+    "pids": [
+      "8784",
+      "8786",
+      "8789"
+    ],
+    "acks": [
+      3,
+      4
+    ],
+    "result": "PASS",
+    "wal_prefix_of_before_cut": "RDL-N01"
+  },
+  "RDL-N03": {
+    "pids": [
+      "8792",
+      "8797",
+      "8799"
+    ],
+    "acks": [
+      2,
+      3
+    ],
+    "result": "PASS"
+  },
+  "RDL-N04": {
+    "pids": [
+      "8802",
+      "8804",
+      "8806"
+    ],
+    "acks": [
+      2,
+      3
+    ],
+    "result": "PASS",
+    "wal_prefix_of_before_cut": "RDL-N03"
+  },
+  "RDL-N05": {
+    "pids": [
+      "8808",
+      "8814",
+      "8816"
+    ],
+    "acks": [
+      3,
+      4
+    ],
+    "result": "PASS"
+  },
+  "RDL-N06": {
+    "pids": [
+      "8818",
+      "8821",
+      "8826"
+    ],
+    "acks": [
+      3,
+      4
+    ],
+    "result": "PASS",
+    "wal_prefix_of_before_cut": "RDL-N05"
+  }
+}

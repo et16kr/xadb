@@ -1,0 +1,61 @@
+{
+ "schema": "XADB_MODULE_GATE_RECORD_V1",
+ "change": "DEV3 Row DELETE first path, stage 3 (dev3-row-delete.md#implementation-3): native fault cuts RDL-N01..N06 before and after DeleteForward, DeleteClr and DeletePrune (memory twins in CI, an ignored native worker and its controller with a frozen inventory) and RDL-J11, the Busy/SerializationConflict cases of rows another transaction holds over the actual C supply. No product code changes. The DEV3 schedule baseline marks 06-6 done (row 06 complete on merge).",
+ "rust_tests": [
+  {
+   "paths": [
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_native.rs",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
+    "tests/fixtures/module-row-delete/native-inventory.json"
+   ],
+   "reason": "RDL-N01..N06 (dev3-row-delete.md#implementation-3): crashes before and after each DELETE group over the actual C supply: DeletePrune (N01 the autocommit DELETE ACKed at q 3, N02 plus the first live cleanup step), DeleteForward (N03 an explicit transaction's preflight and RowReserve, N04 its DELETE statement with the transaction Active) and DeleteClr (N05 after Y on a second Status commits 102 at q 3, A's Commit is refused SerializationConflict and its full RollbackStart; N06 plus the rollback's first step). The memory twins run each history over the memory directory, then recover (C's recovery with A's recovered CLR handler to READY at the last ACKed q, B's read, a new ACK at q+1) over the files at the cut and reenter (RejectInitialLosers, B reads both ACKs) over the files recover left, asserting the READY q, recovered CLRs (N03 0, N04 1, N05 1, N06 0) and committed values, and that the controller's frozen inventory (tests/fixtures/module-row-delete/native-inventory.json, include_str) states the same table. The ignored rdl_native_worker is the same history as one same-ELF process per phase; scripts/check_dev3_row_delete_native.py ran 18 processes PASS at 04be6e9 (module-gate/evidence/row-delete-3/run). delete.rs only declares the two new modules and points RDL-J09's comment at RDL-J11; J09 itself is unchanged and reruns.",
+   "cases": [
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_native.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::native::rdl_n01_n02_memory_delete_prune_cuts",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_native.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::native::rdl_n03_n04_memory_delete_forward_cuts",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_native.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::native::rdl_n05_n06_memory_delete_clr_cuts",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j09_own_insert_row_is_unsupported_and_the_transaction_goes_on",
+     "sources": [
+      "head"
+     ]
+    }
+   ]
+  },
+  {
+   "paths": [
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_busy.rs"
+   ],
+   "reason": "RDL-J11 (dev3-row-delete.md#implementation-3, #classification): C's judgement of rows another transaction holds, over the actual supply with test-initialized second and third Row Statuses. Y's DELETE of A's Leased tombstone is Busy; A's DELETE of Y's Leased INSERT row is 0 rows; after Y commits at q 3 with no drain A's DELETE of Y's row is Busy (committed <= S, before Prune); the live cleanup steps only Y's Jobs (Prune, three ReleaseRoles, RootFree, TerminalFinish) and the row stays Busy after the Prune and after the third ReleaseRole (Committed(3), Y's root still holds the RowId), then A deletes it after RootFree. Z (Serializable, snapshot 3) gets SerializationConflict on both of A's tombstones committed at q 4 and rolls back; the drain is 12 groups and C's restart reads only 101 at q 4. Each Busy rule disabled in a probe build fails the case (Leased tombstone, unpruned committed row: 0 rows instead of the refusal; RowId root check: the refusal moves to Reserve).",
+   "cases": [
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_busy.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::busy::rdl_j11_rows_another_transaction_holds_are_busy_until_its_cleanup",
+     "sources": [
+      "head"
+     ]
+    }
+   ]
+  }
+ ],
+ "na": [],
+ "reviews": []
+}

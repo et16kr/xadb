@@ -1,0 +1,11 @@
+case	RDL-N04
+phase	produce
+pid	8802
+source	8cab873a7c264be7978e1a2f0436e70232b279eaa7a70a8e5ac87ea97a10aab9
+elf	bb0e74a3e6aaeba04d944a33467915813eeaad2f91f1bc678875382bb4263360
+result	crashed
+q	2
+rows	1,2
+wal_before	57ad49c630522cd9b6e642154f4f7d48b5c93f8cf635c618ddc1524f8913f382
+wal_cut	5343568cbf7163834ee956aa297d76bd9eb98b4b9b6caef2f0f22d4ada6f18f6
+wal_cut_bytes	2030142

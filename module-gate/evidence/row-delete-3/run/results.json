@@ -1,0 +1,110 @@
+[
+  {
+    "case": "RDL-N01",
+    "phase": "produce",
+    "exit": 0,
+    "seconds": 4.35
+  },
+  {
+    "case": "RDL-N01",
+    "phase": "recover",
+    "exit": 0,
+    "seconds": 5.42
+  },
+  {
+    "case": "RDL-N01",
+    "phase": "reenter",
+    "exit": 0,
+    "seconds": 2.07
+  },
+  {
+    "case": "RDL-N02",
+    "phase": "produce",
+    "exit": 0,
+    "seconds": 5.24
+  },
+  {
+    "case": "RDL-N02",
+    "phase": "recover",
+    "exit": 0,
+    "seconds": 4.69
+  },
+  {
+    "case": "RDL-N02",
+    "phase": "reenter",
+    "exit": 0,
+    "seconds": 2.02
+  },
+  {
+    "case": "RDL-N03",
+    "phase": "produce",
+    "exit": 0,
+    "seconds": 4.24
+  },
+  {
+    "case": "RDL-N03",
+    "phase": "recover",
+    "exit": 0,
+    "seconds": 3.88
+  },
+  {
+    "case": "RDL-N03",
+    "phase": "reenter",
+    "exit": 0,
+    "seconds": 2.07
+  },
+  {
+    "case": "RDL-N04",
+    "phase": "produce",
+    "exit": 0,
+    "seconds": 4.34
+  },
+  {
+    "case": "RDL-N04",
+    "phase": "recover",
+    "exit": 0,
+    "seconds": 6.25
+  },
+  {
+    "case": "RDL-N04",
+    "phase": "reenter",
+    "exit": 0,
+    "seconds": 1.87
+  },
+  {
+    "case": "RDL-N05",
+    "phase": "produce",
+    "exit": 0,
+    "seconds": 6.7
+  },
+  {
+    "case": "RDL-N05",
+    "phase": "recover",
+    "exit": 0,
+    "seconds": 10.93
+  },
+  {
+    "case": "RDL-N05",
+    "phase": "reenter",
+    "exit": 0,
+    "seconds": 1.98
+  },
+  {
+    "case": "RDL-N06",
+    "phase": "produce",
+    "exit": 0,
+    "seconds": 6.95
+  },
+  {
+    "case": "RDL-N06",
+    "phase": "recover",
+    "exit": 0,
+    "seconds": 10.92
+  },
+  {
+    "case": "RDL-N06",
+    "phase": "reenter",
+    "exit": 0,
+    "seconds": 2.13
+  }
+]

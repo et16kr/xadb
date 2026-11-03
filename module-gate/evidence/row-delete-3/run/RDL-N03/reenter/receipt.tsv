@@ -1,0 +1,16 @@
+case	RDL-N03
+phase	reenter
+pid	8799
+source	8cab873a7c264be7978e1a2f0436e70232b279eaa7a70a8e5ac87ea97a10aab9
+elf	bb0e74a3e6aaeba04d944a33467915813eeaad2f91f1bc678875382bb4263360
+handles	0
+peak	3
+fd_peak	6
+mutations	440
+log_bytes	400418
+result	ready
+steps	11
+clrs	0
+rows	[(1, 100), (2, 101), (3, 17)]
+values	100,101,17
+q_ready	3

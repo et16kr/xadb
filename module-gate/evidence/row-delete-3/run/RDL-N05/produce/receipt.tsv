@@ -1,0 +1,11 @@
+case	RDL-N05
+phase	produce
+pid	8808
+source	8cab873a7c264be7978e1a2f0436e70232b279eaa7a70a8e5ac87ea97a10aab9
+elf	bb0e74a3e6aaeba04d944a33467915813eeaad2f91f1bc678875382bb4263360
+result	crashed
+q	3
+rows	1,2
+wal_before	ffcb3b79b39ebc10eeb0fcd833f2e4b644ba1d9db80e6bb220ac770c930a56c8
+wal_cut	8db1b5438cab6c55b310ab08951845252151de0cba32411979d34f4d679e7bae
+wal_cut_bytes	2414047
