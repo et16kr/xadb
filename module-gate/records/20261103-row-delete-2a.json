@@ -1,0 +1,452 @@
+{
+ "schema": "XADB_MODULE_GATE_RECORD_V1",
+ "change": "DEV3 Row DELETE first path, stage 2a (format layer, dev3-row-delete.md): scope3 opcodes DeleteForward=8/DeleteClr=9/DeletePrune=23 with shapes, frames (largest Row frame 95888 B) and per-opcode wire native sides; Job3 effect byte @284 with the Forward/CLR/cleanup recipes in one place (job.rs) used by the ledger, A's INSERT producer and Reserve; undo codec accepts a bodyless Releasing RowValue. No product entry writes a DELETE root or frame. C's shared prepare rules (producer, whole-group observer and replay) refuse a DELETE root at the selected Job decode, A's INSERT producer and base4 refuse effect 1, Row replay refuses 8/9/23, and the N1 jobs observer refuses it too; all Unsupported until stage 2b. Contract text for the new maxima and the Job effect byte. Tests RDL-F01..F07, F09 and the boundary guards. Moved to stage 2b: the codec entries (a) schema and (b) metadata with RDL-F08 (they have no caller in 2a, and changing validate_record or public signatures would move the pinned census models: catalog_before source_census, transition ur_*, transition/source.rs undo_row_codec under the C Row lifecycle 40,881/44,304); a case for base4's effect-1 refusal (needs a resealed effect-1 base, which RDL-R builds); replay of 8/9/23 (RDL-R).",
+ "rust_tests": [
+  {
+   "paths": [
+    "crates/engine/src/storage/semantic_row/operation.rs",
+    "crates/engine/src/storage/semantic_row/wire.rs",
+    "crates/engine/src/storage/semantic_row/core.rs",
+    "crates/engine/src/storage/semantic_row/wire_tests.rs"
+   ],
+   "reason": "New scope3 opcodes 8/9/23 (decode, role, outer, handoff, native mask), their shapes/frames, the per-opcode C derivation and native sides in wire decode (tombstone cell and U size taken from ROW_HEADER_BYTES+12 and UNDO_RECORD_BYTES), and core's role rules: RDL-F01..F04 over independently packed DELETE frames (C 185/2228, h 0/1, every scope3 profile), RDL-F04 core with each DELETE opcode held to exactly its INSERT role's statement/mutation/cursor/reference rules, plus the existing wire corpus, whose INSERT frames must decode exactly as before (thirty literals, shape equations, native presence/length rules, core relations) and whose dialect case moved from opcode 8 (now known) to 10.",
+   "cases": [
+    {
+     "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+     "case": "storage::semantic_row::wire_tests::rdl_f01_delete_opcodes_decode_role_outer_handoff",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+     "case": "storage::semantic_row::wire_tests::rdl_f02_delete_shape_and_frame_equations",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+     "case": "storage::semantic_row::wire_tests::rdl_f03_delete_frames_decode_with_contract_native_sides",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+     "case": "storage::semantic_row::wire_tests::rdl_f04_delete_native_totals_and_sides_refused",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+     "case": "storage::semantic_row::wire_tests::rdl_f04_delete_core_role_rules",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+     "case": "storage::semantic_row::wire_tests::wire_independent_thirty_frames_and_profile_ids",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+     "case": "storage::semantic_row::wire_tests::wire_closed_shape_equations_and_boundaries",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+     "case": "storage::semantic_row::wire_tests::wire_rejects_native_kind_length_presence_digest_and_order",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+     "case": "storage::semantic_row::wire_tests::wire_rejects_profile_scope_opcode_and_outer_aliases",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+     "case": "storage::semantic_row::wire_tests::wire_dialect_reports_unsupported_before_semantic_use",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+     "case": "storage::semantic_row::wire_tests::wire_core_multiple_statement_and_mark_relations",
+     "sources": [
+      "head"
+     ]
+    }
+   ]
+  },
+  {
+   "paths": [
+    "crates/engine/src/storage/semantic_row/jobs.rs",
+    "crates/engine/src/storage/semantic_row/jobs_tests.rs"
+   ],
+   "reason": "The N1 jobs observer (its caller is the N1 cross-check; semantic_row.rs allows its dead code) refuses a DELETE root (effect 1) before or after every INSERT-root step until stage 2b; the new case turns valid literal roots into DELETE roots, and the raw-pair corpus shows every INSERT transition still observed. The product refusal is prepare's (transition/prepare.rs mapping).",
+   "cases": [
+    {
+     "file": "crates/engine/src/storage/semantic_row/jobs_tests.rs",
+     "case": "storage::semantic_row::jobs_tests::rdl_f_insert_job_observer_refuses_delete_roots",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/jobs_tests.rs",
+     "case": "storage::semantic_row::jobs_tests::jobs_twenty_six_raw_pairs_and_page_boundaries",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/jobs_tests.rs",
+     "case": "storage::semantic_row::jobs_tests::jobs_cell_size_and_predecessor_match_same_frame",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/jobs_tests.rs",
+     "case": "storage::semantic_row::jobs_tests::jobs_preserves_root_material_rowid_sender_and_budget",
+     "sources": [
+      "head"
+     ]
+    }
+   ]
+  },
+  {
+   "paths": [
+    "crates/engine/src/storage/semantic_row/ledger.rs",
+    "crates/engine/src/storage/semantic_row/ledger_tests.rs"
+   ],
+   "reason": "The ledger's Forward row and CLR terms now call the root's effect recipe (JobView::forward_wal/clr_wal): RDL-F09 converts every live literal root to a DELETE root and checks the +C deltas; the literal residual and exact budget cases show the INSERT values unchanged.",
+   "cases": [
+    {
+     "file": "crates/engine/src/storage/semantic_row/ledger_tests.rs",
+     "case": "storage::semantic_row::ledger::tests::rdl_f09_ledger_rows_follow_each_root_effect",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/ledger_tests.rs",
+     "case": "storage::semantic_row::ledger::tests::row_ledger_literal_states_and_residuals",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/ledger_tests.rs",
+     "case": "storage::semantic_row::ledger::tests::row_ledger_exact_budget_and_statement_credit",
+     "sources": [
+      "head"
+     ]
+    }
+   ]
+  },
+  {
+   "paths": [
+    "crates/engine/src/storage/semantic_row/transition/prepare.rs",
+    "crates/engine/src/storage/semantic_row/transition_tests.rs"
+   ],
+   "reason": "Reserve's Job budget now calls row_cleanup_wal(Insert, C, h) instead of its own copy of 311608+2C+128h, and the selected Job decode shared by the producer, the whole-group observer and replay refuses a DELETE root as Unsupported. The new case reseals noh-300 with root 3 as a valid DELETE root (census verified) and is refused for C's Cancel before any output and for the observer over A's Forward literal (BudgetMismatch with the refusal removed, checked once by hand); the Reserve/Commit/Prune literals, the replay-adopted Reserve equality and the borrowed twins pin the INSERT bytes.",
+   "cases": [
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+     "case": "storage::semantic_row::transition::tests::rdl_f_insert_producer_refuses_delete_root_in_bank",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+     "case": "storage::semantic_row::transition::tests::n1_statement_reserve_commit_prune_match_literals",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+     "case": "storage::semantic_row::transition::tests::s1g_reserve_adopted_equals_produced",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+     "case": "storage::semantic_row::transition::tests::s1d_borrowed_producer_matches_owned_groups",
+     "sources": [
+      "head"
+     ]
+    }
+   ]
+  },
+  {
+   "paths": [
+    "crates/engine/src/storage/retention_page/row.rs",
+    "crates/engine/src/storage/retention_page/row/job.rs",
+    "crates/engine/src/storage/retention_page/row/job_tests.rs"
+   ],
+   "reason": "Job3 effect byte @284 (accept 0/1 on Row Reserved/Retained/Releasing roots, refuse elsewhere, Releasing zero rule [280,284)+[285,320)) and the shared Forward/CLR/cleanup recipes with has_previous per effect: RDL-F05/F06; the literal views, closed grammar (284 moved to rdl_f05), budget and multi-root census cases keep the INSERT behaviour.",
+   "cases": [
+    {
+     "file": "crates/engine/src/storage/retention_page/row/job_tests.rs",
+     "case": "storage::retention_page::row::job_tests::rdl_f05_effect_byte_accept_and_reject",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/retention_page/row/job_tests.rs",
+     "case": "storage::retention_page::row::job_tests::rdl_f06_effect_recipes_and_has_previous",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/retention_page/row/job_tests.rs",
+     "case": "storage::retention_page::row::job_tests::job3_literal_views_and_exact_recipes",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/retention_page/row/job_tests.rs",
+     "case": "storage::retention_page::row::job_tests::job3_closed_grammar_and_identity_rejections",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/retention_page/row/job_tests.rs",
+     "case": "storage::retention_page::row::job_tests::job3_budget_every_byte_is_checked",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/retention_page/row/job_tests.rs",
+     "case": "storage::retention_page::row::job_tests::job3_independent_multi_root_censuses",
+     "sources": [
+      "head"
+     ]
+    }
+   ]
+  },
+  {
+   "paths": [
+    "crates/engine/src/storage/undo_record.rs",
+    "crates/engine/src/storage/undo_record_tests.rs"
+   ],
+   "reason": "validate_record accepts payload None for a Releasing RowValue only: RDL-F07 hand-edits the U09-U12 literal images (unchanged and still schema-checked; their bodyless Releasing images accepted with or without a schema; a Live RowValue without a body refused), and a round trip through the product encoder walks the delete U through Live and Releasing cursors 0..3 (bytes 324/325/328 checked); the literal and state-matrix cases keep every other record kind.",
+   "cases": [
+    {
+     "file": "crates/engine/src/storage/undo_record_tests.rs",
+     "case": "storage::undo_record::tests::rdl_f07_releasing_row_value_may_drop_its_body",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/undo_record_tests.rs",
+     "case": "storage::undo_record::tests::rdl_f07_delete_undo_live_then_releasing_cursors",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/undo_record_tests.rs",
+     "case": "storage::undo_record::tests::undo_independent_literals_and_layouts",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/undo_record_tests.rs",
+     "case": "storage::undo_record::tests::undo_before_state_matrix",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/undo_record_tests.rs",
+     "case": "storage::undo_record::tests::undo_release_cursor_state_matrix",
+     "sources": [
+      "head"
+     ]
+    }
+   ]
+  },
+  {
+   "paths": [
+    "crates/engine/src/storage/row/insert/group.rs",
+    "crates/engine/src/storage/row/insert/group/images.rs",
+    "crates/engine/src/storage/row/insert/group_tests.rs"
+   ],
+   "reason": "A's INSERT group producer (images.rs gains a comment only): the Forward/CLR debt rows and the CLR residual now call the shared Job recipes, and a DELETE root as the selected RootJob is Unsupported before any output. The new case covers the refusal for Forward/CLR with and without H; the four literal cases and the C-observer case pin the produced bytes; head and the A-only export.",
+   "cases": [
+    {
+     "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+     "case": "storage::row::insert::group_tests::rdl_f_insert_producer_refuses_delete_root",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+     "case": "storage::row::insert::group_tests::mca00_v06_forward_without_h_matches_literals",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+     "case": "storage::row::insert::group_tests::mca00_v06_forward_with_h_matches_literals",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+     "case": "storage::row::insert::group_tests::mca00_v06_clr_without_h_matches_literals",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+     "case": "storage::row::insert::group_tests::mca00_v06_clr_with_h_matches_literals",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+     "case": "storage::row::insert::group_tests::mca00_v06_descriptor_refusals_precede_output",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+     "case": "storage::row::insert::group_tests::mca00_v06_produced_groups_pass_c_observers",
+     "sources": [
+      "head",
+      "export-a"
+     ]
+    }
+   ]
+  },
+  {
+   "paths": [
+    "crates/engine/src/storage/plan4_recovery_base/row/actor.rs"
+   ],
+   "reason": "Base4's actor observation refuses a DELETE root (effect 1) as Unsupported until the effect-1 rules of dev3-row-delete.md#recovery exist; the literal physical graphs run the new check on every Job (all effect 0) and must observe exactly as before. The effect-1 refusal itself has no 2a case: it needs a resealed effect-1 base4, which stage 2b's RDL-R builds and covers.",
+   "cases": [
+    {
+     "file": "crates/engine/src/storage/plan4_recovery_base/row/actor_tests.rs",
+     "case": "storage::plan4_recovery_base::row::actor::tests::actor_literal_physical_graphs",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/plan4_recovery_base/row/actor_tests.rs",
+     "case": "storage::plan4_recovery_base::row::actor::tests::actor_rejects_wrong_chain_counts_identity_and_before",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/plan4_recovery_base/row/actor_tests.rs",
+     "case": "storage::plan4_recovery_base::row::actor::tests::actor_rejects_uncut_release_and_cursor_mismatch",
+     "sources": [
+      "head"
+     ]
+    }
+   ]
+  }
+ ],
+ "na": [
+  {
+   "paths": [
+    "crates/engine/src/storage/wal_io/plan4_apply.rs"
+   ],
+   "reason": "Comment only: the RowLoanLayout::FRAME doc comment names the new largest Row frame (95888 B, DeleteForward); no code, constant or layout changes."
+  },
+  {
+   "paths": [
+    "crates/engine/src/storage/wal_io/plan4_retention/history/row.rs"
+   ],
+   "reason": "Row replay refuses opcodes 8/9/23 at ordinal selection, with an unreachable arm in the change match guarded by that early return. For a well-formed 8/9/23 frame replay returns the same value as before this change, sem(Unsupported): before, Operation::decode inside decode_layout returned it; now ordinal selection does. Only malformed 8/9/23 frames change error kind, and that is the decoder's, covered by RDL-F04 at decode_layout. No producer writes these frames in this change; their replay with its observer and tests (RDL-R) is stage 2b. The INSERT arms are unchanged; the match only gained the three new variants."
+  },
+  {
+   "paths": [
+    "crates/engine/src/storage/semantic_row/transition/source.rs"
+   ],
+   "reason": "Comment only: undo_row_codec's doc cites undo_record.rs :606/:612 after the 4-line insertion above them (was :602/:608); no code or census term changes."
+  }
+ ],
+ "reviews": [
+  {
+   "id": "row-delete-2a-d2",
+   "class": "D2",
+   "scopes": [
+    "common",
+    "policy"
+   ],
+   "author": "claude-thread-session/claude-project-thread-9inq97",
+   "reviewer": "claude-independent-review/row-delete-2a",
+   "verdict": "ACCEPT",
+   "required_open": 0,
+   "log": "module-gate/evidence/row-delete-2a/review.md",
+   "log_sha256": "dbbb58063d1e7ce511bb8a9cd2b1a6c6e68d0a66c23bd5884a5b881b807ecf9a",
+   "files": {
+    "crates/engine/src/storage/plan4_recovery_base/row/actor.rs": "23cdc16834c330aef2323f89cd359ace0d0ed7c9",
+    "crates/engine/src/storage/plan4_recovery_base/row/actor_tests.rs": "876705a0094a57584d641b521d91683c93dc3e9a",
+    "crates/engine/src/storage/retention_page/row.rs": "79d856d1999d28352310539a8477827bd13d1223",
+    "crates/engine/src/storage/retention_page/row/job.rs": "20c551da4e47a61e01df1865cb497dc17450229f",
+    "crates/engine/src/storage/retention_page/row/job_tests.rs": "a388f7ca7311617ae04d9267fb4af62756482826",
+    "crates/engine/src/storage/row/insert/group.rs": "ccbca41c669f2c2d317d3dc189ec6e6c383fab42",
+    "crates/engine/src/storage/row/insert/group/images.rs": "2e6bd930252bc02b6b2f6c276fe40187df172974",
+    "crates/engine/src/storage/row/insert/group_tests.rs": "c1297af85b36b09eacf6e12d9a04dadd3eeecb3a",
+    "crates/engine/src/storage/semantic_row/core.rs": "b012944d570032e06df09b05ec6c5f6345b8651d",
+    "crates/engine/src/storage/semantic_row/jobs.rs": "99e70fc0d3ab9c186fd1003ceebd368e51f34021",
+    "crates/engine/src/storage/semantic_row/jobs_tests.rs": "3ffaf6248bbde350f0a875b9aac3581115b89ae1",
+    "crates/engine/src/storage/semantic_row/ledger.rs": "8e28fbbe72177aad146be6e20682bb11e14695e1",
+    "crates/engine/src/storage/semantic_row/ledger_tests.rs": "942393903e5d9d375b715e19bfa747558582acf0",
+    "crates/engine/src/storage/semantic_row/operation.rs": "6551e5dfe864faf7f49601983a0a5c286286f359",
+    "crates/engine/src/storage/semantic_row/transition/prepare.rs": "91cae036ee3f009ede7bd6e263022a559da66f9c",
+    "crates/engine/src/storage/semantic_row/transition/source.rs": "b758d8b278d0752ee690d874cd5c5f4083308ad4",
+    "crates/engine/src/storage/semantic_row/transition_tests.rs": "f4b6d369c64910b893c35cedc37db5bde71a5290",
+    "crates/engine/src/storage/semantic_row/wire.rs": "494d148e085300710c9b2c6e479adcafd6083af6",
+    "crates/engine/src/storage/semantic_row/wire_tests.rs": "445bdf02273168d84f8e655406fb6d29da43316b",
+    "crates/engine/src/storage/undo_record.rs": "a1068207e745f9159bdedcf20fe9167e75b150a5",
+    "crates/engine/src/storage/undo_record_tests.rs": "9ab7c305bbdc86727fbe6e90b086ea97848d0732",
+    "crates/engine/src/storage/wal_io/plan4_apply.rs": "2e1d7118fea5d092c7d5e89d7cd8cdafc1db73bc",
+    "crates/engine/src/storage/wal_io/plan4_retention/history/row.rs": "d3b2b1b21d0d3c4dbb1e75d7c015ea6d1a67cc56",
+    "devdoc/contracts/dev3-module-boundaries.md": "84c208ba0a8c00026decb1b378fc12bd901535a5",
+    "devdoc/contracts/dev3-module-consumers.md": "8175a228e78abab9c8cacc9533518791a960aef1"
+   }
+  }
+ ]
+}
