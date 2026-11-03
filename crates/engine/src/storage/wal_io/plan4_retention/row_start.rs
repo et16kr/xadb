@@ -61,6 +61,18 @@ enum RowLifecycle<'q> {
     AbortEnd(TxnRef),
 }
 
+/// What a Row lifecycle action hands the common preparer once its own
+/// checks, selection and (Begin) identity are done: the Change, its Status
+/// slot and its original targets. Each action is a never-inlined frame that
+/// has returned before the shell calls `prepare_existing_row`, so the shell
+/// holds this packet and not a `Result<PreparedRowGroup>` forwarded through
+/// the action, and the action's own slots are not below the preparation
+/// (boundaries `#begin-statement-ceilings`).
+enum RowLifecycleInput {
+    Three(row_group::Change<'static>, usize, [(TargetRequest, u8); 3]),
+    Four(row_group::Change<'static>, usize, [(TargetRequest, u8); 4]),
+}
+
 fn row_semantic_error(error: row_semantic::Error) -> RetentionError {
     unchanged(RetentionPhase::Prepare, RetentionCause::RowSemantic(error))
 }
@@ -339,12 +351,8 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     /// Full transaction RollbackStart of an empty Row actor: no root of the
     /// actor exists and its Status has no undo head (the producer requires
     /// no Undo proof page then), so the group changes only the Status.
-    fn prepare_row_rollback_start<'i>(
-        &self,
-        owner: &mut Owner<'c, 's>,
-        actor: TxnRef,
-        private: &'i mut [u8; PRIVATE_BYTES],
-    ) -> Result<PreparedRowGroup<'i, 'c, 's>> {
+    #[inline(never)]
+    fn row_rollback_start_input(&self, actor: TxnRef) -> Result<RowLifecycleInput> {
         let (terminal, status) = self.row_terminal(actor)?;
         let slot = self.control.slot(actor).ok_or_else(|| {
             unchanged(RetentionPhase::Prepare, RetentionCause::MissingTransaction)
@@ -364,28 +372,22 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             .target_request(0)
             .map_err(|e| frame(RetentionPhase::Prepare, e))?;
         let root = target_from_source(self.storage, Plan4Page::Root)?.request;
-        self.prepare_existing_row(
-            owner,
+        Ok(RowLifecycleInput::Three(
             row_group::Change::RollbackStart {
                 terminal,
                 statement: None,
             },
-            Some(slot),
+            slot,
             [
                 (allocator, ALLOCATOR_ROLE),
                 (root, ROOT),
                 (self.catalog_status_request(status), STATUS),
             ],
-            private,
-        )
+        ))
     }
 
-    fn prepare_row_abort_end<'i>(
-        &self,
-        owner: &mut Owner<'c, 's>,
-        actor: TxnRef,
-        private: &'i mut [u8; PRIVATE_BYTES],
-    ) -> Result<PreparedRowGroup<'i, 'c, 's>> {
+    #[inline(never)]
+    fn row_abort_end_input(&self, actor: TxnRef) -> Result<RowLifecycleInput> {
         let (terminal, status) = self.row_terminal(actor)?;
         let slot = self.control.slot(actor).ok_or_else(|| {
             unchanged(RetentionPhase::Prepare, RetentionCause::MissingTransaction)
@@ -402,18 +404,16 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             },
         )?
         .request;
-        self.prepare_existing_row(
-            owner,
+        Ok(RowLifecycleInput::Four(
             row_group::Change::AbortEnd { terminal },
-            Some(slot),
+            slot,
             [
                 (allocator, ALLOCATOR_ROLE),
                 (root, ROOT),
                 (job, JOB),
                 (self.catalog_status_request(status), STATUS),
             ],
-            private,
-        )
+        ))
     }
 
     /// The Row counterpart of `prepare_existing_catalog`: the same entry
@@ -760,14 +760,24 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             source::OperationClass::RowProgress,
             flusher,
             |writer, owner| {
-                let prepared = match action {
-                    RowLifecycle::Begin(status) => writer.prepare_row_begin(owner, status, private),
-                    RowLifecycle::RollbackStart(actor) => writer
+                let input = match action {
+                    RowLifecycle::Begin(status) => writer.row_begin_input(owner, status),
+                    RowLifecycle::RollbackStart(actor) => {
+                        writer.catalog_preparation().row_rollback_start_input(actor)
+                    }
+                    RowLifecycle::AbortEnd(actor) => {
+                        writer.catalog_preparation().row_abort_end_input(actor)
+                    }
+                }?;
+                // The common preparer's result comes straight to this match
+                // (no action frame forwards it).
+                let prepared = match input {
+                    RowLifecycleInput::Three(change, slot, selected) => writer
                         .catalog_preparation()
-                        .prepare_row_rollback_start(owner, actor, private),
-                    RowLifecycle::AbortEnd(actor) => writer
+                        .prepare_existing_row(owner, change, Some(slot), selected, private),
+                    RowLifecycleInput::Four(change, slot, selected) => writer
                         .catalog_preparation()
-                        .prepare_row_abort_end(owner, actor, private),
+                        .prepare_existing_row(owner, change, Some(slot), selected, private),
                 }?;
                 #[cfg(test)]
                 crate::transaction::concurrency::catalog_test_support::hit(
@@ -782,12 +792,12 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         )
     }
 
-    fn prepare_row_begin<'i>(
+    #[inline(never)]
+    fn row_begin_input(
         &mut self,
         owner: &mut Owner<'c, 's>,
         status: &Plan4Target,
-        private: &'i mut [u8; PRIVATE_BYTES],
-    ) -> Result<PreparedRowGroup<'i, 'c, 's>> {
+    ) -> Result<RowLifecycleInput> {
         let (slot, ordinal) = self.begin_selection(owner)?;
         let allocator = self
             .pool
@@ -802,22 +812,20 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         )?
         .request;
         let (actor, location) = self.begin_identity(owner, status)?;
-        self.catalog_preparation().prepare_existing_row(
-            owner,
+        Ok(RowLifecycleInput::Four(
             row_group::Change::Begin {
                 actor,
                 status: location,
                 scope: JobScope::Row,
             },
-            Some(slot),
+            slot,
             [
                 (allocator, ALLOCATOR_ROLE),
                 (root, ROOT),
                 (job, JOB),
                 (status.request, STATUS),
             ],
-            private,
-        )
+        ))
     }
 }
 
@@ -836,9 +844,16 @@ pub(in super::super) struct RowLifecycleTerms {
     pub(in super::super) assembled: usize,
     /// The control part: staged-group prelude, layout decode and `record`.
     pub(in super::super) control: usize,
-    /// Prepared group and Observation carriers through the shell.
+    /// Prepared group and Observation carriers through a shell whose action
+    /// adapter forwards the group (common preparation, adapter and match
+    /// output). The lifecycle's own shell no longer forwards it and counts
+    /// `row_lifecycle_carriers` instead; the Row write estimates keep this.
     pub(in super::super) carriers: usize,
-    /// Entry packets that survive into common preparation/installation.
+    /// Entry packets of the action: its arguments, selection and identity
+    /// results and requests. The lifecycle's action is a never-inlined frame
+    /// that returns its input before common preparation, so `row_lifecycle`
+    /// adds this term to the action's own phase (the start selection), not
+    /// beside preparation and installation.
     pub(in super::super) caller: usize,
     /// `produce` with the borrowed observer of a producer-supplied frame
     /// (`observe_borrowed`) in place of C's producer. No lifecycle group
@@ -848,6 +863,22 @@ pub(in super::super) struct RowLifecycleTerms {
 
 pub(in super::super) fn row_lifecycle_terms() -> RowLifecycleTerms {
     row_group_terms::<ROW_TARGETS>()
+}
+
+/// The carriers `row_lifecycle`'s shell holds through the action,
+/// preparation and installation: the action's result and the first match's
+/// output (two input packets), the common preparer's result and the second
+/// match's output (two Prepared carriers where `carriers` counts three, since
+/// no action frame forwards the group), the Observation results, the action
+/// and the ExistingGroup borrow (boundaries `#begin-statement-ceilings`).
+pub(in super::super) fn row_lifecycle_carriers() -> usize {
+    use std::mem::size_of;
+    type Prepared<'a> = PreparedRowGroup<'a, 'a, 'a>;
+    2 * size_of::<Result<RowLifecycleInput>>()
+        + 2 * size_of::<Result<Prepared<'_>>>()
+        + 3 * size_of::<Result<row_group::Observation>>()
+        + 2 * size_of::<RowLifecycle<'_>>()
+        + size_of::<ExistingGroup<'_, '_, '_, '_>>()
 }
 
 /// The same terms for a Row group over `N` targets. Every target-indexed

@@ -409,6 +409,63 @@ fn live_row_retirement_fits_the_progress_charge() {
     inspect::<super::super::super::native::Writer>("NATIVE_TYPE");
 }
 
+/// F4 Begin and statement start ceilings (boundaries
+/// `#begin-statement-ceilings`), C's side. Row Begin runs its Row lifecycle
+/// body under the one CatalogProgressCharge it reserves (RowProgress), with
+/// A's frames below it: body + `BEGIN` fits the charge. Begin's entry and
+/// capsule reservation run before that admission and its binding after it,
+/// both unadmitted, and a Row `begin_statement` takes no short admission at
+/// all (its Row statement head included); these run in the session's
+/// single-operation window, whose largest Row writer body is
+/// `writable::source_bytes()` and which `source_census().peak` holds beside
+/// the retained source and the split ports: that body + `BEGIN` and +
+/// `STATEMENT_START` fit there without raising the peak. The caller's table issue (a Catalog statement call,
+/// CatalogFull) has no ceiling: its charge is its body, and a Full read
+/// beside a Pending Catalog Commit leaves less room under the short cap than
+/// any A share, so the line only records it.
+#[test]
+fn f4_c_begin_statement_budget() {
+    fn inspect<W: WriterNamespace>(kind: &str) {
+        use crate::storage::wal_io::row_caller_budget::{BEGIN, STATEMENT_START};
+        let phases = create_pair::catalog_live::catalog_live_source_bytes::<W>();
+        let charge = CatalogProgressCharge::new::<W>().0;
+        let live = resources::source_census::<W>();
+        let body = transaction::writable::source_bytes();
+        let window = |ceiling: usize| live.retained + live.split_ports + body + ceiling;
+        let [shared, full, _] = CatalogSourceCharges::new::<W>().observations();
+        let [_, _, pending, _, _] = CatalogCommitCharges::new::<W>().observations();
+        println!(
+            "F4_C_BEGIN_{kind} row_lifecycle={} ceiling={BEGIN} charge={charge} room={} \
+             unadmitted_sum={} peak={} unadmitted_room={}",
+            phases.row_lifecycle,
+            charge as i64 - (phases.row_lifecycle + BEGIN) as i64,
+            window(BEGIN),
+            live.peak,
+            live.peak as i64 - window(BEGIN) as i64
+        );
+        println!(
+            "F4_C_STATEMENT_START_{kind} body={body} ceiling={STATEMENT_START} \
+             retained={} split_ports={} sum={} peak={} room={}",
+            live.retained,
+            live.split_ports,
+            window(STATEMENT_START),
+            live.peak,
+            live.peak as i64 - window(STATEMENT_START) as i64
+        );
+        println!(
+            "F4_C_TABLE_ISSUE_{kind} full_charge={full} lookup_body={} shared={shared} \
+             pending={pending} short_room_beside_pending={}",
+            read::lookup_source_bytes::<W>(),
+            SHORT_BYTES as i64 - (shared + pending + full) as i64
+        );
+        assert!(phases.row_lifecycle + BEGIN <= charge);
+        assert!(window(BEGIN) <= live.peak);
+        assert!(window(STATEMENT_START) <= live.peak);
+    }
+    inspect::<crate::storage::wal_io::plan4_test_support::Writer>("MEMORY");
+    inspect::<super::super::super::native::Writer>("NATIVE_TYPE");
+}
+
 /// ROW-BEGIN-001 "자원": RowProgress reserves the one fixed
 /// CatalogProgressCharge. The Row lifecycle term is checked as a constant to
 /// be no larger than the Catalog bodies, so the charge is unchanged by it;

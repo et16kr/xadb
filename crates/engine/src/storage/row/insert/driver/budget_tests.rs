@@ -109,28 +109,26 @@ fn f4_a_caller_budgets_native() {
     inspect::<budget::NativeWriter>("native");
 }
 
-/// The autocommit executor (`dev3-module-boundaries.md#autocommit-insert`):
-/// its share at every C call under `autocommit_insert_live`, with its
-/// caller's term, against the same fixed ceilings (`live::autocommit_sites`).
-fn autocommit<W: WriterNamespace + 'static>(label: &str) {
+/// The autocommit executor (`dev3-module-boundaries.md#autocommit-insert`)
+/// and an explicit transaction's entries (`#explicit-transaction`): the
+/// share at every C call under the executor or the entries, with the
+/// caller's term, against the same fixed ceilings (`live::autocommit_sites`,
+/// `live::explicit_sites`).
+fn executor(label: &str, kind: &str, refs: usize, census: live::ExecutorCensus, charge: usize) {
     use crate::storage::{disk::ROW_PREFLIGHT_CALLER_BYTES, disk::ROW_WRITE_CALLER_BYTES};
     let mut output = String::new();
-    let census = live::autocommit_sites::<W>();
-    let charge = crate::storage::disk::row_write_charge::<W>();
     let (_, producer) = super::super::local_source_carrier_bytes();
     writeln!(
         output,
-        "writer={label} autocommit caller={} refs={} drain_caller={}",
-        census.caller,
-        live::AUTOCOMMIT_CALLER_REFS,
-        census.drain_caller
+        "writer={label} {kind} caller={} refs={refs} drain_caller={}",
+        census.caller, census.drain_caller
     )
     .unwrap();
     let mut over = Vec::new();
     let mut check = |name: &str, actual: usize, bound: usize, output: &mut String| {
         writeln!(
             output,
-            "autocommit item={name} actual={actual} bound={bound} margin={}",
+            "{kind} item={name} actual={actual} bound={bound} margin={}",
             bound as i64 - actual as i64
         )
         .unwrap();
@@ -151,6 +149,13 @@ fn autocommit<W: WriterNamespace + 'static>(label: &str) {
         budget::ROLLBACK_CALLER,
         &mut output,
     );
+    check("begin", census.begin, budget::BEGIN, &mut output);
+    check(
+        "statement_start",
+        census.statement_start,
+        budget::STATEMENT_START,
+        &mut output,
+    );
     let mut seen = BTreeSet::new();
     for (name, path, share, frame) in &census.sites {
         assert!(share <= frame, "{label} {name}/{path}: {share} > {frame}");
@@ -165,7 +170,7 @@ fn autocommit<W: WriterNamespace + 'static>(label: &str) {
             budget::ROLLBACK_SITES
                 .iter()
                 .find(|(site, _)| site == name)
-                .unwrap_or_else(|| panic!("unbudgeted autocommit site: {name}"))
+                .unwrap_or_else(|| panic!("unbudgeted {kind} site: {name}"))
                 .1
         };
         if !name.starts_with("insert.") {
@@ -174,7 +179,7 @@ fn autocommit<W: WriterNamespace + 'static>(label: &str) {
         check(&format!("{name}@{path}"), *frame, bound, &mut output);
     }
     let expected: BTreeSet<_> = budget::ROLLBACK_SITES.iter().map(|(n, _)| *n).collect();
-    assert_eq!(seen, expected, "missing or extra autocommit rollback site");
+    assert_eq!(seen, expected, "missing or extra {kind} rollback site");
     for (name, share, frame) in census.cleanup {
         assert!(share <= frame);
         check(
@@ -185,10 +190,20 @@ fn autocommit<W: WriterNamespace + 'static>(label: &str) {
         );
     }
     for (name, share) in census.unbounded {
-        writeln!(output, "autocommit unbounded={name} share={share}").unwrap();
+        writeln!(output, "{kind} unbounded={name} share={share}").unwrap();
     }
-    budget::record(&format!("a-autocommit-{label}"), &output);
-    assert!(over.is_empty(), "{label}: {over:?}");
+    budget::record(&format!("a-{kind}-{label}"), &output);
+    assert!(over.is_empty(), "{label} {kind}: {over:?}");
+}
+
+fn autocommit<W: WriterNamespace + 'static>(label: &str) {
+    executor(
+        label,
+        "autocommit",
+        live::AUTOCOMMIT_CALLER_REFS,
+        live::autocommit_sites::<W>(),
+        crate::storage::disk::row_write_charge::<W>(),
+    );
 }
 
 #[test]
@@ -198,4 +213,29 @@ fn f4_a_autocommit_budgets_memory() {
 #[test]
 fn f4_a_autocommit_budgets_native() {
     autocommit::<budget::NativeWriter>("native");
+}
+
+fn explicit<W: WriterNamespace + 'static>(label: &str) {
+    // Off the caller's stack by the census; on it, this is added to the
+    // caller's term (boundaries `#explicit-transaction`).
+    println!(
+        "writer={label} explicit holder_on_stack={}",
+        live::explicit_holder_bytes()
+    );
+    executor(
+        label,
+        "explicit",
+        live::EXPLICIT_CALLER_REFS,
+        live::explicit_sites::<W>(),
+        crate::storage::disk::row_write_charge::<W>(),
+    );
+}
+
+#[test]
+fn f4_a_explicit_budgets_memory() {
+    explicit::<crate::storage::wal_io::plan4_test_support::Writer>("memory");
+}
+#[test]
+fn f4_a_explicit_budgets_native() {
+    explicit::<budget::NativeWriter>("native");
 }

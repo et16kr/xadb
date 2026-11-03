@@ -22,6 +22,16 @@ pub(in crate::storage) const RECOVERY_HANDLER: usize = 4096;
 /// residency victim). C checks its live retirement body plus this ceiling
 /// against the one CatalogProgressCharge it reserves.
 pub(in crate::storage) const LIVE_ROW_CLEANUP: usize = 4096;
+/// Row Begin (boundaries `#begin-statement-ceilings`): A's frame-static
+/// share, with its caller's term, at its call of `begin_row_transaction`. C
+/// checks its Row lifecycle body plus this ceiling against the one
+/// CatalogProgressCharge the Begin reserves (RowProgress).
+pub(in crate::storage) const BEGIN: usize = 2816;
+/// A Row statement's start (the same section): A's share at its call of
+/// `begin_statement`, which takes no short admission. C checks its body
+/// plus this ceiling, beside the retained source and the split ports,
+/// against the session's single-operation peak, which it does not raise.
+pub(in crate::storage) const STATEMENT_START: usize = 3584;
 
 /// Each ceiling includes the caller plus the complete frame-static site share.
 /// All ten sites are mandatory; neither owner may silently skip a new site.

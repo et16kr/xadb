@@ -2,7 +2,7 @@
 
 2026-11-02
 
-**상태: 구현·선택 검증 완료 · 독립 검토 세 차례(ACCEPT) · PR 대기.** 계약은 [자동커밋 INSERT 실행기](../contracts/dev3-module-boundaries.md#autocommit-insert)다. 기준 source는 main `5f478d0`(PR #38 병합)이고, branch는 `claude/project-thread-9inq97`이다.
+**상태: 구현·선택 검증 완료 · 독립 검토 세 차례(ACCEPT) · PR #39로 병합(main `65d473e`).** 계약은 [자동커밋 INSERT 실행기](../contracts/dev3-module-boundaries.md#autocommit-insert)다. 기준 source는 main `5f478d0`(PR #38 병합)이고, branch는 `claude/project-thread-9inq97`이다.
 
 <a id="aci-why"></a>
 ## 1. 왜 이 단위인가
@@ -152,7 +152,7 @@ LAC-J01의 재시작은 C Progress 11단계로 READY에 닿는다(출력만, 정
 
 - SQL·DEV4 engine 연결이 없다. 지금 실행기를 부르는 것은 JOIN 시험뿐이다. 명시 거래(BEGIN … COMMIT)와 여러 statement, UPDATE·DELETE는 범위 밖이다.
 - 대기·재시도 정책이 없다. rollback 도중의 Unchanged 거절도 fence로 간다(복구가 끝을 맺는다). Begin과 statement 시작의 Unchanged 거절은 handle을 남기지 않거나 거래를 rollback하므로 호출자가 다시 부를 수 있다.
-- begin·statement 시작·표 발급 지점은 C census에 A 항이 없어 상한이 없다(2,625·3,401·3,417 B, 출력만). C가 상한을 정할 잔여로 계약에 남겼고, SQL 연결 전에 정한다.
+- begin·statement 시작·표 발급 지점은 C census에 A 항이 없어 상한이 없다(2,625·3,401·3,417 B, 출력만). C가 상한을 정할 잔여로 계약에 남겼고, SQL 연결 전에 정한다. 2026-11-03 [다음 단위](explicit-transaction-20261103.md#ext-ceilings)가 begin·statement 시작 상한을 두었고, 표 발급은 C 잔여로 남았다. 그 단위는 C 호출의 receiver를 참조로 세어 statement 시작·표 발급이 8 B 크다(3,409·3,425 B).
 - A의 여유가 얇다(`rollback.finish` 87, Commit 135, rollback base caller 159, next 167, CLR lane 231 B). 이 경로의 type 크기가 늘어 몫이 상한을 넘으면 계약을 다시 연다.
 - caller term은 호출자가 참조 12개와 상태 target만 쥔다고 가정한다. 행·slot 배열을 stack에 두는 호출자는 다시 세야 한다.
 - 다음 경로는 literal stand-in에서만 시험했다: commit의 `RollbackRequired`·Unchanged 거절 뒤 전체 rollback(LAC-A04), rollback flush, Begin·statement 시작 거절(LAC-A09), statement 검사의 CallerMustResolve(LAC-A11), `FinishPending`(LAC-A10·A12). 실제 C 위에서 이 거절을 일으키는 JOIN 사례는 없다.
