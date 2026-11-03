@@ -1,11 +1,9 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-11-03T10:54:43.062216+09:00",
-  "status": "FAIL",
-  "errors": [
-    "/home/claude/xadb/devdoc/evidence/explicit-transaction-20261103.md: missing link ../../module-gate/records/20261103-explicit-transaction.json"
-  ],
+  "date": "2026-11-03T10:55:27.531519+09:00",
+  "status": "PASS",
+  "errors": [],
   "markdown_documents": [
     {
       "file": "devdoc/README.md",
