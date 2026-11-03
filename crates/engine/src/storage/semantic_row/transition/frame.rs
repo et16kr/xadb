@@ -134,7 +134,7 @@ fn native_kind(kind: PageKind) -> Result<u8> {
 )]
 fn group_header(prepared: &Prepared<'_, '_>, output: &mut [u8; 256]) -> Result<usize> {
     let op = prepared.op;
-    let shape = op.shape(prepared.row_cell, prepared.predecessor)?;
+    let shape = prepared.shape()?;
     let size = if op.handoff() { 256 } else { 192 };
     output.fill(0);
     output[..4].copy_from_slice(if op.handoff() { b"XHG1" } else { b"XSG1" });
@@ -215,7 +215,7 @@ fn body(
     cursor: &mut Cursor<'_>,
 ) -> Result<()> {
     let op = prepared.op;
-    let shape = op.shape(prepared.row_cell, prepared.predecessor)?;
+    let shape = prepared.shape()?;
     let mut group = [0; 256];
     let size = group_header(prepared, &mut group)?;
     cursor.part(&group[..size])?;
@@ -322,10 +322,7 @@ pub(super) fn encode(
         at: 160,
     };
     body(prepared, after, &mut cursor)?;
-    let count = prepared
-        .op
-        .shape(prepared.row_cell, prepared.predecessor)?
-        .redo_count;
+    let count = prepared.shape()?.redo_count;
     if prepared.op.handoff() {
         wal_frame::finish_retention_envelope(prepared.header, count, output)?;
     } else {

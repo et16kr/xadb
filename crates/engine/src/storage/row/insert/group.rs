@@ -725,7 +725,12 @@ fn observe<'a>(
     let job = row::decode_job(&input.jobs[ordinal], namespace)?;
     // The RootJob's effect names the group (dev3-row-delete.md#job-effect):
     // an INSERT value goes to an INSERT root, the sealed old row to a DELETE
-    // root; a CLR compensates either.
+    // root; a CLR compensates either. This producer has no UPDATE group yet
+    // (dev3-row-update.md#stages: module A learns it in stage 3).
+    require(
+        job.effect() != row::RowEffect::Update,
+        InsertError::Unsupported,
+    )?;
     let delete = is_delete(job);
     require(
         match input.change {
@@ -785,7 +790,12 @@ fn observe<'a>(
                 .has_previous_transaction()
                 .ok_or(InsertError::IdentityMismatch)?;
             let owed = debt(
-                row::row_clr_wal(candidate.effect(), candidate.cell_bytes(), recipe),
+                row::row_clr_wal(
+                    candidate.effect(),
+                    candidate.cell_bytes(),
+                    candidate.new_cell(),
+                    recipe,
+                ),
                 0,
             );
             clr_steps = clr_steps
@@ -803,6 +813,12 @@ fn observe<'a>(
             previous = Some(candidate);
         }
     }
+    // An UPDATE root as H needs the effect-2 proof (dev3-row-update.md
+    // #previous-proof), which this producer learns in stage 3.
+    require(
+        previous.is_none_or(|job| job.effect() != row::RowEffect::Update),
+        InsertError::Unsupported,
+    )?;
     let census = previous
         .map(|job| -> Result<UndoLink> {
             Ok(UndoLink {
@@ -975,7 +991,10 @@ fn observe<'a>(
                 && transaction.chain.apply == job.lease_lsn()
                 && transaction.last_mutation_sequence == job.mutation()
                 && transaction.remaining[1]
-                    == debt(row::row_forward_wal(job.effect(), cell as u32, h), 1),
+                    == debt(
+                        row::row_forward_wal(job.effect(), cell as u32, job.new_cell(), h),
+                        1,
+                    ),
             InsertError::BudgetMismatch,
         )?;
     } else {

@@ -74,6 +74,14 @@ const D_INDEX: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/../../tests/fixtures/module-row-format/transition-delete/index.tsv"
 ));
+const U_BLOBS: &[u8] = include_bytes!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../../tests/fixtures/module-row-format/transition-update/blobs.bin"
+));
+const U_INDEX: &str = include_str!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../../tests/fixtures/module-row-format/transition-update/index.tsv"
+));
 
 type Page = [u8; PAGE_BYTES];
 type Descriptor = [u8; 1536];
@@ -106,6 +114,10 @@ fn g(name: &str) -> &'static [u8] {
 /// A Row DELETE history D literal (`module-row-format/transition-delete`).
 fn d(name: &str) -> &'static [u8] {
     literal(D_BLOBS, D_INDEX, name)
+}
+/// A Row UPDATE history U literal (`module-row-format/transition-update`).
+fn u(name: &str) -> &'static [u8] {
+    literal(U_BLOBS, U_INDEX, name)
 }
 fn page_of(bytes: &[u8]) -> &Page {
     bytes.try_into().unwrap()
@@ -1410,10 +1422,15 @@ fn s1b_row_arm_replays_n1_and_a_literals() {
 /// world; base4 over effect-1 states is RDL-R's, over actual captured bases.
 #[test]
 fn rdl_j_row_arm_replays_history_d() {
-    let mode = Mode {
+    history_d_replay(Mode {
         live: true,
         ..Mode::default()
-    };
+    });
+}
+
+/// History H and then history D through the Row arm (`rdl_j_row_arm_
+/// replays_history_d`), returning the replay for the groups after D.
+fn history_d_replay(mode: Mode) -> Replay {
     let mut r = history_h_replay(mode);
     for name in ["D-status20-0", "D-undo15-0", "D-undo16-0"] {
         r.set_page(page_of(d(name)));
@@ -1635,6 +1652,63 @@ fn rdl_j_row_arm_replays_history_d() {
             r.step(name, d(name), Change::ReleaseRole { ordinal }, undo);
         }
         r.step(names[3], d(names[3]), Change::RootFree { ordinal }, undo);
+    }
+    r
+}
+
+/// RUP stage 2 boundary (dev3-row-update.md#stages): after history D, the
+/// first groups of history U (U-546..U-553 release roots 17 and 20, U-554
+/// begins T3 on Status 21) replay through the Row arm, and then the arm
+/// refuses UPDATE as Unsupported without effect until stage 3 opens its
+/// replay with the producer: an update RowReserve (U-555, a valid effect-2
+/// Job after) at its place, and each UPDATE opcode (U-558 UpdateForward,
+/// U-562 UpdateClr, U-569 UpdatePrune) at its own previous LSN, before any
+/// ordinal is selected.
+#[test]
+fn rup_j_row_arm_refuses_update_until_stage_3() {
+    let mut r = history_d_replay(Mode {
+        live: true,
+        ..Mode::default()
+    });
+    for (ordinal, page_no, names) in [
+        (17, 14, ["U-546", "U-547", "U-548", "U-549"]),
+        (20, 15, ["U-550", "U-551", "U-552", "U-553"]),
+    ] {
+        let undo = Pages {
+            jobs: Some(1),
+            undo: Some(page_no),
+            ..pages()
+        };
+        for name in &names[..3] {
+            r.step(name, u(name), Change::ReleaseRole { ordinal }, undo);
+        }
+        r.step(names[3], u(names[3]), Change::RootFree { ordinal }, undo);
+    }
+    r.set_page(page_of(u("U-status21-0")));
+    r.step(
+        "U-554",
+        u("U-554"),
+        Change::Begin {
+            actor: actor(7, 2),
+            status: slot(21, 2),
+            scope: job3::JobScope::Row,
+        },
+        Pages {
+            jobs: Some(1),
+            status: Some(21),
+            ..pages()
+        },
+    );
+    let unsupported = "Some(RowSemantic(Unsupported))";
+    assert_eq!(r.refused("U-555", u("U-555")), unsupported);
+    // Each opcode frame at its own previous LSN: the cursor is moved there
+    // (apply_frame refuses any other as Invariant) and put back after.
+    let at_d = r.saved();
+    for name in ["U-558", "U-562", "U-569"] {
+        let frame = u(name);
+        r.cursor.previous_lsn = u64_at(frame, 64);
+        assert_eq!(r.refused(name, frame), unsupported, "{name}");
+        r.restore(&at_d);
     }
 }
 

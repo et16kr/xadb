@@ -307,6 +307,12 @@ pub(in super::super) fn apply(
             | Operation::ReleaseRole
             | Operation::RootFree
             | Operation::TerminalFinish => Some(native_before(view, jobs)?),
+            // The UPDATE first path (dev3-row-update.md#stages) has a wire
+            // format and C transitions but no product producer yet; its replay
+            // arm opens with that producer in stage 3.
+            Operation::UpdateForward | Operation::UpdateClr | Operation::UpdatePrune => {
+                return Err(sem(semantic::Error::Unsupported));
+            }
         };
         // Reserve: the actor's TerminalLeased Job (its Status) and the
         // adopted Job after, a Row RootReserved cell of the same actor whose
@@ -330,6 +336,11 @@ pub(in super::super) fn apply(
                     || cell.source() != actor
                 {
                     return Err(invalid());
+                }
+                // An UPDATE root (dev3-row-update.md#job-effect) replays with
+                // its producer in stage 3, as the opcodes above.
+                if cell.effect() == job3::RowEffect::Update {
+                    return Err(sem(semantic::Error::Unsupported));
                 }
                 Some(cell)
             }
@@ -433,6 +444,9 @@ pub(in super::super) fn apply(
             Operation::TerminalFinish => Change::TerminalFinish {
                 ordinal: ordinal_of()?,
             },
+            Operation::UpdateForward | Operation::UpdateClr | Operation::UpdatePrune => {
+                unreachable!("refused at ordinal selection above")
+            }
         };
         let undo = match op {
             Operation::Cancel

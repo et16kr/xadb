@@ -950,3 +950,46 @@ fn rdl_f_insert_producer_refuses_delete_root() {
         });
     }
 }
+
+/// Makes `job` a valid UPDATE root of the same old cell (dev3-row-update.md
+/// #job-effect): effect 2, C' = C in `[286,288)` and the UPDATE cleanup
+/// recipe `311428+C+2C'+128h` in both cleanup rows.
+fn as_update_root(job: &mut [u8; JOB_BYTES]) {
+    let cell = u64::from(u32::from_le_bytes(job[280..284].try_into().unwrap()));
+    let wal = u64::from_le_bytes(job[784..792].try_into().unwrap());
+    let h = wal - (311_608 + 2 * cell);
+    assert!(h == 0 || h == 128);
+    job[284] = 2;
+    job[286..288].copy_from_slice(&(cell as u16).to_le_bytes());
+    job[784..792].copy_from_slice(&(311_428 + 3 * cell + h).to_le_bytes());
+    job[880..888].copy_from_slice(&(311_428 + 3 * cell + h).to_le_bytes());
+    let view = row::decode_job(job, namespace()).unwrap();
+    assert_eq!(view.effect(), row::RowEffect::Update);
+    assert_eq!(view.new_cell() as u64, cell);
+}
+
+/// Stage 2 boundary (dev3-row-update.md#stages): A's group producer learns
+/// UPDATE in stage 3. Until then it refuses a valid UPDATE root as its
+/// selected RootJob, and an UPDATE root as the H of a Forward or CLR, before
+/// the first output byte.
+#[test]
+fn rup_f_insert_producer_refuses_update_root() {
+    for case in [Case::ForwardNoH, Case::ForwardH, Case::ClrNoH, Case::ClrH] {
+        refuses(case, InsertError::Unsupported, |f| {
+            as_update_root(&mut f.bank[f.ordinal])
+        });
+    }
+    for case in [Case::ForwardH, Case::ClrH] {
+        refuses(case, InsertError::Unsupported, |f| {
+            let h = f.predecessor.unwrap().reference;
+            let ordinal = (0..JOB_COUNT)
+                .find(|i| {
+                    row::decode_job(&f.bank[*i], namespace())
+                        .is_ok_and(|job| job.state().is_root() && job.undo() == Some(h))
+                })
+                .unwrap();
+            assert_ne!(ordinal, f.ordinal);
+            as_update_root(&mut f.bank[ordinal]);
+        });
+    }
+}

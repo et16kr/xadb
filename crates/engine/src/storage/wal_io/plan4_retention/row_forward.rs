@@ -406,17 +406,21 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             sources,
             after_order: changed.map(|(_, page)| page),
             after_count: 5,
-            input: if draft.operation == 0 && job.effect() == job3::RowEffect::Delete {
-                // The delete Reserve's draft: the old row's cell C and
-                // record projection (dev3-row-delete.md#api).
-                RowProducerInput::Delete {
-                    cell_bytes: usize::from(draft.input_len),
-                    projection: draft.input,
-                }
-            } else if draft.operation == 0 {
-                RowProducerInput::Insert {
-                    canonical_len: usize::from(draft.input_len),
-                    canonical_digest: draft.input,
+            input: if draft.operation == 0 {
+                match job.effect() {
+                    // The delete Reserve's draft: the old row's cell C and
+                    // record projection (dev3-row-delete.md#api).
+                    job3::RowEffect::Delete => RowProducerInput::Delete {
+                        cell_bytes: usize::from(draft.input_len),
+                        projection: draft.input,
+                    },
+                    job3::RowEffect::Insert => RowProducerInput::Insert {
+                        canonical_len: usize::from(draft.input_len),
+                        canonical_digest: draft.input,
+                    },
+                    // No UPDATE draft before dev3-row-update.md#stages
+                    // stage 3, which adds its producer input.
+                    job3::RowEffect::Update => return Err(invariant()),
                 }
             } else {
                 RowProducerInput::Clr {
@@ -544,6 +548,11 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 RetentionCause::Retention(error),
             )
         })?;
+        // No product path makes an UPDATE root before dev3-row-update.md
+        // #stages stage 3, which opens its Forward here.
+        if job.effect() == job3::RowEffect::Update {
+            return Err(invariant());
+        }
         Ok(ReservedEntry {
             owner: identity,
             prefix,

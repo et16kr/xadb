@@ -693,16 +693,16 @@ fn rdl_f06_effect_recipes_and_has_previous() {
                     311_608 + c64,
                 ),
             ] {
-                assert_eq!(row_forward_wal(effect, c, h), forward + h128);
-                assert_eq!(row_clr_wal(effect, c, h), clr + h128);
-                assert_eq!(row_cleanup_wal(effect, c, h), cleanup + h128);
+                assert_eq!(row_forward_wal(effect, c, 0, h), forward + h128);
+                assert_eq!(row_clr_wal(effect, c, 0, h), clr + h128);
+                assert_eq!(row_cleanup_wal(effect, c, 0, h), cleanup + h128);
             }
         }
     }
-    assert_eq!(row_cleanup_wal(RowEffect::Delete, 2228, true), 313_964);
-    assert_eq!(row_cleanup_wal(RowEffect::Insert, 2228, true), 316_192);
-    assert_eq!(row_forward_wal(RowEffect::Delete, 2228, true), 95_888);
-    assert_eq!(row_clr_wal(RowEffect::Delete, 2228, true), 95_680);
+    assert_eq!(row_cleanup_wal(RowEffect::Delete, 2228, 0, true), 313_964);
+    assert_eq!(row_cleanup_wal(RowEffect::Insert, 2228, 0, true), 316_192);
+    assert_eq!(row_forward_wal(RowEffect::Delete, 2228, 0, true), 95_888);
+    assert_eq!(row_clr_wal(RowEffect::Delete, 2228, 0, true), 95_680);
     for (i, c, h) in LIVE_ROOTS {
         let bytes = delete_root(i, c, h);
         let view = decode_job(&bytes, ns()).unwrap();
@@ -738,4 +738,170 @@ fn rdl_f06_effect_recipes_and_has_previous() {
             .has_previous_transaction(),
         Some(true)
     );
+}
+
+// ---- RUP-F: the UPDATE effect 2 and its new cell C' (dev3-row-update.md
+// #job-effect, #update-costs). Expected values are the contract's integers,
+// never the product recipe functions. ----
+
+/// The live root `i` turned into an UPDATE root: effect 2, C' in
+/// `[286,288)` and the update cleanup budget `311428 + C + 2C' + 128h`.
+fn update_root(i: usize, c: u64, n: u64, h: bool) -> [u8; JOB_BYTES] {
+    let mut bytes = cell(i);
+    bytes[280..284].copy_from_slice(&(c as u32).to_le_bytes());
+    bytes[284] = 2;
+    bytes[286..288].copy_from_slice(&(n as u16).to_le_bytes());
+    let wal = 311_428 + c + 2 * n + 128 * u64::from(h);
+    put(&mut bytes, 784, wal);
+    put(&mut bytes, 880, wal);
+    bytes
+}
+
+/// RUP-F05: effect 2 with C' in 185..=2228 is accepted on a Row Reserved or
+/// Retained root, round-trips and reports C, C', h and the restore bytes
+/// `max(0, C−C')`. Effect 3, `@285`, C' outside its range, C' under effect
+/// 0/1, the other effects' budgets under effect 2 (and the reverse), C' left
+/// in a Releasing root and effect 2 on any other Job are refused.
+#[test]
+fn rup_f05_update_effect_accept_and_reject() {
+    for (i, c, h) in LIVE_ROOTS {
+        for n in [185, 2228, c] {
+            let bytes = update_root(i, c, n, h);
+            let view = decode_job(&bytes, ns()).unwrap();
+            assert_eq!(view.effect(), RowEffect::Update);
+            assert_eq!(view.cell_bytes() as u64, c);
+            assert_eq!(view.new_cell() as u64, n);
+            assert_eq!(view.has_previous_transaction(), Some(h));
+            assert_eq!(view.restore_bytes() as u64, c.saturating_sub(n));
+            let mut out = [0xa5; JOB_BYTES];
+            encode_job(&bytes, ns(), &mut out).unwrap();
+            assert_eq!(out, bytes);
+            let mut bad = bytes;
+            bad[284] = 3;
+            rejected(&bad, RetentionError::Corrupt);
+            let mut bad = bytes;
+            bad[285] = 1;
+            rejected(&bad, RetentionError::Corrupt);
+        }
+        // C' outside 185..=2228 with its own matching budget.
+        for n in [0, 184, 2229] {
+            rejected(&update_root(i, c, n, h), RetentionError::Corrupt);
+        }
+        // A C' beside effect 0 or 1.
+        for base in [cell(i), delete_root(i, c, h)] {
+            let mut bad = base;
+            bad[286] = 185;
+            rejected(&bad, RetentionError::Corrupt);
+        }
+        // Each other effect's budget under effect 2, and the reverse.
+        let mut bad = delete_root(i, c, h);
+        bad[284] = 2;
+        bad[286..288].copy_from_slice(&185u16.to_le_bytes());
+        rejected(&bad, RetentionError::BudgetMismatch);
+        let mut bad = cell(i);
+        bad[284] = 2;
+        bad[286..288].copy_from_slice(&185u16.to_le_bytes());
+        rejected(&bad, RetentionError::BudgetMismatch);
+        let mut bad = update_root(i, c, 185, h);
+        bad[284] = 1;
+        bad[286..288].fill(0);
+        rejected(&bad, RetentionError::BudgetMismatch);
+    }
+    // Releasing Committed/Compensated keep effect 2 and zero C'.
+    for i in 23..31 {
+        let mut bytes = cell(i);
+        bytes[284] = 2;
+        let view = decode_job(&bytes, ns()).unwrap();
+        assert_eq!(view.effect(), RowEffect::Update);
+        assert_eq!((view.new_cell(), view.restore_bytes()), (0, 0));
+        assert_eq!(
+            view.cleanup(),
+            decode_job(&cell(i), ns()).unwrap().cleanup()
+        );
+        let mut bad = bytes;
+        bad[286] = 185;
+        rejected(&bad, RetentionError::Corrupt);
+    }
+    // Free, Catalog/Row Terminal and every Catalog root keep it zero.
+    for i in 0..19 {
+        let mut bad = cell(i);
+        bad[284] = 2;
+        rejected(&bad, RetentionError::Corrupt);
+    }
+}
+
+/// RUP-F06: the UPDATE recipes at the (C, C') bounds, a growing and a
+/// shrinking pair and h 0/1; the root cleanup maximum 318240 and the ledger
+/// maxima 97936/97728; `has_previous` as `budget@400 == 311556 + C + 2C'`;
+/// equal DELETE and UPDATE totals stay distinct by the effect byte.
+#[test]
+fn rup_f06_update_recipes_and_has_previous() {
+    for (c, n) in [
+        (185u32, 185u32),
+        (185, 2228),
+        (2228, 185),
+        (2228, 2228),
+        (199, 230),
+        (230, 199),
+    ] {
+        for h in [false, true] {
+            let (c64, n64, h128) = (u64::from(c), u64::from(n), 128 * u64::from(h));
+            let update = RowEffect::Update;
+            assert_eq!(
+                row_forward_wal(update, c, n, h),
+                91_124 + 2 * c64 + n64 + h128
+            );
+            assert_eq!(row_clr_wal(update, c, n, h), 90_916 + 2 * c64 + n64 + h128);
+            assert_eq!(
+                row_cleanup_wal(update, c, n, h),
+                311_428 + c64 + 2 * n64 + h128
+            );
+            // INSERT and DELETE ignore the new cell.
+            for effect in [RowEffect::Insert, RowEffect::Delete] {
+                assert_eq!(
+                    row_forward_wal(effect, c, n, h),
+                    row_forward_wal(effect, c, 0, h)
+                );
+                assert_eq!(
+                    row_cleanup_wal(effect, c, n, h),
+                    row_cleanup_wal(effect, c, 0, h)
+                );
+            }
+        }
+    }
+    assert_eq!(
+        row_cleanup_wal(RowEffect::Update, 2228, 2228, true),
+        318_240
+    );
+    assert_eq!(row_forward_wal(RowEffect::Update, 2228, 2228, true), 97_936);
+    assert_eq!(row_clr_wal(RowEffect::Update, 2228, 2228, true), 97_728);
+    for (i, c, h) in LIVE_ROOTS {
+        for n in [185, 2228] {
+            let bytes = update_root(i, c, n, h);
+            let view = decode_job(&bytes, ns()).unwrap();
+            let h128 = 128 * u64::from(h);
+            assert_eq!(view.cleanup().steps, 5);
+            assert_eq!(view.cleanup().wal, 311_428 + c + 2 * n + h128);
+            assert_eq!(view.forward_wal(), Some(91_124 + 2 * c + n + h128));
+            assert_eq!(view.clr_wal(), Some(90_916 + 2 * c + n + h128));
+            assert_eq!(get(&bytes, 784) == 311_556 + c + 2 * n, h);
+        }
+    }
+    // DELETE C 740 h0 and UPDATE C 186 C' 367 h0 share 312348 B.
+    let mut delete = delete_root(19, 740, false);
+    delete[280..284].copy_from_slice(&740u32.to_le_bytes());
+    let update = update_root(19, 186, 367, false);
+    let (delete, update) = (
+        decode_job(&delete, ns()).unwrap(),
+        decode_job(&update, ns()).unwrap(),
+    );
+    assert_eq!(
+        (delete.cleanup().wal, update.cleanup().wal),
+        (312_348, 312_348)
+    );
+    assert_eq!(
+        (delete.effect(), update.effect()),
+        (RowEffect::Delete, RowEffect::Update)
+    );
+    assert_eq!(update.has_previous_transaction(), Some(false));
 }

@@ -1,6 +1,6 @@
 # DEV3 Row UPDATE 첫 경로 — 형식·전이 설계
 
-2026-11-04 · `D3-ROW-UPDATE-001` · **설계 동결 / D2 ACCEPTED(2회차) / 구현·시험 NOT_RUN**
+2026-11-04 · `D3-ROW-UPDATE-001` · **설계 동결 / D2 ACCEPTED(2회차) / 2단계(C 형식·전이) 구현 / 3·4단계 NOT_RUN**
 
 [DELETE 첫 경로](dev3-row-delete.md) · [첫 Row profile](dev3-module-consumers.md#profile) · [WAL shape](dev3-module-consumers.md#row-shape) · [scope3 wire 기록](dev3-module-consumers.md#row-scope3-wire) · [API 흐름](dev3-module-consumers.md#api-flow) · [Row 격리](dev3-task-10-concurrency.md#module-row-isolation) · [자원 정본](dev3-resource-bounds.md#row-missing-module-budget) · [Undo 형식](dev3-undo-format.md) · [live Row 정리](dev3-task-14-reclamation.md#live-row-retirement) · [명시 거래 실행기](dev3-module-boundaries.md#explicit-transaction) · [행 owner](dev3-task-06-tree-rows.md#algorithms) · [일정 07](../plans/dev3-schedule-baseline.md#items)
 
@@ -361,8 +361,39 @@ DELETE와 같은 규칙으로, **영속 update 행·update U를 쓰는 제품 �
 8. 효과를 읽는 제품 소비자가 모두 wildcard 없는 match인지(§13 2단계), `scope()`에 UpdatePrune arm이 있는지(§8).
 9. B의 (b) outline 표와 겹치지 않는 before copy 구간(§7), holder root 묶음(§5).
 
+<a id="implementation-2"></a>
+## 16. 2단계(07-2) 구현 기록
+
+2단계는 C의 형식·전이층이다. UPDATE를 쓰는 제품 진입점은 없다. `Change::ReserveUpdate`·`UpdateForward`·`UpdateClr`·`UpdatePrune`은 시험만 만든다. 그래서 §13의 "쓰는 PR이 읽기·복구도 갖는다" 조건이 지켜진다.
+
+- **형식(§3).** opcode 10·13·24와 두 cell shape(`Shape.new_cell`), 세 frame 식(최대 97936·97728·96128)을 더했다. wire decode는 kind1 record 하나의 header에서 C'을 먼저 읽는다. 사전 scan은 native 구간의 record를 최대 5개만 걷고, 남은 바이트가 있으면 Corrupt다. Job3 효과 2(`@284`)와 `[286,288)`의 C', `JobView::new_cell`·`restore_bytes`, 효과별 Forward·CLR·cleanup 식은 `retention_page/row/job.rs` 한 곳에 있다. UPDATE 식은 DELETE 식에서 tombstone 180을 C'으로 바꾼 것이다(`fixed − 180`, 상수 단언 91124·90916·311428). codec은 Row root의 효과 ≤2, 효과2 Reserved·Retained의 C' 185..2228, 그 밖의 `[286,288)` zero를 요구한다.
+- **전이(§4.1).** update Reserve는 delete Reserve의 단계를 밟는다. 대상은 `Committed`·undo None·Inline·Prune된 행이어야 하고, row_high는 올리지 않는다. Job에는 옛 C, 새 C', 계획한 새 행의 projection을 넣는다. UpdatePrune은 C가 만든다. UpdateForward·UpdateClr은 A의 group이라 C 생산자는 Unsupported로 거절하고, 관찰자만 둘을 받는다. `ReserveAdopted`는 후보 Job의 효과 byte·RowId·C'·projection을 채택하고 나머지를 다시 계산하며, C는 leaf의 옛 행에서 얻는다.
+- **효과2 H(§4.4).** `check_outline`은 "효과 0이 아니면" 규칙으로 효과1·2 H를 같이 본다(진입 (b)).
+- **leaf 예약(§4.3).** D는 같은 table의 Retained root마다 `restore_bytes`(효과1 `C−180`, 효과2 `max(0, C−C')`)를 더한다. update Reserve는 `entries+max(0, C'−C)+D ≤ 16188`을 요구하고, 어기면 OrderMismatch다. 커지는 UpdateForward도 같은 식을 다시 보며 어기면 OrderMismatch다. UpdateClr·UpdatePrune은 D 안에서 되돌리므로 leaf가 D를 넘어 있으면 Corrupt다. Capacity 분류는 3단계의 C preflight가 한다.
+- **효과 소비자의 명시 거절(§13).** `RowEffect::Update`를 더한 뒤 효과를 읽는 곳은 모두 효과2를 따로 다룬다. bool 비교(`effect() == Delete`)가 남은 곳은 그 앞에서 효과2를 거절한다. 3단계가 여는 곳과 그 거절은 다음과 같다.
+  - A 생산자 `row/insert/group.rs` `observe`: 선택한 RootJob이 효과2이면 Unsupported, H가 효과2이면 Unsupported(출력 전).
+  - C `row_forward.rs`: 효과2 Reserved entry와 생산자 입력은 invariant 오류다(제품 경로가 효과2 root를 만들지 않는다). `row_clr.rs`: 효과2 root는 CLR 대상이 아니다(invalid).
+  - live 정리 `row_start/retire.rs`와 복구 정리 `recovery/catalog.rs`: 효과2 Retained root의 정리 선택은 Fatal(Unsupported)이다.
+  - 제품 replay `history/row.rs`: opcode 10·13·24와 효과2 RowReserve는 Unsupported다(효과 없음).
+  - base4 `graph.rs` `check_queue`: 효과2 Job은 Unsupported다(actor·table·ledger 규칙 앞).
+  - 시험 전용 관찰자 `semantic_row/{jobs,undo,leaf}.rs`: UPDATE opcode와 효과2 root는 Unsupported다. status.rs는 효과와 무관하다.
+  - `visibility/row_retirement.rs`의 `scope()`는 3단계에서 wildcard 없는 match로 바꾼다(§8). 2단계에서는 UpdatePrune을 만드는 제품 경로가 없다.
+- **census(§10).** 처음 구현은 복구 Row 갈래 S1B를 25,963 B로 키워 상한 25,743 B를 220 B 넘었다. 원인은 prepare frame에 든 계획 행(`Planned`, A 값의 `CanonicalRowView`를 복사해 가짐)과 `Shape`·`Prepared`의 usize C'이었다. 동작은 그대로 두고 배치만 바꿨다. 계획 행은 `reserve_target` 안에서 만들고 C'=계획 cell 검산도 그 안으로 옮겼다. Reserve의 대상과 효과는 `Option<(RowId, RowEffect)>` 하나로 묶었다. `Shape.new_cell`·`Prepared.new_cell`은 u16(185..=2228)이라 기존 padding에 든다. 그 결과 main 대비 늘어난 것은 prepare 지역 8 B(대상에 붙은 효과)뿐이다.
+  - S1B Row 갈래: 25,731 → 25,739 B(상한 25,743, 여유 4 B). history frame 25,743 B와 live/recovered peak 64,016/65,392 B(memory), 64,024/65,400 B(native)는 그대로다.
+  - N1 transition bound 30,351 → 30,359 B(prepare 17,651 → 17,659, entry·split·frame은 main과 같다).
+  - RowWrite C 여유: reserve 595 → 587 B, cancel 1,539 → 1,531 B, preflight 728 B 그대로다. row_lifecycle 40,881 B와 44,304 B charge도 그대로다.
+  - **07-3에 남는 위험.** S1B 여유가 4 B뿐이므로 07-3이 replay에 UPDATE 갈래를 열 때 Row 갈래 frame이 다시 넘을 수 있다. 그때는 같은 규칙으로 배치를 먼저 줄이고, 모자라면 멈추고 묻는다.
+- **시험.**
+  - 독립 저자 [`module-row-format/transition-update/author.py`](../../tests/fixtures/module-row-format/transition-update/author.py)는 이력 D 끝에서 시작하는 이력 U(U-546..U-579, 34 group)와 변형 13개를 만든다. 세 번째 actor T3이 update Reserve와 Cancel, 커지는 UpdateForward(h0), 효과2 H 위의 줄어드는 UpdateForward와 UpdateClr, 효과0 H 위의 같은 크기 UpdateForward, 효과2 H 위의 INSERT Forward, UpdatePrune 둘과 Prune, committed·compensated update root의 ReleaseRole·RootFree를 지난다.
+  - RUP-F01..F08(`wire_tests.rs`, `job_tests.rs`, `ledger_tests.rs`): opcode·shape·frame, C' 유도와 그 거절, native 크기, 효과2 codec, 효과별 식, ledger 행.
+  - RUP-C(`transition_update_tests.rs`): C가 만든 29 group은 literal과 바이트가 같고, A 몫 5 group은 관찰자가 받는다. 변형 13개(framing 1개 포함)는 모두 거절된다. borrowed 관찰자·생산자, `ReserveAdopted` 효과2, 다른 RowId, 효과2 H 증명(H page의 incoming +1을 거절), leaf 예약 경계(커지는 Reserve의 정확한 맞춤과 1 B 부족, 줄어드는 Reserve, D 안의 INSERT·커지는 update, UpdateForward 1 B 부족, D 안의 UpdateClr, 가득 찬 leaf의 UpdatePrune)도 본다.
+  - N1 cross-check: UPDATE opcode group(U-558·U-560·U-562·U-567·U-569·U-571)에서는 undo·jobs·leaf 관찰자가 Unsupported를 돌려주는지 단언한다. 효과2 root나 H 곁의 다른 group은 status.rs만 대조하고 나머지는 3단계에서 켠다.
+  - 거절 지점 시험: `rup_f_insert_producer_refuses_update_root`(A, 선택 root와 H), `rup_f_base4_refuses_update_root_until_stage_3`(base4), `rup_j_row_arm_refuses_update_until_stage_3`(replay: 이력 D 뒤 U-546..U-554를 그대로 replay하고 U-555와 opcode 10·13·24 frame을 효과 없이 거절). 세 가드를 지운 probe build에서는 세 시험이 모두 실패했다(A는 뒤의 H 증명이 Retention(Corrupt), base4는 Queue(Corrupt), replay는 U-555를 받아들임).
+  - 기존 시험 가운데 바뀐 코드를 지나는 것: RDL-F·N1 wire·job·ledger·transition·A group·base4 graph, `catalog_memory::row_forward`·`row_recovery`, `row_join::retire`(DELETE RDL-J·R·N 포함), census(s2w_c01..c06, mbc40_v09, S1B 등).
+
 ## 작성 기록
 
 - 2026-11-04 r1 초안. main `5760f30`의 source를 읽고 썼다(operation.rs, wire.rs, core.rs, job.rs, undo_record.rs, transition.rs, transition/prepare.rs, ledger.rs, row_preflight.rs의 `delete_class`, plan4_apply/row/read.rs의 `missing_before`·`value_before`, row/read/driver.rs, plan4_recovery_base/row/actor.rs, plan4_apply.rs의 `RowLoanLayout`).
 - 2026-11-04 D2 1회차 **ACCEPT WITH REQUIRED CHANGES**(독립 검토). 형식·전이·산술(native 합, frame 세 식과 최대 97936/97728/96128, ledger, cleanup 최대 318240, `has_previous`), Job3 바이트 배치, U 형식, leaf 예약, RowId 유일성, 판정, 회수 scope, 단계 분리는 맞다고 확인됐다. 필수 3건은 모두 B 읽기와 Undo codec의 경계였고 r2에 반영했다: (1) `value_before`가 capture의 새 값 copy 구간을 덮어 같은 capture의 `copy_candidate`가 옛 값을 새 version 이름으로 내줄 수 있다 → §7. (2) [Undo 형식](dev3-undo-format.md) 개정이 닫은 (b) 사용처 목록에 B `missing_before`가 없다 → 개정 문단. (3) `missing_before`의 (b) outline 판정이 "지금과 같다"로만 적혀 Releasing·`Transaction` stamp 등의 결과가 없다 → §7 표. 권고 6건: 효과2를 INSERT 쪽으로 보내는 bool 비교와 2단계의 명시 거절(§13), `scope()`의 wildcard(§8), kind1 사전 scan 경계(§3.4), holder root 묶음 필드(§5), A↔C 경계의 cell 길이 하나 가정(§6·§11), C' 사용처(§3.3). 사소 6건(§2 B 행, §5 Fatal 행, 오류 순서의 L'>2048, §9 Releasing의 C·C', §8 읽기 쪽 근거, 한 번 읽기 근거는 추정)도 반영했다.
 - 2026-11-04 D2 2회차 **ACCEPT**(같은 검토자). r2가 1회차 15건을 모두 닫았고 새 필수·권고는 없음을 확인했다. 사소 6건을 r3에 반영했다: §7 표의 거절 층(codec·read.rs) 구분, before 값을 겹치지 않는 copy 구간 `[10240,12288)`에 두어 r2의 상태 규칙을 대체(copy 버퍼가 이미 `PAGE_BYTES`라 바이트 증가 0), §6 표의 DELETE Forward·Update 필드 출처와 `ReservedEntry.delete`, §9 Releasing의 길이 검산은 canonical decode뿐, §10 읽기 census 문장.
+- 2026-11-04 §16(2단계 구현 기록) 추가. C 형식·전이층, 효과2 소비자의 명시 거절 목록, census(S1B 상한 초과를 배치 변경으로 해소, 여유 4 B), 독립 저자 이력 U와 RUP-F·RUP-C·거절 지점 시험을 적었다. 07-2가 고칠 설명(§3.5)은 소비자 계약의 shape 표·cleanup 최대·scope3 wire 기록·`candidate_template` 상계, 자원 정본, 모듈 경계의 XOI 배치, `RowLoanLayout::FRAME` 주석에 반영했다.

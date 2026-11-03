@@ -75,12 +75,16 @@ impl JobObservation {
 pub(crate) fn observe(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<JobObservation> {
     let delete = layout.operation() != layout.operation().role();
     // A DELETE root's Forward/Clr/Prune follow the INSERT role's Job rules;
-    // the root's effect byte must name the operation's effect.
+    // the root's effect byte must name the operation's effect. UPDATE's
+    // operations and roots reach this observer in dev3-row-update.md#stages
+    // stage 3.
     let op = layout.operation().role();
-    if matches!(
-        op,
-        Operation::RollbackStart | Operation::StatementFinish | Operation::AgingStart
-    ) {
+    if layout.operation().update()
+        || matches!(
+            op,
+            Operation::RollbackStart | Operation::StatementFinish | Operation::AgingStart
+        )
+    {
         return Err(Error::Unsupported);
     }
     context(layout, input)?;
@@ -89,6 +93,9 @@ pub(crate) fn observe(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<JobOb
     let namespace = input.context.profile.spec().namespace;
     let before = row::decode_job(before_page.cell(slot).ok_or(Error::Corrupt)?, namespace)?;
     let after = row::decode_job(after_page.cell(slot).ok_or(Error::Corrupt)?, namespace)?;
+    if before.effect() == row::RowEffect::Update || after.effect() == row::RowEffect::Update {
+        return Err(Error::Unsupported);
+    }
     if matches!(op, Operation::Forward | Operation::Clr | Operation::Prune) {
         require(
             before.cell_bytes() as usize == layout.shape().cell

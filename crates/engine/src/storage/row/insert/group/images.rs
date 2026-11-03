@@ -393,6 +393,7 @@ fn descriptor(observed: &Observed<'_>, status: StatusHome, output: &mut [u8]) ->
             row::row_clr_wal(
                 observed.job.effect(),
                 observed.cell as u32,
+                observed.job.new_cell(),
                 observed.predecessor.is_some(),
             ),
             0,

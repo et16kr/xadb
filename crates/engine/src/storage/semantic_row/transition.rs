@@ -106,6 +106,24 @@ pub(crate) struct DeletePlan {
     pub(crate) row: RowId,
 }
 
+/// Plan of one update RowReserve (dev3-row-update.md#update-states): the
+/// delete RowReserve's target with A's new canonical inline value, which the
+/// planned new row (Job C' and projection) seals. No RowId is issued.
+#[derive(Clone, Copy)]
+pub(crate) struct UpdatePlan<'a> {
+    /// Ordinal of the actor's TerminalLeased Job; actor and Status come from it.
+    pub(crate) terminal: usize,
+    /// Free Undo container chosen by the original allocator/provisioning owner.
+    pub(crate) container: PageRef,
+    pub(crate) table: ObjectHandle,
+    /// The caller's live statement sequence (nonzero, non-decreasing).
+    pub(crate) statement: u64,
+    /// The committed, pruned row to update.
+    pub(crate) row: RowId,
+    /// A's validated canonical inline new value (L' bytes).
+    pub(crate) canonical: &'a [u8],
+}
+
 /// Stable table observation: anchor proof, current RowLeaf and schema. This is
 /// not a CheckedTable, epoch or Catalog selection token.
 #[derive(Clone, Copy)]
@@ -131,12 +149,23 @@ pub(crate) enum Change<'a> {
     Reserve(&'a ReservePlan<'a>),
     /// The live delete RowReserve producer (dev3-row-delete.md#api).
     ReserveDelete(&'a DeletePlan),
+    /// The live update RowReserve producer (dev3-row-update.md#api).
+    #[cfg_attr(
+        not(test),
+        allow(
+            dead_code,
+            reason = "A's UPDATE executor (dev3-row-update.md stage 3) constructs it"
+        )
+    )]
+    ReserveUpdate(&'a UpdatePlan<'a>),
     /// Replay-only RowReserve (contract row-reserve-replay): the three
     /// selectors the original owner chose, bound and checked by the Row
     /// replay arm. From the candidate's single kind-9 after, an INSERT root
     /// adopts C and the projection, a DELETE root its effect byte and RowId
-    /// (dev3-row-delete.md#api); every other byte is recomputed and compared.
-    /// Reached only through `observe_borrowed`.
+    /// (dev3-row-delete.md#api), an UPDATE root its effect byte, RowId, C'
+    /// and projection (dev3-row-update.md#api; its C is the leaf row's);
+    /// every other byte is recomputed and compared. Reached only through
+    /// `observe_borrowed`.
     ReserveAdopted {
         terminal: usize,
         container: PageRef,
@@ -188,6 +217,41 @@ pub(crate) enum Change<'a> {
     DeletePrune {
         ordinal: usize,
     },
+    /// Observe only; A produces UpdateForward (dev3-row-update.md#api).
+    #[cfg_attr(
+        not(test),
+        allow(
+            dead_code,
+            reason = "A's UPDATE executor (dev3-row-update.md stage 3) constructs it"
+        )
+    )]
+    UpdateForward {
+        ordinal: usize,
+        statement: StatementBoundary,
+    },
+    /// Observe only; A produces UpdateClr.
+    #[cfg_attr(
+        not(test),
+        allow(
+            dead_code,
+            reason = "A's UPDATE executor (dev3-row-update.md stage 3) constructs it"
+        )
+    )]
+    UpdateClr {
+        ordinal: usize,
+        statement: Option<StatementBoundary>,
+    },
+    /// C produces UpdatePrune, the cleanup of a committed update root.
+    #[cfg_attr(
+        not(test),
+        allow(
+            dead_code,
+            reason = "A's UPDATE executor (dev3-row-update.md stage 3) constructs it"
+        )
+    )]
+    UpdatePrune {
+        ordinal: usize,
+    },
     ReleaseRole {
         ordinal: usize,
     },
@@ -203,9 +267,10 @@ impl Change<'_> {
         match self {
             Self::AgingStart => Operation::AgingStart,
             Self::Begin { .. } => Operation::Begin,
-            Self::Reserve(_) | Self::ReserveDelete(_) | Self::ReserveAdopted { .. } => {
-                Operation::Reserve
-            }
+            Self::Reserve(_)
+            | Self::ReserveDelete(_)
+            | Self::ReserveUpdate(_)
+            | Self::ReserveAdopted { .. } => Operation::Reserve,
             Self::Forward { .. } => Operation::Forward,
             Self::Cancel { .. } => Operation::Cancel,
             Self::RollbackStart { .. } => Operation::RollbackStart,
@@ -217,6 +282,9 @@ impl Change<'_> {
             Self::DeleteForward { .. } => Operation::DeleteForward,
             Self::DeleteClr { .. } => Operation::DeleteClr,
             Self::DeletePrune { .. } => Operation::DeletePrune,
+            Self::UpdateForward { .. } => Operation::UpdateForward,
+            Self::UpdateClr { .. } => Operation::UpdateClr,
+            Self::UpdatePrune { .. } => Operation::UpdatePrune,
             Self::ReleaseRole { .. } => Operation::ReleaseRole,
             Self::RootFree { .. } => Operation::RootFree,
             Self::TerminalFinish { .. } => Operation::TerminalFinish,
@@ -290,8 +358,9 @@ enum LeafEdit<'a> {
     /// Forward: the candidate's sealed cell, already checked against the Job.
     Insert(&'a [u8]),
     Remove(RowId),
-    /// Prune's restamped cell, DeleteForward's tombstone or DeleteClr's
-    /// restored row, in `Prepared::cell`.
+    /// Prune's restamped cell, DeleteForward's tombstone, DeleteClr's or
+    /// UpdateClr's restored row, UpdateForward's new row or UpdatePrune's
+    /// restamped one, in `Prepared::cell`.
     Replace,
 }
 
@@ -303,6 +372,9 @@ struct Prepared<'a, 's> {
     header: WalFrameHeader,
     frame_bytes: usize,
     row_cell: usize,
+    /// UPDATE's new cell C' (dev3-row-update.md#update-shape, 185..=2228);
+    /// 0 otherwise.
+    new_cell: u16,
     predecessor: bool,
     ordinal: Option<usize>,
     actor: Option<TxnRef>,
@@ -312,9 +384,10 @@ struct Prepared<'a, 's> {
     root: &'s mut [u8; ROOT_BYTES],
     status: Option<StatusHome>,
     undo: &'s mut [u8; UNDO_RECORD_BYTES],
-    /// DeleteForward's Live U value: the old row's canonical bytes, borrowed
-    /// from the RowLeaf before image, placed right after the 432-byte header
-    /// in `undo` (dev3-row-delete.md#scratch). Empty for every other group.
+    /// DeleteForward's and UpdateForward's Live U value: the old row's
+    /// canonical bytes, borrowed from the RowLeaf before image, placed right
+    /// after the 432-byte header in `undo` (dev3-row-delete.md#scratch,
+    /// dev3-row-update.md#scratch). Empty for every other group.
     undo_tail: &'a [u8],
     leaf: Option<(
         LeafEdit<'a>,
@@ -332,11 +405,19 @@ struct Prepared<'a, 's> {
     aging_before: Option<&'a [u8; 1536]>,
     transaction_before: Option<&'a [u8; 1536]>,
 }
+impl Prepared<'_, '_> {
+    /// The group's shape over its cells C (and C' for UPDATE) and h.
+    fn shape(&self) -> Result<super::Shape> {
+        self.op
+            .shape_cells(self.row_cell, usize::from(self.new_cell), self.predecessor)
+    }
+}
 
 /// Produce one complete C-owned group into caller loans. Every refusal that
 /// depends on the inputs returns before the first `after`/`frame` byte is
-/// written. Forward, CLR, DeleteForward and DeleteClr are A's and
-/// ReserveAdopted is replay-only; all five return Unsupported here.
+/// written. Forward, CLR, DeleteForward, DeleteClr, UpdateForward and
+/// UpdateClr are A's and ReserveAdopted is replay-only; all seven return
+/// Unsupported here.
 #[allow(
     dead_code,
     reason = "owned-backing producer; the live Row install uses produce_borrowed"
@@ -377,8 +458,9 @@ pub(crate) fn row_projection(
     cells::projection(table, row, value)
 }
 
-/// D of the leaf reservation (dev3-row-delete.md#leaf-reservation) over a
-/// Jobs bank: the `C-180` bytes every Retained delete root of `table` must
+/// D of the leaf reservation (dev3-row-delete.md#leaf-reservation, widened by
+/// dev3-row-update.md#leaf-reservation) over a Jobs bank: the bytes every
+/// Retained delete (`C-180`) and update (`max(0, C-C')`) root of `table` must
 /// be able to restore. The live INSERT RowReserve refuses a candidate that
 /// would leave less (Capacity), before the producer's own check.
 pub(crate) fn leaf_reservation(
@@ -386,7 +468,7 @@ pub(crate) fn leaf_reservation(
     namespace: crate::api::Namespace,
     table: ObjectHandle,
 ) -> Result<usize> {
-    cells::delete_reservation(jobs, namespace, table)
+    cells::leaf_reservation(jobs, namespace, table)
 }
 
 /// The RootJob a live RowReserve leases: the first Free Job from the stable
@@ -401,9 +483,9 @@ pub(crate) fn reserve_job(
     cells::first_free(root, jobs, namespace)
 }
 
-/// Forward and CLR, DeleteForward and DeleteClr are A's; ReserveAdopted is
-/// replay-only. Both producers refuse them before writing any loan,
-/// `produce_borrowed` before clearing its scratch.
+/// Forward and CLR, DeleteForward and DeleteClr, UpdateForward and UpdateClr
+/// are A's; ReserveAdopted is replay-only. Both producers refuse them before
+/// writing any loan, `produce_borrowed` before clearing its scratch.
 fn refuse_unproduced(inputs: &Inputs<'_>) -> Result<()> {
     if matches!(
         inputs.change,
@@ -411,6 +493,8 @@ fn refuse_unproduced(inputs: &Inputs<'_>) -> Result<()> {
             | Change::Clr { .. }
             | Change::DeleteForward { .. }
             | Change::DeleteClr { .. }
+            | Change::UpdateForward { .. }
+            | Change::UpdateClr { .. }
             | Change::ReserveAdopted { .. }
     ) {
         return Err(Error::Unsupported);
@@ -440,7 +524,8 @@ fn produce_with(
 /// stable before observations and compare every byte of the candidate —
 /// header, both descriptors, core, natives, Edge/Count/InventoryDelta and
 /// redo. Forward's inserted row cell is the one candidate value adopted, and
-/// only after its record version, length and projection match the Job.
+/// only after its record version, length and projection match the Job;
+/// UpdateForward adopts its new row's canonical value the same way.
 /// ReserveAdopted is replay-only and returns Unsupported before any output.
 #[allow(
     dead_code,
@@ -500,10 +585,11 @@ fn observe_with<'a>(
     }
     // The one candidate value each change adopts, chosen by the change and
     // not by the layout (Reserve and ReserveAdopted share one layout):
-    // Forward's inserted row cell, ReserveAdopted's Job after (C and
+    // Forward's inserted row cell, UpdateForward's new row cell (its value,
+    // dev3-row-update.md#scratch), ReserveAdopted's Job after (C and
     // projection, checked by prepare's Reserve arm), otherwise none.
     let inserted = match inputs.change {
-        Change::Forward { .. } => layout
+        Change::Forward { .. } | Change::UpdateForward { .. } => layout
             .native_records()
             .find(|native| native.kind() == 1)
             .and_then(|native| native.after()),

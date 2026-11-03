@@ -109,15 +109,19 @@ pub(crate) fn observe(
     // DeleteForward/DeleteClr/DeletePrune take their INSERT role's steps on
     // a delete root's U (dev3-row-delete.md#delete-states).
     let role = op.role();
-    if !matches!(
-        role,
-        Operation::Reserve
-            | Operation::Forward
-            | Operation::Clr
-            | Operation::Prune
-            | Operation::ReleaseRole
-            | Operation::RootFree
-    ) {
+    // UPDATE's operations reach this observer in dev3-row-update.md#stages
+    // stage 3; until then they and UPDATE roots are Unsupported.
+    if op.update()
+        || !matches!(
+            role,
+            Operation::Reserve
+                | Operation::Forward
+                | Operation::Clr
+                | Operation::Prune
+                | Operation::ReleaseRole
+                | Operation::RootFree
+        )
+    {
         return Err(Error::Unsupported);
     }
     let ordinal = source.ordinal();
@@ -141,9 +145,15 @@ pub(crate) fn observe(
             require(role != Operation::Reserve)?;
             validate_job(selected, context)?;
             // A DELETE opcode names a delete root, an INSERT opcode an INSERT
-            // root; the release steps serve both.
+            // root; the release steps serve both. This observer learns UPDATE
+            // roots in dev3-row-update.md#stages stage 3.
+            let delete = match selected.effect() {
+                RowEffect::Insert => false,
+                RowEffect::Delete => true,
+                RowEffect::Update => return Err(Error::Unsupported),
+            };
             if matches!(role, Operation::Forward | Operation::Clr | Operation::Prune)
-                && (op != role) != (selected.effect() == RowEffect::Delete)
+                && (op != role) != delete
             {
                 return Err(Error::IdentityMismatch);
             }
@@ -461,6 +471,9 @@ fn validate_live(
             UndoCell::Live(material(job, transaction, 2, 0)),
         ),
         RowEffect::Delete => validate_outline(bytes, job, context, true, transaction, 0),
+        // This local observer learns UPDATE roots in dev3-row-update.md
+        // #stages stage 3, with the product path.
+        RowEffect::Update => Err(Error::Unsupported),
     }
 }
 /// A Releasing U at release `cursor`: INSERT's exact material, or a delete
@@ -480,6 +493,7 @@ fn validate_releasing(
             UndoCell::Releasing(material(job, transaction, 0, cursor)),
         ),
         RowEffect::Delete => validate_outline(bytes, job, context, false, transaction, cursor),
+        RowEffect::Update => Err(Error::Unsupported),
     }
 }
 /// A delete root's U through entry (b) (dev3-row-delete.md#delete-undo):

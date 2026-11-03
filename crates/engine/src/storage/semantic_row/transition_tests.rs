@@ -79,6 +79,16 @@ const DELETE_INDEX: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/../../tests/fixtures/module-row-format/transition-delete/index.tsv"
 ));
+/// UPDATE literals (`module-row-format/transition-update/author.py`):
+/// history U from the end of D and its `R-U-*` variants.
+const UPDATE_BLOBS: &[u8] = include_bytes!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../../tests/fixtures/module-row-format/transition-update/blobs.bin"
+));
+const UPDATE_INDEX: &str = include_str!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../../tests/fixtures/module-row-format/transition-update/index.tsv"
+));
 const PROFILE: &[u8; 4096] = scope3!("profile3.bin");
 /// Every framing-valid variant and the exact refusal its base's observer must
 /// give: the recomputed canonical group differs from the candidate.
@@ -209,10 +219,13 @@ fn hex(bytes: &[u8]) -> String {
 }
 
 /// The literal set a name belongs to: history D and its `R-D-` variants are
-/// the DELETE author's, everything else the N1 author's.
+/// the DELETE author's, history U and its `R-U-` variants the UPDATE
+/// author's, everything else the N1 author's.
 fn literals(name: &str) -> (&'static str, &'static [u8]) {
     if name.starts_with("D-") || name.starts_with("R-D-") {
         (DELETE_INDEX, DELETE_BLOBS)
+    } else if name.starts_with("U-") || name.starts_with("R-U-") {
+        (UPDATE_INDEX, UPDATE_BLOBS)
     } else {
         (INDEX, BLOBS)
     }
@@ -694,11 +707,23 @@ impl World {
                 continue;
             }
             let bytes = blob(variant);
+            // A variant wire decode itself refuses (`update::FRAMING`).
+            if let Some((_, expected)) = update::FRAMING.iter().find(|(name, _)| *name == variant) {
+                assert_eq!(
+                    decode_layout(bytes, inputs.frame, inputs.profile).map(|_| ()),
+                    Err(*expected),
+                    "{variant} framing"
+                );
+                println!("N1_REJECT\t{variant}\tframing {expected:?}");
+                counter.set(counter.get() + 1);
+                continue;
+            }
             decode_layout(bytes, inputs.frame, inputs.profile)
                 .unwrap_or_else(|error| panic!("{variant} framing {error:?}"));
             let expected = REJECTS
                 .iter()
                 .chain(delete::REJECTS.iter())
+                .chain(update::REJECTS.iter())
                 .find(|(name, _)| *name == variant)
                 .unwrap_or_else(|| panic!("{variant} has no expected refusal"))
                 .1;
@@ -809,6 +834,27 @@ impl World {
         // (dev3-row-delete.md#implementation-2b3).
         let layout = decode_layout(frame, expectation(self.lsn), profile()).unwrap();
         let op = observed.operation;
+        // undo.rs, leaf.rs and jobs.rs learn UPDATE in dev3-row-update.md
+        // #stages stage 3 and refuse it until then; a group that touches an
+        // effect-2 root (its own, or its H) is checked by status.rs only.
+        let effect2 = |cell: &[u8]| {
+            row::decode_job(cell, namespace())
+                .is_ok_and(|job| job.state().is_root() && job.effect() == row::RowEffect::Update)
+        };
+        let update = op.update()
+            || observed.job_ordinal.is_some_and(|ordinal| {
+                effect2(&self.bank[ordinal])
+                    || (observed.order[..usize::from(observed.count)].contains(&(JOB as u8))
+                        && effect2(cell(&after[JOB], ordinal % 15)))
+            })
+            || pages.previous.is_some_and(|previous| {
+                self.bank.iter().any(|cell| {
+                    effect2(cell)
+                        && row::decode_job(cell, namespace()).is_ok_and(|job| {
+                            job.undo().is_some_and(|u| u.page().page_no == previous)
+                        })
+                })
+            });
         let present =
             |role: usize| observed.order[..usize::from(observed.count)].contains(&(role as u8));
         let context = undo::UndoContext {
@@ -820,10 +866,12 @@ impl World {
         let statement = match change {
             Change::Forward { statement, .. }
             | Change::DeleteForward { statement, .. }
+            | Change::UpdateForward { statement, .. }
             | Change::StatementFinish { statement, .. } => Some(statement),
             Change::RollbackStart { statement, .. }
             | Change::Clr { statement, .. }
-            | Change::DeleteClr { statement, .. } => statement,
+            | Change::DeleteClr { statement, .. }
+            | Change::UpdateClr { statement, .. } => statement,
             _ => None,
         };
         let status_before = self
@@ -868,6 +916,61 @@ impl World {
                 images,
             )
             .unwrap_or_else(|error| panic!("{name}: status.rs {error:?}"));
+        }
+        if update {
+            // Stage 2 boundary (dev3-row-update.md#stages): an UPDATE opcode
+            // is refused at each local observer's entry. Other groups beside
+            // an effect-2 root wait for stage 3, which teaches the observers.
+            let refused = op.update();
+            if refused {
+                let ordinal = observed.job_ordinal.unwrap();
+                let undo = undo::observe(
+                    layout,
+                    context,
+                    jobs,
+                    undo::UndoSource::Existing { ordinal },
+                    undo::UndoImages {
+                        before: World::find(&self.undo, u64_at(&after[UNDO], 32)),
+                        after: &after[UNDO],
+                        predecessor: None,
+                    },
+                    None,
+                );
+                assert_eq!(undo.map(|_| ()), Err(Error::Unsupported), "{name}: undo.rs");
+                let job = jobs::observe(
+                    layout,
+                    jobs::Inputs {
+                        context,
+                        jobs,
+                        ordinal,
+                        images: jobs::JobImages {
+                            before: self.jobs[ordinal / 15].as_ref().unwrap(),
+                            after: &after[JOB],
+                        },
+                        reserve: None,
+                        sender: None,
+                        commit,
+                    },
+                );
+                assert_eq!(job.map(|_| ()), Err(Error::Unsupported), "{name}: jobs.rs");
+                let afters = RowAfters {
+                    undo: &after[UNDO],
+                    status: &after[STATUS],
+                    leaf: &after[LEAF],
+                };
+                assert_eq!(
+                    self.observe_leaf(frame, change, pages, afters)
+                        .map(|result| result.map(|_| ())),
+                    Some(Err(Error::Unsupported)),
+                    "{name}: leaf.rs"
+                );
+            }
+            println!(
+                "N1_CROSS_UPDATE\t{name}\tstatus={}\tundo/leaf/jobs={}",
+                present(STATUS),
+                if refused { "Unsupported" } else { "stage 3" }
+            );
+            return;
         }
         let ordinal = observed.job_ordinal;
         if present(UNDO) {
@@ -1131,7 +1234,11 @@ impl World {
             Change::Clr { ordinal, statement } | Change::DeleteClr { ordinal, statement } => {
                 (ordinal, statement)
             }
-            Change::Prune { ordinal } | Change::DeletePrune { ordinal } => (ordinal, None),
+            Change::UpdateForward { ordinal, statement } => (ordinal, Some(statement)),
+            Change::UpdateClr { ordinal, statement } => (ordinal, statement),
+            Change::Prune { ordinal }
+            | Change::DeletePrune { ordinal }
+            | Change::UpdatePrune { ordinal } => (ordinal, None),
             _ => panic!("not a Row change"),
         };
         let job = row::decode_job(&self.bank[ordinal], namespace()).unwrap();
@@ -2253,6 +2360,9 @@ fn n1_producer_refusals_precede_output() {
 /// These sums check the counted `source` terms; they are not stack samples.
 #[path = "transition_delete_tests.rs"]
 pub(crate) mod delete;
+
+#[path = "transition_update_tests.rs"]
+pub(crate) mod update;
 
 mod measured {
     use super::super::source::returned;

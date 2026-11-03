@@ -426,7 +426,14 @@ impl<'a> Graph<'a> {
     fn check_queue(&self, scratch: &mut [[u8; PAGE_BYTES]; 4]) -> Result<()> {
         let cells = bank(scratch);
         for (ordinal, cell) in cells.iter_mut().enumerate() {
-            cell.copy_from_slice(self.job(ordinal)?.bytes());
+            let job = self.job(ordinal)?;
+            // Base4 knows INSERT and DELETE roots. An UPDATE root
+            // (dev3-row-update.md#job-effect) needs the effect-2 rules of
+            // #recovery, which stage 3 adds with the product path.
+            if job.effect() == row::RowEffect::Update {
+                return Err(Error::Unsupported);
+            }
+            cell.copy_from_slice(job.bytes());
         }
         let mut aggregate = [0; 640];
         row::verify_census(self.root, self.namespace(), cells, &mut aggregate)?;

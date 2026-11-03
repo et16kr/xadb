@@ -636,3 +636,63 @@ fn base4_closure_row_xoi_mode_reproduces_inventory() {
     }
     assert_eq!(seen, 8);
 }
+
+/// Stage 2 boundary (dev3-row-update.md#stages): base4 learns UPDATE roots
+/// with their recovery rules in stage 3. Until then the queue check refuses a
+/// valid UPDATE root (effect 2, C' in `[286,288)`, the UPDATE cleanup
+/// recipe) as Unsupported before any actor, table or ledger rule reads it;
+/// the same base with the root left INSERT passes the queue check.
+#[test]
+fn rup_f_base4_refuses_update_root_until_stage_3() {
+    use crate::storage::page::DIGEST_OFFSET;
+    let mut bytes = state("state-row-reserved");
+    let mut scratch = scratch();
+    let cell = {
+        let graph = Graph::new(decode_layout(&*bytes, expected()).unwrap()).unwrap();
+        graph.check_queue(&mut scratch).unwrap();
+        let ordinal = (0..JOB_COUNT)
+            .find(|ordinal| {
+                graph
+                    .job(*ordinal)
+                    .is_ok_and(|job| job.row_scope() && job.state() == row::JobState::RootReserved)
+            })
+            .unwrap();
+        graph.job(ordinal).unwrap().bytes().to_vec()
+    };
+    let at = ARENA
+        + bytes[ARENA..ARENA + 64 * PAGE_BYTES]
+            .windows(cell.len())
+            .position(|window| window == &cell[..])
+            .unwrap();
+    let job = &mut bytes[at..at + cell.len()];
+    let c = u64::from(u32::from_le_bytes(job[280..284].try_into().unwrap()));
+    let wal = u64::from_le_bytes(job[784..792].try_into().unwrap());
+    let h = wal - (311_608 + 2 * c);
+    assert!(h == 0 || h == 128);
+    job[284] = 2;
+    job[286..288].copy_from_slice(&(c as u16).to_le_bytes());
+    job[784..792].copy_from_slice(&(311_428 + 3 * c + h).to_le_bytes());
+    job[880..888].copy_from_slice(&(311_428 + 3 * c + h).to_le_bytes());
+    // Reseal the Jobs page and its certificate's full digest, then pack the
+    // sections again (section digests and trailer).
+    let ordinal = (at - ARENA) / PAGE_BYTES;
+    let page = ARENA + ordinal * PAGE_BYTES;
+    let digest = content_digest(&bytes[page..page + DIGEST_OFFSET]);
+    bytes[page + DIGEST_OFFSET..page + PAGE_BYTES].copy_from_slice(&digest);
+    let full = content_digest(&bytes[page..page + PAGE_BYTES]);
+    let cert = CERTIFICATES + ordinal * 96;
+    bytes[cert + 56..cert + 88].copy_from_slice(&full);
+    let header = decode_layout(&*state("state-row-reserved"), expected())
+        .unwrap()
+        .header();
+    let mut output = backing(&[0; BASE_BYTES]);
+    let layout =
+        super::super::encode_layout(header, expected(), sections(&bytes), &mut output).unwrap();
+    let graph = Graph::new(layout).unwrap();
+    assert!((0..JOB_COUNT).any(|ordinal| {
+        graph
+            .job(ordinal)
+            .is_ok_and(|job| job.effect() == row::RowEffect::Update)
+    }));
+    assert_eq!(graph.check_queue(&mut scratch), Err(Error::Unsupported));
+}

@@ -10,7 +10,7 @@ use crate::storage::{
     page::{self, FileId, PAGE_BYTES, PageIdentity, PageKind, PageRef, PageView},
     retention_page::{
         JOB_COUNT,
-        row::{self, JobCells, JobState, JobView, RowEffect},
+        row::{self, JobCells, JobState, JobView},
     },
     row_record::{
         self, RecordExpectation, RecordVersion, RowPayload, RowRecordView, RowSchemaInput,
@@ -92,7 +92,9 @@ impl LeafObservation {
 pub(crate) fn observe(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<LeafObservation> {
     let op = layout.operation();
     let role = op.role();
-    if !matches!(role, Operation::Forward | Operation::Clr | Operation::Prune) {
+    // UPDATE's operations reach this observer in dev3-row-update.md#stages
+    // stage 3.
+    if op.update() || !matches!(role, Operation::Forward | Operation::Clr | Operation::Prune) {
         return Err(Error::Unsupported);
     }
     let delete = op != role;
@@ -445,8 +447,10 @@ fn validate_rows(
     }
     Ok(used)
 }
-/// D of the leaf reservation (dev3-row-delete.md#leaf-reservation): `C-180`
-/// for every Retained DELETE root of `table` in the original bank.
+/// D of the leaf reservation (dev3-row-delete.md#leaf-reservation, widened
+/// by dev3-row-update.md#leaf-reservation): each Retained root of `table` in
+/// the original bank adds its `JobView::restore_bytes` (DELETE `C-180`,
+/// UPDATE `max(0, C-C')`).
 fn reservation(
     jobs: JobCells<'_>,
     namespace: crate::api::Namespace,
@@ -456,13 +460,12 @@ fn reservation(
     for ordinal in 0..JOB_COUNT {
         let job = row::decode_job(jobs.cell(ordinal), namespace)?;
         if job.state() == JobState::RootRetained
-            && job.effect() == RowEffect::Delete
             && job.object().is_some_and(|object| {
                 object.object == table.object && object.generation == table.generation
             })
         {
-            reserved += (job.cell_bytes() as usize)
-                .checked_sub(TOMBSTONE_CELL)
+            reserved = reserved
+                .checked_add(job.restore_bytes())
                 .ok_or(Error::Corrupt)?;
         }
     }

@@ -249,16 +249,30 @@ pub(crate) fn decode_layout(
         return Err(Error::Corrupt);
     }
     let native_bytes = u32_at(payload, if operation.handoff() { 228 } else { 136 }) as usize;
-    let c = super::operation::cell_from_native(operation, native_bytes)?;
+    let native_at = 160 + h + if operation.handoff() { 3072 } else { 1536 } + 256;
+    // UPDATE names two cells: C' from its leaf record header, C from the
+    // total (dev3-row-update.md#update-shape). Every other row op names C.
+    let (c, new_cell) = if operation.update() {
+        let natives = native_at
+            .checked_add(native_bytes)
+            .and_then(|end| bytes.get(native_at..end))
+            .ok_or(Error::Corrupt)?;
+        super::operation::update_cells_from_native(operation, natives)?
+    } else {
+        (
+            super::operation::cell_from_native(operation, native_bytes)?,
+            0,
+        )
+    };
     let edges = u16_at(payload, if operation.handoff() { 244 } else { 126 });
     let row = operation.row();
     if row && !matches!(edges, 3 | 4) {
         return Err(Error::Corrupt);
     }
     let shape = operation
-        .shape(c, row && edges == 4)
+        .shape_cells(c, new_cell, row && edges == 4)
         .map_err(|_| Error::Corrupt)?;
-    if operation.frame_bytes(c, shape.predecessor)? != bytes.len()
+    if operation.frame_bytes_cells(c, new_cell, shape.predecessor)? != bytes.len()
         || envelope.record_count != shape.redo_count
     {
         return Err(Error::Corrupt);
@@ -295,7 +309,6 @@ pub(crate) fn decode_layout(
     {
         return Err(Error::Corrupt);
     }
-    let native_at = 160 + h + if operation.handoff() { 3072 } else { 1536 } + 256;
     let view = LayoutView {
         bytes,
         header: envelope.header,
@@ -381,11 +394,16 @@ fn validate_native_shape(view: LayoutView<'_>) -> Result<()> {
         if u16_at(bytes, 2) != ordinal {
             return Err(Error::OrderMismatch);
         }
-        // Per-operation sides (dev3-row-delete.md#delete-shape): a DELETE
-        // leaf and U change size; every other native keeps its fixed size.
-        let (presence, before_size, after_size) =
-            super::operation::native_sides(view.operation, kind, view.shape.cell)
-                .ok_or(Error::Corrupt)?;
+        // Per-operation sides (dev3-row-delete.md#delete-shape,
+        // dev3-row-update.md#update-shape): a DELETE/UPDATE leaf and U change
+        // size; every other native keeps its fixed size.
+        let (presence, before_size, after_size) = super::operation::native_sides(
+            view.operation,
+            kind,
+            view.shape.cell,
+            usize::from(view.shape.new_cell),
+        )
+        .ok_or(Error::Corrupt)?;
         if bytes[1] != presence {
             return Err(Error::Corrupt);
         }

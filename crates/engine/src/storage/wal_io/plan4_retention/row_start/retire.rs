@@ -224,6 +224,16 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                     match job.effect() {
                         job3::RowEffect::Insert => row_semantic::Operation::Prune,
                         job3::RowEffect::Delete => row_semantic::Operation::DeletePrune,
+                        // No product path makes an UPDATE root before
+                        // dev3-row-update.md#stages stage 3, which opens
+                        // its UpdatePrune here.
+                        job3::RowEffect::Update => {
+                            return Err(fatal(
+                                storage,
+                                RetentionPhase::Census,
+                                RetentionCause::Unsupported,
+                            ));
+                        }
                     }
                 }
                 job3::JobState::RootReleasingCommitted
