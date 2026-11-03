@@ -475,6 +475,33 @@ pub(crate) fn a_befores() -> Vec<ABefore> {
     out
 }
 
+/// The RowLeaf and Jobs bank after each named history D group, for the C
+/// preflight's classification tests (RDL-C, dev3-row-delete.md#classification).
+pub(crate) fn d_leaves(
+    names: &[&str],
+) -> Vec<(String, Box<Page>, Box<[[u8; JOB_BYTES]; JOB_COUNT]>)> {
+    let mut out = Vec::new();
+    history_d_with(false, |name, world| {
+        if names.contains(&name) {
+            out.push((
+                name.to_owned(),
+                Box::new(world.leaf.expect("RowLeaf")),
+                Box::new(world.bank),
+            ));
+        }
+    });
+    assert_eq!(
+        out.iter()
+            .map(|(name, ..)| name.as_str())
+            .collect::<Vec<_>>(),
+        names
+    );
+    out
+}
+
+/// The T2 Terminal Job's ordinal in history D's Jobs bank.
+pub(crate) const D_TERMINAL: usize = TERMINAL;
+
 #[test]
 fn rdl_c_delete_history_matches_literals() {
     assert_eq!(history_d(false), 0);

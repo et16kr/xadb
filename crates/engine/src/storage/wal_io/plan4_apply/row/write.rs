@@ -56,6 +56,37 @@ pub(crate) enum RowPreflightStep<
     FlushRequired { target: Plan4Target },
 }
 
+/// What `preflight_delete` returns (dev3-row-delete.md#api): the two answers
+/// of `RowPreflightStep`, with the same release rules, and `NoRow`, a target
+/// that is no row under the statement snapshot
+/// (dev3-row-delete.md#classification). `NoRow` is returned after the table
+/// read bit is registered and the source, gate and lease were returned;
+/// nothing took effect and the statement succeeds with zero rows.
+#[allow(
+    clippy::large_enum_variant,
+    reason = "the preflight wrapper is returned inline as the contract's Ready value"
+)]
+pub(crate) enum RowDeleteStep<
+    'r,
+    't,
+    'v,
+    'i,
+    'b,
+    'a,
+    's,
+    'c,
+    'p,
+    'd,
+    'o,
+    'm,
+    'w,
+    W: WriterNamespace,
+> {
+    Ready(PreflightRow<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>),
+    FlushRequired { target: Plan4Target },
+    NoRow,
+}
+
 /// Upper bound of A's driver share at the preflight call of a Row write: what
 /// the driver holds while `preflight_row` runs, before it holds any Row
 /// wrapper (S2-0b amendment, decision 3). The preflight phase is checked as
@@ -347,6 +378,52 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         private: &'i mut [u8; 425_984],
         flusher: &'r mut MaintenancePort<'_, 's, 'c, 'p, 'd, 'm, 'w, W>,
     ) -> Result<RowPreflightStep<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>> {
+        let storage = self.storage;
+        match self.preflight_target(owner, statement, table, private, flusher, None)? {
+            RowDeleteStep::Ready(preflight) => Ok(RowPreflightStep::Ready(preflight)),
+            RowDeleteStep::FlushRequired { target } => {
+                Ok(RowPreflightStep::FlushRequired { target })
+            }
+            // An INSERT's body classifies no target.
+            RowDeleteStep::NoRow => Err(fatal(
+                storage,
+                RetentionPhase::Census,
+                RetentionCause::Invariant,
+            )),
+        }
+    }
+
+    /// The DELETE preflight (dev3-row-delete.md#api, #classification):
+    /// `preflight_row`'s shell and body for the row `row`, whose target the
+    /// body classifies under the statement snapshot before the Free Undo
+    /// selection. Busy, Unsupported and SerializationConflict are Unchanged
+    /// refusals that register nothing; a target S does not see registers the
+    /// table read bit and returns `NoRow`; a deletable row returns Ready with
+    /// the target in the cut, for `reserve_delete`. RowId 0 is not
+    /// representable, so no argument check precedes the I/O.
+    pub(in crate::storage) fn preflight_delete<'r, 't, 'v, 'i>(
+        &'r mut self,
+        owner: &'r mut Owner<'c, 's>,
+        statement: &'r RowStatementView<'t, 'v, 'a, 'c, 's>,
+        table: &'r CheckedTable<'c, 's>,
+        row: RowId,
+        private: &'i mut [u8; 425_984],
+        flusher: &'r mut MaintenancePort<'_, 's, 'c, 'p, 'd, 'm, 'w, W>,
+    ) -> Result<RowDeleteStep<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>> {
+        self.preflight_target(owner, statement, table, private, flusher, Some(row))
+    }
+
+    /// The shell of both preflights: `preflight_row`'s doc, with `delete`
+    /// the DELETE target (`row_preflight`).
+    fn preflight_target<'r, 't, 'v, 'i>(
+        &'r mut self,
+        owner: &'r mut Owner<'c, 's>,
+        statement: &'r RowStatementView<'t, 'v, 'a, 'c, 's>,
+        table: &'r CheckedTable<'c, 's>,
+        private: &'i mut [u8; 425_984],
+        flusher: &'r mut MaintenancePort<'_, 's, 'c, 'p, 'd, 'm, 'w, W>,
+        delete: Option<RowId>,
+    ) -> Result<RowDeleteStep<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>> {
         #[cfg(test)]
         TEST_ROW_PREFLIGHTS.with(|count| count.set(count.get() + 1));
         let storage = self.storage;
@@ -423,26 +500,26 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 anchor: table.anchor,
             },
             private,
+            delete,
         );
         match outcome {
-            Ok(RowPreflightOutcome::Ready(source_cut)) => {
-                Ok(RowPreflightStep::Ready(PreflightRow {
-                    mutation: self,
-                    owner,
-                    statement,
-                    table,
-                    private: Some(private),
-                    source_cut,
-                    source,
-                    gate: Some(gate),
-                    io: Some(RowIoLease {
-                        original: &mut *flusher.control,
-                    }),
-                }))
-            }
+            Ok(RowPreflightOutcome::Ready(source_cut)) => Ok(RowDeleteStep::Ready(PreflightRow {
+                mutation: self,
+                owner,
+                statement,
+                table,
+                private: Some(private),
+                source_cut,
+                source,
+                gate: Some(gate),
+                io: Some(RowIoLease {
+                    original: &mut *flusher.control,
+                }),
+            })),
             Ok(RowPreflightOutcome::FlushRequired(target)) => {
-                release(source, gate).map(|()| RowPreflightStep::FlushRequired { target })
+                release(source, gate).map(|()| RowDeleteStep::FlushRequired { target })
             }
+            Ok(RowPreflightOutcome::NoRow) => release(source, gate).map(|()| RowDeleteStep::NoRow),
             Err(error) => merge(Err(error), release(source, gate)),
         }
     }
@@ -673,19 +750,63 @@ impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         reason = "unchanged failure returns the same preflight for retry"
     )]
     pub(in crate::storage) fn reserve(
-        mut self,
+        self,
         input: RowInputPlan,
+    ) -> std::result::Result<
+        ReservedRow<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
+        RowOwnedError<Self>,
+    > {
+        self.reserve_target(Some(&input))
+    }
+
+    /// The delete RowReserve (dev3-row-delete.md#api): `reserve`'s body for
+    /// the target `preflight_delete` classified, with no candidate. Its
+    /// RootJob seals the tombstone's projection and its draft the old row's
+    /// cell C and projection, which A's DeleteForward producer checks. The
+    /// refusals and the moves are `reserve`'s; an INSERT preflight's wrapper
+    /// is refused Before (InvalidInput), as is a DELETE one's at `reserve`.
+    #[allow(
+        clippy::result_large_err,
+        reason = "unchanged failure returns the same preflight"
+    )]
+    pub(in crate::storage) fn reserve_delete(
+        self,
+    ) -> std::result::Result<
+        ReservedRow<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
+        RowOwnedError<Self>,
+    > {
+        self.reserve_target(None)
+    }
+
+    /// `reserve` and `reserve_delete`: `input` is the INSERT candidate's
+    /// plan, None for the DELETE target of the cut.
+    #[allow(
+        clippy::result_large_err,
+        reason = "unchanged failure returns the same preflight for retry"
+    )]
+    fn reserve_target(
+        mut self,
+        input: Option<&RowInputPlan>,
     ) -> std::result::Result<
         ReservedRow<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
         RowOwnedError<Self>,
     > {
         let storage = self.mutation.storage;
         let table = self.table_source();
+        if input.is_some() == self.source_cut.delete.is_some() {
+            return Err(RowOwnedError::Before {
+                error: unchanged(
+                    RetentionPhase::Prepare,
+                    RetentionCause::RowSemantic(crate::storage::semantic_row::Error::InvalidInput),
+                ),
+                owned: self,
+            });
+        }
         let reserved = match self.private.as_deref_mut() {
             Some(private) => self.mutation.row_reserve(
                 self.owner,
                 self.statement,
-                (table, &self.source_cut, &input),
+                (table, &self.source_cut, input),
                 private,
             ),
             None => Err(fatal(

@@ -36,6 +36,7 @@ fn cut(leaf_free: u16) -> RowPreflightCut {
         roles: 0,
         leaf_free,
         root_job: 0,
+        delete: None,
     }
 }
 
@@ -52,9 +53,9 @@ fn s2b2_a6_check_candidate_leaf_shortage_is_capacity() {
     // A's rule: four cell-header bytes, eight key bytes, the row header and
     // a slot over the canonical row.
     let need = u16::try_from(length + ROW_HEADER_BYTES + 16).expect("need");
-    check_candidate(&plan, &candidate, table(), &cut(need)).expect("fits exactly");
-    let error =
-        check_candidate(&plan, &candidate, table(), &cut(need - 1)).expect_err("one byte short");
+    check_candidate(&plan, &candidate, table(), (&cut(need), 0)).expect("fits exactly");
+    let error = check_candidate(&plan, &candidate, table(), (&cut(need - 1), 0))
+        .expect_err("one byte short");
     assert_eq!(error.effect, Effect::Unchanged);
     assert_eq!(error.phase, RetentionPhase::Prepare);
     assert!(
@@ -64,8 +65,8 @@ fn s2b2_a6_check_candidate_leaf_shortage_is_capacity() {
     );
     // The plan check runs first: a shortage never masks a forged candidate.
     candidate[0] ^= 1;
-    let error =
-        check_candidate(&plan, &candidate, table(), &cut(need - 1)).expect_err("forged candidate");
+    let error = check_candidate(&plan, &candidate, table(), (&cut(need - 1), 0))
+        .expect_err("forged candidate");
     assert!(
         matches!(
             error.cause,

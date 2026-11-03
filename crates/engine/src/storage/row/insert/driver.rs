@@ -153,6 +153,11 @@ enum PreflightNext<P, F> {
     /// preflight. Nothing is held: C has returned its source, gate and flush
     /// lease, and nothing took effect.
     Flush(F),
+    /// A DELETE's target is no row under the statement snapshot: C has
+    /// registered the table read and returned its source, gate and lease,
+    /// and nothing took effect (dev3-row-delete.md#classification). An
+    /// INSERT's preflight never answers it.
+    NoRow,
 }
 
 /// Checked source state before the row's first effect.
@@ -602,6 +607,14 @@ fn insert_row<B: Boundary>(
         let target = match call.preflight(statement, table, loan) {
             Ok(PreflightNext::Ready(preflight)) => break preflight,
             Ok(PreflightNext::Flush(target)) => target,
+            // Outside `preflight_row`'s contract: nothing is held, so the
+            // row ends as a refusal.
+            Ok(PreflightNext::NoRow) => {
+                return Err(Failure::new(
+                    Stage::Preflight,
+                    InsertError::IdentityMismatch.into(),
+                ));
+            }
             // A refusal, Busy included (a LOAD claim held by another owner,
             // a moved WAL prefix), ends the row: C returned what it took, and
             // only a FlushRequired is retried.
