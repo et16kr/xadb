@@ -443,7 +443,7 @@ base4의 지금 `rows()`·`undo()`는 Missing 전용이라 효과1 Job의 상태
   - `reenter`는 C+B 복구(RejectInitialLosers)와 두 ACK의 B 읽기다.
   - worker는 `row_join::retire::autocommit::delete::native::rdl_native_worker`(ignored)이고, controller는 `scripts/check_dev3_row_delete_native.py`다.
 - **controller 검사.** 기대값은 모두 동결 inventory에서 온다.
-  - produce: 결과, q, RowId가 inventory와 같다. in-process WAL witness는 controller가 직접 계산한 WAL file의 SHA-256·길이와 같다. 마지막 단계 앞뒤의 witness가 다르다(그 group이 WAL에 있다). effect trace에서 파일마다 마지막 write·resize 뒤에 그 파일의 성공 sync가 있고, 마지막 성공 sync 뒤에는 lease 해제와 close뿐이다.
+  - produce: 결과, q, RowId가 inventory와 같다. in-process WAL witness는 controller가 직접 계산한 WAL file의 SHA-256·길이와 같다. 마지막 단계 앞뒤의 witness가 다르다(마지막 단계는 N01이 RowReserve·DeleteForward·Commit 세 group, N04가 RowReserve·DeleteForward 두 group, 나머지는 group 하나다). effect trace에서 파일마다 마지막 write·resize 뒤에 그 파일의 성공 sync가 있고, 마지막 성공 sync 뒤에는 lease 해제와 close뿐이다.
   - "뒤" 사례의 cut WAL은 짝 "앞" 사례의 cut WAL을 바이트 그대로 앞에 두고, 그 뒤의 WAL write는 하나(그 group)뿐이다(N01→N02 DeletePrune, N03→N04 DeleteForward, N05→N06 DeleteClr). 같은 이력이 그 group만큼 더 간 것이다. "뒤" 사례만 골라 실행해도 controller가 짝 사례를 먼저 돌린다.
   - recover·reenter: READY q는 앞 process의 마지막 ACK q이고 inventory와 같다. 복구 CLR 수와 B가 읽은 값도 inventory와 같다. 각 process는 파일을 바꿨다. 세 process의 pid는 모두 다르다.
   - 자원: 복구 process마다 handle 0, peak 3 이하, fd peak 6 이하, log 4 MiB 이하다(worker 단언).
@@ -459,7 +459,7 @@ base4의 지금 `rows()`·`undo()`는 Missing 전용이라 효과1 Job의 상태
 
   판정 규칙을 하나씩 끈 build에서 J11은 실패한다. Leased tombstone의 Busy나 Prune 전 행의 Busy를 0행으로 바꾸면, 그 statement가 거절 대신 0행으로 끝난다. RowId를 쥔 root 검사를 끄면 preflight는 통과하고 Reserve가 거절한다(census의 RowId 유일성, 이중 방어). RDL-J09의 주석도 J11을 가리키게 고쳤다.
 - **한계.**
-  - cut은 process 종료다. 전원 단절처럼 page cache의 쓰기를 잃는 경우는 아니다. 대신 controller가 cut에 sync되지 않은 쓰기가 없음을 보인다(마지막 write 뒤의 성공 sync, 그 뒤 쓰기 없음). 그래서 파일 내용이 곧 durable prefix다. S7과 같다.
+  - cut은 process 종료다. 전원 단절처럼 page cache의 쓰기를 잃는 경우는 아니다. 대신 controller가 cut에 sync되지 않은 쓰기가 없음을 보인다(파일마다 마지막 write·resize 뒤의 성공 sync, 마지막 sync 뒤 쓰기 없음). 그래서 파일 내용이 곧 durable prefix다. S7의 같은 검사를 파일 단위로 강화했다.
   - cut은 group 경계에만 둔다. group 안의 torn write, 복구 도중의 crash(복구가 쓴 DeleteClr·DeletePrune과 READY 사이), I/O fault(짧은 write, write·sync 오류)는 이 단계에서 보지 않는다. 일반 재장애는 [일정 12](../plans/dev3-schedule-baseline.md#items), fault 전수 실행은 일정 17의 몫이다.
   - ReadCommitted의 "T' committed q'>S → 0행"은 A 실행기로 만들 수 없다. statement snapshot을 preflight 바로 앞에서 잡기 때문이다. C 판정 표 시험(`row_delete_tests.rs`)이 본다.
   - native 결과는 이 cloud 환경의 실행 한 번이다. CI는 native worker를 돌리지 않는다(ignored).
@@ -475,3 +475,4 @@ base4의 지금 `rows()`·`undo()`는 Missing 전용이라 효과1 Job의 상태
 - 2026-11-03 2-b-3 D2 1회차 **ACCEPT WITH REQUIRED CHANGES**(독립 검토). (1) gate record의 `paths`에 바뀌지 않은 파일 → 제거. (2) H mutant(Job 편집)가 Job codec의 budget 검사에 걸려 H 증명에 닿지 않음 → H page U의 incoming mutant로 바꾸고 오류를 단언. 권고: DeleteClr 복원 행 logical mutant 추가, DELETE group의 예약 경계(D-526·D-528) 추가로 before 거절 시험, tombstone 판정 한계 기록, RDL-B06의 WAL 기준을 rollback 호출 전으로. NIT: undo.rs 효과·opcode 묶음은 이중 방어, 행 번호, 상태 줄.
 - 2026-11-03 §19(3단계 구현 기록) 추가. native fault cut RDL-N01..N06(메모리 쌍둥이 셋, native 18 process)과 RDL-J11(실제 C 위 다른 거래가 쥔 행의 Busy·SerializationConflict)을 적었다.
 - 2026-11-04 3단계 D2 1회차 **ACCEPT**(독립 검토, 필수 지적 0). 권고 반영: 메모리 쌍둥이가 cut의 base4 Row Job 상태를 대조(N01·N02가 CI에서도 갈림), controller가 파일마다 sync를 보고 짝 사례 뒤의 WAL write가 하나인지 보며 "뒤" 사례만 고른 실행에서도 짝을 먼저 돌림, 한계에 복구 도중 crash와 I/O fault 추가, 일정 문구를 PR #47 병합 시점 기준으로. NIT: J11의 drain 설명, N04 inventory 문구, §12·§17 정정 표시, README·일정 문구.
+- 2026-11-04 3단계 D2 2회차 **ACCEPT**(같은 검토자, 필수·권고 0). 1회차 권고가 모두 맞게 반영됐음을 probe로 확인했다. NIT 둘(§19의 마지막 단계 group 수, 한계의 sync 검사 설명)을 반영했다.
