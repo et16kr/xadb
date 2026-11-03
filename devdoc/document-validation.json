@@ -1,15 +1,15 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-11-04T01:25:40.063097+09:00",
+  "date": "2026-11-04T01:32:10.144341+09:00",
   "status": "PASS",
   "errors": [],
   "markdown_documents": [
     {
       "file": "devdoc/README.md",
-      "links": 300,
+      "links": 301,
       "duplicate_ids": 0,
-      "sha256": "01dce6ca88053ed133fab3bb8cea47133635c27a10d01137fac78ff12ebf5cfe"
+      "sha256": "76fae462d4404ff95d0776d9a5a07d116ae71f8bf900c7f77abb6f49cf8e6351"
     },
     {
       "file": "devdoc/contracts/README.md",
@@ -1411,9 +1411,9 @@
     },
     {
       "file": "devdoc/plans/README.md",
-      "links": 78,
+      "links": 79,
       "duplicate_ids": 0,
-      "sha256": "2a215005c46adbb1ad93bc47cec9405651285a5cc150cb8dbac0b715dda2e85c"
+      "sha256": "1dd306871f32e16c06288a592054eb9958d4e7205c1fcd9a750138d0e36eb5d5"
     },
     {
       "file": "devdoc/plans/bottom-up-development.md",
@@ -1441,15 +1441,21 @@
     },
     {
       "file": "devdoc/plans/dev3-ai-throughput-improvement.md",
-      "links": 36,
+      "links": 37,
       "duplicate_ids": 0,
-      "sha256": "f79f77f1ba85a6484e9ab8d170e1d40977efca9bec4ad7d130505c3eafa8a17d"
+      "sha256": "37f3ab515aa6ad79e5598cae27ad6cd5b3db27d8ce360a2201699222ea21ecde"
     },
     {
       "file": "devdoc/plans/dev3-implementation-plan.md",
-      "links": 122,
+      "links": 123,
       "duplicate_ids": 0,
-      "sha256": "087e09066acdc876b292c9bbaea244a4a0c4593d34be6f6cb976cda8ac9f7e5f"
+      "sha256": "6afbfd8c72479724df28a246916122a5ca2fef8c6f9c76a5808a8cb183b0bfbc"
+    },
+    {
+      "file": "devdoc/plans/dev3-schedule-baseline.md",
+      "links": 103,
+      "duplicate_ids": 0,
+      "sha256": "5632597f6388bc88d4408537a73826c76fd91eba463452d0ef6b90139236065c"
     },
     {
       "file": "devdoc/plans/dev3-test-plan.md",
