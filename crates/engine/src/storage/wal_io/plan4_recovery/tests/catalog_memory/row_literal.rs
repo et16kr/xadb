@@ -325,19 +325,25 @@ macro_rules! done {
     };
 }
 
-/// The Int64 value of T's one column in a copied canonical row.
+/// What `int_of` returns for a NULL: only the UPDATE tests' nullable T
+/// (dev3-row-update.md#tests, a value that grows or shrinks) has one.
+pub(super) const NULL_INT: i64 = i64::MIN;
+
+/// The Int64 value of T's one column in a copied canonical row (`NULL_INT`
+/// for a NULL of a nullable T).
 pub(super) fn int_of(output: &[u8], len: usize) -> i64 {
     let row = crate::storage::row_record::decode_canonical_row(
         &output[..len],
         &[Column {
             name: "i".into(),
             data_type: DataType::Int64,
-            nullable: false,
+            nullable: true,
         }],
     )
     .unwrap();
     match row.value(0).unwrap() {
         ValueRef::Int64(value) => value,
+        ValueRef::Null => NULL_INT,
         other => panic!("column value {other:?}"),
     }
 }

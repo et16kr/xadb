@@ -11,17 +11,24 @@
 //! - B08: the tombstone restamped `Committed` with no U, which DeletePrune
 //!   never leaves: capture refuses it (Source, Invariant).
 //! - B09: a Missing (INSERT) U under the tombstone: `tombstone_before`
-//!   refuses it (Census, Invariant); and the delete's RowValue U under an
-//!   Inline `Transaction` row (the tombstone re-encoded as a row of the same
-//!   version): B takes the Missing-before path and `read_missing`'s
-//!   schema-less decode refuses the inline RowValue (Census, Undo).
+//!   refuses it (Census, Invariant).
 //!
 //! Each edit path first runs as a control that re-encodes the page's own
 //! cell unchanged: the read then takes the committed row 100 through the
 //! tombstone's U, so each refusal comes from the state, not from the edit.
 //!
+//! B09's second half, the delete's RowValue U under an Inline
+//! `Transaction` row (the tombstone re-encoded as a row of the same
+//! version), is the state an UPDATE writes (dev3-row-update.md#read,
+//! #compatibility 6): B takes the Missing-before path, C's
+//! `read_missing` reports the committed Inline value before, and the
+//! foreign statement reads 100. B cannot tell it from an UPDATE's row;
+//! that a DELETE root (effect 1) holds an Inline row is damage only C's
+//! restart sees (base4's actor walk, RUP-R in `update_base.rs`).
+//!
 //! `read_missing`'s typed Unsupported (MCB04-V14) is only for a valid
-//! RowDeleted or chunked RowValue before, which DELETE never writes.
+//! RowDeleted or chunked RowValue before, which DELETE and UPDATE never
+//! write.
 use super::*;
 use crate::storage::{
     dirty_frame::status_load_test_support,
@@ -342,7 +349,9 @@ fn broken_read(broken: Broken) -> std::result::Result<i64, RowReadError> {
 #[test]
 fn rdl_b07_b09_broken_delete_states_are_fatal() {
     case_within("RDL-B07-B09", std::time::Duration::from_secs(600), || {
-        for control in [Broken::SameU, Broken::SameTombstone] {
+        // The controls, and the Inline row over the delete's U that reads
+        // as an UPDATE's row (module doc).
+        for control in [Broken::SameU, Broken::SameTombstone, Broken::InlineRow] {
             assert_eq!(broken_read(control).unwrap(), 100, "{control:?}");
             println!("RDL_B07_B09\t{control:?}\tread 100");
         }
@@ -350,7 +359,6 @@ fn rdl_b07_b09_broken_delete_states_are_fatal() {
             (Broken::ReleasingU, RetentionPhase::Census, true),
             (Broken::MissingU, RetentionPhase::Census, false),
             (Broken::CommittedTombstone, RetentionPhase::Source, false),
-            (Broken::InlineRow, RetentionPhase::Census, true),
         ] {
             let error = broken_read(broken).expect_err("a broken DELETE state is never a row");
             let RowReadError::Source(error) = &error else {
