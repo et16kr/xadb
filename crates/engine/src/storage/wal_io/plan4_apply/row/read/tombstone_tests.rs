@@ -6,11 +6,12 @@ use super::tombstone_before;
 use crate::{
     api::DatabaseId,
     storage::{
+        page::{FileId, PageRef},
         row_record::RecordVersion,
         transaction_record::{LogicalRowVersion, TxnRef, VersionStamp},
         undo_record::{
-            UndoBeforeKind, UndoCreator, UndoEdge, UndoPayload, UndoRecord, UndoRelease,
-            UndoTargetKind, UndoTargetView,
+            UndoBeforeKind, UndoCreator, UndoEdge, UndoPayload, UndoPayloadHead, UndoRecord,
+            UndoRelease, UndoTargetKind, UndoTargetView,
         },
     },
     transaction::TxnId,
@@ -87,7 +88,7 @@ fn rdl_b_tombstone_before_takes_the_committed_inline_row() {
 #[test]
 fn rdl_b_tombstone_before_refuses_every_other_u() {
     type Mutant = fn(&mut UndoRecord<'static>);
-    let mutants: [(&str, Mutant); 10] = [
+    let mutants: [(&str, Mutant); 11] = [
         ("Missing before", |r| {
             r.before_kind = UndoBeforeKind::Missing;
         }),
@@ -100,6 +101,14 @@ fn rdl_b_tombstone_before_refuses_every_other_u() {
         ("no before stamp", |r| r.before_stamp = None),
         ("no before logical", |r| r.before_logical = None),
         ("no value", |r| r.payload = UndoPayload::None),
+        ("chunked value", |r| {
+            let root = PageRef {
+                file: FileId::new(0x1_0000_0001).unwrap(),
+                page_no: 40,
+                incarnation: g(1),
+            };
+            r.payload = UndoPayload::Chunks(UndoPayloadHead::new(root, 2049, [0; 32]).unwrap());
+        }),
         ("other creator", |r| r.creator.id = id(8)),
         ("other Status generation", |r| {
             r.creator.status_generation = g(5);
