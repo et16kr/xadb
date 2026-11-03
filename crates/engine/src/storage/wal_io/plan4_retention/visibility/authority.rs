@@ -53,6 +53,10 @@ pub(in crate::storage) enum RetirementScope {
     MissingClr = 2,
     UndoFree = 3,
     TerminalFree = 4,
+    /// A committed DELETE root's DeletePrune (dev3-row-delete.md#retirement):
+    /// it drops U's RowValue payload, so `MissingPrune`'s rules hold (its Q
+    /// published and within the snapshot horizon, no other pin on U).
+    ValuePrune = 5,
 }
 impl RetirementScope {
     pub(super) fn decode(value: u8) -> Option<Self> {
@@ -61,6 +65,7 @@ impl RetirementScope {
             2 => Some(Self::MissingClr),
             3 => Some(Self::UndoFree),
             4 => Some(Self::TerminalFree),
+            5 => Some(Self::ValuePrune),
             _ => None,
         }
     }

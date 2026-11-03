@@ -5,14 +5,14 @@
 //! driver judges with, so a caller cannot pair one view's operation with
 //! another view's snapshot, or move a cursor to another table.
 use super::{
-    CursorCredit, CursorStep, Observed, PointRead, ReadSource, ReadView, RowCursor, RowReadError,
-    SearchPage, Step, read_point,
+    BeforeObserved, CursorCredit, CursorStep, Observed, PointRead, ReadSource, ReadView, RowCursor,
+    RowReadError, SearchPage, Step, read_point,
 };
 use crate::storage::{
     disk::{
         CallerCredit, CheckedTable, MissingRowEvidence, Owner, Plan4ResidencyCursor, Plan4Target,
         ReadPort, ReadStep, RetentionError, RowCandidate, RowCopyObservation, RowReadOperation,
-        RowSearchPage, RowStatementView,
+        RowSearchPage, RowStatementView, RowValueBefore,
     },
     row_record::RecordVersion,
     transaction_record::{TransactionState, TxnRef},
@@ -52,6 +52,21 @@ impl Observed for RowCandidate<'_> {
     fn canonical_len(&self) -> usize {
         RowCandidate::canonical_len(self)
     }
+    fn deleted(&self) -> bool {
+        RowCandidate::deleted(self)
+    }
+}
+
+impl BeforeObserved for RowValueBefore<'_> {
+    fn row(&self) -> RowId {
+        RowValueBefore::row(self)
+    }
+    fn q_old(&self) -> u64 {
+        RowValueBefore::q_old(self)
+    }
+    fn canonical_len(&self) -> usize {
+        RowValueBefore::canonical_len(self)
+    }
 }
 
 impl Observed for RowCopyObservation {
@@ -90,6 +105,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, W: WriterNamespace> ReadSource
     type Target = Plan4Target;
     type Candidate = RowCandidate<'b>;
     type Missing = MissingRowEvidence;
+    type Before = RowValueBefore<'b>;
     type Copied = RowCopyObservation;
     type Page<'g>
         = RowSearchPage<'g, 'b, 'a, 's, 'c, 'p, 'd>
@@ -112,12 +128,25 @@ impl<'b, 'a, 's, 'c, 'p, 'd, W: WriterNamespace> ReadSource
     ) -> Result<Step<MissingRowEvidence, Plan4Target>, RetentionError> {
         self.operation.missing_before(candidate, self.residency)
     }
+    fn value_before(
+        &mut self,
+        candidate: &RowCandidate<'b>,
+    ) -> Result<Step<RowValueBefore<'b>, Plan4Target>, RetentionError> {
+        self.operation.value_before(candidate, self.residency)
+    }
     fn copy_candidate(
         &mut self,
         candidate: &RowCandidate<'b>,
         output: &mut [u8],
     ) -> Result<RowCopyObservation, RetentionError> {
         self.operation.copy_candidate(candidate, output)
+    }
+    fn copy_before(
+        &mut self,
+        before: &RowValueBefore<'b>,
+        output: &mut [u8],
+    ) -> Result<RowCopyObservation, RetentionError> {
+        self.operation.copy_before(before, output)
     }
     fn release_candidate(&mut self, candidate: RowCandidate<'b>) -> Result<(), RetentionError> {
         self.operation.release_candidate(candidate)
@@ -214,7 +243,7 @@ pub(in crate::storage) fn next_live<'a, 'c, 's, W: WriterNamespace>(
 /// LOAD-path frame inventory before leaf-temporary bounds. This is a partial
 /// diagnostic, not the complete S5 source bound.
 #[cfg(test)]
-pub(in crate::storage) fn test_load_callers<W: WriterNamespace>() -> [usize; 6] {
+pub(in crate::storage) fn test_load_callers<W: WriterNamespace>() -> [usize; 8] {
     use super::super::{SeekPosition, Visibility};
     use super::{Scan, ViewSample};
     use std::mem::size_of as n;
@@ -232,6 +261,7 @@ pub(in crate::storage) fn test_load_callers<W: WriterNamespace>() -> [usize; 6] 
     >;
     type GS = C<Step<TransactionState, Plan4Target>>;
     type GM = C<Step<MissingRowEvidence, Plan4Target>>;
+    type GB = C<Step<RowValueBefore<'static>, Plan4Target>>;
     type N = E<Step<Scan, Plan4Target>>;
     let r = n::<&()>();
     let open = n::<C<LiveSource<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, W>>>()
@@ -254,6 +284,12 @@ pub(in crate::storage) fn test_load_callers<W: WriterNamespace>() -> [usize; 6] 
     let page = outer + point + select + capture + r + n::<GP>();
     let status = outer + point + select + selecting + resolve + 2 * r + n::<GS>();
     let missing = outer + point + select + selecting + 2 * r + n::<GM>();
+    // A tombstone (dev3-row-delete.md#read): select_before holds its source,
+    // candidate, q, output, cancel and slot arguments, the before carrier and
+    // the never-inlined copy's result while the adapter forwards to C's
+    // value_before. Its own result is select_point's slot (`select`).
+    let before_frame = 7 * r + n::<u64>() + n::<GB>() + n::<E<()>>();
+    let before = outer + point + select + selecting + before_frame + 2 * r + n::<GB>();
     // next_live/next hold revision/check, scan/merge, and one copied slot;
     // publish_next owns take/ok_or and finish progress checks after cleanup.
     let next = 4 * r
@@ -277,9 +313,11 @@ pub(in crate::storage) fn test_load_callers<W: WriterNamespace>() -> [usize; 6] 
         page,
         status,
         missing,
+        before,
         page + delta,
         status + delta,
         missing + delta,
+        before + delta,
     ]
 }
 
@@ -298,6 +336,7 @@ pub(in crate::storage) fn test_nonload_caller<W: WriterNamespace>() -> usize {
         + 2 * n::<RecordVersion>()
         + 2 * n::<Result<RowCopyObservation, RetentionError>>()
         + 2 * n::<RowCopyObservation>()
+        + n::<RowValueBefore>()
         + 8 * n::<Result<(), RowReadError>>()
         + 32 * n::<&()>()
         + 512

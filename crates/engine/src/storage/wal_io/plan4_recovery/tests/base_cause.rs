@@ -17,7 +17,7 @@ const GENESIS: (&str, &str) = (
 );
 const VARIANTS: (&str, &str) = (
     "base4-closure/variants.bin",
-    "9a3a127435d053f7b4f250f10befb8815f211d67a72c4c981ca4fc6c44abef89",
+    "4cb06bcb8548f45075be8bde033eff3eca9e9b58e3beb1e124b49399b939fd88",
 );
 const ENVELOPES: (&str, &str) = (
     "base4-closure/envelopes.bin",

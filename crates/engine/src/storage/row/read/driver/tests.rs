@@ -21,7 +21,10 @@ use crate::{
     },
     transaction::TxnId,
 };
-use Call::{Capture, CopyOut, Finish, Leaf, MissingBefore, Page, Release, ReleasePage, Status};
+use Call::{
+    Capture, CopyBefore, CopyOut, Finish, Leaf, MissingBefore, Page, Release, ReleasePage, Status,
+    ValueBefore,
+};
 use foundation::identity::{CommitSeq, Generation, ObjectId};
 use std::{
     cell::{Cell, RefCell},
@@ -138,7 +141,9 @@ enum Call {
     Capture(u64),
     Status(u64),
     MissingBefore(u64),
+    ValueBefore(u64),
     CopyOut(u64),
+    CopyBefore(u64),
     Release(u64),
     Finish,
 }
@@ -176,11 +181,38 @@ struct LiteralCandidate<'x> {
     version: RecordVersion,
     canonical: &'x [u8],
     sequence: u64,
+    deleted: bool,
 }
 
 impl Observed for LiteralCandidate<'_> {
     fn version(&self) -> RecordVersion {
         self.version
+    }
+    fn canonical_len(&self) -> usize {
+        self.canonical.len()
+    }
+    fn deleted(&self) -> bool {
+        self.deleted
+    }
+}
+
+/// A logical U RowValue-before answer: the row and `q_old` it reports, the
+/// version its copy observes and its literal canonical bytes, not a
+/// RowValueBefore.
+#[derive(Clone, Copy, Debug)]
+struct LiteralBefore {
+    row: RowId,
+    q_old: u64,
+    copied: RecordVersion,
+    canonical: &'static [u8],
+}
+
+impl BeforeObserved for LiteralBefore {
+    fn row(&self) -> RowId {
+        self.row
+    }
+    fn q_old(&self) -> u64 {
+        self.q_old
     }
     fn canonical_len(&self) -> usize {
         self.canonical.len()
@@ -210,6 +242,7 @@ struct LiteralSource<'x> {
     page_answer: Answer<()>,
     status: Vec<(u64, Answer<TransactionState>)>,
     missing: Vec<(u64, Answer<MissingAnswer>)>,
+    before: Vec<(u64, Answer<LiteralBefore>)>,
     fail_release: Option<(u64, Effect)>,
     fail_finish: Option<Effect>,
     cancel_at: Option<(Call, Cancellation)>,
@@ -224,6 +257,7 @@ impl<'x> LiteralSource<'x> {
             page_answer: Answer::Ready(()),
             status: Vec::new(),
             missing: Vec::new(),
+            before: Vec::new(),
             fail_release: None,
             fail_finish: None,
             cancel_at: None,
@@ -240,6 +274,10 @@ impl<'x> LiteralSource<'x> {
     }
     fn with_missing(mut self, row: u64, answer: Answer<MissingAnswer>) -> Self {
         self.missing.push((row, answer));
+        self
+    }
+    fn with_before(mut self, row: u64, answer: Answer<LiteralBefore>) -> Self {
+        self.before.push((row, answer));
         self
     }
     fn failing_release(mut self, row: u64, effect: Effect) -> Self {
@@ -282,6 +320,7 @@ impl<'x> ReadSource for LiteralSource<'x> {
     type Target = FlushTarget;
     type Candidate = LiteralCandidate<'x>;
     type Missing = MissingAnswer;
+    type Before = LiteralBefore;
     type Copied = LiteralCopy;
     type Page<'g>
         = LiteralPage<'g, 'x>
@@ -315,12 +354,46 @@ impl<'x> ReadSource for LiteralSource<'x> {
         let scripted = self.missing.iter().find(|(at, _)| *at == row);
         answer(scripted.map_or(Answer::Ready(MissingAnswer), |(_, scripted)| *scripted))
     }
+    fn value_before(
+        &mut self,
+        candidate: &LiteralCandidate<'x>,
+    ) -> Result<Step<LiteralBefore, FlushTarget>, RetentionError> {
+        let row = candidate.version.row.get();
+        self.note(ValueBefore(row));
+        // C reads a U before only for a tombstone; an unscripted answer is a
+        // test input error.
+        if !candidate.deleted {
+            return Err(invariant());
+        }
+        match self.before.iter().find(|(at, _)| *at == row) {
+            Some((_, scripted)) => answer(*scripted),
+            None => Err(invariant()),
+        }
+    }
+    fn copy_before(
+        &mut self,
+        before: &LiteralBefore,
+        output: &mut [u8],
+    ) -> Result<LiteralCopy, RetentionError> {
+        self.note(CopyBefore(before.row.get()));
+        let target = output
+            .get_mut(..before.canonical.len())
+            .ok_or_else(invariant)?;
+        target.copy_from_slice(before.canonical);
+        Ok(LiteralCopy {
+            version: before.copied,
+            len: before.canonical.len(),
+        })
+    }
     fn copy_candidate(
         &mut self,
         candidate: &LiteralCandidate<'x>,
         output: &mut [u8],
     ) -> Result<LiteralCopy, RetentionError> {
         self.note(CopyOut(candidate.version.row.get()));
+        if candidate.deleted {
+            return Err(invariant());
+        }
         // B must have rejected a short output before this call.
         let target = output
             .get_mut(..candidate.canonical.len())
@@ -383,15 +456,18 @@ impl<'x> SearchPage for LiteralPage<'_, 'x> {
         let record =
             decode_row_record_with_schema(value, expected, RowSchemaInput::Columns(&columns))
                 .map_err(|_| invariant())?;
-        let RowPayload::Inline(canonical) = record.payload() else {
-            return Err(invariant());
+        let (canonical, deleted) = match record.payload() {
+            RowPayload::Inline(canonical) => (canonical.as_bytes(), false),
+            RowPayload::Deleted => (&[][..], true),
+            RowPayload::Overflow(_) => return Err(invariant()),
         };
         source.note(Capture(row.get()));
         source.sequence += 1;
         Ok(LiteralCandidate {
             version: record.version(),
-            canonical: canonical.as_bytes(),
+            canonical,
             sequence: source.sequence,
+            deleted,
         })
     }
     fn release_checked(self) -> Result<(), RetentionError> {
@@ -1577,3 +1653,6 @@ fn mcb00_d13_native_call_inventory() {
         live::test_nonload_caller::<W>()
     );
 }
+
+#[path = "delete_tests.rs"]
+mod delete;

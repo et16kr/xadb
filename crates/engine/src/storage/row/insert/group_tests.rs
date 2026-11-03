@@ -916,13 +916,25 @@ fn mca05_v29_h_net0_with_before_count_zero_is_refused() {
     });
 }
 
-/// Stage 2a boundary (dev3-row-delete.md#job-effect): the INSERT group
-/// producer refuses a valid DELETE root (effect 1, delete cleanup budget) as
-/// its selected RootJob, before the first output byte.
+/// The RootJob's effect names the group (dev3-row-delete.md#job-effect): an
+/// INSERT value on a valid DELETE root (effect 1, delete cleanup budget) is
+/// Unsupported. A CLR compensates either effect, so it goes on to the Root's
+/// Job census, which the flipped Job no longer matches (A's DeleteClr over
+/// real DELETE pages is `group_delete_tests.rs`). Both refuse before the
+/// first output byte.
 #[test]
 fn rdl_f_insert_producer_refuses_delete_root() {
-    for case in [Case::ForwardNoH, Case::ForwardH, Case::ClrNoH, Case::ClrH] {
-        refuses(case, InsertError::Unsupported, |f| {
+    use crate::storage::retention_page::RetentionError;
+    for (case, error) in [
+        (Case::ForwardNoH, InsertError::Unsupported),
+        (Case::ForwardH, InsertError::Unsupported),
+        (
+            Case::ClrNoH,
+            InsertError::Retention(RetentionError::Corrupt),
+        ),
+        (Case::ClrH, InsertError::Retention(RetentionError::Corrupt)),
+    ] {
+        refuses(case, error, |f| {
             let job = &mut f.bank[f.ordinal];
             let cell = u64::from(u32::from_le_bytes(job[280..284].try_into().unwrap()));
             let wal = u64::from_le_bytes(job[784..792].try_into().unwrap());

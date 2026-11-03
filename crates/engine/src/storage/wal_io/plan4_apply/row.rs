@@ -37,6 +37,7 @@ pub(crate) use write_operation::{
 
 pub(crate) use read::{
     MissingRowEvidence, RowCandidate, RowCopyObservation, RowReadOperation, RowSearchPage,
+    RowValueBefore,
 };
 #[cfg(test)]
 #[allow(unused_imports, reason = "used by the C+B selection only")]
@@ -50,7 +51,7 @@ pub(crate) use rollback::{
 };
 pub(crate) use write::{
     PreflightRow, PreparedRow, ROW_PREFLIGHT_CALLER_BYTES, ROW_WRITE_CALLER_BYTES, ReservedRow,
-    RowApplied, RowCancelled, RowPreflightStep, row_write_charge,
+    RowApplied, RowCancelled, RowDeleteStep, RowPreflightStep, row_write_charge,
 };
 
 fn unsupported() -> RetentionError {
@@ -214,7 +215,10 @@ pub(super) type RowRoleMap = u64;
 /// expectation from `roles` and the RowLeaf before header, and re-observes the
 /// Catalog leaf stamp under the same gate and lease. A scalar would only
 /// repeat what the copy and the commitment already fix, while the A driver
-/// holds each cut several times on its narrowest path.
+/// holds each cut several times on its narrowest path. The DELETE amendment
+/// (dev3-row-delete.md#api) adds one field, `delete`: the target the
+/// preflight classified, which no copy or commitment holds and which A
+/// cannot be trusted to name again at `reserve_delete`.
 pub(super) struct RowPreflightCut {
     /// SHA-256 (kind 1, in the order the comment before the cuts gives) over
     /// the WAL prefix, the physical write target set T in before order
@@ -240,6 +244,13 @@ pub(super) struct RowPreflightCut {
     pub(super) leaf_free: u16,
     /// The Jobs ordinal of the RootJob slot preflight chose for RowReserve.
     pub(super) root_job: u8,
+    /// None for an INSERT preflight; for a DELETE preflight, the RowId of the
+    /// committed, pruned row its classification found under the statement
+    /// snapshot with no root Job holding it (dev3-row-delete.md#classification).
+    /// The classification read the RowLeaf and Jobs bank the commitment
+    /// folds, so `reserve_delete`'s recompute keeps it valid. Only
+    /// `reserve_delete` takes a Some cut and only `reserve` a None one.
+    pub(super) delete: Option<RowId>,
 }
 
 /// Recorded by RowReserve's completed install (Forward) or by the rollback

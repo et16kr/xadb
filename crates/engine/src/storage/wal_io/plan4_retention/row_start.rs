@@ -148,8 +148,9 @@ impl<'i, 'c, 's, const T: usize> PreparedRowGroup<'i, 'c, 's, T> {
         )
     }
     /// The supplied Row write operations over the whole write target set:
-    /// RowReserve (S2-b2), Forward (S2-c) and Cancel (S2-d); any other Row
-    /// write group is refused by the install body.
+    /// RowReserve (S2-b2), Forward (S2-c), Cancel (S2-d), CLR, and a DELETE
+    /// root's DeleteForward and DeleteClr (dev3-row-delete.md#api); any
+    /// other Row write group is refused by the install body.
     pub(super) fn row_write(&self) -> bool {
         matches!(
             self.payload.observation.operation,
@@ -157,6 +158,8 @@ impl<'i, 'c, 's, const T: usize> PreparedRowGroup<'i, 'c, 's, T> {
                 | row_semantic::Operation::Forward
                 | row_semantic::Operation::Cancel
                 | row_semantic::Operation::Clr
+                | row_semantic::Operation::DeleteForward
+                | row_semantic::Operation::DeleteClr
         )
     }
     pub(super) fn check(

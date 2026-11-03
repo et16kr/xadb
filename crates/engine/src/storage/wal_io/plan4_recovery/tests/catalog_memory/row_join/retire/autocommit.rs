@@ -1129,3 +1129,9 @@ fn lxt_j05_refused_begin_and_fenced_statement_leave_the_holder_empty() {
         );
     });
 }
+
+/// The DELETE first path over the actual C (dev3-row-delete.md#tests,
+/// RDL-J): A's autocommit and explicit DELETE entries from Begin to the
+/// transaction's end, the caller's cleanup and restart.
+#[path = "delete.rs"]
+mod delete;

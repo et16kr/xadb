@@ -2,11 +2,11 @@
 //! images and descriptors. The tag3 envelope is finished last and the whole
 //! frame is reread by the shared layout decoder before success is reported.
 
-use super::{InsertError, Observed, Result, projection, require, undo_item};
+use super::{InsertError, Observed, Result, is_delete, operation, projection, require, undo_item};
 use crate::storage::{
     disk::RowPageRole,
     page::{self, PAGE_BYTES},
-    semantic_row::{Operation, decode_layout},
+    semantic_row::decode_layout,
     tree_page,
     undo_record::UndoLink,
     wal_frame::{self, FrameExpectation, RedoTarget},
@@ -68,6 +68,18 @@ fn leaf_slot(observed: &Observed<'_>, bytes: &[u8; PAGE_BYTES]) -> Result<u16> {
     Ok((position.index + 1) as u16)
 }
 
+/// The record of the row in one RowLeaf image: DeleteForward's replaced row
+/// (before) or DeleteClr's restored one (after).
+fn leaf_record<'p>(observed: &Observed<'_>, bytes: &'p [u8; PAGE_BYTES]) -> Result<&'p [u8]> {
+    let view = tree_page::decode_tree_page(bytes, observed.leaf)?;
+    let position = view.lower_bound(&observed.row.get().to_be_bytes())?;
+    require(position.equal, InsertError::IdentityMismatch)?;
+    let tree_page::EntryPayload::Value(record) = view.entry(position.index)?.payload else {
+        return Err(InsertError::IdentityMismatch);
+    };
+    Ok(record)
+}
+
 /// One native record: 128-byte header, then the present before/after cells.
 fn native(
     observed: &Observed<'_>,
@@ -84,6 +96,12 @@ fn native(
         }
         RowPageRole::Status => (5, Some(0), Some(0)),
         RowPageRole::Undo => (3, Some(0), Some(0)),
+        // A DELETE group replaces the row in place (dev3-row-delete.md#delete-shape).
+        RowPageRole::RowLeaf if is_delete(observed.job) => (
+            1,
+            Some(leaf_slot(observed, page.before)?),
+            Some(leaf_slot(observed, after)?),
+        ),
         RowPageRole::RowLeaf if observed.forward => (1, None, Some(leaf_slot(observed, after)?)),
         RowPageRole::RowLeaf => (1, Some(leaf_slot(observed, page.before)?), None),
     };
@@ -118,15 +136,15 @@ fn native(
     Ok(length)
 }
 
-fn core(observed: &Observed<'_>, output: &mut [u8]) -> Result<()> {
+/// The core's row digests: INSERT's are the absent row and the RootJob
+/// projection; DELETE's the replaced row's record, read from the RowLeaf
+/// before (DeleteForward) or after (DeleteClr), and the tombstone's RootJob
+/// projection (dev3-row-delete.md#delete-states).
+fn core(observed: &Observed<'_>, leaf_after: &[u8; PAGE_BYTES], output: &mut [u8]) -> Result<()> {
     let job = observed.job;
     let h = observed.predecessor.is_some();
     let flags = 1 | (u16::from(h) << 1) | (u16::from(observed.target.is_some()) << 2) | 24;
-    let operation = if observed.forward {
-        Operation::Forward
-    } else {
-        Operation::Clr
-    };
+    let operation = operation(observed);
     put16(output, 0, operation as u16);
     put16(output, 2, flags);
     put32(output, 4, 256);
@@ -140,12 +158,25 @@ fn core(observed: &Observed<'_>, output: &mut [u8]) -> Result<()> {
     if let Some(target) = observed.target {
         target.encode(&mut output[112..152])?;
     }
-    let missing = projection(observed.table, observed.row, None)?;
+    let other = if is_delete(job) {
+        let leaf = if observed.forward {
+            super::before_of(observed, RowPageRole::RowLeaf)
+        } else {
+            leaf_after
+        };
+        projection(
+            observed.table,
+            observed.row,
+            Some(leaf_record(observed, leaf)?),
+        )?
+    } else {
+        projection(observed.table, observed.row, None)?
+    };
     let present = job.projection_digest();
     let (before, after) = if observed.forward {
-        (&missing, present)
+        (&other, present)
     } else {
-        (present, &missing)
+        (present, &other)
     };
     output[176..208].copy_from_slice(before);
     output[208..240].copy_from_slice(after);
@@ -160,13 +191,10 @@ pub(super) fn write(
     output: &mut [u8],
 ) -> Result<()> {
     let h = observed.predecessor.is_some();
-    let operation = if observed.forward {
-        Operation::Forward
-    } else {
-        Operation::Clr
-    };
+    let operation = operation(observed);
     let shape = operation.shape(observed.cell, h)?;
-    core(observed, &mut output[CORE_AT..NATIVE_AT])?;
+    let leaf_at = usize::from(native_index(observed, RowPageRole::RowLeaf));
+    core(observed, &after[leaf_at], &mut output[CORE_AT..NATIVE_AT])?;
 
     let mut at = NATIVE_AT;
     for (index, image) in after.iter().enumerate() {

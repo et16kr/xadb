@@ -116,9 +116,9 @@ pub(crate) use row::{
     CheckedTable, MissingRowEvidence, PreflightRow, PreparedRollbackTask, PreparedRow,
     ROW_PREFLIGHT_CALLER_BYTES, ROW_WRITE_CALLER_BYTES, ReservedRow, RollbackScope, RollbackStep,
     RowApplied, RowCancelled, RowCandidate, RowCommitObservation, RowCopyObservation,
-    RowMutationObservation, RowOwnedError, RowPreflightOperation, RowPreflightStep,
+    RowDeleteStep, RowMutationObservation, RowOwnedError, RowPreflightOperation, RowPreflightStep,
     RowPreparedOperation, RowReadOperation, RowReservedOperation, RowRollback, RowRollbackDone,
-    RowRollbackTask, RowSearchPage, row_write_charge,
+    RowRollbackTask, RowSearchPage, RowValueBefore, row_write_charge,
 };
 #[allow(unused_imports)]
 pub(in crate::storage) use row::{PreparedRecoveredClr, RecoveredClr, RecoveredClrStep};
@@ -917,6 +917,16 @@ pub(crate) enum RowProducerInput {
         canonical_len: usize,
         canonical_digest: [u8; 32],
     },
+    /// A DELETE root's Forward (dev3-row-delete.md#api): the committed,
+    /// pruned row the delete RowReserve sealed, its cell C and the XRP1
+    /// projection of its record.
+    Delete {
+        cell_bytes: usize,
+        projection: [u8; 32],
+    },
+    /// The CLR of either effect: an INSERT root's removes its row, a DELETE
+    /// root's restores the row from U; `current_row_len` is the RootJob's
+    /// cell C and `current_projection` its projection.
     Clr {
         current_row_len: usize,
         current_projection: [u8; 32],
