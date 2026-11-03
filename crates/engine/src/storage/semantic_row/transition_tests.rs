@@ -3502,3 +3502,62 @@ fn mca04_v04_v08_issuer_max_is_exhausted_before_output() {
         );
     }
 }
+
+/// Stage 2a boundary (dev3-row-delete.md#job-effect): the C rules shared by
+/// the producer and the whole-group observer (`prepare`, which replay also
+/// runs) refuse a valid DELETE root in the bank. noh-300's Reserved root 3
+/// becomes a DELETE root with C' = 2C: its delete cleanup 311608+C' equals
+/// the INSERT 311608+2C, so the budget census is unchanged and only Jobs
+/// page 0 and the Root job digest follow. The census over the edited bank
+/// verifies, so each refusal is the effect's: C's Cancel before its first
+/// output byte, and the observer over A's noh-301 Forward literal. Without
+/// the refusal, Cancel would run the INSERT rules (BudgetMismatch here).
+#[test]
+fn rdl_f_insert_producer_refuses_delete_root_in_bank() {
+    let noh = Pages {
+        jobs: Some(0),
+        status: Some(9),
+        undo: Some(11),
+        ..pages()
+    };
+    let mut world = noh_300();
+    let c = row::decode_job(&world.bank[3], namespace())
+        .unwrap()
+        .cell_bytes();
+    assert!((185..=1114).contains(&c), "noh-300 C {c}");
+    world.bank[3][280..284].copy_from_slice(&(2 * c).to_le_bytes());
+    world.bank[3][284] = 1;
+    let job = row::decode_job(&world.bank[3], namespace()).unwrap();
+    assert_eq!(job.effect(), row::RowEffect::Delete);
+    assert_eq!(job.has_previous_transaction(), Some(false));
+    let jobs = world.jobs[0].as_mut().expect("jobs page 0");
+    let lsn = u64_at(&jobs[..], 64);
+    let refs: Vec<&[u8]> = world.bank[..15].iter().map(|cell| &cell[..]).collect();
+    let mut page = [0xa5; PAGE_BYTES];
+    row::encode_jobs_page(namespace(), 0, lsn, &refs, &mut page).unwrap();
+    *jobs = page;
+    let digest = job_digest(&world);
+    with_root_cell(&mut world, |cell| cell[128..160].copy_from_slice(&digest));
+    let (_, root) = row::decode_root_page(&world.root, namespace()).unwrap();
+    let mut aggregate = [0; 640];
+    row::verify_census(root, namespace(), &world.bank, &mut aggregate).unwrap();
+
+    refuses(
+        "Cancel of a DELETE root",
+        &world.inputs(Change::Cancel { ordinal: 3 }, noh),
+        FRAME_BYTES,
+        Error::Unsupported,
+    );
+    let (forward, pages) = forward_301();
+    let mut after = loans(0xa5);
+    assert_eq!(
+        observe(
+            &world.inputs(forward, pages),
+            scope3!("noh-301-forward.wal"),
+            &mut after
+        )
+        .map(|_| ()),
+        Err(Error::Unsupported),
+        "A's Forward over a DELETE root"
+    );
+}

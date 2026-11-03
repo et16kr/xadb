@@ -130,6 +130,8 @@ row logical projection 후보는 `XRP1`, version1, kindRow1, UndoTargetCore32(ta
 <a id="job3-census"></a>
 #### Job3 순수 cell·64행 census 구체화 — 2026-10-27
 
+**2026-11-03 개정([Job 효과 byte](dev3-row-delete.md#job-effect)).** Row root의 @284는 효과 byte(0 INSERT, 1 DELETE)이며 C는 280..284다. h는 효과별 cleanup WAL(INSERT `311608+2C`, DELETE `311608+C`) 또는 그 값에 정확히128을 더한 두 recipe로 관찰한다. Releasing과 CLR/Prune가 지우는 범위는 280..284와 285..320이고 효과 byte는 Free까지 보존한다. 이 절의 h·Releasing 줄, §6.1의 Row 필드 목록과 format 표의 "Job kind3/RowId@320만 새 의미", Job 전이 문단의 CLR/Prune "pair/C/projection을 비우되"는 효과 byte를 더하고 이 예외를 뺀 뜻으로 읽는다.
+
 기준 `2c9964d`의 후속 D2 구체화다. 별도 `row::decode_job/encode_job`은 exact version3만 읽고 원 bytes를 빌린다. Free generation recipe는 그대로 유지하며 kind2 Catalog와 kind3 Row의 의미를 별도로 검산한다. 이 단위는 current Profile 선택·page wrapper·issuer·actual graph/descriptor 권한이 아니다.
 
 - Terminal kind1의 Catalog/Row 구분은 기존 budget5행의 **완전 검산된** peak registry9/16 recipe로 관찰한다. 새 persistent flag는 없다. Row peak는 `{frames9,memory425984,locks0,registry16,files5,doublewrite1}`, Catalog peak는 기존9/425984/0/9/5/1이다. root kind와 actor Terminal recipe가 일치해야 한다. actual Tx descriptor scope의 일치는 후속 의미 observer 의무다.

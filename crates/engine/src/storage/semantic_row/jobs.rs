@@ -84,6 +84,8 @@ pub(crate) fn observe(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<JobOb
     let after = row::decode_job(after_page.cell(slot).ok_or(Error::Corrupt)?, namespace)?;
     // Every opcode this observer knows is an INSERT-root step; a DELETE root
     // (dev3-row-delete.md#job-effect) is refused until its own rules exist.
+    // This local observer's caller is the N1 cross-check; the product rules
+    // refuse the same root in `transition::prepare`'s Job decode.
     if before.effect() != row::RowEffect::Insert || after.effect() != row::RowEffect::Insert {
         return Err(Error::Unsupported);
     }

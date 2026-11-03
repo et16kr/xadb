@@ -4,7 +4,9 @@
 //! path (contract dev3-row-delete.md#delete-shape). Their `cell` is the old
 //! row's cell C; the tombstone's 180-byte cell is the fixed term below.
 use super::{Error, MAX_CELL, MIN_CELL, Result};
-use crate::storage::wal_frame::FrameKind;
+use crate::storage::{
+    row_record::ROW_HEADER_BYTES, undo_record::UNDO_RECORD_BYTES, wal_frame::FrameKind,
+};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[repr(u16)]
@@ -179,9 +181,9 @@ pub(crate) struct Shape {
     pub(crate) predecessor: bool,
 }
 /// Size of a tombstone tree cell (XRW1 header 168 plus the 12-byte cell head).
-pub(crate) const TOMBSTONE_CELL: usize = 180;
+pub(crate) const TOMBSTONE_CELL: usize = ROW_HEADER_BYTES + 12;
 /// The one-slot Undo record without a payload.
-const UNDO_RECORD: usize = 432;
+const UNDO_RECORD: usize = UNDO_RECORD_BYTES;
 
 /// Native presence (1 before, 2 after, 3 both) and the before/after body
 /// sizes of one native kind of a Row-cell operation (dev3-row-delete.md

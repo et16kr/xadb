@@ -319,6 +319,7 @@ fn descriptor(observed: &Observed<'_>, status: StatusHome, output: &mut [u8]) ->
         };
         spec.remaining[1] = RemainingBudget::default();
     } else {
+        // `produce` refused any root that is not an INSERT root.
         let clr = debt(
             row::row_clr_wal(
                 row::RowEffect::Insert,

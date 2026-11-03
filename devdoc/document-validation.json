@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-11-03T13:16:08.684660+09:00",
+  "date": "2026-11-03T15:18:08.259984+09:00",
   "status": "PASS",
   "errors": [],
   "markdown_documents": [
@@ -157,15 +157,15 @@
     },
     {
       "file": "devdoc/contracts/dev3-module-boundaries.md",
-      "links": 362,
+      "links": 363,
       "duplicate_ids": 0,
-      "sha256": "fbaa81286251b0e13026ac6f6795e72cfb72fa243d3c33f42ddc9ed5e5e1ebb1"
+      "sha256": "85a57f7c98e5f8a941e529fbffe62a256f8d3c0256f9ddd7959a7d46de4c52c3"
     },
     {
       "file": "devdoc/contracts/dev3-module-consumers.md",
-      "links": 91,
+      "links": 96,
       "duplicate_ids": 0,
-      "sha256": "efdac48f64171dc0d1cb1f04c5c36ae52a98d334135a5557416597eb95bc9ab0"
+      "sha256": "656e1f853023203796c1a0a49001a1ee1a25023aa0d93e9423a25fc94f103569"
     },
     {
       "file": "devdoc/contracts/dev3-obligation-format.md",
@@ -277,9 +277,9 @@
     },
     {
       "file": "devdoc/contracts/dev3-resource-bounds.md",
-      "links": 33,
+      "links": 37,
       "duplicate_ids": 0,
-      "sha256": "1931cde144950a15a153e5e19095c979f577f23fa846d88a66e0913a08919c2c"
+      "sha256": "ea72a85cb3f22aaff6be689ed64655299bf3182147ac0b473f62083304d88d1d"
     },
     {
       "file": "devdoc/contracts/dev3-retention-live.md",

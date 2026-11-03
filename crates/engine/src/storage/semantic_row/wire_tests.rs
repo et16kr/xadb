@@ -951,3 +951,51 @@ fn rdl_f04_delete_native_totals_and_sides_refused() {
     reject("op-4", |b| put(b, 166, 9, 2));
     reject("op-20", |b| put(b, 166, 23, 2));
 }
+
+/// RDL-F04 (core): each DELETE opcode keeps exactly its INSERT role's core
+/// rules (dev3-row-delete.md#delete-states): DeleteForward/DeleteClr are
+/// planned (statement and mutation, no cursors), DeletePrune is not (no
+/// statement or mutation, cursors below 64), Forward/Prune refs are 1 or 3
+/// and Clr's may also be 7. Offsets are the contract core's literal fields.
+#[test]
+fn rdl_f04_delete_core_role_rules() {
+    fn run(op: u16, h: bool, change: impl FnOnce(&mut Vec<u8>, usize)) -> Option<Error> {
+        let mut b = delete_frame(op, 185, h);
+        let core = if op == 23 {
+            160 + 192 + 1536
+        } else {
+            160 + 256 + 3072
+        };
+        assert_eq!(u16_at(&b, core), op);
+        change(&mut b, core);
+        reseal(&mut b);
+        check(&b).map(|_| ()).err()
+    }
+    // A third reference (target, flag bit 2) beside current and next.
+    let target = |b: &mut Vec<u8>, core: usize| {
+        let flags = u16_at(b, core + 2) | 4;
+        put(b, core + 2, u64::from(flags), 2);
+        b[core + 112..core + 152].copy_from_slice(&wire_undo(12));
+    };
+    for op in [8, 9] {
+        for (field, value) in [(8, 0), (16, 0), (160, 1), (168, 1)] {
+            assert_eq!(
+                run(op, false, |b, at| put(b, at + field, value, 8)),
+                Some(Error::Corrupt),
+                "op {op} core+{field}={value}"
+            );
+        }
+    }
+    for (field, value) in [(8, 3), (16, 7), (160, 64), (168, 64)] {
+        assert_eq!(
+            run(23, false, |b, at| put(b, at + field, value, 8)),
+            Some(Error::Corrupt),
+            "op 23 core+{field}={value}"
+        );
+    }
+    assert_eq!(run(23, false, |b, at| put(b, at + 160, 63, 8)), None);
+    for op in [8, 23] {
+        assert_eq!(run(op, true, target), Some(Error::OrderMismatch), "op {op}");
+    }
+    assert_eq!(run(9, true, target), None, "DeleteClr refs 7");
+}
