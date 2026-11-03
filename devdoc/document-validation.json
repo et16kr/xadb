@@ -1,15 +1,15 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-11-04T00:17:10.420787+09:00",
+  "date": "2026-11-04T01:25:40.063097+09:00",
   "status": "PASS",
   "errors": [],
   "markdown_documents": [
     {
       "file": "devdoc/README.md",
-      "links": 299,
+      "links": 300,
       "duplicate_ids": 0,
-      "sha256": "22b596efa1d845151338bf6c7a389cfddd6db85d811c7440bac0f450a982f5d7"
+      "sha256": "01dce6ca88053ed133fab3bb8cea47133635c27a10d01137fac78ff12ebf5cfe"
     },
     {
       "file": "devdoc/contracts/README.md",
@@ -289,9 +289,9 @@
     },
     {
       "file": "devdoc/contracts/dev3-row-delete.md",
-      "links": 27,
+      "links": 28,
       "duplicate_ids": 0,
-      "sha256": "c763344b285d575e9c7ff10323c31793e10c10dec8534f1019b68cce1603f512"
+      "sha256": "2bebf5259e3ddf51046f78d13d6b7180209696a2c2802984da29eaec8003bdf6"
     },
     {
       "file": "devdoc/contracts/dev3-row-format.md",

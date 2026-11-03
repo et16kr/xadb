@@ -840,11 +840,8 @@ fn rdl_j08_delete_then_insert_in_one_transaction() {
 /// preflight: the statement fails holding nothing and the transaction goes
 /// on. Its next DELETE of a committed row deletes it (1 row) and the
 /// transaction commits at q 3 with the caller's 2 rows; the drain cleans
-/// both roots and the Terminal (5 + 5 + 1 groups). A RowId still held by
-/// another transaction's root (Busy) is not reachable through A here: the
-/// first Row profile has one Row Status slot, so a new transaction begins
-/// only after the previous one's Terminal, the last of its cleanup, is
-/// freed. RDL-A03 and C's classification table cover Busy.
+/// both roots and the Terminal (5 + 5 + 1 groups). Rows another
+/// transaction holds (Busy) need a second Row Status: RDL-J11 (`busy`).
 #[test]
 fn rdl_j09_own_insert_row_is_unsupported_and_the_transaction_goes_on() {
     case_within("RDL-J09", std::time::Duration::from_secs(300), || {
@@ -1112,3 +1109,12 @@ mod base;
 
 #[path = "delete_read.rs"]
 mod read;
+
+#[path = "delete_busy.rs"]
+mod busy;
+
+/// RDL-N: native crashes on either side of each DELETE group, and their
+/// memory twins.
+#[cfg(target_os = "linux")]
+#[path = "delete_native.rs"]
+mod native;
