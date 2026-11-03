@@ -338,7 +338,7 @@ base4의 지금 `rows()`·`undo()`는 Missing 전용이라 효과1 Job의 상태
   - `transition_delete_tests.rs`(RDL-C)는 C가 만든 25 group을 literal과 바이트 단위로 비교하고, A 몫 5 group(DeleteForward ×3·DeleteClr·효과1 H 위 INSERT Forward)을 관찰하고, 변형 11개를 Corrupt로 거절하는지 본다. 그 밖에 borrowed 관찰자·생산자 쌍, `ReserveAdopted`, RowId 중복, 대상 행 거절(own INSERT 행·없는 RowId), 효과와 opcode 불일치, leaf 예약 경계(INSERT Reserve·delete Reserve·INSERT Forward·DeletePrune)도 시험한다.
   - Row arm replay 시험(`recovery/row_tests.rs`)은 H 뒤 D-516..D-520을 replay로 그대로 적용하고 D-521을 효과 없이 Unsupported로 거절하는지 본다.
   - scope3 per-native 관찰자 대조(N1 cross-check)에서 undo·jobs 관찰자는 효과1 actor의 group에서 건너뛰고 2-b-2에서 켠다. status 관찰자는 DELETE opcode group만 건너뛴다.
-  - §12의 RDL-C mutant 가운데 후보 frame의 cell 크기·다른 RowId는 2-b-2의 A producer 시험(RDL-A)과 per-native 관찰자 시험(RDL-J)에서 다룬다.
+  - §12의 RDL-C mutant 가운데 후보 frame의 cell 크기·다른 RowId는 2-b-2의 A producer 시험(RDL-A)과 per-native 관찰자 시험(RDL-J)에서 다룬다. INSERT Forward가 정확히 `entries+cell+D = 16188`인 leaf에서 받아들여지는지도 A가 만든 frame이 있어야 하므로 RDL-A에서 본다.
 - **undo outline.** 진입 (b)의 `UndoRecordOutline`은 payload 형태(None·Inline·Chunks)를 따로 돌려준다. Releasing delete U 증명은 형태 None을 요구한다.
 
 ## 작성 기록

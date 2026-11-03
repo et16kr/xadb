@@ -630,8 +630,9 @@ fn rdl_c_leaf_reservation_bounds_every_leaf_step() {
 /// reservation, the observer refuses it (#leaf-reservation calls this
 /// corruption, not Capacity: Reserve proved the fit under the same gate; the
 /// refusal is OrderMismatch, the split check it extends). C's DeletePrune
-/// (D-535 at the D-534 state, two Retained delete roots) refuses a leaf whose
-/// entries already exceed capacity − D as Corrupt, like every leaf step.
+/// (D-535 at the D-534 state, two Retained delete roots) takes a leaf at
+/// exactly capacity − D and refuses one whose entries already exceed it as
+/// Corrupt, like every leaf step.
 #[test]
 fn rdl_c_leaf_reservation_forward_and_delete_prune() {
     let c = 180 + blob("D-530-canonical").len();
@@ -661,6 +662,18 @@ fn rdl_c_leaf_reservation_forward_and_delete_prune() {
             }
             "D-534" => {
                 assert_eq!(reserved, (199 - 180) + (194 - 180), "{name} D");
+                // Entries exactly capacity − D is a legal leaf.
+                let padded = padded_leaf(leaf, reserved);
+                let mut inputs =
+                    world.inputs(Change::DeletePrune { ordinal: 21 }, row_pages(16, Some(15)));
+                inputs.table.as_mut().unwrap().leaf_image = Some(&*padded);
+                let mut after = loans(0xa5);
+                let mut frame = vec![0xa5; FRAME_BYTES];
+                assert_eq!(
+                    produce(&inputs, &mut after, &mut frame).map(|_| ()),
+                    Ok(()),
+                    "{name}: DeletePrune at exactly capacity - D"
+                );
                 let padded = padded_leaf(leaf, reserved - 1);
                 let mut inputs =
                     world.inputs(Change::DeletePrune { ordinal: 21 }, row_pages(16, Some(15)));
