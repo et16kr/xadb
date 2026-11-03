@@ -3,6 +3,11 @@
   "reference_base": "devdoc",
   "json_document_references": "Registered filenames are document IDs resolved by this catalogue. Markdown uses actual relative paths.",
   "documents": {
+    "dev3-schedule-baseline.md": {
+      "path": "plans/dev3-schedule-baseline.md",
+      "role": "plans",
+      "title": "DEV3 전체 예상 일정과 누적 진척률 기준선"
+    },
     "module-independence-followup-plan.md": {
       "path": "plans/module-independence-followup-plan.md",
       "role": "plans",
