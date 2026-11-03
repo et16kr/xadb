@@ -293,12 +293,15 @@ fn row_write_roles(map: u64, count: usize) -> Option<[u8; ROW_WRITE_TARGETS]> {
 /// of the candidate range, else InvalidInput; then the RowLeaf free bytes of
 /// the cut by A's own rule (four cell-header bytes, eight key bytes, the row
 /// header and a slot) less the leaf reservation `reserved` (D,
-/// dev3-row-delete.md#leaf-reservation), else Capacity. Both are Before.
+/// dev3-row-delete.md#leaf-reservation), else Capacity. An UPDATE's new
+/// value replaces the row of cell `old_cell` (C), so it needs only its
+/// growth `max(0, C'−C)` beside D (dev3-row-update.md#leaf-reservation).
+/// Both are Before.
 fn check_candidate(
     input: &RowInputPlan,
     candidate: &[u8; PAGE_BYTES],
     table: RowTableSource,
-    (cut, reserved): (&RowPreflightCut, usize),
+    (cut, reserved, old_cell): (&RowPreflightCut, usize, Option<usize>),
 ) -> Result<()> {
     let length = input.encoded_len;
     if input.schema_epoch != table.handle.schema_epoch
@@ -310,7 +313,13 @@ fn check_candidate(
             RetentionCause::RowSemantic(row_semantic::Error::InvalidInput),
         ));
     }
-    if length + ROW_HEADER_BYTES + 16 + reserved > usize::from(cut.leaf_free) {
+    let needed = match old_cell {
+        None => length + ROW_HEADER_BYTES + 16,
+        // The new cell C' (the row header, the 12-byte cell head and the
+        // value) less the old one; the slot stays.
+        Some(cell) => (length + ROW_HEADER_BYTES + 12).saturating_sub(cell),
+    };
+    if needed + reserved > usize::from(cut.leaf_free) {
         return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Capacity));
     }
     Ok(())
@@ -320,7 +329,10 @@ fn check_candidate(
 /// and the XRP1 projection of its record in the RowLeaf image, which A's
 /// DeleteForward producer checks against the row it replaces. The delete
 /// Reserve proved the row committed, pruned and inline, so any other answer
-/// contradicts the installed group.
+/// contradicts the installed group. An UPDATE's reserve reads the cell C of
+/// its target here too, before its Reserve, to size the growth
+/// (`check_candidate`); the preflight's classification found that row, and
+/// the commitment recompute just proved the image unchanged.
 fn delete_input(
     leaf: &[u8; PAGE_BYTES],
     target: TargetRequest,
@@ -773,10 +785,15 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             9 => self.draft_fold::<9>(owner, (prefix, entry.slot), &targets, (cut, issued), before),
             _ => Err(installed_fatal(RetentionCause::Invariant)),
         }?;
-        let (length, digest) = match (input, cut.delete) {
-            (Some(input), None) => (input.encoded_len, input.digest),
+        let (length, digest) = match (input, cut.target, cut.effect) {
+            (Some(input), None, job3::RowEffect::Insert) => (input.encoded_len, input.digest),
+            // The update Reserve issued the cut's target and sealed the new
+            // value (dev3-row-update.md#api, C's own output).
+            (Some(input), Some(row), job3::RowEffect::Update) if row == issued.row => {
+                (input.encoded_len, input.digest)
+            }
             // The delete Reserve issued the cut's target (C's own output).
-            (None, Some(row)) if row == issued.row => {
+            (None, Some(row), job3::RowEffect::Delete) if row == issued.row => {
                 let leaf_at = role_position(cut.roles, RowSourceRole::RowLeaf)
                     .filter(|at| *at < count)
                     .ok_or_else(|| installed_fatal(RetentionCause::Invariant))?;
@@ -1006,8 +1023,9 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                 .ok_or_else(invariant)?;
             let insert;
             let delete;
-            let change = match (input, cut.delete) {
-                (Some(input), None) => {
+            let update;
+            let change = match (input, cut.target, cut.effect) {
+                (Some(input), None, job3::RowEffect::Insert) => {
                     insert = row_group::ReservePlan {
                         terminal: entry.terminal,
                         container: requests[undo].identity.page,
@@ -1018,7 +1036,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                     row_group::Change::Reserve(&insert)
                 }
                 // The target preflight classified (dev3-row-delete.md#api).
-                (None, Some(row)) => {
+                (None, Some(row), job3::RowEffect::Delete) => {
                     delete = row_group::DeletePlan {
                         terminal: entry.terminal,
                         container: requests[undo].identity.page,
@@ -1027,6 +1045,19 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                         row,
                     };
                     row_group::Change::ReserveDelete(&delete)
+                }
+                // The target preflight classified, with A's checked new
+                // value (dev3-row-update.md#api).
+                (Some(input), Some(row), job3::RowEffect::Update) => {
+                    update = row_group::UpdatePlan {
+                        terminal: entry.terminal,
+                        container: requests[undo].identity.page,
+                        table: table.handle,
+                        statement: entry.sequence,
+                        row,
+                        canonical: &candidate[..input.encoded_len],
+                    };
+                    row_group::Change::ReserveUpdate(&update)
                 }
                 _ => return Err(invariant()),
             };
@@ -1139,9 +1170,9 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
 
     /// Steps 2 and 3 of the module doc, before the producer: T in before
     /// order into `requests` and its group roles, the commitment recompute
-    /// (T's stamps into `stamps`), an INSERT's candidate (S2W-R04) and the
-    /// table definition from the Catalog leaf copy, whose record value the
-    /// recompute just proved equal to the pool's.
+    /// (T's stamps into `stamps`), an INSERT's or UPDATE's candidate
+    /// (S2W-R04) and the table definition from the Catalog leaf copy, whose
+    /// record value the recompute just proved equal to the pool's.
     fn reserve_sources<'x>(
         &self,
         owner: &mut Owner<'c, 's>,
@@ -1170,9 +1201,23 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             9 => self.reserve_recompute::<10>(owner, entry.prefix, targets, (cut, table), stamps),
             _ => Err(invariant()),
         }?;
-        // An INSERT's candidate, with the leaf reservation D of the Jobs the
-        // recompute just proved; a DELETE has none and frees space.
+        // An INSERT's or UPDATE's candidate, with the leaf reservation D of
+        // the Jobs the recompute just proved; a DELETE has none and frees
+        // space. An UPDATE needs its growth over the target's cell C.
         if let Some(input) = input {
+            let old_cell = match cut.target {
+                Some(row) => {
+                    let leaf_at = role_position(cut.roles, RowSourceRole::RowLeaf)
+                        .filter(|at| *at < count)
+                        .ok_or_else(invariant)?;
+                    Some(
+                        delete_input(&before[leaf_at], targets[leaf_at], table.handle, row)
+                            .map_err(|cause| fatal(storage, RetentionPhase::Census, cause))?
+                            .0,
+                    )
+                }
+                None => None,
+            };
             let reserved = row_group::leaf_reservation(
                 self.control.jobs(),
                 profile.spec().namespace,
@@ -1185,7 +1230,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                     RetentionCause::RowSemantic(error),
                 )
             })?;
-            check_candidate(input, candidate, table, (cut, reserved))?;
+            check_candidate(input, candidate, table, (cut, reserved, old_cell))?;
         }
         let catalog = target_from_source(storage, Plan4Page::CatalogLeaf)?.request;
         let definition =
@@ -1476,8 +1521,16 @@ pub(in super::super::super) fn row_reserve_body<W: WriterNamespace>(
         + 2 * size_of::<Result<Group<'_>>>()
         + size_of::<RowPayload<'_, '_, '_>>()
         + fold;
+    // `delete_input`: the tree view and position beside the RowLeaf search,
+    // then the projection.
+    let delete_input = size_of::<tree_page::TreePageView<'_>>()
+        + size_of::<tree_page::SearchPosition>()
+        + 2 * size_of::<std::result::Result<[u8; 32], row_semantic::Error>>()
+        + 6 * reference
+        + row_group::tree_source_bytes().max(row_group::projection_source_bytes());
     // `reserve_sources`: its own values, then T, the roles, the recompute,
-    // the candidate and the table definition one after another.
+    // an UPDATE's old cell (`delete_input`), the leaf reservation, the
+    // candidate and the table definition one after another.
     let sources_frame = size_of::<RowTableSource>()
         + size_of::<crate::storage::control::Profile>()
         + size_of::<usize>()
@@ -1489,9 +1542,13 @@ pub(in super::super::super) fn row_reserve_body<W: WriterNamespace>(
         + size_of::<TableDefinitionView<'_>>()
         + size_of::<Cause<TableDefinitionView<'_>>>()
         + size_of::<ReserveSources<'_>>()
-        // An INSERT's leaf reservation D beside its candidate check.
+        // An INSERT's or UPDATE's leaf reservation D beside its candidate
+        // check, and an UPDATE's old cell C with its RowLeaf position.
         + size_of::<usize>()
         + 2 * size_of::<std::result::Result<usize, row_semantic::Error>>()
+        + size_of::<Option<usize>>()
+        + 2 * size_of::<Cause<(usize, [u8; 32])>>()
+        + size_of::<usize>()
         + 4 * size_of::<RetentionError>()
         // Receiver, arguments, storage, the closure capture and T's slice.
         + 14 * reference;
@@ -1499,6 +1556,7 @@ pub(in super::super::super) fn row_reserve_body<W: WriterNamespace>(
         + targets
             .max(roles)
             .max(recompute)
+            .max(delete_input)
             .max(row_group::leaf_reservation_source_bytes())
             .max(candidate)
             .max(schema);
@@ -1514,9 +1572,10 @@ pub(in super::super::super) fn row_reserve_body<W: WriterNamespace>(
         + size_of::<ReserveSources<'_>>()
         + size_of::<Result<ReserveSources<'_>>>()
         + size_of::<FrameExpectation>()
-        // The INSERT or the DELETE plan and the change naming it.
+        // The INSERT, DELETE or UPDATE plan and the change naming it.
         + size_of::<row_group::ReservePlan<'_>>()
         + size_of::<row_group::DeletePlan>()
+        + size_of::<row_group::UpdatePlan<'_>>()
         + size_of::<row_group::Change<'_>>()
         + size_of::<row_group::Observation>()
         + size_of::<Option<&[u8]>>()
@@ -1567,7 +1626,8 @@ pub(in super::super::super) fn row_reserve_body<W: WriterNamespace>(
         + 2 * size_of::<Cause<usize>>()
         + size_of::<DraftIssued>()
         + 2 * size_of::<Result<[u8; 32]>>()
-        // The draft input: the INSERT plan's or the DELETE's `delete_input`.
+        // The draft input: the INSERT or UPDATE plan's or the DELETE's
+        // `delete_input`.
         + size_of::<(usize, [u8; 32])>()
         + 2 * size_of::<Cause<(usize, [u8; 32])>>()
         + size_of::<Option<usize>>()
@@ -1575,13 +1635,6 @@ pub(in super::super::super) fn row_reserve_body<W: WriterNamespace>(
         + 6 * size_of::<usize>()
         + 4 * size_of::<RetentionError>()
         + 10 * reference;
-    // `delete_input`: the tree view and position beside the RowLeaf search,
-    // then the projection.
-    let delete_input = size_of::<tree_page::TreePageView<'_>>()
-        + size_of::<tree_page::SearchPosition>()
-        + 2 * size_of::<std::result::Result<[u8; 32], row_semantic::Error>>()
-        + 6 * reference
-        + row_group::tree_source_bytes().max(row_group::projection_source_bytes());
     let draft = draft_frame
         + job3::source_bytes()
             .max(targets)

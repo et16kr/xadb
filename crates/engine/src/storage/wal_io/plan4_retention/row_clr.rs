@@ -50,9 +50,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             self.storage.profile().spec().namespace,
         )
         .map_err(|_| bad())?;
-        // An UPDATE root's CLR opens in dev3-row-update.md#stages stage 3.
         if job.state() != job3::JobState::RootRetained
-            || job.effect() == job3::RowEffect::Update
             || job.source() != Some(issued.actor)
             || job.undo() != Some(issued.undo)
             || job.row_id() != Some(issued.row)
@@ -75,7 +73,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             status,
             slot,
             statement: job.statement(),
-            delete: job.effect() == job3::RowEffect::Delete,
+            effect: job.effect(),
         })
     }
     pub(in super::super::super::super::super::super::super) fn row_prepare_clr(

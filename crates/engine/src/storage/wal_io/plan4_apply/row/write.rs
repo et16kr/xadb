@@ -7,6 +7,7 @@ use super::super::create_pair::catalog_live::row_preflight::{RowPreflightOutcome
 use super::super::flush::RetentionFlushControl;
 use super::super::source::{OperationClass, OperationSourceAdmission};
 use super::*;
+use crate::storage::retention_page::row::RowEffect;
 use crate::transaction::concurrency::TerminalReadGate;
 
 /// The original flush control's one mutable borrow, held from preflight to
@@ -56,8 +57,9 @@ pub(crate) enum RowPreflightStep<
     FlushRequired { target: Plan4Target },
 }
 
-/// What `preflight_delete` returns (dev3-row-delete.md#api): the two answers
-/// of `RowPreflightStep`, with the same release rules, and `NoRow`, a target
+/// What `preflight_delete` and `preflight_update` return
+/// (dev3-row-delete.md#api, dev3-row-update.md#api): the two answers of
+/// `RowPreflightStep`, with the same release rules, and `NoRow`, a target
 /// that is no row under the statement snapshot
 /// (dev3-row-delete.md#classification). `NoRow` is returned after the table
 /// read bit is registered and the source, gate and lease were returned;
@@ -410,11 +412,41 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         private: &'i mut [u8; 425_984],
         flusher: &'r mut MaintenancePort<'_, 's, 'c, 'p, 'd, 'm, 'w, W>,
     ) -> Result<RowDeleteStep<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>> {
-        self.preflight_target(owner, statement, table, private, flusher, Some(row))
+        self.preflight_target(
+            owner,
+            statement,
+            table,
+            private,
+            flusher,
+            Some((row, RowEffect::Delete)),
+        )
     }
 
-    /// The shell of both preflights: `preflight_row`'s doc, with `delete`
-    /// the DELETE target (`row_preflight`).
+    /// The UPDATE preflight (dev3-row-update.md#api, #classification):
+    /// `preflight_delete`'s shell, body and answers for the row `row`, by the
+    /// same classification table, with the target and its effect in the cut
+    /// for `reserve_update`. The new value is A's, checked at the reserve.
+    pub(in crate::storage) fn preflight_update<'r, 't, 'v, 'i>(
+        &'r mut self,
+        owner: &'r mut Owner<'c, 's>,
+        statement: &'r RowStatementView<'t, 'v, 'a, 'c, 's>,
+        table: &'r CheckedTable<'c, 's>,
+        row: RowId,
+        private: &'i mut [u8; 425_984],
+        flusher: &'r mut MaintenancePort<'_, 's, 'c, 'p, 'd, 'm, 'w, W>,
+    ) -> Result<RowDeleteStep<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>> {
+        self.preflight_target(
+            owner,
+            statement,
+            table,
+            private,
+            flusher,
+            Some((row, RowEffect::Update)),
+        )
+    }
+
+    /// The shell of the three preflights: `preflight_row`'s doc, with
+    /// `target` the DELETE or UPDATE target and its effect (`row_preflight`).
     fn preflight_target<'r, 't, 'v, 'i>(
         &'r mut self,
         owner: &'r mut Owner<'c, 's>,
@@ -422,7 +454,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         table: &'r CheckedTable<'c, 's>,
         private: &'i mut [u8; 425_984],
         flusher: &'r mut MaintenancePort<'_, 's, 'c, 'p, 'd, 'm, 'w, W>,
-        delete: Option<RowId>,
+        target: Option<(RowId, RowEffect)>,
     ) -> Result<RowDeleteStep<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>> {
         #[cfg(test)]
         TEST_ROW_PREFLIGHTS.with(|count| count.set(count.get() + 1));
@@ -500,7 +532,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 anchor: table.anchor,
             },
             private,
-            delete,
+            target,
         );
         match outcome {
             Ok(RowPreflightOutcome::Ready(source_cut)) => Ok(RowDeleteStep::Ready(PreflightRow {
@@ -756,7 +788,7 @@ impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         ReservedRow<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
         RowOwnedError<Self>,
     > {
-        self.reserve_target(Some(&input))
+        self.reserve_target(Some(&input), RowEffect::Insert)
     }
 
     /// The delete RowReserve (dev3-row-delete.md#api): `reserve`'s body for
@@ -775,11 +807,37 @@ impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         ReservedRow<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
         RowOwnedError<Self>,
     > {
-        self.reserve_target(None)
+        self.reserve_target(None, RowEffect::Delete)
     }
 
-    /// `reserve` and `reserve_delete`: `input` is the INSERT candidate's
-    /// plan, None for the DELETE target of the cut.
+    /// The update RowReserve (dev3-row-update.md#api): `reserve`'s body for
+    /// the target `preflight_update` classified, with A's new value `input`
+    /// from the same validation lane as an INSERT's. Its RootJob seals the
+    /// old cell C, the new cell C' and the planned new row's projection, and
+    /// its draft the new value's length and digest, which A's UpdateForward
+    /// producer checks. The leaf must keep room for the growth beside the
+    /// reservation D (Capacity, dev3-row-update.md#leaf-reservation). The
+    /// refusals and the moves are `reserve`'s; any other preflight's wrapper
+    /// is refused Before (InvalidInput).
+    #[allow(
+        clippy::result_large_err,
+        reason = "unchanged failure returns the same preflight"
+    )]
+    pub(in crate::storage) fn reserve_update(
+        self,
+        input: RowInputPlan,
+    ) -> std::result::Result<
+        ReservedRow<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
+        RowOwnedError<Self>,
+    > {
+        self.reserve_target(Some(&input), RowEffect::Update)
+    }
+
+    /// `reserve`, `reserve_delete` and `reserve_update`: `input` is the
+    /// INSERT candidate's or the UPDATE's new value's plan, None for the
+    /// DELETE target of the cut. The cut's effect must be `effect`, the one
+    /// the call names: Insert with an input and no target, Delete with a
+    /// target and no input, Update with both.
     #[allow(
         clippy::result_large_err,
         reason = "unchanged failure returns the same preflight for retry"
@@ -787,13 +845,17 @@ impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     fn reserve_target(
         mut self,
         input: Option<&RowInputPlan>,
+        effect: RowEffect,
     ) -> std::result::Result<
         ReservedRow<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>,
         RowOwnedError<Self>,
     > {
         let storage = self.mutation.storage;
         let table = self.table_source();
-        if input.is_some() == self.source_cut.delete.is_some() {
+        let paired = self.source_cut.effect == effect
+            && input.is_some() == (effect != RowEffect::Delete)
+            && self.source_cut.target.is_some() == (effect != RowEffect::Insert);
+        if !paired {
             return Err(RowOwnedError::Before {
                 error: unchanged(
                     RetentionPhase::Prepare,

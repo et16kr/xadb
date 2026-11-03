@@ -1,12 +1,12 @@
 //! RDL-C (dev3-row-delete.md#classification, #tests): the DELETE preflight's
-//! classification of its target (`delete_class`) over the RowLeaf and Jobs
+//! classification of its target (`row_class`) over the RowLeaf and Jobs
 //! bank of history D (`transition_delete_tests.rs`, independent
 //! `transition-delete/author.py` literals), by every row of the contract's
 //! table, and the source contradictions it must never lower to a refusal or
 //! zero rows. Literal observations confer no actual source, reservation,
 //! pin, staging, installation or recovery authority.
 
-use super::{DeleteClass, RowTableSource, delete_class, target_class};
+use super::{RowTableSource, TargetClass, row_class, target_class};
 use crate::{
     api::{Column, DataType, DatabaseId, Namespace, TableSpec},
     storage::{
@@ -35,14 +35,14 @@ type Bank = [[u8; JOB_BYTES]; JOB_COUNT];
 fn generation(value: u64) -> Generation {
     Generation::new(value).unwrap()
 }
-fn namespace() -> Namespace {
+pub(super) fn namespace() -> Namespace {
     Namespace {
         database: DatabaseId::new([1; 16]).unwrap(),
         timeline: 1,
     }
 }
 /// History D's RowLeaf: page 13 incarnation 2 of table 6.
-fn expected() -> TreeExpectation {
+pub(super) fn expected() -> TreeExpectation {
     TreeExpectation {
         identity: PageIdentity {
             database: namespace().database,
@@ -59,7 +59,7 @@ fn expected() -> TreeExpectation {
         arity: 0,
     }
 }
-fn columns() -> [Column; 2] {
+pub(super) fn columns() -> [Column; 2] {
     [
         Column {
             name: "n".into(),
@@ -74,7 +74,7 @@ fn columns() -> [Column; 2] {
     ]
 }
 /// A transaction with no Job in history D's bank.
-fn stranger() -> TxnRef {
+pub(super) fn stranger() -> TxnRef {
     let id = TxnId {
         database: namespace().database,
         timeline: 1,
@@ -83,7 +83,7 @@ fn stranger() -> TxnRef {
     };
     TxnRef::new(id, generation(1)).unwrap()
 }
-fn t2() -> TxnRef {
+pub(super) fn t2() -> TxnRef {
     a_actor().0
 }
 
@@ -92,9 +92,9 @@ fn classify(
     actor: TxnRef,
     row: u64,
     (snapshot, serializable): (u64, bool),
-) -> Option<DeleteClass> {
+) -> Option<TargetClass> {
     let columns = columns();
-    delete_class(
+    row_class(
         leaf,
         expected(),
         RowSchemaInput::Columns(&columns),
@@ -106,7 +106,7 @@ fn classify(
 }
 
 /// The record of `row` in a RowLeaf image.
-fn version(leaf: &Page, row: u64) -> (RecordVersion, bool) {
+pub(super) fn version(leaf: &Page, row: u64) -> (RecordVersion, bool) {
     let view = tree_page::decode_tree_page(leaf, expected()).unwrap();
     let position = view.lower_bound(&row.to_be_bytes()).unwrap();
     assert!(position.equal, "row {row}");
@@ -129,7 +129,7 @@ fn version(leaf: &Page, row: u64) -> (RecordVersion, bool) {
     )
 }
 
-fn committed_q(leaf: &Page, row: u64) -> u64 {
+pub(super) fn committed_q(leaf: &Page, row: u64) -> u64 {
     match version(leaf, row).0.stamp {
         VersionStamp::Committed(q) => q.get(),
         VersionStamp::Transaction(_) => panic!("row {row} is not committed"),
@@ -144,7 +144,7 @@ fn restamp(leaf: &Page, row: u64, version: RecordVersion, deleted: bool) -> Box<
 
 /// `row`'s record re-encoded with `version` and `payload` (None keeps the
 /// row's own payload), over the same RowLeaf image.
-fn rewrite(
+pub(super) fn rewrite(
     leaf: &Page,
     row: u64,
     version: RecordVersion,
@@ -208,37 +208,37 @@ fn rdl_c_delete_class_follows_the_contract_table() {
     let q9 = committed_q(d523.0, 9);
     assert_eq!(
         classify(d523, t2(), 1000, all),
-        Some(DeleteClass::NoRow),
+        Some(TargetClass::NoRow),
         "absent key"
     );
     assert_eq!(
         classify(d523, t2(), 9, sr(q9)),
-        Some(DeleteClass::Delete),
+        Some(TargetClass::Proceed),
         "q = S"
     );
     assert_eq!(
         classify(d523, t2(), 9, sr(q9 - 1)),
-        Some(DeleteClass::NoRow),
+        Some(TargetClass::NoRow),
         "q > S"
     );
     assert_eq!(
         classify(d523, t2(), 9, rc(q9 - 1)),
-        Some(DeleteClass::NoRow),
+        Some(TargetClass::NoRow),
         "q > S, RC"
     );
     assert_eq!(
         classify(d523, t2(), 2, all),
-        Some(DeleteClass::Busy),
+        Some(TargetClass::Busy),
         "own Reserved root"
     );
     assert_eq!(
         classify(d523, stranger(), 2, all),
-        Some(DeleteClass::Busy),
+        Some(TargetClass::Busy),
         "T2's root"
     );
     assert_eq!(
         classify(d523, t2(), 11, all),
-        Some(DeleteClass::Busy),
+        Some(TargetClass::Busy),
         "T's pruned root"
     );
 
@@ -247,12 +247,12 @@ fn rdl_c_delete_class_follows_the_contract_table() {
     assert!(version(d524.0, 2).1, "tombstone");
     assert_eq!(
         classify(d524, t2(), 2, all),
-        Some(DeleteClass::NoRow),
+        Some(TargetClass::NoRow),
         "own tombstone"
     );
     assert_eq!(
         classify(d524, stranger(), 2, all),
-        Some(DeleteClass::Busy),
+        Some(TargetClass::Busy),
         "T' Leased"
     );
 
@@ -266,17 +266,17 @@ fn rdl_c_delete_class_follows_the_contract_table() {
     ));
     assert_eq!(
         classify(d532, t2(), row12, all),
-        Some(DeleteClass::Unsupported),
+        Some(TargetClass::Unsupported),
         "own INSERT row"
     );
     assert_eq!(
         classify(d532, stranger(), row12, all),
-        Some(DeleteClass::NoRow),
+        Some(TargetClass::NoRow),
         "T' Leased INSERT row"
     );
     assert_eq!(
         classify(d532, t2(), 4, all),
-        Some(DeleteClass::Busy),
+        Some(TargetClass::Busy),
         "own Reserved root"
     );
 
@@ -291,30 +291,30 @@ fn rdl_c_delete_class_follows_the_contract_table() {
     for row in [2, 4] {
         assert_eq!(
             classify(d534, stranger(), row, sr(q2)),
-            Some(DeleteClass::NoRow)
+            Some(TargetClass::NoRow)
         );
         assert_eq!(
             classify(d534, stranger(), row, sr(q2 - 1)),
-            Some(DeleteClass::SerializationConflict),
+            Some(TargetClass::SerializationConflict),
             "row {row}"
         );
         assert_eq!(
             classify(d534, stranger(), row, rc(q2 - 1)),
-            Some(DeleteClass::NoRow)
+            Some(TargetClass::NoRow)
         );
     }
     assert_eq!(
         classify(d534, stranger(), row12, sr(q2)),
-        Some(DeleteClass::Busy),
+        Some(TargetClass::Busy),
         "unpruned"
     );
     assert_eq!(
         classify(d534, stranger(), row12, sr(q2 - 1)),
-        Some(DeleteClass::NoRow)
+        Some(TargetClass::NoRow)
     );
     assert_eq!(
         classify(d534, stranger(), 9, all),
-        Some(DeleteClass::Busy),
+        Some(TargetClass::Busy),
         "compensated root"
     );
 }
@@ -522,18 +522,18 @@ fn rdl_c_indexed_table_is_unsupported_before_the_class() {
         )
         .ok()
     };
-    assert_eq!(class(None, 9), Some(DeleteClass::Delete), "no Index");
-    assert_eq!(class(None, 1000), Some(DeleteClass::NoRow), "absent key");
-    assert_eq!(class(None, 2), Some(DeleteClass::Busy), "held row");
+    assert_eq!(class(None, 9), Some(TargetClass::Proceed), "no Index");
+    assert_eq!(class(None, 1000), Some(TargetClass::NoRow), "absent key");
+    assert_eq!(class(None, 2), Some(TargetClass::Busy), "held row");
     assert_eq!(
         class(Some(99), 9),
-        Some(DeleteClass::Delete),
+        Some(TargetClass::Proceed),
         "another table's Index"
     );
     for (row, label) in [(9, "the row"), (1000, "absent key"), (2, "held row")] {
         assert_eq!(
             class(Some(6), row),
-            Some(DeleteClass::Unsupported),
+            Some(TargetClass::Unsupported),
             "indexed table, {label}"
         );
     }
@@ -560,7 +560,7 @@ fn rdl_c_delete_class_overflow_and_undo_less_rows() {
     let committed = rewrite(d523_leaf, 9, row9, Some(RowPayload::Overflow(head)));
     assert_eq!(
         classify((&committed, d523_bank), t2(), 9, all),
-        Some(DeleteClass::Unsupported),
+        Some(TargetClass::Unsupported),
         "committed overflow row"
     );
 
@@ -569,7 +569,7 @@ fn rdl_c_delete_class_overflow_and_undo_less_rows() {
     let foreign = rewrite(d524_leaf, 2, tombstone, Some(RowPayload::Overflow(head)));
     assert_eq!(
         classify((&foreign, d524_bank), stranger(), 2, all),
-        Some(DeleteClass::Unsupported),
+        Some(TargetClass::Unsupported),
         "another transaction's overflow row"
     );
 

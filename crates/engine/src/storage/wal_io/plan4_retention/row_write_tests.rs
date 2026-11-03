@@ -36,7 +36,8 @@ fn cut(leaf_free: u16) -> RowPreflightCut {
         roles: 0,
         leaf_free,
         root_job: 0,
-        delete: None,
+        target: None,
+        effect: crate::storage::retention_page::row::RowEffect::Insert,
     }
 }
 
@@ -53,8 +54,8 @@ fn s2b2_a6_check_candidate_leaf_shortage_is_capacity() {
     // A's rule: four cell-header bytes, eight key bytes, the row header and
     // a slot over the canonical row.
     let need = u16::try_from(length + ROW_HEADER_BYTES + 16).expect("need");
-    check_candidate(&plan, &candidate, table(), (&cut(need), 0)).expect("fits exactly");
-    let error = check_candidate(&plan, &candidate, table(), (&cut(need - 1), 0))
+    check_candidate(&plan, &candidate, table(), (&cut(need), 0, None)).expect("fits exactly");
+    let error = check_candidate(&plan, &candidate, table(), (&cut(need - 1), 0, None))
         .expect_err("one byte short");
     assert_eq!(error.effect, Effect::Unchanged);
     assert_eq!(error.phase, RetentionPhase::Prepare);
@@ -65,7 +66,7 @@ fn s2b2_a6_check_candidate_leaf_shortage_is_capacity() {
     );
     // The plan check runs first: a shortage never masks a forged candidate.
     candidate[0] ^= 1;
-    let error = check_candidate(&plan, &candidate, table(), (&cut(need - 1), 0))
+    let error = check_candidate(&plan, &candidate, table(), (&cut(need - 1), 0, None))
         .expect_err("forged candidate");
     assert!(
         matches!(
@@ -101,14 +102,14 @@ fn rdl_c_insert_capacity_keeps_the_leaf_reservation() {
         &plan,
         &candidate,
         table(),
-        (&cut(free(need + reserved)), reserved),
+        (&cut(free(need + reserved)), reserved, None),
     )
     .expect("fits exactly beside D");
     let error = check_candidate(
         &plan,
         &candidate,
         table(),
-        (&cut(free(need + reserved - 1)), reserved),
+        (&cut(free(need + reserved - 1)), reserved, None),
     )
     .expect_err("one byte inside D");
     assert_eq!(error.effect, Effect::Unchanged);
@@ -118,6 +119,51 @@ fn rdl_c_insert_capacity_keeps_the_leaf_reservation() {
         "{:?}",
         error.cause
     );
+}
+
+/// RUP-C (dev3-row-update.md#leaf-reservation, #classification): an
+/// UPDATE's new value replaces the row of cell C, so its Capacity needs only
+/// the growth `max(0, C'−C)` beside the reservation D. A growing value (C
+/// 194 → C' 244) fits with exactly growth + D free bytes and is Unchanged
+/// Capacity in Prepare one byte fewer; a shrinking or same-size value needs
+/// none but D (at D free bytes it fits, at D − 1 it is Capacity).
+#[test]
+fn rup_c_update_capacity_is_the_growth_beside_the_reservation() {
+    let length = 64;
+    let mut candidate = [0u8; PAGE_BYTES];
+    candidate[..length].fill(0x5a);
+    let plan = RowInputPlan::new(
+        length,
+        SchemaEpoch::new(1).expect("epoch"),
+        content_digest(&candidate[..length]),
+    );
+    let new_cell = length + ROW_HEADER_BYTES + 12;
+    let reserved = (189 - 180) + (194 - 180);
+    let free = |bytes: usize| u16::try_from(bytes).expect("free");
+    for (old_cell, growth) in [(194, new_cell - 194), (new_cell, 0), (new_cell + 30, 0)] {
+        check_candidate(
+            &plan,
+            &candidate,
+            table(),
+            (&cut(free(growth + reserved)), reserved, Some(old_cell)),
+        )
+        .unwrap_or_else(|error| panic!("C {old_cell}: {error:?}"));
+        let error = check_candidate(
+            &plan,
+            &candidate,
+            table(),
+            (&cut(free(growth + reserved - 1)), reserved, Some(old_cell)),
+        )
+        .expect_err("one byte inside D");
+        assert_eq!(error.effect, Effect::Unchanged);
+        assert_eq!(error.phase, RetentionPhase::Prepare);
+        assert!(
+            matches!(error.cause, RetentionCause::Capacity),
+            "C {old_cell}: {:?}",
+            error.cause
+        );
+        println!("RUP_C_CAPACITY\tC={old_cell}\tC'={new_cell}\tgrowth={growth}\tD={reserved}");
+    }
 }
 
 /// MCA01-V12-P (consumers §9.1, the variant's one C0 case): the pure

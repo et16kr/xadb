@@ -526,6 +526,29 @@ pub(crate) fn a_befores() -> Vec<delete::ABefore> {
     out
 }
 
+/// History U's RowLeaf and Jobs bank after each named group, in history
+/// order (the preflight classification of RUP-C,
+/// `plan4_retention/row_update_tests.rs`).
+pub(crate) fn u_leaves(names: &[&str]) -> Vec<delete::DLeaf> {
+    let mut out = Vec::new();
+    history_u_with(false, |name, world| {
+        if names.contains(&name) {
+            out.push((
+                name.to_owned(),
+                Box::new(world.leaf.expect("RowLeaf")),
+                Box::new(world.bank),
+            ));
+        }
+    });
+    assert_eq!(
+        out.iter()
+            .map(|(name, ..)| name.as_str())
+            .collect::<Vec<_>>(),
+        names
+    );
+    out
+}
+
 #[test]
 fn rup_c_update_history_matches_literals() {
     assert_eq!(history_u(false), 0);
