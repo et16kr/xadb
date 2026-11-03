@@ -1,0 +1,42 @@
+{
+  "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::native::rdl_native_worker",
+  "cases": {
+    "RDL-N01": [
+      "produce",
+      "recover",
+      "reenter"
+    ],
+    "RDL-N02": [
+      "produce",
+      "recover",
+      "reenter"
+    ],
+    "RDL-N03": [
+      "produce",
+      "recover",
+      "reenter"
+    ],
+    "RDL-N04": [
+      "produce",
+      "recover",
+      "reenter"
+    ],
+    "RDL-N05": [
+      "produce",
+      "recover",
+      "reenter"
+    ],
+    "RDL-N06": [
+      "produce",
+      "recover",
+      "reenter"
+    ]
+  },
+  "source": "5cd5baac52e26b434e894dec7f9322cc6b2511d15ca43a6a31d04746266858a8",
+  "elf": "0cb626ce50afa8b961cc08a8a2649e56d05196317859b1b82118b31ccc5f0047",
+  "input": "30943b1331c0738d49932e4dbf787fe90e5f88e3c2e73e91153cd361703f66cb",
+  "per_process_seconds": 180,
+  "log_bytes_cap": 16777216,
+  "rust_stack": 33554432,
+  "expected": "produce stops at its cut with the inventory result and q; the last step changed the WAL and every write before the cut is synced; recover is READY at the last ACKed q with the inventory's CLRs and committed values, then a new ACK; reenter reads both ACKs"
+}

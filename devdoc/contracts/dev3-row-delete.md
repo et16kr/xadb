@@ -1,6 +1,6 @@
 # DEV3 Row DELETE 첫 경로 — 형식·전이 설계
 
-2026-11-03 · `D3-ROW-DELETE-001` · **설계 동결 / D2 ACCEPTED(3회차) / 2-a 형식층·2-b-1 C 전이층·2-b-2 제품 경로 구현(메모리 시험, §17)·2-b-3 시험 전용 관찰자 DELETE 대조(§18) / native fault cut NOT_RUN**
+2026-11-03 · `D3-ROW-DELETE-001` · **설계 동결 / D2 ACCEPTED(3회차) / 2-a 형식층·2-b-1 C 전이층·2-b-2 제품 경로 구현(메모리 시험, §17)·2-b-3 시험 전용 관찰자 DELETE 대조(§18) / 3단계 native fault cut RDL-N01..N06 PASS(18 process)·RDL-J11(§19)**
 
 [첫 Row profile](dev3-module-consumers.md#profile) · [RowMissingRoot 전이](dev3-module-consumers.md#row-states) · [WAL shape](dev3-module-consumers.md#row-shape) · [API 흐름](dev3-module-consumers.md#api-flow) · [Row 참조 이동](dev3-visibility-retirement.md#row-missing-traversal) · [Row 격리](dev3-task-10-concurrency.md#module-row-isolation) · [자원 정본](dev3-resource-bounds.md#row-missing-module-budget) · [Undo 형식](dev3-undo-format.md) · [live Row 정리](dev3-task-14-reclamation.md#live-row-retirement) · [명시 거래 실행기](dev3-module-boundaries.md#explicit-transaction) · [행 owner](dev3-task-06-tree-rows.md#algorithms)
 
@@ -282,10 +282,11 @@ base4의 지금 `rows()`·`undo()`는 Missing 전용이라 효과1 Job의 상태
 | RDL-F01..09 | 2 | literal: opcode decode·shape·frame(C 경계 185/2228, h 0/1), native 크기 규칙, 홀수·범위 밖 native 거절, 효과 byte 수용·거절(2, 잘못된 상태, `[285,288)`≠0), 효과별 cleanup·`has_previous`, codec Releasing RowValue None 수용·Live None 거절·U09–U12 그대로, metadata 진입 (b), ledger 행 |
 | RDL-C01..12 | 2 | C 관찰: delete Reserve(row_high 불변, RowId 채택), DeleteForward·DeleteClr·DeletePrune 수용과 mutant(cell 크기, projection, payload, 옛 행 미Prune, 다른 RowId, split 필요), 효과1 H proof, leaf 예약으로 INSERT Capacity와 Forward 손상, RowId를 쥔 root(Releasing INSERT root, own compensated root)의 Busy |
 | RDL-A01..08 | 2 | A 실행기: 1행·0행(키 없음, own tombstone, 안 보이는 행), Busy, Unsupported(own INSERT), SerializationConflict, 명시 거래 statement 실패 뒤 계속, F4 census |
-| RDL-J01..08 | 2 | 실제 C 위: 삭제→commit→정리→읽기 없음, 삭제→rollback→옛 값, 명시 거래 삭제 둘·statement rollback, 삭제 뒤 INSERT(효과1 H)와 leaf 예약, 정리 전 RowId Busy, commit 뒤 재시작 replay |
+| RDL-J01..08 | 2 | 실제 C 위: 삭제→commit→정리→읽기 없음, 삭제→rollback→옛 값, 명시 거래 삭제 둘·statement rollback, 삭제 뒤 INSERT(효과1 H)와 leaf 예약, 정리 전 RowId Busy(RDL-J11, §19), commit 뒤 재시작 replay |
 | RDL-B01..10 | 2 | B: own tombstone, committed q≤S, 진행 중 거래의 옛 값, q_old>S, 읽기 중 DeleteClr의 gate 대기, Releasing U Fatal, Committed tombstone Fatal, Missing U의 tombstone·RowValue U의 Inline `Transaction` 행 Fatal, `value_before` 읽기 census |
 | RDL-R01..10 | 2 | 복구(메모리): loser DeleteClr, winner DeletePrune, 효과1 Reserved·Retained·ReleasingCompensated·ReleasingCommitted의 base4 수용, Committed tombstone·불변식 위반·짝 없는 tombstone·비canonical delete U 거절 |
-| RDL-N01.. | 3 | native fault cut: DeleteForward·DeleteClr·DeletePrune 앞뒤의 crash |
+| RDL-N01..06 | 3 | native fault cut: DeleteForward·DeleteClr·DeletePrune 앞뒤의 crash(§19) |
+| RDL-J11 | 3 | 실제 C 위 다른 거래가 쥔 행: Leased tombstone·Prune 전 행·RowId를 쥔 Releasing root의 Busy, 늦게 commit된 tombstone의 SerializationConflict(§19) |
 
 <a id="stages"></a>
 ## 13. 단계와 PR
@@ -363,7 +364,7 @@ base4의 지금 `rows()`·`undo()`는 Missing 전용이라 효과1 Job의 상태
   - RDL-J01..J10, 실제 C 공급 위: 자동커밋 삭제·정리·0행, 명시 거래 rollback 뒤 commit, 정리 전 읽기, Committed·Active·RolledBack·Reserved crash의 재시작, 한 거래의 삭제 뒤 INSERT, own INSERT 행 Unsupported, 두 건 삭제의 rollback·commit. jobs.rs 효과 묶음, Row arm의 이력 D 전체 replay(live record와 같음)도 RDL-J다.
   - RDL-R01..R06: 재시작에서 실제로 잡은 base로 본다. R01은 효과1 네 상태의 base4 수용이다. R02..R06은 Active base를 한 곳씩 고친 손상의 거절이다: actor tombstone을 `Committed`로 고침, U 없는 `Committed` tombstone, 짝 없는 tombstone, 비canonical delete U, leaf 예약. leaf 예약은 entries+D가 16188을 넘으면 Corrupt다. 정확히 16188이면 예약은 통과하고, 채운 RowId가 row_high 위라 Order로 거절된다(시험이 Order를 직접 단언한다).
 - **계획과 다른 점.**
-  - §12 RDL-J의 "정리 전 RowId Busy"는 실제 C 위에서 다른 거래로 만들 수 없다. 첫 Row profile은 Status slot이 하나라서 앞 거래가 TerminalFinish되기 전에는 새 거래가 Begin하지 못한다(WrongState). J09는 own INSERT 행 Unsupported로 바꿨다. Busy·SerializationConflict 분류는 RDL-A03..A05(literal 대역)와 C 대상 판정 표가 본다.
+  - §12 RDL-J의 "정리 전 RowId Busy"는 실제 C 위에서 다른 거래로 만들 수 없다(§19에서 정정: 시험이 Status page를 더 초기화하면 만들 수 있고, RDL-J11이 본다). 첫 Row profile은 Status slot이 하나라서 앞 거래가 TerminalFinish되기 전에는 새 거래가 Begin하지 못한다(WrongState). J09는 own INSERT 행 Unsupported로 바꿨다. Busy·SerializationConflict 분류는 RDL-A03..A05(literal 대역)와 C 대상 판정 표가 본다.
   - 이력 D replay 시험은 closure mode를 끈다. 이 world의 Status 20과 Undo 15·16은 미리 초기화한 page라 INIT provenance가 없다. 효과1 상태의 base4는 RDL-R이 실제로 잡은 base로 본다.
   - leaf 예약 Capacity를 A로 끝까지 밟으려면 leaf를 거의 채워야 한다(80행 안팎). 그래서 경계는 C 단위 시험과 RDL-C transition 시험으로 본다.
   - §5의 오류 순서에서 Reserve admission은 대상 판정 뒤다. 그러나 Free root Job이 없을 때의 거절(Unchanged, `BudgetMismatch`)은 판정 전 `row_shape`에서 난다. `row_shape`가 RowLeaf 위치와 함께 root Job을 고르기 때문이고, INSERT와 같은 순서다. 효과 없는 거절이라 0행이 될 DELETE도 이 경우 그 거절로 끝난다.
@@ -420,6 +421,50 @@ base4의 지금 `rows()`·`undo()`는 Missing 전용이라 효과1 Job의 상태
   - A literal의 INSERT Forward 셋은 leaf.rs를 거치지 않는다(위).
   - 세 관찰자는 여전히 제품 호출자가 없는 시험 전용 oracle이다.
 
+<a id="implementation-3"></a>
+## 19. 3단계 구현 기록
+
+3단계는 native fault cut RDL-N01..N06과 남은 시험 RDL-J11을 더한다. RDL-J11은 2-b-2가 실제 C 위에서 만들 수 없다고 적은 Busy 시험이다. 제품 경로는 바뀌지 않는다. 시험, controller, 동결 inventory만 더했다.
+
+- **RDL-N 이력.** 사례마다 이력 하나를 실행 전에 정했다(`tests/fixtures/module-row-delete/native-inventory.json`). CREATE가 q 1을 쓰고, A의 자동커밋 INSERT가 행 100·101을 q 2에 commit한 뒤 정리까지 마친다. 그 뒤 행 100에 사례의 단계를 밟고 cut에서 멈춘다.
+
+  | 사례 | cut | 마지막 단계 | READY q | 복구 CLR | READY 행 |
+  | --- | --- | --- | --- | --- | --- |
+  | N01 | DeletePrune 앞 | 자동커밋 DELETE와 그 ACK(q 3) | 3 | 0 | 101 |
+  | N02 | DeletePrune 뒤 | N01과 live 정리의 첫 단계(DeletePrune) | 3 | 0 | 101 |
+  | N03 | DeleteForward 앞 | 명시 거래(Serializable)의 preflight와 RowReserve | 2 | 0 | 100, 101 |
+  | N04 | DeleteForward 뒤 | 명시 거래의 DELETE statement, 거래는 Active | 2 | 1 | 100, 101 |
+  | N05 | DeleteClr 앞 | N04 뒤 Y(다른 Status)가 102를 INSERT해 q 3에 commit, A의 Commit은 SerializationConflict로 거절, A의 full RollbackStart | 3 | 1 | 100, 101, 102 |
+  | N06 | DeleteClr 뒤 | N05와 rollback의 첫 단계(DeleteClr) | 3 | 0 | 100, 101, 102 |
+
+- **세 process.** S7 native(MCI02-N)와 같은 모양이다. 같은 ELF가 phase마다 process 하나로 돈다.
+  - `produce`는 cut에서 flush나 shutdown 쓰기 없이 `exit(0)`한다.
+  - `recover`는 C 복구와 A의 복구 CLR handler로 READY에 간다. B cursor로 읽은 뒤 A의 새 행(17)과 그 Commit ACK를 낸다.
+  - `reenter`는 C+B 복구(RejectInitialLosers)와 두 ACK의 B 읽기다.
+  - worker는 `row_join::retire::autocommit::delete::native::rdl_native_worker`(ignored)이고, controller는 `scripts/check_dev3_row_delete_native.py`다.
+- **controller 검사.** 기대값은 모두 동결 inventory에서 온다.
+  - produce: 결과, q, RowId가 inventory와 같다. in-process WAL witness는 controller가 직접 계산한 WAL file의 SHA-256·길이와 같다. 마지막 단계 앞뒤의 witness가 다르다(마지막 단계는 N01이 RowReserve·DeleteForward·Commit 세 group, N04가 RowReserve·DeleteForward 두 group, 나머지는 group 하나다). effect trace에서 파일마다 마지막 write·resize 뒤에 그 파일의 성공 sync가 있고, 마지막 성공 sync 뒤에는 lease 해제와 close뿐이다.
+  - "뒤" 사례의 cut WAL은 짝 "앞" 사례의 cut WAL을 바이트 그대로 앞에 두고, 그 뒤의 WAL write는 하나(그 group)뿐이다(N01→N02 DeletePrune, N03→N04 DeleteForward, N05→N06 DeleteClr). 같은 이력이 그 group만큼 더 간 것이다. "뒤" 사례만 골라 실행해도 controller가 짝 사례를 먼저 돌린다.
+  - recover·reenter: READY q는 앞 process의 마지막 ACK q이고 inventory와 같다. 복구 CLR 수와 B가 읽은 값도 inventory와 같다. 각 process는 파일을 바꿨다. 세 process의 pid는 모두 다르다.
+  - 자원: 복구 process마다 handle 0, peak 3 이하, fd peak 6 이하, log 4 MiB 이하다(worker 단언).
+- **결과.** debug test ELF에서 18 process가 모두 통과했다. 복구 step은 N01이 20, N02가 18이다. N01에서는 복구가 DeletePrune을 했고, N02에서는 live 정리가 이미 했다. 복구 CLR은 N03 0(Reserved root는 Cancel), N04 1, N05 1, N06 0이다. 실행 기록은 [`module-gate/evidence/row-delete-3/`](../../module-gate/evidence/row-delete-3/README.md)에 있다.
+- **메모리 쌍둥이.** 같은 이력을 memory directory 위에서 도는 시험 셋이다(`rdl_n01_n02_memory_delete_prune_cuts`, `rdl_n03_n04_memory_delete_forward_cuts`, `rdl_n05_n06_memory_delete_clr_cuts`). cut의 파일로 recover를, recover가 남긴 파일로 reenter를 돌리고, native worker와 같은 기대값을 단언한다. cut의 파일에서 C의 재시작이 base4로 잡는 Row Job 상태도 §9의 기대와 대조한다. 예를 들어 N01은 Retained delete root와 TerminalReady이고, N02는 ReleasingCommitted root와 TerminalReady다. 그래서 "앞"과 "뒤" 사례가 CI에서도 갈린다(N01이 DeletePrune까지 가는 probe는 여기서 실패한다). 각 사례의 기대값이 동결 inventory에 그대로 적혀 있는지도 본다. CI가 도는 것은 이 셋이고 native worker는 ignored다.
+- **RDL-J11**(`row_join/retire/delete_busy.rs`). §17은 "정리 전 RowId Busy"를 실제 C 위에서 만들 수 없다고 적었다(Status slot 하나). 실제로는 시험이 Row Status page를 더 초기화하면(`system_init`, RDL-N05와 같다) 다른 거래가 Active인 동안에도 새 거래가 Begin한다. 그래서 §5 표에서 다른 거래가 쥔 행의 판정을 실제 C 위에서 본다. 행 100·101이 q 2에 commit되고 정리된 뒤 A(ReadCommitted)가 100을 지운다.
+  1. Y(ReadCommitted, 둘째 Status)의 100 DELETE는 Busy다(A가 Leased인 tombstone). Y는 이어서 102를 INSERT한다.
+  2. A의 102 DELETE는 0행이다(Y가 Leased인 INSERT 행).
+  3. Y가 q 3에 commit하고 정리는 하지 않는다. A의 102 DELETE는 Busy다(q 3 ≤ S에 commit됐고 Prune 전).
+  4. A가 Active이므로 live 정리는 Y의 단계만 고른다: Prune, ReleaseRole 셋, RootFree, TerminalFinish. Prune 뒤와 셋째 ReleaseRole 뒤에는 102가 `Committed(3)`이고 Y의 root가 RowId를 쥐어 Busy다. RootFree 뒤에는 A의 DELETE가 102를 지운다.
+  5. Z(Serializable, 셋째 Status)가 q 3에서 Begin하고, A가 q 4에 2행으로 commit한다. Z의 100·102 DELETE는 SerializationConflict다(q 4 > Z의 snapshot 3). Z는 rollback한다.
+  6. drain은 12 group이다. A의 delete root 둘(5 + 5), A의 Terminal, Z의 Terminal이다. 새 statement는 101만 읽고, 재시작은 q 4 READY, CLR 0으로 101만 읽는다.
+
+  판정 규칙을 하나씩 끈 build에서 J11은 실패한다. Leased tombstone의 Busy나 Prune 전 행의 Busy를 0행으로 바꾸면, 그 statement가 거절 대신 0행으로 끝난다. RowId를 쥔 root 검사를 끄면 preflight는 통과하고 Reserve가 거절한다(census의 RowId 유일성, 이중 방어). RDL-J09의 주석도 J11을 가리키게 고쳤다.
+- **한계.**
+  - cut은 process 종료다. 전원 단절처럼 page cache의 쓰기를 잃는 경우는 아니다. 대신 controller가 cut에 sync되지 않은 쓰기가 없음을 보인다(파일마다 마지막 write·resize 뒤의 성공 sync, 마지막 sync 뒤 쓰기 없음). 그래서 파일 내용이 곧 durable prefix다. S7의 같은 검사를 파일 단위로 강화했다.
+  - cut은 group 경계에만 둔다. group 안의 torn write, 복구 도중의 crash(복구가 쓴 DeleteClr·DeletePrune과 READY 사이), I/O fault(짧은 write, write·sync 오류)는 이 단계에서 보지 않는다. 일반 재장애는 [일정 12](../plans/dev3-schedule-baseline.md#items), fault 전수 실행은 일정 17의 몫이다.
+  - ReadCommitted의 "T' committed q'>S → 0행"은 A 실행기로 만들 수 없다. statement snapshot을 preflight 바로 앞에서 잡기 때문이다. C 판정 표 시험(`row_delete_tests.rs`)이 본다.
+  - native 결과는 이 cloud 환경의 실행 한 번이다. CI는 native worker를 돌리지 않는다(ignored).
+  - RDL-J11과 RDL-N05의 둘째·셋째 Status page는 시험이 직접 초기화한다(S7 MCI02-N03과 같다). 여러 Status를 쓰는 동시 거래의 일반 공급은 [일정 11](../plans/dev3-schedule-baseline.md#items)이다.
+
 ## 작성 기록
 
 - 2026-11-03 r1 초안. main `c7a6425`의 source를 읽고 썼다(operation.rs, job.rs, undo_record.rs, undo.rs, transition/prepare.rs, ledger.rs, read.rs, retirement.rs, tree_page/edit.rs, row_record.rs).
@@ -428,3 +473,6 @@ base4의 지금 `rows()`·`undo()`는 Missing 전용이라 효과1 Job의 상태
 - 2026-11-03 D2 3회차 **ACCEPT**(같은 검토자). 문구 nit 넷(metadata 진입의 길이 표현, 옛 이름 "header 진입", ReleasingCompensated의 logical은 모든 cursor, RDL-R 번호 범위)을 반영했다.
 - 2026-11-03 §18(2-b-3 구현 기록) 추가. 관찰자 status.rs·undo.rs·leaf.rs의 DELETE, N1 cross-check의 효과1 skip 제거, 넘겨받은 시험(다른 RowId, A frame 예약 경계, RDL-B06, RDL-R07)을 적었다.
 - 2026-11-03 2-b-3 D2 1회차 **ACCEPT WITH REQUIRED CHANGES**(독립 검토). (1) gate record의 `paths`에 바뀌지 않은 파일 → 제거. (2) H mutant(Job 편집)가 Job codec의 budget 검사에 걸려 H 증명에 닿지 않음 → H page U의 incoming mutant로 바꾸고 오류를 단언. 권고: DeleteClr 복원 행 logical mutant 추가, DELETE group의 예약 경계(D-526·D-528) 추가로 before 거절 시험, tombstone 판정 한계 기록, RDL-B06의 WAL 기준을 rollback 호출 전으로. NIT: undo.rs 효과·opcode 묶음은 이중 방어, 행 번호, 상태 줄.
+- 2026-11-03 §19(3단계 구현 기록) 추가. native fault cut RDL-N01..N06(메모리 쌍둥이 셋, native 18 process)과 RDL-J11(실제 C 위 다른 거래가 쥔 행의 Busy·SerializationConflict)을 적었다.
+- 2026-11-04 3단계 D2 1회차 **ACCEPT**(독립 검토, 필수 지적 0). 권고 반영: 메모리 쌍둥이가 cut의 base4 Row Job 상태를 대조(N01·N02가 CI에서도 갈림), controller가 파일마다 sync를 보고 짝 사례 뒤의 WAL write가 하나인지 보며 "뒤" 사례만 고른 실행에서도 짝을 먼저 돌림, 한계에 복구 도중 crash와 I/O fault 추가, 일정 문구를 PR #47 병합 시점 기준으로. NIT: J11의 drain 설명, N04 inventory 문구, §12·§17 정정 표시, README·일정 문구.
+- 2026-11-04 3단계 D2 2회차 **ACCEPT**(같은 검토자, 필수·권고 0). 1회차 권고가 모두 맞게 반영됐음을 probe로 확인했다. NIT 둘(§19의 마지막 단계 group 수, 한계의 sync 검사 설명)을 반영했다.
