@@ -300,6 +300,7 @@ fn history_d_with(rejects: bool, mut probe: impl FnMut(&str, &World)) -> usize {
         reserved.issued.map(|issued| issued.row),
         Some(RowId::new(row_high + 1).unwrap())
     );
+    probe("D-530", &world);
     world.observe(
         "D-531",
         blob("D-531"),
@@ -309,6 +310,22 @@ fn history_d_with(rejects: bool, mut probe: impl FnMut(&str, &World)) -> usize {
         },
         row_pages(15, Some(11)),
     );
+    // C's delete Reserve takes only a committed, pruned, inline row: T2's own
+    // unpruned INSERT row and an absent RowId are not the planned target and
+    // are refused before output (the preflight's Unsupported/0-row answers
+    // for them, #classification, are stage 2b-2's).
+    for (label, row) in [
+        ("T2's own INSERT row", row_high + 1),
+        ("an absent RowId", 1000),
+    ] {
+        let plan = delete_plan(5, 16, row);
+        refuses(
+            &format!("delete Reserve of {label}"),
+            &world.inputs(Change::ReserveDelete(&plan), reserve_pages(16)),
+            FRAME_BYTES,
+            Error::IdentityMismatch,
+        );
+    }
 
     // Statement 5: delete row 4 (freed by D-520) over the effect-0 H.
     let plan = delete_plan(5, 16, 4);
@@ -333,6 +350,15 @@ fn history_d_with(rejects: bool, mut probe: impl FnMut(&str, &World)) -> usize {
             ..pages()
         },
     );
+    probe("D-534", &world);
+    // The root's effect binds the opcode (`prepare`'s role rule): INSERT's
+    // Prune of a delete root is refused before any output.
+    refuses(
+        "INSERT Prune of the delete root 21",
+        &world.inputs(Change::Prune { ordinal: 21 }, row_pages(16, Some(15))),
+        FRAME_BYTES,
+        Error::IdentityMismatch,
+    );
 
     // Live cleanup from the head: DeletePrune (h1), Prune over the effect-1
     // H, DeletePrune (h0).
@@ -340,6 +366,12 @@ fn history_d_with(rejects: bool, mut probe: impl FnMut(&str, &World)) -> usize {
         "D-535",
         Change::DeletePrune { ordinal: 21 },
         row_pages(16, Some(15)),
+    );
+    refuses(
+        "DeletePrune of the INSERT root 20",
+        &world.inputs(Change::DeletePrune { ordinal: 20 }, row_pages(15, Some(11))),
+        FRAME_BYTES,
+        Error::IdentityMismatch,
     );
     world.produce(
         "D-536",
@@ -412,6 +444,19 @@ fn rdl_c_delete_history_borrowed_producer() {
 }
 
 // ---- leaf reservation (dev3-row-delete.md#leaf-reservation) ----------------
+
+/// D: Σ(C − 180) over the table's Retained delete roots in the World's bank.
+fn retained_d(world: &World) -> usize {
+    world
+        .bank
+        .iter()
+        .filter_map(|cell| row::decode_job(cell, namespace()).ok())
+        .filter(|job| {
+            job.state() == row::JobState::RootRetained && job.effect() == row::RowEffect::Delete
+        })
+        .map(|job| job.cell_bytes() as usize - 180)
+        .sum()
+}
 
 /// `leaf` with committed filler rows (keys from 1000, row 9's version, text
 /// values) added until `TREE_ENTRY_CAPACITY - entry bytes == free`. Each
@@ -525,15 +570,10 @@ fn rdl_c_leaf_reservation_bounds_every_leaf_step() {
     let c = 180 + canonical_row.len();
     let mut seen = Vec::new();
     history_d_with(false, |name, world| {
-        let reserved: usize = world
-            .bank
-            .iter()
-            .filter_map(|cell| row::decode_job(cell, namespace()).ok())
-            .filter(|job| {
-                job.state() == row::JobState::RootRetained && job.effect() == row::RowEffect::Delete
-            })
-            .map(|job| job.cell_bytes() as usize - 180)
-            .sum();
+        if !["D-524", "D-526", "D-529", "D-537"].contains(&name) {
+            return;
+        }
+        let reserved = retained_d(world);
         let expected = match name {
             "D-524" | "D-529" => 199 - 180,
             "D-526" => (199 - 180) + (194 - 180),
@@ -582,4 +622,60 @@ fn rdl_c_leaf_reservation_bounds_every_leaf_step() {
     });
     let names: Vec<&str> = seen.iter().map(|(name, _)| name.as_str()).collect();
     assert_eq!(names, ["D-524", "D-526", "D-529", "D-537"]);
+}
+
+/// RDL-C: the leaf reservation in the leaf steps after a Reserve. A's INSERT
+/// Forward (D-531 at the D-530 state, D = 19) re-checks entries + cell + D:
+/// over a leaf where entries + D fit but the cell would break the
+/// reservation, the observer refuses it (#leaf-reservation calls this
+/// corruption, not Capacity: Reserve proved the fit under the same gate; the
+/// refusal is OrderMismatch, the split check it extends). C's DeletePrune
+/// (D-535 at the D-534 state, two Retained delete roots) refuses a leaf whose
+/// entries already exceed capacity − D as Corrupt, like every leaf step.
+#[test]
+fn rdl_c_leaf_reservation_forward_and_delete_prune() {
+    let c = 180 + blob("D-530-canonical").len();
+    let mut seen = Vec::new();
+    history_d_with(false, |name, world| {
+        let reserved = retained_d(world);
+        let leaf = world.leaf.as_ref().unwrap();
+        match name {
+            "D-530" => {
+                assert_eq!(reserved, 199 - 180, "{name} D");
+                let padded = padded_leaf(leaf, c + 4 + reserved - 1);
+                let mut inputs = world.inputs(
+                    Change::Forward {
+                        ordinal: 20,
+                        statement: boundary(4, None),
+                    },
+                    row_pages(15, Some(11)),
+                );
+                inputs.table.as_mut().unwrap().leaf_image = Some(&*padded);
+                let mut after = loans(0xa5);
+                assert_eq!(
+                    observe(&inputs, blob("D-531"), &mut after).map(|_| ()),
+                    Err(Error::OrderMismatch),
+                    "{name}: INSERT Forward one byte short of D"
+                );
+                assert!(after.iter().flatten().all(|byte| *byte == 0xa5));
+            }
+            "D-534" => {
+                assert_eq!(reserved, (199 - 180) + (194 - 180), "{name} D");
+                let padded = padded_leaf(leaf, reserved - 1);
+                let mut inputs =
+                    world.inputs(Change::DeletePrune { ordinal: 21 }, row_pages(16, Some(15)));
+                inputs.table.as_mut().unwrap().leaf_image = Some(&*padded);
+                refuses(
+                    &format!("{name}: DeletePrune over a leaf inside D"),
+                    &inputs,
+                    FRAME_BYTES,
+                    Error::Corrupt,
+                );
+            }
+            _ => return,
+        }
+        seen.push((name.to_owned(), reserved));
+    });
+    println!("RDL_C_LEAF_STEPS\t{seen:?}");
+    assert_eq!(seen.len(), 2);
 }

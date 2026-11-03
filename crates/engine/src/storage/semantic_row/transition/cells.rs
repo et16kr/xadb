@@ -13,13 +13,13 @@ use crate::{
             row::{self, JobCells, JobScope, JobState, JobView, RootView, RowEffect},
         },
         status_home::StatusHome,
-        transaction_record::{LogicalRowVersion, VersionStamp},
-        transaction_record::{StatusSlotRef, TxnRef},
+        transaction_record::{LogicalRowVersion, StatusSlotRef, TxnRef, VersionStamp},
         tree_page::edit::LeafEditError,
         undo_record::{
             self, UNDO_RECORD_BYTES, UndoBeforeKind, UndoCell, UndoCreator, UndoEdge, UndoLink,
-            UndoPayload, UndoRecord, UndoRecordExpectation, UndoRecordMetadata, UndoRecordOutline,
-            UndoRecordState, UndoRelease, UndoStampKind, UndoTargetKind, UndoTargetView,
+            UndoPayload, UndoPayloadForm, UndoRecord, UndoRecordExpectation, UndoRecordMetadata,
+            UndoRecordOutline, UndoRecordState, UndoRelease, UndoStampKind, UndoTargetKind,
+            UndoTargetView,
         },
         wal_frame::FrameExpectation,
     },
@@ -458,6 +458,12 @@ pub(super) fn check_outline(
                 before_kind: UndoBeforeKind::RowValue,
                 before_stamp: (cursor < 3).then_some(UndoStampKind::Committed),
                 before_logical: true,
+                // The Releasing delete U has no body (#delete-undo).
+                payload_form: if live {
+                    UndoPayloadForm::Inline
+                } else {
+                    UndoPayloadForm::None
+                },
                 payload_bytes,
                 release: material.release,
             },

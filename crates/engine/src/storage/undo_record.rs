@@ -455,6 +455,14 @@ pub(crate) enum UndoStampKind {
     Transaction,
 }
 
+/// The form of a before payload, without its bytes.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum UndoPayloadForm {
+    None,
+    Inline,
+    Chunks,
+}
+
 /// Entry (b)'s result (dev3-row-delete.md#delete-undo): what an occupied
 /// record's header and lengths prove without a schema. It widens
 /// [`UndoRecordMetadata`] with the state, edges, before kind, stamp kind,
@@ -469,6 +477,7 @@ pub(crate) struct UndoRecordOutline<'a> {
     pub(crate) before_kind: UndoBeforeKind,
     pub(crate) before_stamp: Option<UndoStampKind>,
     pub(crate) before_logical: bool,
+    pub(crate) payload_form: UndoPayloadForm,
     /// Inline bytes (0 for None or Chunks).
     pub(crate) payload_bytes: usize,
     pub(crate) release: UndoRelease,
@@ -569,6 +578,11 @@ impl<'a> UndoRecordView<'a> {
                 VersionStamp::Transaction(_) => UndoStampKind::Transaction,
             }),
             before_logical: record.before_logical.is_some(),
+            payload_form: match record.payload {
+                UndoPayload::None => UndoPayloadForm::None,
+                UndoPayload::Inline(_) => UndoPayloadForm::Inline,
+                UndoPayload::Chunks(_) => UndoPayloadForm::Chunks,
+            },
             payload_bytes: match record.payload {
                 UndoPayload::Inline(bytes) => bytes.len(),
                 UndoPayload::None | UndoPayload::Chunks(_) => 0,
@@ -1104,8 +1118,6 @@ pub(crate) fn decode_undo_record<'a>(
     })
 }
 
-/// Validate the selected root slot; other schemas and global graph integrity
-/// remain the caller's responsibility. Free is inspection-only, never a lookup.
 /// Entry (b) of `lookup_undo_record`: the selected root slot's outline.
 pub(crate) fn lookup_undo_record_metadata<'a>(
     input: &'a [u8],
@@ -1115,6 +1127,8 @@ pub(crate) fn lookup_undo_record_metadata<'a>(
     lookup_undo_record(input, identity, expected, MetadataOnly)?.outline()
 }
 
+/// Validate the selected root slot; other schemas and global graph integrity
+/// remain the caller's responsibility. Free is inspection-only, never a lookup.
 pub(crate) fn lookup_undo_record<'a>(
     input: &'a [u8],
     identity: PageIdentity,

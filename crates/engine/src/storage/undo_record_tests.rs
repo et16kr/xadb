@@ -1931,6 +1931,7 @@ fn rdl_f08_metadata_and_schema_entries() {
         before_kind: UndoBeforeKind::RowValue,
         before_stamp: Some(UndoStampKind::Committed),
         before_logical: true,
+        payload_form: UndoPayloadForm::Inline,
         payload_bytes: f.inline.len(),
         release: live.release,
     };
@@ -1988,6 +1989,7 @@ fn rdl_f08_metadata_and_schema_entries() {
             o.before_kind,
             o.before_stamp,
             o.before_logical,
+            o.payload_form,
             o.payload_bytes,
             o.release.cursor
         ),
@@ -1996,9 +1998,17 @@ fn rdl_f08_metadata_and_schema_entries() {
             UndoBeforeKind::RowValue,
             None,
             true,
+            UndoPayloadForm::None,
             0,
             3
         )
+    );
+    // A chunked RowValue body (U05) is told apart from None by its form.
+    let chunked = literal(4);
+    let o = decode_undo_record_metadata(&chunked, f.expect(4)).unwrap();
+    assert_eq!(
+        (o.before_kind, o.payload_form, o.payload_bytes),
+        (UndoBeforeKind::RowValue, UndoPayloadForm::Chunks, 0)
     );
     // INSERT's Missing U (U02) and a Free slot (U01).
     let missing = literal(1);
@@ -2009,6 +2019,7 @@ fn rdl_f08_metadata_and_schema_entries() {
             o.before_kind,
             o.before_stamp,
             o.before_logical,
+            o.payload_form,
             o.payload_bytes
         ),
         (
@@ -2016,6 +2027,7 @@ fn rdl_f08_metadata_and_schema_entries() {
             UndoBeforeKind::Missing,
             None,
             false,
+            UndoPayloadForm::None,
             0
         )
     );

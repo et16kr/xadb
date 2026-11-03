@@ -676,10 +676,10 @@ impl World {
         let (Some(actor), Some(location)) = (observed.actor, observed.status) else {
             return;
         };
-        // The scope3 local observers learn the DELETE effect in stage 2b-2
-        // (dev3-row-delete.md#files: semantic_row/{undo,leaf,jobs}.rs). Until
-        // then a group of an actor with an effect-1 root, before or after,
-        // is checked by the whole-group observer alone.
+        // The scope3 local Undo and Job observers learn the DELETE effect in
+        // stage 2b-2 (dev3-row-delete.md#files: semantic_row/{undo,leaf,jobs}.rs).
+        // Until then they skip a group of an actor with an effect-1 root,
+        // before or after; status.rs skips only the DELETE opcodes themselves.
         let delete_actor = |bank: &[[u8; JOB_BYTES]; JOB_COUNT]| {
             bank.iter().any(|cell| {
                 row::decode_job(cell, namespace()).is_ok_and(|job| {
@@ -694,10 +694,7 @@ impl World {
             .job_ordinal
             .filter(|_| job_changed)
             .is_some_and(|ordinal| cell(&after[JOB], ordinal % 15)[284] == 1);
-        if delete_actor(&self.bank) || after_effect {
-            println!("N1_CROSS\t{name}\tdeferred to 2b-2 (effect-1 actor)");
-            return;
-        }
+        let deferred = delete_actor(&self.bank) || after_effect;
         let layout = decode_layout(frame, expectation(self.lsn), profile()).unwrap();
         let op = observed.operation;
         let present =
@@ -744,7 +741,7 @@ impl World {
             before: status_before.unwrap(),
             after: &after[STATUS],
         });
-        if let Some(images) = status_images {
+        if let Some(images) = status_images.filter(|_| op == op.role()) {
             status::observe(
                 layout,
                 status::StatusContext {
@@ -757,6 +754,13 @@ impl World {
                 images,
             )
             .unwrap_or_else(|error| panic!("{name}: status.rs {error:?}"));
+        }
+        if deferred {
+            println!(
+                "N1_CROSS\t{name}\tstatus={}\tundo/jobs deferred to 2b-2 (effect-1 actor)",
+                present(STATUS) && op == op.role()
+            );
+            return;
         }
         let ordinal = observed.job_ordinal;
         if present(UNDO) {

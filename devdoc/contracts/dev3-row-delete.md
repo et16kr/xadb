@@ -1,6 +1,6 @@
 # DEV3 Row DELETE 첫 경로 — 형식·전이 설계
 
-2026-11-03 · `D3-ROW-DELETE-001` · **설계 동결 / D2 ACCEPTED(3회차) / 제품·시험 NOT_RUN**
+2026-11-03 · `D3-ROW-DELETE-001` · **설계 동결 / D2 ACCEPTED(3회차) / 2-a 형식층·2-b-1 C 전이층 구현(제품 진입 없음) / 제품 경로 NOT_RUN**
 
 [첫 Row profile](dev3-module-consumers.md#profile) · [RowMissingRoot 전이](dev3-module-consumers.md#row-states) · [WAL shape](dev3-module-consumers.md#row-shape) · [API 흐름](dev3-module-consumers.md#api-flow) · [Row 참조 이동](dev3-visibility-retirement.md#row-missing-traversal) · [Row 격리](dev3-task-10-concurrency.md#module-row-isolation) · [자원 정본](dev3-resource-bounds.md#row-missing-module-budget) · [Undo 형식](dev3-undo-format.md) · [live Row 정리](dev3-task-14-reclamation.md#live-row-retirement) · [명시 거래 실행기](dev3-module-boundaries.md#explicit-transaction) · [행 owner](dev3-task-06-tree-rows.md#algorithms)
 
@@ -328,14 +328,18 @@ base4의 지금 `rows()`·`undo()`는 Missing 전용이라 효과1 Job의 상태
 - **전이(§4.1).** delete Reserve는 INSERT Reserve의 단계를 그대로 밟는다. row_high는 올리지 않고, 계획 tombstone의 projection을 Job에 넣는다. 대상은 `Committed`·undo None·Inline이어야 한다. DeleteForward·DeleteClr는 A의 group이라 C 생산자는 Unsupported로 거절하고, 관찰자만 둘을 받는다. DeletePrune은 C가 만든다.
 - **U(§3.2, §3.6).** Live delete U의 432 B header는 scratch U 버퍼에서 `encode_undo_record_head`로 만든다. 값 L은 leaf before image에서 빌려 after page에 바로 쓴다. 상한 9076 B는 그대로다. DeleteClr·DeletePrune은 U를 진입 (a)와 table 스키마로 읽는다. ReleaseRole은 `encode_release_step`으로 cursor를 하나 올리며 before stamp·logical을 caller에 넘기지 않는다.
 - **효과1 H(§4.4).** `check_outline`은 H의 셀을 진입 (b)로 보고, Job에서 오는 필드를 대조한다.
-- **leaf 예약(§4.3).** D는 각 leaf 단계(INSERT Reserve·Forward·CLR·Prune, delete Reserve·DeleteForward·DeleteClr·DeletePrune)가 원래 bank에서 먼저 계산한다. `typed_leaf`가 `entries+D ≤ 16188`을 검산하고, 어기면 Corrupt다. INSERT Reserve와 Forward는 새 cell을 넣은 뒤에도 이 식을 요구하고, 어기면 OrderMismatch다. Capacity 분류는 2-b-2의 C preflight가 한다.
+- **leaf 예약(§4.3).** D는 각 leaf 단계(INSERT Reserve·Forward·CLR·Prune, delete Reserve·DeleteForward·DeleteClr·DeletePrune)가 원래 bank에서 먼저 계산한다. `typed_leaf`가 `entries+D ≤ 16188`을 검산하고, 어기면 Corrupt다. INSERT Reserve와 Forward는 새 cell을 넣은 뒤에도 이 식을 요구하고, 어기면 OrderMismatch다. 이 검사는 예전 split 검사(`needs_split`, OrderMismatch)를 D만큼 넓힌 것이라 D=0이면 INSERT 결과가 예전과 같다. Forward에서 어긋나는 것은 §4.3의 "손상"이며, 관찰자는 그 후보를 OrderMismatch로 거절한다. Capacity 분류는 2-b-2의 C preflight가 한다.
 - **RowId 유일성(§5).** 대상 RowId를 다른 root가 쥐면 after bank census가 `Queue(IdentityMismatch)`로 거절한다. Busy 분류는 2-b-2 preflight가 한다.
-- **replay(§6).** `ReserveAdopted`는 후보 Job의 효과 byte와 RowId를 채택하고 나머지를 다시 계산한다.
-- **census(§10).** delete 항은 11,269 B다. callee 최대는 ledger 11,811 B 그대로이고 prepare 지역은 +8 B다. 복구 Row 갈래 S1B는 25,731 B로 상한 25,743 B 안이다. RowWrite reserve C 여유는 771 B, row_lifecycle은 40,881 B 그대로이며, live/recovered peak는 64,016/65,392 B(memory), 64,024/65,400 B(native)로 바뀌지 않았다.
+- **replay(§6).** `ReserveAdopted`는 후보 Job의 효과 byte와 RowId를 채택하고 나머지를 다시 계산한다. 다만 제품 replay(`history/row.rs`)는 2-b-2 전까지 효과1 RowReserve를 Unsupported로 거절한다. 8/9/23 replay와 base4의 효과1 규칙이 같은 단계에 들어오므로, 그 전에 replay가 DELETE root를 설치하지 않게 2-a의 귀납을 그대로 둔다.
+- **효과와 opcode.** 공유 Row 연산은 Job의 효과와 opcode가 맞아야 한다(`op != op.role()`이 효과1과 같아야 함). 어긋나면 출력 전 IdentityMismatch다(INSERT Prune으로 delete root, DeletePrune으로 INSERT root).
+- **census(§10).** delete 항은 11,269 B다. callee 최대는 ledger 11,811 B 그대로이고 prepare 지역은 +8 B다. 복구 Row 갈래 S1B는 25,731 B로 상한 25,743 B 안이다. RowWrite reserve C 여유는 771 B, row_lifecycle은 40,881 B 그대로이며, live/recovered peak는 64,016/65,392 B(memory), 64,024/65,400 B(native)로 바뀌지 않았다. 측정 모형(`transition_tests.rs` measured chains)은 U 쪽 사슬만 새로 더했다. DELETE leaf frame(`delete_source`·`delete_leaf`·`reserve_delete`)은 셈 모형만 있고, 그 최대 delete 11,269 B는 callee 최대 11,811 B보다 542 B 작다. `leaf_source`의 frame은 예전부터 따로 세지 않았고 새 `reserved` 인자 8 B도 그 여유 안이다. Catalog 쪽 목록(`catalog_before.rs`, `semantic_catalog/resources.rs`)은 새 `encode_record_header`·`check_row_before` frame을 이름으로 적지 않지만 둘은 더 깊은 사슬의 형제라 보수 합이 덮는다.
 - **시험.**
   - 독립 저자 [`module-row-format/transition-delete/author.py`](../../tests/fixtures/module-row-format/transition-delete/author.py)는 N1 이력 H를 다시 돌린다. H의 모든 frame은 N1 literal과 바이트가 같아야 한다. 그다음 이력 D 30 group과 변형 11개를 만든다.
-  - `transition_delete_tests.rs`(RDL-C)는 C가 만든 25 group을 literal과 바이트 단위로 비교하고, A 몫 5 group(DeleteForward ×3·DeleteClr·효과1 H 위 INSERT Forward)을 관찰하고, 변형 11개를 Corrupt로 거절하는지 본다. 그 밖에 borrowed 관찰자·생산자 쌍, `ReserveAdopted`, RowId 중복, leaf 예약 경계도 시험한다.
-  - scope3 per-native 관찰자 대조(N1 cross-check)는 효과1 actor의 group에서 건너뛰고 2-b-2에서 켠다.
+  - `transition_delete_tests.rs`(RDL-C)는 C가 만든 25 group을 literal과 바이트 단위로 비교하고, A 몫 5 group(DeleteForward ×3·DeleteClr·효과1 H 위 INSERT Forward)을 관찰하고, 변형 11개를 Corrupt로 거절하는지 본다. 그 밖에 borrowed 관찰자·생산자 쌍, `ReserveAdopted`, RowId 중복, 대상 행 거절(own INSERT 행·없는 RowId), 효과와 opcode 불일치, leaf 예약 경계(INSERT Reserve·delete Reserve·INSERT Forward·DeletePrune)도 시험한다.
+  - Row arm replay 시험(`recovery/row_tests.rs`)은 H 뒤 D-516..D-520을 replay로 그대로 적용하고 D-521을 효과 없이 Unsupported로 거절하는지 본다.
+  - scope3 per-native 관찰자 대조(N1 cross-check)에서 undo·jobs 관찰자는 효과1 actor의 group에서 건너뛰고 2-b-2에서 켠다. status 관찰자는 DELETE opcode group만 건너뛴다.
+  - §12의 RDL-C mutant 가운데 후보 frame의 cell 크기·다른 RowId는 2-b-2의 A producer 시험(RDL-A)과 per-native 관찰자 시험(RDL-J)에서 다룬다.
+- **undo outline.** 진입 (b)의 `UndoRecordOutline`은 payload 형태(None·Inline·Chunks)를 따로 돌려준다. Releasing delete U 증명은 형태 None을 요구한다.
 
 ## 작성 기록
 

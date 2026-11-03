@@ -314,6 +314,12 @@ pub(in super::super) fn apply(
                 {
                     return Err(invalid());
                 }
+                // A delete Reserve (dev3-row-delete.md#job-effect) is replayed
+                // with opcodes 8/9/23 and base4's effect-1 rules (stage 2b-2);
+                // until then replay never installs a DELETE root.
+                if cell.effect() != job3::RowEffect::Insert {
+                    return Err(sem(semantic::Error::Unsupported));
+                }
                 Some(cell)
             }
             _ => None,
