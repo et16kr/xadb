@@ -39,6 +39,24 @@
         "devdoc/plans/dev3-schedule-baseline.md": "1a671015e755c4360744687f85b487552d9383be"
       },
       "log": "module-gate/evidence/dev3-schedule/review.md#reweight (sha256 da4578a17578347fdc63d1f65e468470f6b87c3398148228bc20b4772f6078ca)"
+    },
+    {
+      "id": "dev3-schedule-items-d2",
+      "class": "D2",
+      "scopes": [
+        "policy"
+      ],
+      "author": "Claude PR review session",
+      "reviewer": "separate AI reviewer run (read-only)",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "devdoc/README.md": "6d10af02c02819d0a45a44ec9b8c73ae9b8b12de",
+        "devdoc/plans/README.md": "31cad407ac92cdb200fdf6aeeff7a06898ee3a25",
+        "devdoc/plans/dev3-implementation-plan.md": "b1863a48a4f9f81569e1f39493fae9a93ab1a65a",
+        "devdoc/plans/dev3-schedule-baseline.md": "8ec64989bae38efe2a1b9e945da49eaf11299e2c"
+      },
+      "log": "module-gate/evidence/dev3-schedule/review.md#items (sha256 1834a5f5321a81fa5fda57679d33fdc1db6b4f0895d23eee4f4129634457bfec)"
     }
   ]
 }

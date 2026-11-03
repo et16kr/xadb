@@ -1,6 +1,6 @@
 # DEV3 전체 예상 일정과 누적 진척률 기준선
 
-2026-11-03 · **D3-SCHEDULE-001 / V1 · 사용자 요청에 따른 일정 가중치 기준선 · 초안 독립 D2 ACCEPT; 공급 단위 재배정 독립 D2 ACCEPT(r2, 필수 지적 0); 일정 항목 적립 독립 D2 검토 중(r1 필수 지적 반영) · PR 반영 대기**
+2026-11-03 · **D3-SCHEDULE-001 / V1 · 사용자 요청에 따른 일정 가중치 기준선 · 초안 독립 D2 ACCEPT; 공급 단위 재배정 독립 D2 ACCEPT(r2, 필수 지적 0); 일정 항목 적립 독립 D2 ACCEPT(r2 필수 1건 반영) · PR 반영 대기**
 
 기준 source: main `ab2537eb`(PR #46 병합). PR 초안은 `cd41b174`(PR #43) 기준 58일·39.66%였다. 병합 전에 PR #44·#46(DELETE 2-b-2·2-b-3) 상태를 반영하고, 사용자 결정으로 01–19 전체를 [공급 단위](#units)로 다시 배정했다([개정 기록](#decision)). 실제 제품 인수 상태는 [단계 완료 정본](stage-completion.json)과 각 source별 증거가 소유한다. 이 문서는 DEV3 일정 보고의 분모·가중치·적립 규칙을 소유한다.
 
@@ -43,7 +43,7 @@ ID는 모두 `D3-SCH-` 접두어를 갖는다. 아래는 보고용 기본 배치
 | 14 | 일반 aging·공간 반환·재사용 | 3 | E68–E70 | 3.49% | 81.40% | 대기 | 12·13 |
 | 15 | 독립 audit·최종 inventory 준비 | 3 | E71–E73 | 3.49% | 84.88% | 대기 | 05; 최종 닫기는 06–14 |
 | 16 | exact-cut backup·restore | 3 | E74–E76 | 3.49% | 88.37% | 대기 | 13·14·15 |
-| 17 | S5 정확성·복구 전수 | 4 | E77–E80 | 4.65% | 93.02% | 대기 | 06–16 |
+| 17 | S5 정확성·복구 전수 | 4 | E77–E80 | 4.65% | 93.02% | 대기 | 06–16; 17-4는 18-1·18-2 |
 | 18 | S5 대형 profile·PF09 | 3 | E81–E83 | 3.49% | 96.51% | 대기 | 06–16 |
 | 19 | 최종 결함 수정·영향 재검증·인수 | 3 | E84–E86 | 3.49% | 100.00% | 대기 | 17·18 |
 | **합계** | **DEV3 전체** | **86** | **E1–E86** | **100%** | **100%** | **29.5일 적립 / 56.5일 미적립** | — |
@@ -83,25 +83,25 @@ ID는 모두 `D3-SCH-` 접두어를 갖는다. 아래는 보고용 기본 배치
 <a id="items"></a>
 ### 2.2 일정 항목
 
-적립은 일정 항목 단위다. 01–19를 모두 아래 항목으로 나누고, 항목 배정일의 합은 그 행의 배정일과 같다. 01–05와 07–19는 §2.1 계수 근거의 구성 요소마다 항목 하나를 두고 그 단위를 그대로 쓴다(0.5단위 = 1일). 한 계수로 묶여 있던 것(04의 A/B/C·소비자 inventory 1.5, 05의 F0–F7 1과 실행기 1, 07 전체, 08의 SMO·cursor 1.5, 15의 1.5, 17의 2, 18의 FT06·FT08 1, 19의 1.5)은 산출물 경계로 나눴다. 04·05는 실제 단계(경계·S7–S9와 S10–S11, F0와 F1–F7, PR #39와 #40)를 경계로 나눴고(04는 실제 구간의 대부분을 차지한 경계 작업을 2일, 소비자 inventory를 1일로 둠), 17은 fault 셀 3회·stress가 있는 FT04·FT05를 무겁게, 결과 대응 검사인 FT09를 가볍게 뒀다. 07은 06과 같은 계약→C 형식·전이→A/B 경로·복구→native 순서다. 06은 계약 §13의 단계(1 계약, 2 제품 경로, 3 native)를 따르고, 2단계는 실제 PR 분할(2-a·2-b-1·2-b-2·2-b-3)로 나눴다. PR 경계는 항목 경계로만 쓰고, 배정일은 PR 수가 아니라 부담으로 매겼다. A/B/C·복구를 한 PR에 모은 2-b-2와 실제 I/O fault 환경이 필요한 3단계를 0.5일, 나머지를 0.25일로 두었다. 06-1–06-5는 끝난 뒤에 나눈 사후 분할이며, 사용자 요청("작업을 세분화")으로 병합 전 V1에 넣어 1.5일을 소급 적립했다. 01–05의 항목도 사용자 요청("이미 끝난 작업도 세분화")으로 끝난 뒤 나눈 것이며, 행 전체가 이미 적립돼 있어 적립 28일은 바뀌지 않는다.
+적립은 일정 항목 단위다. 01–19를 모두 아래 항목으로 나누고, 항목 배정일의 합은 그 행의 배정일과 같다. 01–05와 07–19는 §2.1 계수 근거의 구성 요소마다 항목 하나를 두고 그 단위를 그대로 쓴다(0.5단위 = 1일). 한 계수로 묶여 있던 것(04의 A/B/C·소비자 inventory 1.5, 05의 F0–F7 1과 실행기 1, 07 전체, 08의 SMO·cursor 1.5, 15의 1.5, 17의 2, 18의 FT06·FT08 1, 19의 1.5)은 산출물 경계로 나눴다. 04·05는 실제 단계(경계·S7–S9와 S10–S11, F0와 F1–F7, PR #39와 #40)를 경계로 나눴고(04는 C0–C3·L1–L6 이동·S7–S9의 경계·export 공급이 S10–S11의 소비자 inventory보다 부담이 커 2일·1일로 둠. 이미 전액 적립된 행이라 % 영향 없음), 17은 fault 셀 3회·stress가 있는 FT04·FT05를 무겁게, 결과 대응 검사인 FT09를 가볍게 뒀다. 07은 06과 같은 계약→C 형식·전이→A/B 경로·복구→native 순서다. 06은 계약 §13의 단계(1 계약, 2 제품 경로, 3 native)를 따르고, 2단계는 실제 PR 분할(2-a·2-b-1·2-b-2·2-b-3)로 나눴다. PR 경계는 항목 경계로만 쓰고, 배정일은 PR 수가 아니라 부담으로 매겼다. A/B/C·복구를 한 PR에 모은 2-b-2와 실제 I/O fault 환경이 필요한 3단계를 0.5일, 나머지를 0.25일로 두었다. 06-1–06-5는 끝난 뒤에 나눈 사후 분할이며, 사용자 요청("작업을 세분화")으로 병합 전 V1에 넣어 1.5일을 소급 적립했다. 01–05의 항목도 사용자 요청("이미 끝난 작업도 세분화")으로 끝난 뒤 나눈 것이며, 행 전체가 이미 적립돼 있어 적립 28일은 바뀌지 않는다. 01–05 항목은 §3의 당시 제한 공급(첫 Row profile·Status slot 하나 등)이며 일반 기능 완료가 아니다.
 
 | 항목 | 일정 항목 | 배정일 | 상태 | 증거 |
 | --- | --- | ---: | --- | --- |
-| 01-1 | page·key·tree·WAL·Undo·Status·Catalog 표현 codec과 독립 vector | 2 | 완료 | `d58c26b9`(page)·`d96bd1a9`(catalog·undo·control), [표현](../implementation/dev3-implementation.md#catalog-undo-control) |
+| 01-1 | 당시 공급한 page·key·tree·WAL·Undo·Status·Catalog 표현 codec과 독립 vector | 2 | 완료 | `d58c26b9`(page)·`d96bd1a9`(catalog·undo·control), [표현](../implementation/dev3-implementation.md#catalog-undo-control) |
 | 01-2 | M01–M06 유한 모델 | 1 | 완료 | `d58c26b9`, [M01–M06](../implementation/dev3-implementation.md#models-all) |
 | 02-1 | 설치·선택 읽기·물리 WAL·reserve/cancel·한 page flush | 2 | 완료 | [설치](../implementation/dev3-implementation.md#doublewrite-install-results)·[선택 읽기](../implementation/dev3-implementation.md#selector-resume-results)·[genesis WAL](../implementation/dev3-implementation.md#genesis-wal-results)·[예약](../implementation/dev3-implementation.md#allocation-reservation-accepted)·[flush](../implementation/dev3-implementation.md#allocator-flush) |
 | 02-2 | Status INIT/home flush와 닫힌 genesis 복구 | 2 | 완료 | [Status INIT](../implementation/dev3-implementation.md#status-init)·[home flush](../implementation/dev3-implementation.md#status-home-flush)·[닫힌 genesis 복구](../implementation/dev3-implementation.md#recovery-effects) |
 | 03-1 | 빈 거래 terminal·재적재·복구 | 2 | 완료 | [빈 거래](../implementation/dev3-implementation.md#empty-transaction)·[복구](../implementation/dev3-implementation.md#empty-transaction-recovery) |
 | 03-2 | Free Undo 수명·N=0 plan4 복구 | 2 | 완료 | [Free Undo](../implementation/dev3-implementation.md#undo-free-page)·[plan4 Free Undo](../implementation/dev3-implementation.md#plan4-free-undo)·[N=0 복구](../evidence/dev3-recovery-resumed-20261025.md) |
 | 03-3 | 첫 Catalog CREATE·commit·복구 | 2 | 완료 | [Catalog CREATE 잔여 선택 사례](../evidence/dev3-catalog-remaining-20261026.md)·[수정](../evidence/dev3-catalog-review-fix-20261026.md) |
-| 04-1 | Row INSERT·Commit·point/cursor 읽기(S2·S3·S5) | 2 | 완료 | PR #2 `6ec2d343`·#5 `139a05f4`·#7 `8d5e48b5`, [S2](../evidence/module-independence-survey-20261026.md#s2f-closeout)·[S3](../evidence/module-independence-survey-20261026.md#s3-row-commit)·[S5](../evidence/module-independence-survey-20261026.md#s5-row-read-completion) |
-| 04-2 | statement/full rollback CLR(S4) | 2 | 완료 | PR #6 `2ed254ac`, [S4](../evidence/module-independence-survey-20261026.md#s4-row-rollback) |
-| 04-3 | 복구 READY(REBASE·새 epoch·복구 CLR, S6) | 2 | 완료 | PR #8 `76b36278`·#10 `c427def8`, [S6](../evidence/module-independence-survey-20261026.md#s6-row-recovery) |
+| 04-1 | 첫 Row profile의 제한 INSERT·Commit·point/cursor 읽기(S1–S3·S5) | 2 | 완료 | PR #2 `6ec2d343`·#5 `139a05f4`·#7 `8d5e48b5`, [S1](../evidence/module-independence-survey-20261026.md#s1d-row-begin)·[S2](../evidence/module-independence-survey-20261026.md#s2f-closeout)·[S3](../evidence/module-independence-survey-20261026.md#s3-row-commit)·[S5](../evidence/module-independence-survey-20261026.md#s5-row-read-completion) |
+| 04-2 | 첫 Row profile의 statement/full rollback CLR(S4) | 2 | 완료 | PR #6 `2ed254ac`, [S4](../evidence/module-independence-survey-20261026.md#s4-row-rollback) |
+| 04-3 | 첫 Row profile의 복구 READY(REBASE·새 epoch·복구 CLR, S6) | 2 | 완료 | PR #8 `76b36278`·#10 `c427def8`, [S6](../evidence/module-independence-survey-20261026.md#s6-row-recovery) |
 | 04-4 | A/B/C 경계 조사·C0–C3 경계·L1–L6 이동, 결합·단독 export(S7–S9) | 2 | 완료 | [조사](../evidence/module-independence-survey-20261026.md#survey)·[C0](../evidence/module-independence-survey-20261026.md#c0-borrowed-codec)·[L1–L6](../evidence/module-independence-survey-20261026.md#l1-allocation-move), PR #11 `5c989374`·#12 `3c046e98`·#14 `7efb32c6`, [S7](../evidence/module-independence-survey-20261026.md#s7-row-join)·[S8](../evidence/module-independence-survey-20261026.md#s8-single-source)·[S9](../evidence/module-independence-survey-20261026.md#s9-module-completion) |
 | 04-5 | 소비자 고정 inventory와 M5 한정 인수(S10–S11) | 1 | 완료 | PR #15 `ee0a48c4`·#16 `f95eba15`·#17 `907c7cf5`, [S10](../evidence/module-independence-survey-20261026.md#s10-frozen-inventory)·[M5](../evidence/module-independence-survey-20261026.md#s11-m5); MCB03-V01 한계 수용 보존 |
-| 04-6 | module gate S12와 원격 시행 | 1 | 완료 | PR #18 `76ec2cf5`·#22 `9dc9bf7d`, [S12](../evidence/module-independence-survey-20261026.md#s12-module-gate)·[원격 시행](../evidence/module-independence-survey-20261026.md#s12-remote-rollout) |
-| 05-1 | F0 main 기존 실패 수정·이관 | 1 | 완료 | PR #24 `01fb227d`·#26 `d6ebed80`, [F0](../evidence/main-preexisting-failures-20261030.md#f0-completion) |
-| 05-2 | F1–F7(F6는 조사·M0) | 1 | 완료 | PR #25·#27–#35·#37, [F1](../evidence/module-independence-survey-20261026.md#f1-python-gate)·[F2](../evidence/module-independence-survey-20261026.md#f2-contract-selection)·[F3](../evidence/module-independence-survey-20261026.md#f3-catalog-call)·[F4](../evidence/module-independence-survey-20261026.md#f4-caller-budgets)·[F5](../evidence/module-independence-survey-20261026.md#f5-scope3-fixture)·[F6 M0](../evidence/f6-wal-revalidation-survey-20261102.md#f6a-m0)·[F7](../evidence/module-independence-survey-20261026.md#f7-current-comments) |
+| 04-6 | module gate 계획 검토·S12와 원격 시행 | 1 | 완료 | PR #13 `5107056d`·#18 `76ec2cf5`·#22 `9dc9bf7d`, [S12](../evidence/module-independence-survey-20261026.md#s12-module-gate)·[원격 시행](../evidence/module-independence-survey-20261026.md#s12-remote-rollout) |
+| 05-1 | 후속 계획과 F0 main 기존 실패 수정·이관 | 1 | 완료 | PR #23 `8215c729`·#24 `01fb227d`·#26 `d6ebed80`, [F0](../evidence/main-preexisting-failures-20261030.md#f0-completion) |
+| 05-2 | F1–F7(F6는 조사·M0) | 1 | 완료 | PR #25 `5af10231`·#27–#35(`0fde463c`…`f1600a24`)·#37 `372b22e0`, [F1](../evidence/module-independence-survey-20261026.md#f1-python-gate)·[F2](../evidence/module-independence-survey-20261026.md#f2-contract-selection)·[F3](../evidence/module-independence-survey-20261026.md#f3-catalog-call)·[F4](../evidence/module-independence-survey-20261026.md#f4-caller-budgets)·[F5](../evidence/module-independence-survey-20261026.md#f5-scope3-fixture)·[F6 M0](../evidence/f6-wal-revalidation-survey-20261102.md#f6a-m0)·[F7](../evidence/module-independence-survey-20261026.md#f7-current-comments) |
 | 05-3 | live Row 정리와 호출자 | 1 | 완료 | PR #36 `8fa96c59`·#38 `5f478d00`, [live 정리](../evidence/live-row-retirement-20261102.md)·[호출자](../evidence/live-row-cleanup-caller-20261102.md) |
 | 05-4 | 자동커밋 INSERT 실행기와 F4 rollback 상한 재계약 | 1 | 완료 | PR #39 `65d473e7`, [자동커밋](../evidence/autocommit-insert-20261102.md) |
 | 05-5 | 명시 거래 실행기와 BEGIN·STATEMENT_START 상한·C census 절감 | 1 | 완료 | PR #40 `c7a6425c`, [명시 거래](../evidence/explicit-transaction-20261103.md) |
@@ -164,7 +164,7 @@ ID는 모두 `D3-SCH-` 접두어를 갖는다. 아래는 보고용 기본 배치
 <a id="completion"></a>
 ## 3. ID별 완료 조건과 기존 범위 대응
 
-행은 아래 산출물·조건을 모두 채워야 완료다. 적립은 [일정 항목](#items) 단위이며, 항목마다 그 산출물의 구현, 계약상 필요한 변경 코드 시험, 독립 검토의 필수 지적 해소, main 병합 및 증거 링크가 필요하다. 행의 마지막 항목은 이 표의 행 조건을 모두 채워야 적립한다. 이 조건은 새 제품 시험 실행 권한이 아니며 [변경 코드 시험 제한과 S5 한정 예외](../../AGENTS.md)를 그대로 따른다.
+행은 아래 산출물·조건을 모두 채워야 완료다. 적립은 [일정 항목](#items) 단위이며, 항목마다 그 산출물의 구현, 계약상 필요한 변경 코드 시험, 독립 검토의 필수 지적 해소, main 병합 및 증거 링크가 필요하다. 행에서 마지막으로 남은 항목(번호 순서와 무관)은 이 표의 행 조건을 모두 채워야 적립한다. 이 조건은 새 제품 시험 실행 권한이 아니며 [변경 코드 시험 제한과 S5 한정 예외](../../AGENTS.md)를 그대로 따른다.
 
 | ID | 기존 분류·범위 | 이번 일정 행을 닫는 산출물·조건 |
 | --- | --- | --- |
@@ -212,7 +212,7 @@ ID는 모두 `D3-SCH-` 접두어를 갖는다. 아래는 보고용 기본 배치
 <a id="forecast"></a>
 ## 5. 앞으로의 날짜 예측 — 가중치와 별도 갱신
 
-아래 중앙 일정은 2026-11-03을 기준일로 두고 11-04부터 매일 현재와 같은 투입을 유지하는 기본 순차 배치다. 주말 제외 근무일표가 아니다. audit·fixture는 앞당겨 준비하고, 성능 실행과 다른 부하의 간섭을 피한다. 병행으로 끝나는 시점이 바뀌면 이 표의 예측만 갱신하며 ID 가중치는 유지한다. 06은 남은 06-6의 0.5일만 배치했다.
+아래 중앙 일정은 2026-11-03을 기준일로 두고 11-04부터 매일 현재와 같은 투입을 유지하는 기본 순차 배치다. 주말 제외 근무일표가 아니다. audit·fixture는 앞당겨 준비하고, 성능 실행과 다른 부하의 간섭을 피한다. 병행으로 끝나는 시점이 바뀌면 이 표의 예측만 갱신하며 ID 가중치는 유지한다. 06은 남은 06-6의 0.5일만 배치했다. 17-4(0.5일)는 18-1·18-2 뒤에 적립되지만, 행 단위 배치라 17의 날짜에 넣었다(끝나는 날짜·% 같음).
 
 | ID | 중앙 예상 시작–종료 | 기준 예상 기간 |
 | --- | --- | ---: |
@@ -240,7 +240,7 @@ ID는 모두 `D3-SCH-` 접두어를 갖는다. 아래는 보고용 기본 배치
 ## 6. 앞으로의 누적 % 규칙
 
 1. **고정 분모:** V1의 합계는 86일이다. 끝난 [일정 항목](#items)의 배정일 합계를 분자로 쓴다. `진척률 = 적립일 / 86 × 100`.
-2. **일정 항목 단위 적립:** 항목은 [§3](#completion) 첫 문단의 항목 조건(구현, 변경 코드 시험, 독립 검토 필수 지적 해소, 증거 링크)을 채우고 main에 병합되면 배정일 전액, 그 전(대기·진행 중·검토 중·PR 미병합)에는 0이다. [적립 시점이 따로 있는 항목](#items)은 그 시점을 따른다. **행의 마지막 항목은 그 행의 §3 조건을 모두 채워야 적립하며, 그 전에는 0이다.** 그래서 행의 모든 항목이 적립되면 행이 완료다. 항목 안의 부분 작성량·시험 개수·실제 소요일·경과 날짜로 임의 비율을 주지 않는다. 끝난 항목이 후속 기능에서 재사용돼도 다시 적립하지 않는다.
+2. **일정 항목 단위 적립:** 항목은 [§3](#completion) 첫 문단의 항목 조건(구현, 변경 코드 시험, 독립 검토 필수 지적 해소, 증거 링크)을 채우고 main에 병합되면 배정일 전액, 그 전(대기·진행 중·검토 중·PR 미병합)에는 0이다. [적립 시점이 따로 있는 항목](#items)은 그 시점을 따른다. **행에서 마지막으로 남은 항목(번호 순서와 무관)은 그 행의 §3 조건을 모두 채워야 적립하며, 그 전에는 0이다.** 그래서 행의 모든 항목이 적립되면 행이 완료다. 항목 안의 부분 작성량·시험 개수·실제 소요일·경과 날짜로 임의 비율을 주지 않는다. 끝난 항목이 후속 기능에서 재사용돼도 다시 적립하지 않는다.
 3. **항목 조정:** 착수 때 실제 단계가 항목과 다르면 그 행의 끝나지 않은 항목 안에서 다시 나눈다. 재분할은 영향 받는 항목의 첫 PR을 열기 전에 §2.2에 반영해 병합하고, 전후 항목·배정일과 이유를 [§7](#decision)에 남긴다. 행의 배정일 합은 그대로이고, 끝난 항목의 배정일은 바꾸지 않는다. 이미 끝난 산출물에 맞춰 유리한 배정일을 사후에 주지 않는다. 01–05와 06-1–06-5의 사후 분할은 병합 전 V1 결정으로 §2.2와 [개정 기록](#decision)에 드러냈다. 행 배정일 자체가 크게 모자라면 6번의 V2로 고친다.
 4. **업데이트할 기록:** 기준일·source, ID·일정 항목 상태, 병합 commit/PR, 실제 착수/종료 또는 미측정, source별 검증·검토 링크, 적립일, 누적률, 남은 ETA를 함께 갱신한다. 증거 본문은 원 구현/증거 문서에 두고 여기는 연결한다.
 5. **완료 취소:** 필수 조건을 무효화하는 결함·revert가 확인되면 해당 항목과 행을 재개하고 그 항목의 적립을 회수한다. 감소 이유와 이전 값을 남긴다. 진척률이 반드시 단조 증가해야 한다고 강제하지 않는다.
@@ -262,7 +262,7 @@ ID는 모두 `D3-SCH-` 접두어를 갖는다. 아래는 보고용 기본 배치
 | 대안 | 기능 수 균등분할은 난도를 반영하지 못함. PR 초안의 잔여 35일 하향 배분(행마다 2~3일)도 같은 이유로 병합 전 사용자 결정에 따라 대체. 행 단위 0/100 적립은 행의 완료 조건이 닫힐 때까지 끝난 일정 항목을 %에 보이지 않게 해 병합 전 사용자 요청으로 대체. 실제 경과/예상 잔여 혼합은 지연만으로 %가 오름. 매번 잔여 재견적으로 가중치를 바꾸면 같은 완료 상태의 %가 흔들림 |
 | 범위 | 일정 보고만. 제품 기능·형식·자원 한도·S5 inventory·기존 실행 결과는 변경하지 않음 |
 | 기존 문서 관계 | [구현 계획의 개수 기반 진척률 금지](dev3-implementation-plan.md#work-organization)는 유지하면서 예상 기간 가중 보고를 추가. [AI 처리량 계획](dev3-ai-throughput-improvement.md)의 미측정 과거 시간을 실측처럼 채우지 않는 규칙도 유지. 과거 8–12주 판단을 소급 확정 일정으로 만들지 않음 |
-| 검토·검사 | [독립 D2 검토](../../module-gate/evidence/dev3-schedule/review.md) ACCEPT, 필수 지적 0. 일반 행 변경의 배정·S5 실행분 적립 조건을 보완하고 audit→backup 선행을 맞춤. 병합 전 재배정은 [별도 독립 D2 검토](../../module-gate/evidence/dev3-schedule/review.md#reweight)를 받음: r1 ACCEPT WITH REQUIRED CHANGES(09·11의 key 대기 이중 계수, 05 적립 증거 링크, 검토 상태 표시; 선택 지적 중 §2.1–§3 대응·14의 06 제외·F6-b 조건은 반영, S5 후반 가중치는 일부 반영), r2 필수 1건(17·18의 FT06 이중 배정) 반영 뒤 ACCEPT. 제품 변경이 없어 제품 시험은 실행하지 않음. 자동 문서 검사는 기존 pre-push 훅에서 수행하며 결과는 PR에 기록 |
+| 검토·검사 | [독립 D2 검토](../../module-gate/evidence/dev3-schedule/review.md) ACCEPT, 필수 지적 0. 일반 행 변경의 배정·S5 실행분 적립 조건을 보완하고 audit→backup 선행을 맞춤. 병합 전 재배정은 [별도 독립 D2 검토](../../module-gate/evidence/dev3-schedule/review.md#reweight)를 받음: r1 ACCEPT WITH REQUIRED CHANGES(09·11의 key 대기 이중 계수, 05 적립 증거 링크, 검토 상태 표시; 선택 지적 중 §2.1–§3 대응·14의 06 제외·F6-b 조건은 반영, S5 후반 가중치는 일부 반영), r2 필수 1건(17·18의 FT06 이중 배정) 반영 뒤 ACCEPT. 일정 항목 적립과 01–19 세분화는 [같은 방식의 독립 D2 검토](../../module-gate/evidence/dev3-schedule/review.md#items)를 받음: r1 ACCEPT WITH REQUIRED CHANGES(사후 분할·소급 적립의 개정 기록, 항목 적립 조건과 행 마지막 항목의 §3 조건, 재분할 시점, 누적 산출물 항목의 적립 시점, §2.1 합계), r2 필수 1건(01–05 항목의 제한 공급 표시) 반영 뒤 ACCEPT. 제품 변경이 없어 제품 시험은 실행하지 않음. 자동 문서 검사는 기존 pre-push 훅에서 수행하며 결과는 PR에 기록 |
 | 재검토 | 범위 누락·이중 적립·완료 증거 불일치, 필수 인수 변경, 분모 변경 필요 시 |
 
 | 버전 | 기준일 | 전체 / 적립 | 누적률 | 변경 이유 |
