@@ -35,7 +35,7 @@
 <a id="scope"></a>
 ## 2. 범위·기준·방법
 
-- **기준 source:** main `7692631`(PR #45 병합). 열린 PR #47(DELETE 3단계 native fault cut)은 반영 전이다.
+- **기준 source:** main `7692631`(PR #45 병합)에서 읽었다. 작성 중 병합된 PR #47(DELETE 3단계, main `5760f30`)은 시험 code·native 증거·문서만 바꾸고 제품 code를 바꾸지 않아, 병합 뒤에도 이 리뷰의 판단은 같다. 진도표 수치는 `5760f30` 기준이다.
 - **읽은 문서:** 저장 정본, 16개 작업 명세 가운데 3.06·3.07·3.08·3.10·3.11·3.13·3.14·3.15, [자원 계약](../contracts/dev3-resource-bounds.md), [첫 profile 소비자 계약](../contracts/dev3-module-consumers.md#profile), [DELETE 계약](../contracts/dev3-row-delete.md), [F6 WAL 재검증 조사](f6-wal-revalidation-survey-20261102.md), 진도표, 이전 리뷰 세 건.
 - **대조한 코드:** [첫 profile의 WAL 모양](../../crates/engine/src/storage/semantic_row/operation.rs)(`shape`·`native_mask`), Row 장부 상수(`retention_page/row/job.rs`의 `FORWARD_FIXED`, `semantic_retention.rs`의 `REDO_BYTES`).
 - **외부 근거:** Oracle은 공개 문서(Database Concepts 11g R2 "Data Concurrency and Consistency", Administrator's Guide 21c "Managing Undo")와 Ask TOM, PostgreSQL은 공식 문서의 Transaction Isolation이다([11절](#sources)). Altibase는 이번에 source·문서를 다시 읽지 않았다. Altibase 쪽 비교(TSS·CTS·지연 stamping)는 [10-25 비교 반영](dev3-comparison-adoption-20261025.md)이 기록한 altidev4 조사(`0682bdd8`)의 범위에 기댄다.
@@ -45,7 +45,7 @@
 <a id="current"></a>
 ## 3. 현재 위치
 
-진도표 V1 기준 적립은 29.5/86일 = 34.30%다(main `7692631`). PR #47이 병합되면 06-6이 적립돼 30/86 = 34.88%가 된다. 남은 중앙 예상은 56.5일, 중앙 완료 예상일은 2026-12-30이다([진도표](../plans/dev3-schedule-baseline.md#schedule)).
+진도표 V1 기준 적립은 30/86일 = 34.88%다(main `5760f30`). PR #47의 병합으로 06-6이 적립돼 06(첫 DELETE)까지 완료다. 남은 중앙 예상은 56일(45~67일), 중앙 완료 예상일은 2026-12-30이다([진도표](../plans/dev3-schedule-baseline.md#schedule)).
 
 구현된 것은 [첫 지원 profile](../contracts/dev3-module-consumers.md#profile)이다.
 
@@ -224,7 +224,7 @@ R2는 이미 병합된 01–06의 결과를 무효로 하지 않는다. N=0 복�
 <a id="schedule-impact"></a>
 ## 9. 진도표 확인
 
-- 보고 형식: `DEV3 V1 / 2026-11-03·main 7692631 / 적립 29.5/86일 = 34.30% / 이번 완료 없음 / 다음 06-6(PR #47)·07-1 / 잔여 ETA 45~68일(중앙 56.5일)`.
+- 보고 형식: `DEV3 V1 / 2026-11-03·main 5760f30 / 적립 30/86일 = 34.88% / 이번 완료 없음(이 리뷰는 적립 대상 아님) / 다음 07-1 / 잔여 ETA 45~67일(중앙 56일)`.
 - 이 리뷰는 일정 항목을 적립하지 않고 표를 바꾸지 않는다. 권고는 채택 전이다.
 - R2를 채택하면 새 일정 항목과 분모 변경이 생기므로 [§6](../plans/dev3-schedule-baseline.md#progress-rule)의 V2 절차로 고친다. 이 리뷰는 일수를 제안하지 않는다. 다만 R2 없이 가면 08·11·14의 배정(7·7·3일)이 지금 구조를 넓히는 전제라 모자랄 위험이 크고, R2를 하면 그 세 행의 위험이 줄어든다고 판단한다.
 
