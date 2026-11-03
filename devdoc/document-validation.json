@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-11-03T23:43:19.741654+09:00",
+  "date": "2026-11-04T00:17:10.420787+09:00",
   "status": "PASS",
   "errors": [],
   "markdown_documents": [
@@ -291,7 +291,7 @@
       "file": "devdoc/contracts/dev3-row-delete.md",
       "links": 27,
       "duplicate_ids": 0,
-      "sha256": "3c3ae5806a405c962ceebd175fb068c59943af83d0dac567a33b64bd1c4f572c"
+      "sha256": "c763344b285d575e9c7ff10323c31793e10c10dec8534f1019b68cce1603f512"
     },
     {
       "file": "devdoc/contracts/dev3-row-format.md",

@@ -394,6 +394,18 @@ fn rebind(
     out[end..].copy_from_slice(&digest);
     (out, page)
 }
+/// `frame` with its core's after projection (core @208) set to `digest`
+/// and the frame digest resealed.
+fn recore(frame: &mut [u8], previous_lsn: u64, digest: &[u8; 32]) {
+    let core = {
+        let layout = decode_layout(frame, expectation(previous_lsn), profile()).unwrap();
+        layout.native().as_ptr() as usize - frame.as_ptr() as usize - 256
+    };
+    frame[core + 208..core + 240].copy_from_slice(digest);
+    let end = frame.len() - 32;
+    let digest = content_digest(&frame[..end]);
+    frame[end..].copy_from_slice(&digest);
+}
 /// `frame` and its U after page with the U record's before logical mutation
 /// sequence +1 (header @312, dev3-row-delete.md#delete-undo).
 fn relogical(frame: &[u8], previous_lsn: u64, undo_after: &Page) -> (Vec<u8>, Box<Page>) {
@@ -900,36 +912,38 @@ impl World {
             });
             undo::observe(layout, context, jobs, source, images, proof)
                 .unwrap_or_else(|error| panic!("{name}: undo.rs {error:?}"));
-            // The H proof over a delete predecessor is entry (b) against its
-            // Job (dev3-row-delete.md#previous-proof): that Job's cell length
-            // or effect no longer matching its Live U is refused.
-            let h = pages.previous.filter(|_| row).and_then(|previous| {
-                (0..JOB_COUNT).find(|&at| {
-                    row::decode_job(&self.bank[at], namespace()).is_ok_and(|job| {
+            // The H proof over a delete predecessor reads its Live U through
+            // entry (b) against that root's Job
+            // (dev3-row-delete.md#previous-proof): the H page with the U's
+            // incoming count +1 (page digest resealed) is refused there. (An
+            // edit of that Job's cell length or effect breaks its budget, so
+            // the Job codec would refuse it before the proof.)
+            let h = pages.previous.filter(|_| row).filter(|&previous| {
+                self.bank.iter().any(|cell| {
+                    row::decode_job(cell, namespace()).is_ok_and(|job| {
                         job.state().is_root()
                             && job.effect() == row::RowEffect::Delete
                             && job.undo().is_some_and(|u| u.page().page_no == previous)
                     })
                 })
             });
-            if let Some(h) = h {
-                for (what, at, edit) in [("cell length", 280, 1u8), ("effect", 284, 1u8)] {
-                    let mut bank = Box::new(self.bank);
-                    bank[h][at] ^= edit;
-                    assert!(
-                        undo::observe(
-                            layout,
-                            context,
-                            JobCells::original(&bank),
-                            source,
-                            images,
-                            proof
-                        )
-                        .is_err(),
-                        "{name}: H {what}"
-                    );
-                }
-                println!("N1_H_DELETE\t{name}\trefused=cell length,effect");
+            if let Some(previous) = h {
+                let mut page = Box::new(*World::find(&self.undo, previous));
+                let start = usize::from(u16::from_le_bytes([page[128], page[129]]));
+                let incoming = u64_at(&page[..], start + 80) + 1;
+                page[start + 80..start + 88].copy_from_slice(&incoming.to_le_bytes());
+                let digest = content_digest(&page[..DIGEST_OFFSET]);
+                page[DIGEST_OFFSET..].copy_from_slice(&digest);
+                let images = undo::UndoImages {
+                    predecessor: Some(&page),
+                    ..images
+                };
+                assert_eq!(
+                    undo::observe(layout, context, jobs, source, images, proof).map(|_| ()),
+                    Err(Error::IdentityMismatch),
+                    "{name}: H incoming"
+                );
+                println!("N1_H_DELETE\t{name}\trefused=incoming");
             }
         }
         let mut leaf_observed = false;
@@ -945,11 +959,12 @@ impl World {
             leaf_observed = true;
             if op != op.role() {
                 // What only leaf.rs checks of a DELETE (#delete-undo): U's
-                // before logical against the old or restored row (Live) or
-                // the before it keeps (Releasing). Entry (b) in undo.rs takes
-                // that logical as present only, so it accepts the mutant. (A
-                // Job mutant does not reach leaf.rs: undo.rs binds the
-                // selected Job to the frame first.)
+                // before logical, against the old row (DeleteForward's Live
+                // after) or against the before the Releasing after keeps
+                // (DeleteClr, DeletePrune). Entry (b) in undo.rs takes that
+                // logical as present only, so it accepts the mutant. (A Job
+                // mutant does not reach leaf.rs: undo.rs binds the selected
+                // Job to the frame first.)
                 let (mutant, undo_after) = relogical(frame, self.lsn, &after[UNDO]);
                 undo::observe(
                     decode_layout(&mutant, expectation(self.lsn), profile()).unwrap(),
@@ -986,7 +1001,43 @@ impl World {
                     Err(Error::IdentityMismatch),
                     "{name}: leaf.rs logical"
                 );
-                println!("N1_LEAF_DELETE\t{name}\trefused=logical");
+                // DeleteClr's restored row against U's Live before: the
+                // leaf after's row with its logical mutation sequence +1
+                // (record @112, cell @124), and the core's after projection
+                // of that row to match.
+                let restored = op == Operation::DeleteClr;
+                if restored {
+                    let mut projection = None;
+                    let (mut mutant, leaf_after) =
+                        rebind(frame, self.lsn, 1, &after[LEAF], |cell| {
+                            let mutation = u64_at(cell, 124) + 1;
+                            cell[124..132].copy_from_slice(&mutation.to_le_bytes());
+                            let row =
+                                RowId::new(u64::from_be_bytes(cell[4..12].try_into().unwrap()))
+                                    .unwrap();
+                            projection =
+                                Some(super::row_projection(table(), row, Some(&cell[12..])));
+                        });
+                    recore(&mut mutant, self.lsn, &projection.unwrap().unwrap());
+                    let refused = self.observe_leaf(
+                        &mutant,
+                        change,
+                        pages,
+                        RowAfters {
+                            leaf: &leaf_after,
+                            ..afters
+                        },
+                    );
+                    assert_eq!(
+                        refused.unwrap().map(|_| ()),
+                        Err(Error::IdentityMismatch),
+                        "{name}: leaf.rs restored logical"
+                    );
+                }
+                println!(
+                    "N1_LEAF_DELETE\t{name}\trefused=logical{}",
+                    if restored { ",restored logical" } else { "" }
+                );
             }
         }
         if present(JOB) {

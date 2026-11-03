@@ -22,7 +22,7 @@ use crate::{
             Error as RowError,
             transition::tests::{
                 RowAfters,
-                delete::{ABefore, a_actor, a_befores, d531_over, padded_leaf},
+                delete::{ABefore, a_actor, a_befores, a_group_over, padded_leaf},
             },
         },
         status_home::StatusHome,
@@ -664,58 +664,71 @@ fn rdl_a_delete_producer_refuses_before_output() {
     );
 }
 
-/// RDL-C/RDL-A (dev3-row-delete.md#leaf-reservation): A's INSERT Forward
-/// (D-531, D = 19 from T2's Retained delete root of row 11) produced over
-/// the D-530 RowLeaf padded with committed rows. At exactly entries + cell +
-/// D = capacity, A writes the group and C's whole-group observer accepts
-/// A's frame (with status.rs, undo.rs, leaf.rs and jobs.rs over the same
-/// leaf). One byte fuller, A still writes it (the cell fits without a
-/// split; Reserve proved the fit under the same gate) and C's observer and
-/// leaf.rs refuse A's frame as OrderMismatch, the split check the
-/// reservation extends.
+/// RDL-C/RDL-A (dev3-row-delete.md#leaf-reservation): three of A's history
+/// D groups produced over their before RowLeaf padded with committed rows,
+/// each at the reservation's edge, where C's whole-group observer and
+/// leaf.rs (with status.rs, undo.rs and jobs.rs over the same leaf when C
+/// accepts) give the same answer.
+/// - The INSERT Forward over the effect-1 H (D-531, D = 19 from T2's
+///   Retained delete root of row 2). At exactly entries + cell + D =
+///   capacity, both accept A's frame. One byte fuller, A still writes it (the
+///   cell fits without a split; Reserve proved the fit under the same gate)
+///   and both refuse it as OrderMismatch, the split check the reservation
+///   extends.
+/// - The DeleteForward of row 9 (D-526, D = 19) and its DeleteClr (D-528,
+///   D = 19 + 14 with row 9's own root). At exactly entries + D = capacity
+///   before the group, both accept A's frame: the group moves entries and D
+///   by the same C - 180, so the after leaf is at capacity too. One byte
+///   fuller, A still writes the group (A checks only that its cell fits) and
+///   both refuse the before leaf as Corrupt.
 #[test]
-fn rdl_a_insert_forward_at_the_leaf_reservation_boundary() {
+fn rdl_a_groups_at_the_leaf_reservation_boundary() {
     let states = a_befores();
-    let state = states.iter().find(|state| state.name == "D-531").unwrap();
-    let reserved: usize = state
-        .bank
-        .iter()
-        .filter_map(|cell| row::decode_job(cell, namespace()).ok())
-        .filter(|job| {
-            job.state() == JobState::RootRetained && job.effect() == row::RowEffect::Delete
-        })
-        .map(|job| job.cell_bytes() as usize - 180)
-        .sum();
-    assert_eq!(reserved, 199 - 180);
     // The new row's entry: its record (168 + L), cell head 12 and slot 4.
     let entry = 168 + insert_canonical().len() + 16;
-    for (free, expected) in [
-        (entry + reserved, Ok(())),
-        (entry + reserved - 1, Err(RowError::OrderMismatch)),
+    for (group, d, entry, refusal) in [
+        ("D-531", 199 - 180, entry, RowError::OrderMismatch),
+        ("D-526", 199 - 180, 0, RowError::Corrupt),
+        ("D-528", (199 - 180) + (194 - 180), 0, RowError::Corrupt),
     ] {
-        let padded = padded_leaf(&state.leaf, free);
-        let mut case = Case::new(state);
-        case.before[case.sources[5].unwrap().index] = *padded;
-        let (result, frame, after) = produce(&case, state, case.change(state));
-        let produced = result.unwrap_or_else(|error| panic!("free {free}: {error:?}"));
-        let role = |role: RowPageRole| {
-            let at = produced.roles.iter().position(|r| *r == role).unwrap();
-            &after[at]
-        };
-        let afters = RowAfters {
-            undo: role(RowPageRole::Undo),
-            status: role(RowPageRole::Status),
-            leaf: role(RowPageRole::RowLeaf),
-        };
-        // C's whole-group observer and leaf.rs give the same answer.
-        assert_eq!(
-            d531_over(&padded, &frame[..produced.frame_len], afters),
-            (expected, expected),
-            "free {free}"
-        );
-        println!(
-            "RDL_A_LEAF_BOUNDARY\tentries+cell+D={}\t{expected:?}",
-            TREE_ENTRY_CAPACITY - free + entry + reserved
-        );
+        let state = states.iter().find(|state| state.name == group).unwrap();
+        let reserved: usize = state
+            .bank
+            .iter()
+            .filter_map(|cell| row::decode_job(cell, namespace()).ok())
+            .filter(|job| {
+                job.state() == JobState::RootRetained && job.effect() == row::RowEffect::Delete
+            })
+            .map(|job| job.cell_bytes() as usize - 180)
+            .sum();
+        assert_eq!(reserved, d, "{group} D");
+        for (free, expected) in [
+            (entry + reserved, Ok(())),
+            (entry + reserved - 1, Err(refusal)),
+        ] {
+            let padded = padded_leaf(&state.leaf, free);
+            let mut case = Case::new(state);
+            case.before[case.sources[5].unwrap().index] = *padded;
+            let (result, frame, after) = produce(&case, state, case.change(state));
+            let produced = result.unwrap_or_else(|error| panic!("{group} free {free}: {error:?}"));
+            let role = |role: RowPageRole| {
+                let at = produced.roles.iter().position(|r| *r == role).unwrap();
+                &after[at]
+            };
+            let afters = RowAfters {
+                undo: role(RowPageRole::Undo),
+                status: role(RowPageRole::Status),
+                leaf: role(RowPageRole::RowLeaf),
+            };
+            assert_eq!(
+                a_group_over(group, &padded, &frame[..produced.frame_len], afters),
+                (expected, expected),
+                "{group} free {free}"
+            );
+            println!(
+                "RDL_A_LEAF_BOUNDARY\t{group}\tentries+cell+D={}\t{expected:?}",
+                TREE_ENTRY_CAPACITY - free + entry + reserved
+            );
+        }
     }
 }

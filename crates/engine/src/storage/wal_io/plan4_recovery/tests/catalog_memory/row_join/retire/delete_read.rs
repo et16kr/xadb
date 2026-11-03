@@ -382,8 +382,9 @@ fn rdl_b07_b09_broken_delete_states_are_fatal() {
 /// after its capture (`Point::RowReadCaptured`), holding the tombstone's
 /// Txn and U pins. The caller's rollback of the transaction closes the
 /// gate when it starts, before its RollbackStart and DeleteClr, and waits
-/// for B1 (`Point::ReadGateWaiting`): no WAL while B1 holds its pins, and a
-/// late reader B2 is refused Unchanged InstallationPending. When B1 resumes
+/// for B1 (`Point::ReadGateWaiting`): the WAL is as it was before the
+/// rollback was called, at the wait and while B1 holds its pins, and a late
+/// reader B2 is refused Unchanged InstallationPending. When B1 resumes
 /// it reads the old value 100 through U's before; the rollback then writes
 /// its groups and ends RolledBack, and B2's retry reads the restored row
 /// 100. The drain cleans the compensated root and the Terminal (5 groups)
@@ -454,6 +455,9 @@ fn rdl_b06_delete_clr_waits_for_a_captured_read() {
                 assert_eq!(slot.expect("deleted row").row(), target);
                 let mut b1_private = boxed::<PRIVATE_BYTES>();
                 let mut b2_private = boxed::<PRIVATE_BYTES>();
+                // The WAL before the rollback is called: B1 and B2 only read,
+                // so it stays this until the rollback writes.
+                let wal = files(state).0;
                 let cell = Mutex::new(&mut writer);
                 std::thread::scope(|scope| {
                     let (cell, reader) = (&cell, &reader);
@@ -477,6 +481,9 @@ fn rdl_b06_delete_clr_waits_for_a_captured_read() {
                         let table = thread_table!(reader, &mut o, &view, b2_private);
                         ready_tx.send(()).unwrap();
                         gate_waiting.recv_timeout(WAIT).unwrap();
+                        // The gate closed at the rollback's start: no
+                        // RollbackStart or DeleteClr before the wait.
+                        assert_eq!(files(state).0, wal, "nothing before the gate wait");
                         let at_wait = hook::observe(core);
                         assert_eq!(at_wait.active_read_operations, 1);
                         assert!(at_wait.read_gate_closed && !at_wait.fenced);
@@ -487,7 +494,6 @@ fn rdl_b06_delete_clr_waits_for_a_captured_read() {
                         gate_go.send(Resume::Continue).unwrap();
                         // The rollback keeps waiting while B1 is admitted: no
                         // WAL, the gate closed, B1's operation still counted.
-                        let wal = files(state).0;
                         std::thread::sleep(Duration::from_millis(200));
                         assert_eq!(files(state).0, wal, "the DeleteClr waits for B1");
                         let still = hook::observe(core);

@@ -584,24 +584,31 @@ pub(crate) fn padded_leaf(leaf: &Page, free: usize) -> Box<Page> {
             })
             .sum::<usize>()
     };
-    let version = {
-        let view = tree_page::decode_tree_page(leaf, expected).unwrap();
-        let at = view.lower_bound(&9u64.to_be_bytes()).unwrap();
-        assert!(at.equal);
-        let EntryPayload::Value(value) = view.entry(at.index).unwrap().payload else {
-            panic!("row 9");
-        };
-        row_record::decode_row_record_with_schema(
-            value,
-            RecordExpectation {
-                namespace: namespace(),
-                row: RowId::new(9).unwrap(),
-            },
-            schema,
-        )
-        .unwrap()
-        .version()
-    };
+    // The fillers copy a committed row's version: row 9, or row 4 while
+    // row 9 is a tombstone.
+    let version = [9u64, 4]
+        .into_iter()
+        .find_map(|row| {
+            let view = tree_page::decode_tree_page(leaf, expected).unwrap();
+            let at = view.lower_bound(&row.to_be_bytes()).unwrap();
+            assert!(at.equal, "row {row}");
+            let EntryPayload::Value(value) = view.entry(at.index).unwrap().payload else {
+                panic!("row {row}");
+            };
+            let version = row_record::decode_row_record_with_schema(
+                value,
+                RecordExpectation {
+                    namespace: namespace(),
+                    row: RowId::new(row).unwrap(),
+                },
+                schema,
+            )
+            .unwrap()
+            .version();
+            (matches!(version.stamp, VersionStamp::Committed(_)) && version.undo.is_none())
+                .then_some(version)
+        })
+        .expect("a committed row");
     let mut page = Box::new(*leaf);
     let mut key = 1000u64;
     loop {
@@ -723,43 +730,68 @@ fn rdl_c_leaf_reservation_bounds_every_leaf_step() {
     assert_eq!(names, ["D-524", "D-526", "D-529", "D-537"]);
 }
 
-/// C's whole-group observer and leaf.rs over `frame`, an INSERT Forward of
-/// row r (D-531's change) whose producer wrote the U, Status and RowLeaf
-/// afters `after`, at the D-530 state of history D with the RowLeaf `leaf`
-/// in place of the World's (#leaf-reservation). A group C accepts then goes
-/// through the World's observation over its own afters, so status.rs,
-/// undo.rs, leaf.rs and jobs.rs see it over the same leaf too.
-pub(crate) fn d531_over(
+/// C's whole-group observer and leaf.rs over `frame`, one of A's history D
+/// groups `group` (D-526 DeleteForward, D-528 DeleteClr or D-531 INSERT
+/// Forward) whose producer wrote the U, Status and RowLeaf afters `after`,
+/// at the state before it with the RowLeaf `leaf` in place of the World's
+/// (#leaf-reservation). A group C accepts then goes through the World's
+/// observation over its own afters, so status.rs, undo.rs, leaf.rs and
+/// jobs.rs see it over the same leaf too.
+pub(crate) fn a_group_over(
+    group: &str,
     leaf: &Page,
     frame: &[u8],
     after: RowAfters<'_>,
 ) -> (Result<(), Error>, Result<(), Error>) {
+    let (before, change, pages) = match group {
+        "D-526" => (
+            "D-525",
+            Change::DeleteForward {
+                ordinal: 19,
+                statement: boundary(3, None),
+            },
+            row_pages(10, Some(11)),
+        ),
+        "D-528" => (
+            "D-527",
+            Change::DeleteClr {
+                ordinal: 19,
+                statement: Some(boundary(3, Some(undo_ref(11, 5)))),
+            },
+            row_pages(10, Some(11)),
+        ),
+        "D-531" => (
+            "D-530",
+            Change::Forward {
+                ordinal: 20,
+                statement: boundary(4, None),
+            },
+            row_pages(15, Some(11)),
+        ),
+        _ => panic!("{group}"),
+    };
     let mut result = None;
     history_d_with(false, |name, world| {
-        if name != "D-530" {
+        if name != before {
             return;
         }
-        let change = Change::Forward {
-            ordinal: 20,
-            statement: boundary(4, None),
-        };
-        let pages = row_pages(15, Some(11));
         let mut world = Box::new(world.clone());
         world.leaf = Some(*leaf);
         let local = world
             .observe_leaf(frame, change, pages, after)
-            .expect("D-530 produced r's RowReserve")
+            .expect("an A group leaf.rs observes")
             .map(|_| ());
         let mut computed = loans(0xa5);
         let observed = observe(&world.inputs(change, pages), frame, &mut computed);
         if observed.is_ok() {
-            world.observe("D-531-padded", frame, change, pages);
+            world.observe(&format!("{group}-padded"), frame, change, pages);
         } else {
+            // A reservation refusal precedes output.
             assert!(computed.iter().flatten().all(|byte| *byte == 0xa5));
         }
         result = Some((observed.map(|_| ()), local));
     });
-    result.expect("history D reaches D-530")
+    result.unwrap_or_else(|| panic!("history D reaches {before}"))
 }
 
 /// RDL-C (#delete-states): a DeleteForward candidate that tombstones another
