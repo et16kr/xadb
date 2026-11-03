@@ -242,7 +242,10 @@ fn rdl_r01_base4_takes_each_delete_state() {
 /// RDL-R02..R06: refusals over the Active base (Retained root, Leased
 /// Terminal), each one edit of its RowLeaf or delete U page.
 /// - R02: the actor's tombstone restamped `Committed(3)`: its Retained root
-///   no longer finds its own tombstone (actor, Identity).
+///   no longer finds its own tombstone (actor, Identity). And RDL-B09's
+///   state, an Inline row of the tombstone's version over the delete U
+///   (which B reads as an UPDATE's row, dev3-row-update.md#open item 6):
+///   the DELETE root (effect 1) finds no tombstone (actor, Identity).
 /// - R03: a `Committed` tombstone with no U in place of the kept row (its
 ///   writer's logical): a tombstone is only ever `Transaction(T)` with U
 ///   (actor scan, Identity).
@@ -284,6 +287,16 @@ fn rdl_r02_to_r06_base4_refuses_broken_delete_states() {
         let r02 = edited(cells);
         println!("RDL_R02 {r02:?}");
         assert_eq!(r02, Err(RowBaseError::Actor(ActorError::Identity)));
+        let mut inline = renumbered(&kept, 1);
+        inline[FLAGS] = 0b10;
+        for field in [STAMP, LOGICAL, UNDO] {
+            inline[field.clone()].copy_from_slice(&tombstone[field]);
+        }
+        let mut cells = base_cells();
+        cells[1] = leaf_cell(1, &inline);
+        let b09 = edited(cells);
+        println!("RDL_R02 inline {b09:?}");
+        assert_eq!(b09, Err(RowBaseError::Actor(ActorError::Identity)));
 
         let mut orphan = renumbered(&tombstone, 2);
         orphan[FLAGS] = 0b01;
