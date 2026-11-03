@@ -463,6 +463,7 @@ base4의 지금 `rows()`·`undo()`는 Missing 전용이라 효과1 Job의 상태
   - cut은 group 경계에만 둔다. group 안의 torn write나 sync 실패는 이 단계에서 보지 않는다.
   - ReadCommitted의 "T' committed q'>S → 0행"은 A 실행기로 만들 수 없다. statement snapshot을 preflight 바로 앞에서 잡기 때문이다. C 판정 표 시험(`row_delete_tests.rs`)이 본다.
   - native 결과는 이 cloud 환경의 실행 한 번이다. CI는 native worker를 돌리지 않는다(ignored).
+  - RDL-J11과 RDL-N05의 둘째·셋째 Status page는 시험이 직접 초기화한다(S7 MCI02-N03과 같다). 여러 Status를 쓰는 동시 거래의 일반 공급은 [일정 11](../plans/dev3-schedule-baseline.md#items)이다.
 
 ## 작성 기록
 
