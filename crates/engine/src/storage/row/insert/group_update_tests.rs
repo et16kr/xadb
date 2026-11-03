@@ -16,7 +16,10 @@ use crate::storage::{
     retention_page::row,
     semantic_row::transition::tests::{
         delete::{ABefore, padded_leaf},
-        update::{U_TERMINAL, a_actor, a_befores, u_blob},
+        update::{
+            GROWN_ORDINAL, U_TERMINAL, a_actor, a_befores, a_update_over, grown, grown_before,
+            grown_forward_over, u_blob,
+        },
     },
 };
 use foundation::identity::RowId;
@@ -299,5 +302,81 @@ fn rup_a_update_forward_needs_only_its_growth() {
         let (result, ..) = produce(&case, state, change(&case, state));
         result.unwrap_or_else(|error| panic!("{group} free {growth}: {error:?}"));
         println!("RUP_A_LEAF\t{group}\tfree={growth}\tfits");
+    }
+}
+
+/// RUP-A and RUP-C (review r1 #1, dev3-row-update.md#leaf-reservation): A's
+/// growing UpdateForward of row 11 (C 194 → C' 194 + 14 B) beside the
+/// reservation D = 10 of the Retained shrinking root 24 (`grown_before`, a
+/// state history U does not reach). A writes it as soon as its growth is
+/// free; C's observer re-checks `entries + (C' − C) + D` and accepts it at
+/// exactly capacity, and refuses it one byte fuller (OrderMismatch) before
+/// any output, where only D decides: the cell itself still fits.
+#[test]
+fn rup_a_growing_update_forward_beside_d() {
+    let state = grown_before();
+    let history = History {
+        ordinals: &[("U-560-grow", GROWN_ORDINAL)],
+        ..history_u()
+    };
+    let value = grown();
+    let job = row::decode_job(&state.bank[GROWN_ORDINAL], namespace()).unwrap();
+    assert_eq!(job.effect(), row::RowEffect::Update);
+    let growth = (job.new_cell() - job.cell_bytes()) as usize;
+    assert_eq!(growth, value.len() - 14);
+    let d = 204 - 194;
+    for (free, expected) in [
+        (growth + d, Ok(())),
+        (
+            growth + d - 1,
+            Err(crate::storage::semantic_row::Error::OrderMismatch),
+        ),
+    ] {
+        let mut case = Case::over(&state, &history);
+        let leaf_at = case.sources[5].unwrap().index;
+        let padded = padded_leaf(&state.leaf, free);
+        case.before[leaf_at] = *padded;
+        let change = Change::UpdateForward {
+            canonical: &value,
+            old_cell: job.cell_bytes() as usize,
+            projection: *job.projection_digest(),
+        };
+        let (result, frame, _) = produce(&case, &state, change);
+        let produced = result.unwrap_or_else(|error| panic!("free {free}: {error:?}"));
+        assert_eq!(
+            grown_forward_over(&padded, &frame[..produced.frame_len]),
+            expected,
+            "free {free}"
+        );
+        println!("RUP_A_GROWN_BESIDE_D\tfree={free}\t{expected:?}");
+    }
+}
+
+/// RUP-A (dev3-row-update.md#leaf-reservation, review r1 #2): A's frames
+/// over a leaf at the reservation boundary, through C's observer. The
+/// growing UpdateForward of row 9 (U-558, D 0) is accepted with exactly its
+/// 30 B of growth free (one byte fewer is A's own Capacity, above). The
+/// UpdateClr of the shrinking root 24 (U-562, D 10, its own share 10) is
+/// accepted at exactly entries + D = capacity, since the 10 B it restores
+/// are its own reservation (the room it needs is D less its share, 0). One
+/// byte fewer is A's own Capacity (its restored cell does not fit); C's
+/// refusal of a leaf already inside D is RUP-C's, over the literal.
+#[test]
+fn rup_a_update_groups_at_the_leaf_reservation_boundary() {
+    let states = a_befores();
+    for (group, free, expected) in [("U-558", 224 - 194, Ok(())), ("U-562", 204 - 194, Ok(()))] {
+        let state = states.iter().find(|state| state.name == group).unwrap();
+        let mut case = Case::over(state, &history_u());
+        let leaf_at = case.sources[5].unwrap().index;
+        let padded = padded_leaf(&state.leaf, free);
+        case.before[leaf_at] = *padded;
+        let (result, frame, _) = produce(&case, state, change(&case, state));
+        let produced = result.unwrap_or_else(|error| panic!("{group} free {free}: {error:?}"));
+        assert_eq!(
+            a_update_over(group, &padded, &frame[..produced.frame_len]),
+            expected,
+            "{group} free {free}"
+        );
+        println!("RUP_A_LEAF_BOUNDARY\t{group}\tfree={free}\t{expected:?}");
     }
 }

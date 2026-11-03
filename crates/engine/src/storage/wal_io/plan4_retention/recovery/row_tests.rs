@@ -815,13 +815,19 @@ impl Replay {
             self.aging = Some(*layout.descriptor(0).unwrap());
         }
     }
-    /// Every `R-<name>-*` variant of the transition corpus is refused here.
+    /// Every `R-<name>-*` variant of the transition corpus (history U's own
+    /// corpus for a `U-` group) is refused here.
     fn variants(&mut self, name: &str) {
         let prefix = format!("R-{name}-");
-        for line in INDEX.lines() {
+        let (index, literal): (&str, fn(&str) -> &'static [u8]) = if name.starts_with("U-") {
+            (U_INDEX, u)
+        } else {
+            (INDEX, blob)
+        };
+        for line in index.lines() {
             let variant = line.split('\t').next().unwrap();
             if variant.starts_with(&prefix) {
-                self.refused(variant, blob(variant));
+                self.refused(variant, literal(variant));
                 self.rejected.set(self.rejected.get() + 1);
             }
         }
@@ -1656,34 +1662,78 @@ fn history_d_replay(mode: Mode) -> Replay {
     r
 }
 
-/// RUP stage 2 boundary (dev3-row-update.md#stages): after history D, the
-/// first groups of history U (U-546..U-553 release roots 17 and 20, U-554
-/// begins T3 on Status 21) replay through the Row arm, and then the arm
-/// refuses UPDATE as Unsupported without effect until stage 3 opens its
-/// replay with the producer: an update RowReserve (U-555, a valid effect-2
-/// Job after) at its place, and each UPDATE opcode (U-558 UpdateForward,
-/// U-562 UpdateClr, U-569 UpdatePrune) at its own previous LSN, before any
-/// ordinal is selected.
+/// RUP-R replay (dev3-row-update.md#recovery): after history H and history
+/// D, every group of history U (U-546..U-579: the release of D's last two
+/// roots, T3's Begin, an update Reserve and its Cancel, UpdateForward of a
+/// growing row with no H, of a shrinking row over an effect-2 H and its
+/// statement rollback by UpdateClr, an INSERT over an effect-2 H, a same-size
+/// UpdateForward over an effect-0 H, Commit, UpdatePrune, Prune and
+/// UpdatePrune, and the ReleaseRoles and RootFrees of the committed and the
+/// compensated update roots) replays through the Row arm to the independent
+/// redo afters, Jobs and ATT, and to C's own live record of the same frame.
+/// Every `R-U-*` variant of the transition corpus is refused there with no
+/// effect (`Mode::rejects` over history U). The closure mode stays off as in
+/// `rdl_j_row_arm_replays_history_d`; base4 over effect-2 states is RUP-R's
+/// over actual captured bases.
 #[test]
-fn rup_j_row_arm_refuses_update_until_stage_3() {
+fn rup_r_row_arm_replays_history_u() {
     let mut r = history_d_replay(Mode {
         live: true,
         ..Mode::default()
     });
-    for (ordinal, page_no, names) in [
-        (17, 14, ["U-546", "U-547", "U-548", "U-549"]),
-        (20, 15, ["U-550", "U-551", "U-552", "U-553"]),
-    ] {
-        let undo = Pages {
-            jobs: Some(1),
-            undo: Some(page_no),
-            ..pages()
+    r.mode.rejects = true;
+    const TERMINAL: usize = 22;
+    let update_plan =
+        |statement: u64, container: u64, row: u64, canonical| transition::UpdatePlan {
+            terminal: TERMINAL,
+            container: page_ref(container, 2),
+            table: table(),
+            statement,
+            row: foundation::identity::RowId::new(row).unwrap(),
+            canonical,
         };
+    let reserve = |container: u64| Pages {
+        jobs: Some(1),
+        status: Some(21),
+        undo: Some(container),
+        table: true,
+        ..pages()
+    };
+    let row = |undo: u64, previous: Option<u64>| Pages {
+        jobs: Some(1),
+        status: Some(21),
+        undo: Some(undo),
+        previous,
+        table: true,
+    };
+    let release = |undo: u64| Pages {
+        jobs: Some(1),
+        undo: Some(undo),
+        ..pages()
+    };
+    let status = Pages {
+        jobs: Some(1),
+        status: Some(21),
+        ..pages()
+    };
+    let release_root = |r: &mut Replay, ordinal: usize, page_no: u64, names: [&str; 4]| {
         for name in &names[..3] {
-            r.step(name, u(name), Change::ReleaseRole { ordinal }, undo);
+            r.step(
+                name,
+                u(name),
+                Change::ReleaseRole { ordinal },
+                release(page_no),
+            );
         }
-        r.step(names[3], u(names[3]), Change::RootFree { ordinal }, undo);
-    }
+        r.step(
+            names[3],
+            u(names[3]),
+            Change::RootFree { ordinal },
+            release(page_no),
+        );
+    };
+    release_root(&mut r, 17, 14, ["U-546", "U-547", "U-548", "U-549"]);
+    release_root(&mut r, 20, 15, ["U-550", "U-551", "U-552", "U-553"]);
     r.set_page(page_of(u("U-status21-0")));
     r.step(
         "U-554",
@@ -1693,23 +1743,148 @@ fn rup_j_row_arm_refuses_update_until_stage_3() {
             status: slot(21, 2),
             scope: job3::JobScope::Row,
         },
+        status,
+    );
+    r.step(
+        "U-555",
+        u("U-555"),
+        Change::ReserveUpdate(&update_plan(1, 10, 9, u("U-555-canonical"))),
+        reserve(10),
+    );
+    r.step(
+        "U-556",
+        u("U-556"),
+        Change::Cancel { ordinal: 23 },
         Pages {
-            jobs: Some(1),
+            undo: Some(10),
+            ..status
+        },
+    );
+    r.step(
+        "U-557",
+        u("U-557"),
+        Change::ReserveUpdate(&update_plan(2, 10, 9, u("U-557-canonical"))),
+        reserve(10),
+    );
+    r.step(
+        "U-558",
+        u("U-558"),
+        Change::UpdateForward {
+            ordinal: 23,
+            statement: boundary(2, None),
+        },
+        row(10, None),
+    );
+    r.step(
+        "U-559",
+        u("U-559"),
+        Change::ReserveUpdate(&update_plan(3, 11, 12, u("U-559-canonical"))),
+        reserve(11),
+    );
+    r.step(
+        "U-560",
+        u("U-560"),
+        Change::UpdateForward {
+            ordinal: 24,
+            statement: boundary(3, None),
+        },
+        row(11, Some(10)),
+    );
+    let mark = boundary(3, Some(undo_ref(10, 5)));
+    r.step(
+        "U-561",
+        u("U-561"),
+        Change::RollbackStart {
+            terminal: TERMINAL,
+            statement: Some(mark),
+        },
+        Pages {
+            status: Some(21),
+            undo: Some(11),
+            ..pages()
+        },
+    );
+    r.step(
+        "U-562",
+        u("U-562"),
+        Change::UpdateClr {
+            ordinal: 24,
+            statement: Some(mark),
+        },
+        row(11, Some(10)),
+    );
+    r.step(
+        "U-563",
+        u("U-563"),
+        Change::StatementFinish {
+            terminal: TERMINAL,
+            statement: mark,
+        },
+        Pages {
             status: Some(21),
             ..pages()
         },
     );
-    let unsupported = "Some(RowSemantic(Unsupported))";
-    assert_eq!(r.refused("U-555", u("U-555")), unsupported);
-    // Each opcode frame at its own previous LSN: the cursor is moved there
-    // (apply_frame refuses any other as Invariant) and put back after.
-    let at_d = r.saved();
-    for name in ["U-558", "U-562", "U-569"] {
-        let frame = u(name);
-        r.cursor.previous_lsn = u64_at(frame, 64);
-        assert_eq!(r.refused(name, frame), unsupported, "{name}");
-        r.restore(&at_d);
-    }
+    let plan = ReservePlan {
+        terminal: TERMINAL,
+        container: page_ref(14, 2),
+        table: table(),
+        statement: 4,
+        canonical: u("U-564-canonical"),
+    };
+    r.step("U-564", u("U-564"), Change::Reserve(&plan), reserve(14));
+    r.step(
+        "U-565",
+        u("U-565"),
+        Change::Forward {
+            ordinal: 25,
+            statement: boundary(4, None),
+        },
+        row(14, Some(10)),
+    );
+    r.step(
+        "U-566",
+        u("U-566"),
+        Change::ReserveUpdate(&update_plan(5, 15, 11, u("U-566-canonical"))),
+        reserve(15),
+    );
+    r.step(
+        "U-567",
+        u("U-567"),
+        Change::UpdateForward {
+            ordinal: 26,
+            statement: boundary(5, None),
+        },
+        row(15, Some(14)),
+    );
+    r.step(
+        "U-568",
+        u("U-568"),
+        Change::Commit { terminal: TERMINAL },
+        status,
+    );
+    r.step(
+        "U-569",
+        u("U-569"),
+        Change::UpdatePrune { ordinal: 26 },
+        row(15, Some(14)),
+    );
+    r.step(
+        "U-570",
+        u("U-570"),
+        Change::Prune { ordinal: 25 },
+        row(14, Some(10)),
+    );
+    r.step(
+        "U-571",
+        u("U-571"),
+        Change::UpdatePrune { ordinal: 23 },
+        row(10, None),
+    );
+    release_root(&mut r, 23, 10, ["U-572", "U-573", "U-574", "U-575"]);
+    release_root(&mut r, 24, 11, ["U-576", "U-577", "U-578", "U-579"]);
+    println!("RUP_R_REPLAY_REJECTED\t{}", r.rejected.get());
+    assert_eq!(r.rejected.get(), 13, "every R-U variant reached");
 }
 
 /// H02: every R- variant of the corpus and every replay precondition is

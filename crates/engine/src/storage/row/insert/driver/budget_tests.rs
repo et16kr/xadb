@@ -159,12 +159,16 @@ fn executor(label: &str, kind: &str, refs: usize, census: live::ExecutorCensus, 
     let mut seen = BTreeSet::new();
     for (name, path, share, frame) in &census.sites {
         assert!(share <= frame, "{label} {name}/{path}: {share} > {frame}");
-        let statement = name.starts_with("insert.") || name.starts_with("delete.");
+        let statement = name.starts_with("insert.")
+            || name.starts_with("delete.")
+            || name.starts_with("update.");
         let bound = if statement {
             match *name {
-                "insert.preflight" | "delete.preflight" => ROW_PREFLIGHT_CALLER_BYTES,
-                "insert.validate" => continue,
-                "insert.forward" | "delete.forward" => charge - producer,
+                "insert.preflight" | "delete.preflight" | "update.preflight" => {
+                    ROW_PREFLIGHT_CALLER_BYTES
+                }
+                "insert.validate" | "update.validate" => continue,
+                "insert.forward" | "delete.forward" | "update.forward" => charge - producer,
                 _ => ROW_WRITE_CALLER_BYTES,
             }
         } else {
@@ -204,10 +208,11 @@ fn autocommit<W: WriterNamespace + 'static>(label: &str, kind: live::Kind) {
         .iter()
         .filter(|(name, ..)| name.starts_with(kind.sites()))
         .count();
-    assert_eq!(statement, if kind == live::Kind::Insert { 15 } else { 13 });
+    assert_eq!(statement, if kind == live::Kind::Delete { 13 } else { 15 });
     let name = match kind {
         live::Kind::Insert => "autocommit",
         live::Kind::Delete => "autocommit-delete",
+        live::Kind::Update => "autocommit-update",
     };
     executor(
         label,
@@ -250,6 +255,7 @@ fn explicit<W: WriterNamespace + 'static>(label: &str, kind: live::Kind) {
     let name = match kind {
         live::Kind::Insert => "explicit",
         live::Kind::Delete => "explicit-delete",
+        live::Kind::Update => "explicit-update",
     };
     executor(
         label,
@@ -275,4 +281,25 @@ fn rdl_a08_explicit_delete_budgets_memory() {
 #[test]
 fn rdl_a08_explicit_delete_budgets_native() {
     explicit::<budget::NativeWriter>("native", live::Kind::Delete);
+}
+
+/// RUP-A08 (dev3-row-update.md#resources): the autocommit and explicit
+/// UPDATE entries under the same fixed ceilings as the INSERT and DELETE
+/// ones (the insert site ceilings at the `update.*` sites), at every
+/// rollback, commit, Begin, statement start and cleanup site under them.
+#[test]
+fn rup_a08_autocommit_update_budgets_memory() {
+    autocommit::<crate::storage::wal_io::plan4_test_support::Writer>("memory", live::Kind::Update);
+}
+#[test]
+fn rup_a08_autocommit_update_budgets_native() {
+    autocommit::<budget::NativeWriter>("native", live::Kind::Update);
+}
+#[test]
+fn rup_a08_explicit_update_budgets_memory() {
+    explicit::<crate::storage::wal_io::plan4_test_support::Writer>("memory", live::Kind::Update);
+}
+#[test]
+fn rup_a08_explicit_update_budgets_native() {
+    explicit::<budget::NativeWriter>("native", live::Kind::Update);
 }

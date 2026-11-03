@@ -637,17 +637,40 @@ fn base4_closure_row_xoi_mode_reproduces_inventory() {
     assert_eq!(seen, 8);
 }
 
-/// Stage 2 boundary (dev3-row-update.md#stages): base4 learns UPDATE roots
-/// with their recovery rules in stage 3. Until then the queue check refuses a
-/// valid UPDATE root (effect 2, C' in `[286,288)`, the UPDATE cleanup
-/// recipe) as Unsupported before any actor, table or ledger rule reads it;
-/// the same base with the root left INSERT passes the queue check.
+/// RUP-R (dev3-row-update.md#recovery): base4 takes effect 2. The queue
+/// check accepts a valid UPDATE root (effect 2, C' in `[286,288)`, the
+/// UPDATE cleanup recipe) by the census alone, and the actor's forward check
+/// then binds it to its row: here the Reserved INSERT root's RowId turned
+/// into an UPDATE root's names a key the RowLeaf does not hold, while an
+/// UPDATE Reserve's target is a committed row of the old cell C
+/// (Identity). The UPDATE states over actual captured bases are RUP-R's
+/// JOIN cases.
 #[test]
-fn rup_f_base4_refuses_update_root_until_stage_3() {
+fn rup_r_base4_update_root_needs_its_old_row() {
     use crate::storage::page::DIGEST_OFFSET;
     let mut bytes = state("state-row-reserved");
     let mut scratch = scratch();
-    let cell = {
+    let find = |bytes: &[u8], window: &[u8]| {
+        ARENA
+            + bytes[ARENA..ARENA + 64 * PAGE_BYTES]
+                .windows(window.len())
+                .position(|w| w == window)
+                .unwrap()
+    };
+    // Reseal one arena page and its certificate's full digest.
+    let reseal = |bytes: &mut [u8; BASE_BYTES], at: usize| {
+        let page = (at - ARENA) / PAGE_BYTES;
+        let start = ARENA + page * PAGE_BYTES;
+        let digest = content_digest(&bytes[start..start + DIGEST_OFFSET]);
+        bytes[start + DIGEST_OFFSET..start + PAGE_BYTES].copy_from_slice(&digest);
+        let full = content_digest(&bytes[start..start + PAGE_BYTES]);
+        let cert = CERTIFICATES + page * 96;
+        bytes[cert + 56..cert + 88].copy_from_slice(&full);
+    };
+    // The Reserved INSERT root becomes a Reserved UPDATE root of the same
+    // old cell C and C' = C, with its UPDATE cleanup recipe; the Root's
+    // Job and budget digests commit to the changed census.
+    let (ordinal, job, job_at, root_at, job_digest, budget_digest) = {
         let graph = Graph::new(decode_layout(&*bytes, expected()).unwrap()).unwrap();
         graph.check_queue(&mut scratch).unwrap();
         let ordinal = (0..JOB_COUNT)
@@ -657,31 +680,44 @@ fn rup_f_base4_refuses_update_root_until_stage_3() {
                     .is_ok_and(|job| job.row_scope() && job.state() == row::JobState::RootReserved)
             })
             .unwrap();
-        graph.job(ordinal).unwrap().bytes().to_vec()
+        let mut cells = Box::new([[0; JOB_BYTES]; JOB_COUNT]);
+        for (at, cell) in cells.iter_mut().enumerate() {
+            cell.copy_from_slice(graph.job(at).unwrap().bytes());
+        }
+        let job_at = find(&*bytes, &cells[ordinal]);
+        let root_at = find(&*bytes, graph.root.bytes());
+        let job = &mut cells[ordinal];
+        let c = u32::from_le_bytes(job[280..284].try_into().unwrap());
+        let wal = u64::from_le_bytes(job[784..792].try_into().unwrap());
+        let previous = wal - (311_608 + 2 * u64::from(c)) == 128;
+        assert!(previous || wal == 311_608 + 2 * u64::from(c));
+        let update = row::row_cleanup_wal(row::RowEffect::Update, c, c, previous);
+        job[284] = 2;
+        job[286..288].copy_from_slice(&(c as u16).to_le_bytes());
+        job[784..792].copy_from_slice(&update.to_le_bytes());
+        job[880..888].copy_from_slice(&update.to_le_bytes());
+        let job = *job;
+        // The census sums the changed budget before it compares the digests.
+        let mut aggregate = [0; 640];
+        assert_eq!(
+            row::verify_census(graph.root, graph.namespace(), &cells, &mut aggregate),
+            Err(RetentionError::Corrupt)
+        );
+        let job_digest = content_digest(cells.as_flattened());
+        (
+            ordinal,
+            job,
+            job_at,
+            root_at,
+            job_digest,
+            content_digest(&aggregate),
+        )
     };
-    let at = ARENA
-        + bytes[ARENA..ARENA + 64 * PAGE_BYTES]
-            .windows(cell.len())
-            .position(|window| window == &cell[..])
-            .unwrap();
-    let job = &mut bytes[at..at + cell.len()];
-    let c = u64::from(u32::from_le_bytes(job[280..284].try_into().unwrap()));
-    let wal = u64::from_le_bytes(job[784..792].try_into().unwrap());
-    let h = wal - (311_608 + 2 * c);
-    assert!(h == 0 || h == 128);
-    job[284] = 2;
-    job[286..288].copy_from_slice(&(c as u16).to_le_bytes());
-    job[784..792].copy_from_slice(&(311_428 + 3 * c + h).to_le_bytes());
-    job[880..888].copy_from_slice(&(311_428 + 3 * c + h).to_le_bytes());
-    // Reseal the Jobs page and its certificate's full digest, then pack the
-    // sections again (section digests and trailer).
-    let ordinal = (at - ARENA) / PAGE_BYTES;
-    let page = ARENA + ordinal * PAGE_BYTES;
-    let digest = content_digest(&bytes[page..page + DIGEST_OFFSET]);
-    bytes[page + DIGEST_OFFSET..page + PAGE_BYTES].copy_from_slice(&digest);
-    let full = content_digest(&bytes[page..page + PAGE_BYTES]);
-    let cert = CERTIFICATES + ordinal * 96;
-    bytes[cert + 56..cert + 88].copy_from_slice(&full);
+    bytes[job_at..job_at + job.len()].copy_from_slice(&job);
+    reseal(&mut bytes, job_at);
+    bytes[root_at + 128..root_at + 160].copy_from_slice(&job_digest);
+    bytes[root_at + 160..root_at + 192].copy_from_slice(&budget_digest);
+    reseal(&mut bytes, root_at);
     let header = decode_layout(&*state("state-row-reserved"), expected())
         .unwrap()
         .header();
@@ -689,10 +725,11 @@ fn rup_f_base4_refuses_update_root_until_stage_3() {
     let layout =
         super::super::encode_layout(header, expected(), sections(&bytes), &mut output).unwrap();
     let graph = Graph::new(layout).unwrap();
-    assert!((0..JOB_COUNT).any(|ordinal| {
-        graph
-            .job(ordinal)
-            .is_ok_and(|job| job.effect() == row::RowEffect::Update)
-    }));
-    assert_eq!(graph.check_queue(&mut scratch), Err(Error::Unsupported));
+    assert_eq!(graph.job(ordinal).unwrap().effect(), row::RowEffect::Update);
+    assert_eq!(graph.check_queue(&mut scratch), Ok(()));
+    // An UPDATE root's row is present in every state; this Reserved root's
+    // old row is not (the INSERT's key is absent), so the actor refuses it.
+    let result = decode(&*output, expected(), &mut scratch).err();
+    println!("RUP_R_BASE4_RESERVED_UPDATE_WITHOUT_ROW\t{result:?}");
+    assert_eq!(result, Some(RowBaseError::Actor(actor::Error::Identity)));
 }

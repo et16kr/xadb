@@ -639,7 +639,9 @@ fn reserve_target(
             !plan.needs_split()
                 && plan.entry_bytes() + source.reserved <= tree_page::TREE_ENTRY_CAPACITY,
         )?;
-        // The planned row's cell is the C' A's value or the adopted Job names.
+        // A's value must make the cell C' the update names. An adopted Job's
+        // placeholder is C' − 12 by construction (above), so for it this
+        // only restates the decode's C' range.
         same(length + 12 == new_cell)?;
     }
     record.fill(0);

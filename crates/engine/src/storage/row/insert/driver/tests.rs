@@ -32,8 +32,8 @@ use crate::{
 use Call::{
     Apply, Cancel, Check, CleanupNext, Clr, ClrApply, ClrLane, ClrPrepare, ClrReopen, Commit,
     ContinueFlush, DropReserved, DropRollback, FinishAborted, FinishPreflight, FinishStatement,
-    Forward, Next, PreflightDelete, Prepare, Reopen, Reserve, ReserveDelete, Retire,
-    RollbackFinish, RollbackFlush, RollbackStart, TryFlush, Validate,
+    Forward, Next, PreflightDelete, PreflightUpdate, Prepare, Reopen, Reserve, ReserveDelete,
+    Retire, RollbackFinish, RollbackFlush, RollbackStart, TryFlush, Validate,
 };
 use foundation::{identity::SchemaEpoch, namespace::WriterNamespace};
 use std::cell::RefCell;
@@ -122,6 +122,9 @@ enum Call {
     /// C's DELETE preflight of a target row, and its delete Reserve.
     PreflightDelete(u64),
     ReserveDelete(u64),
+    /// C's UPDATE preflight, which this literal boundary does not model:
+    /// the A UPDATE executor runs over real C (RUP-A, `row_join`).
+    PreflightUpdate(u64),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -448,6 +451,21 @@ impl<'s> Boundary for LiteralCall<'s> {
             None => PreflightNext::NoRow,
         })
     }
+    /// UPDATE is not modelled here (its executor runs over real C, RUP-A):
+    /// a call is a violation, refused Unsupported with no effect.
+    fn preflight_update<'r, 'i>(
+        &'r mut self,
+        _statement: &'r LiteralStatement<'s>,
+        _table: &'r LiteralTable,
+        row: RowId,
+        _loan: &'i mut Loan,
+    ) -> Result<PreflightNext<LiteralPreflight<'r, 'i>, u64>, RetentionError> {
+        let call = PreflightUpdate(row.get());
+        let mut state = self.state.borrow_mut();
+        state.note(call);
+        state.violations.push("UPDATE on the literal boundary");
+        Err(refusal(call, Cause::Unsupported))
+    }
     fn start_rollback<'r, 'i>(
         &'r mut self,
         _transaction: &'r LiteralTransaction,
@@ -701,6 +719,20 @@ impl<'r, 'i> Preflight for LiteralPreflight<'r, 'i> {
         drop(state);
         this.done = true;
         Ok(reserved)
+    }
+    /// No preflight of this boundary is an UPDATE's (`preflight_update`).
+    fn reserve_update(
+        self,
+        _input: RowInputPlan,
+    ) -> Result<LiteralReserved<'r, 'i>, RowOwnedError<Self>> {
+        self.state
+            .borrow_mut()
+            .violations
+            .push("update Reserve on the literal boundary");
+        Err(RowOwnedError::Before {
+            error: refusal(PreflightUpdate(0), Cause::Unsupported),
+            owned: self,
+        })
     }
     /// The delete Reserve of the preflight's target: no new RowId, the old
     /// row's cell `C = 180 + L`.
@@ -2673,7 +2705,9 @@ fn call_site_census<W: WriterNamespace + 'static>(writer: &str) {
     let names: std::collections::BTreeSet<_> = sites.iter().map(|site| site.name).collect();
     assert_eq!(names.len(), CALL_SITES);
     let bound = |bound| sites.iter().filter(|site| site.bound == bound).count();
-    assert_eq!((bound(Bound::Preflight), bound(Bound::A)), (2, 4));
+    // The preflights of INSERT, DELETE and UPDATE; A's validate (INSERT,
+    // UPDATE), Forward (INSERT, DELETE, UPDATE) and CLR.
+    assert_eq!((bound(Bound::Preflight), bound(Bound::A)), (3, 6));
     // The contract's oracle: the per-call share (M3).
     assert!(over.is_empty(), "{writer}: over the bound at {over:?}");
     assert!(

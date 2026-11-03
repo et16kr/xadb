@@ -332,15 +332,13 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
                             continue;
                         }
                         // A committed DELETE root's tombstone goes by
-                        // DeletePrune (dev3-row-delete.md#recovery).
+                        // DeletePrune (dev3-row-delete.md#recovery), an
+                        // UPDATE root's new row by UpdatePrune
+                        // (dev3-row-update.md#recovery).
                         match self.recovery_row_job(ordinal)?.effect() {
                             job3::RowEffect::Insert => RowOperation::Prune,
                             job3::RowEffect::Delete => RowOperation::DeletePrune,
-                            // UpdatePrune recovery opens in
-                            // dev3-row-update.md#stages stage 3.
-                            job3::RowEffect::Update => {
-                                return Err(self.recovery_row_unsupported());
-                            }
+                            job3::RowEffect::Update => RowOperation::UpdatePrune,
                         }
                     }
                     job3::JobState::RootReleasingCommitted
@@ -544,7 +542,10 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
                 };
                 let job = self.recovery_row_job(ordinal)?;
                 push(2 + ordinal / 15)?;
-                let prune = matches!(operation, RowOperation::Prune | RowOperation::DeletePrune);
+                let prune = matches!(
+                    operation,
+                    RowOperation::Prune | RowOperation::DeletePrune | RowOperation::UpdatePrune
+                );
                 if prune
                     || matches!(
                         operation,

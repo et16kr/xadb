@@ -92,6 +92,16 @@ trait Boundary {
         row: RowId,
         loan: &'i mut Loan,
     ) -> Result<PreflightNext<Self::Preflight<'r, 'i>, Self::Target>, RetentionError>;
+    /// C's UPDATE preflight of `row` (`preflight_update`,
+    /// dev3-row-update.md#api): `preflight_delete`'s answers by the same
+    /// classification table.
+    fn preflight_update<'r, 'i>(
+        &'r mut self,
+        statement: &'r Self::Statement,
+        table: &'r Self::Table,
+        row: RowId,
+        loan: &'i mut Loan,
+    ) -> Result<PreflightNext<Self::Preflight<'r, 'i>, Self::Target>, RetentionError>;
     fn start_rollback<'r, 'i>(
         &'r mut self,
         transaction: &'r Self::Transaction,
@@ -163,10 +173,11 @@ enum PreflightNext<P, F> {
     /// preflight. Nothing is held: C has returned its source, gate and flush
     /// lease, and nothing took effect.
     Flush(F),
-    /// A DELETE's target is no row under the statement snapshot: C has
-    /// registered the table read and returned its source, gate and lease,
-    /// and nothing took effect (dev3-row-delete.md#classification). An
-    /// INSERT's preflight never answers it.
+    /// A DELETE's or an UPDATE's target is no row under the statement
+    /// snapshot: C has registered the table read and returned its source,
+    /// gate and lease, and nothing took effect
+    /// (dev3-row-delete.md#classification, dev3-row-update.md
+    /// #classification). An INSERT's preflight never answers it.
     NoRow,
 }
 
@@ -183,6 +194,11 @@ trait Preflight: Sized {
     /// A DELETE preflight's only first effect (`reserve_delete`): C reserves
     /// the target it classified, and A validates nothing.
     fn reserve_delete(self) -> Result<Self::Reserved, RowOwnedError<Self>>;
+    /// An UPDATE preflight's only first effect (`reserve_update`): C
+    /// reserves the target it classified for the new value `input`, which A
+    /// checked over the same validation lane as an INSERT's; the plan is
+    /// untrusted.
+    fn reserve_update(self, input: RowInputPlan) -> Result<Self::Reserved, RowOwnedError<Self>>;
     /// Returns the admission and loan; the observed read set stays. C
     /// documents Drop as the same no-effect release.
     fn finish(self) -> Result<(), RetentionError>;
@@ -800,6 +816,117 @@ fn erase_row<P: Preflight>(preflight: P) -> Result<P::Applied, Failure> {
 )]
 fn reserve_delete_row<P: Preflight>(preflight: P) -> Result<P::Reserved, Failure> {
     match preflight.reserve_delete() {
+        Ok(reserved) => Ok(reserved),
+        Err(RowOwnedError::Before { error, owned }) => {
+            let failure = Failure::new(Stage::Reserve, error.into());
+            Err(finish_preflight(owned, failure))
+        }
+        Err(RowOwnedError::Fatal(error)) => Err(Failure::fatal(Stage::Reserve, error)),
+    }
+}
+
+/// One UPDATE statement of one target row to the new `values`
+/// (dev3-row-update.md#api), with `delete_statement`'s checks, answers and
+/// end: on success `slot` holds the updated row's observation and the
+/// answer is 1; a target that is no row under the statement snapshot
+/// finishes the statement with 0. The new values are checked by C's
+/// validation lane as an INSERT's (`InvalidInput` for values the table's
+/// schema does not take) after a Ready preflight, so a refusal before it
+/// (Busy, Unsupported, SerializationConflict) does not depend on them.
+#[allow(
+    clippy::result_large_err,
+    reason = "Failure keeps the stage, the error and any refused cleanup inline, without allocation"
+)]
+fn update_statement<B: Boundary>(
+    call: &mut B,
+    statement: B::Statement,
+    table: &B::Table,
+    loan: &mut Loan,
+    (row, values): (RowId, &[ValueRef<'_>]),
+    slot: &mut Option<B::Applied>,
+) -> Result<usize, DriveError<B::Statement>> {
+    if let Err(error) = statement.check() {
+        let failure = Failure::new(Stage::Statement, error.into());
+        return Err(DriveError::new(failure, After::Returned(statement)));
+    }
+    let (failed, updated) = match update_row(call, &statement, table, loan, row, values) {
+        Ok(Some(applied)) => {
+            *slot = Some(applied);
+            (None, 1)
+        }
+        Ok(None) => (None, 0),
+        Err(failure) => (Some(failure), 0),
+    };
+    end_statement(call, statement, failed, updated, updated)
+}
+
+/// The UPDATE's one row, as `delete_row`'s: C's preflight of the target,
+/// flushed and tried again on FlushRequired; None when C answered NoRow;
+/// otherwise the new value's validation and the update Reserve, then A's
+/// UpdateForward producer, prepare and apply on the reservation
+/// (`rewrite_row`), in frames that are not laid out at the preflight and
+/// its flush.
+#[inline(never)]
+#[allow(
+    clippy::result_large_err,
+    reason = "Failure keeps the stage, the error and any refused cleanup inline, without allocation"
+)]
+fn update_row<B: Boundary>(
+    call: &mut B,
+    statement: &B::Statement,
+    table: &B::Table,
+    loan: &mut Loan,
+    row: RowId,
+    values: &[ValueRef<'_>],
+) -> Result<Option<B::Applied>, Failure> {
+    let preflight = loop {
+        // C's answer is dropped at the end of this statement, so the flush
+        // below may borrow the call again.
+        let target = match call.preflight_update(statement, table, row, loan) {
+            Ok(PreflightNext::Ready(preflight)) => break preflight,
+            Ok(PreflightNext::Flush(target)) => target,
+            Ok(PreflightNext::NoRow) => return Ok(None),
+            // A refusal (Busy, Unsupported, SerializationConflict among
+            // them) ends the row: C returned what it took.
+            Err(error) => return Err(Failure::new(Stage::Preflight, error.into())),
+        };
+        flush(call, &target)?;
+    };
+    rewrite_row(preflight, values).map(Some)
+}
+
+/// The UPDATE after a Ready preflight: the new value's validation and the
+/// update Reserve (`reserve_update_row`), then A's producer, prepare and
+/// apply on the reservation (`forward_row`, the INSERT's: C's lane hands A
+/// the UpdateForward). Never inlined, as `write_row`.
+#[inline(never)]
+#[allow(
+    clippy::result_large_err,
+    reason = "Failure keeps the stage, the error and any refused cleanup inline, without allocation"
+)]
+fn rewrite_row<P: Preflight>(preflight: P, values: &[ValueRef<'_>]) -> Result<P::Applied, Failure> {
+    match reserve_update_row(preflight, values) {
+        Ok(reserved) => forward_row(reserved),
+        Err(failure) => Err(failure),
+    }
+}
+
+/// The new value checked over C's validation lane, then the UPDATE's one
+/// Reserve, as `reserve_row`. A refusal finishes the preflight.
+#[inline(never)]
+#[allow(
+    clippy::result_large_err,
+    reason = "Failure keeps the stage, the error and any refused cleanup inline, without allocation"
+)]
+fn reserve_update_row<P: Preflight>(
+    mut preflight: P,
+    values: &[ValueRef<'_>],
+) -> Result<P::Reserved, Failure> {
+    let input = match validate_row(&mut preflight, values) {
+        Ok(input) => input,
+        Err(failure) => return Err(finish_preflight(preflight, failure)),
+    };
+    match preflight.reserve_update(input) {
         Ok(reserved) => Ok(reserved),
         Err(RowOwnedError::Before { error, owned }) => {
             let failure = Failure::new(Stage::Reserve, error.into());
@@ -1463,7 +1590,7 @@ impl CallSite {
     }
 }
 
-pub(super) const CALL_SITES: usize = 39;
+pub(super) const CALL_SITES: usize = 54;
 
 /// A's share at each call site, in the size_of inventory sense of
 /// `carrier_bytes` and with its conventions: a C call's result counts twice
@@ -1508,7 +1635,8 @@ pub(super) const CALL_SITES: usize = 39;
 /// It relies on which frames are separate: `insert_row`, `end_statement`,
 /// `write_row` and its steps (`reserve_row`, `validate_row`, `forward_row`,
 /// `produce_row`, `prepare_row`, `apply_row`), the DELETE's `delete_row`,
-/// `erase_row` and `reserve_delete_row`, `flush`, `finish_preflight`,
+/// `erase_row` and `reserve_delete_row`, the UPDATE's `update_row`,
+/// `rewrite_row` and `reserve_update_row`, `flush`, `finish_preflight`,
 /// `cancel`, `finish_statement`, `compensate`, the two rollback starts and
 /// `rollback_step` are never inlined, so none
 /// of their slots is laid out in their caller's frame: none of `write_row`'s
@@ -1742,6 +1870,69 @@ const fn call_sites<B: Boundary + 'static>() -> [CallSite; CALL_SITES] {
     let in_delete_produce = in_delete_forward + produce_frame;
     let in_delete_prepare = in_delete_forward + prepare_frame;
     let in_delete_apply = in_delete_prepare + apply_frame;
+    // The UPDATE statement (`update_statement`, dev3-row-update.md
+    // #resources): its arguments (the target, its new values and its slot)
+    // and its own result; while update_row runs, the row's result slot and
+    // update_row's arguments.
+    let update_statement = slack
+        + size_of::<&mut B>()
+        + size_of::<&B::Table>()
+        + size_of::<&mut Loan>()
+        + size_of::<(RowId, Values)>()
+        + size_of::<&mut Option<A<B>>>()
+        + size_of::<S<B>>()
+        + size_of::<Result<usize, DriveError<S<B>>>>();
+    let update_row = update_statement
+        + size_of::<Result<Option<A<B>>, Failure>>()
+        + 4 * r
+        + size_of::<RowId>()
+        + size_of::<Values>();
+    // ... after a Ready preflight: rewrite_row's result slot in update_row
+    // (it is mapped, not a tail) and its values; while reserve_update_row
+    // runs, the preflight (in update_row's frame), its values and its
+    // result slot; while validate_row runs, also its arguments and result.
+    let rewriting = update_row + size_of::<Result<A<B>, Failure>>() + size_of::<Values>();
+    let update_reserving =
+        rewriting + size_of::<P<B>>() + size_of::<Values>() + size_of::<Result<R<B>, Failure>>();
+    let update_validating =
+        update_reserving + r + size_of::<Values>() + size_of::<Result<RowInputPlan, Failure>>();
+    // ... after the Reserve, as `forwarding` and `producing`.
+    let update_forwarding = rewriting + size_of::<R<B>>();
+    let update_producing = update_forwarding + r + size_of::<Result<RowProposal, Failure>>();
+    let update_flushing = update_row + size_of::<G<B>>() + 2 * r + size_of::<Result<(), Failure>>();
+    // update_statement's own slots: as delete_statement's, with the new
+    // values beside the target.
+    let update_statement_frame = update_statement - slack
+        + size_of::<Result<(), RetentionError>>()
+        + failure
+        + size_of::<Result<Option<A<B>>, Failure>>()
+        + size_of::<Option<Failure>>()
+        + size_of::<usize>();
+    // update_row: its arguments; C's preflight answer; the Ready preflight
+    // and the flush target; flush's result; rewrite_row's result before
+    // `map`.
+    let update_row_frame = 4 * r
+        + size_of::<RowId>()
+        + size_of::<Values>()
+        + size_of::<Result<PreflightNext<P<B>, G<B>>, RetentionError>>()
+        + size_of::<P<B>>()
+        + size_of::<G<B>>()
+        + size_of::<Result<(), Failure>>()
+        + size_of::<Result<A<B>, Failure>>();
+    // rewrite_row: as write_row. reserve_update_row: as reserve_row.
+    let rewrite_frame = write_frame;
+    let reserve_update_frame = reserve_frame;
+    let in_update = slack + update_statement_frame;
+    let in_update_end = in_update + end_frame;
+    let in_update_row = in_update + update_row_frame;
+    let in_update_flush = in_update_row + flush_frame;
+    let in_rewrite = in_update_row + rewrite_frame;
+    let in_update_reserve = in_rewrite + reserve_update_frame;
+    let in_update_validate = in_update_reserve + validate_frame;
+    let in_update_forward = in_rewrite + forward_frame;
+    let in_update_produce = in_update_forward + produce_frame;
+    let in_update_prepare = in_update_forward + prepare_frame;
+    let in_update_apply = in_update_prepare + apply_frame;
     // rollback_step's slots beside its share: the task it binds out of C's
     // answer and compensate's result while `next` runs, C's answer while
     // compensate runs.
@@ -2006,6 +2197,127 @@ const fn call_sites<B: Boundary + 'static>() -> [CallSite; CALL_SITES] {
                 + 2 * size_of::<Result<(), StatementFinishError<S<B>>>>()
                 + r,
             in_delete_end
+                + finish_statement_frame
+                + size_of::<Result<(), StatementFinishError<S<B>>>>()
+                + r,
+        ),
+        Site::new(
+            "update.check",
+            Bound::Write,
+            update_statement + 2 * size_of::<Result<(), RetentionError>>() + r,
+            in_update + size_of::<Result<(), RetentionError>>() + r,
+        ),
+        Site::new(
+            "update.preflight",
+            Bound::Preflight,
+            update_row
+                + 2 * size_of::<Result<PreflightNext<P<B>, G<B>>, RetentionError>>()
+                + 4 * r
+                + size_of::<RowId>(),
+            in_update_row
+                + size_of::<Result<PreflightNext<P<B>, G<B>>, RetentionError>>()
+                + 4 * r
+                + size_of::<RowId>(),
+        ),
+        Site::new(
+            "update.try_flush",
+            Bound::Write,
+            update_flushing + 2 * size_of::<Result<(), RetentionError>>() + 2 * r,
+            in_update_flush + size_of::<Result<(), RetentionError>>() + 2 * r,
+        ),
+        Site::new(
+            "update.continue_flush",
+            Bound::Write,
+            update_flushing + 2 * size_of::<Result<FlushStep, RetentionError>>() + r,
+            in_update_flush + size_of::<Result<FlushStep, RetentionError>>() + r,
+        ),
+        Site::new(
+            "update.validation_lane",
+            Bound::Write,
+            update_validating + 2 * size_of::<Result<V<B>, RetentionError>>() + r,
+            in_update_validate + size_of::<Result<V<B>, RetentionError>>() + r,
+        ),
+        Site::new(
+            "update.validate",
+            Bound::A,
+            update_validating
+                + size_of::<V<B>>()
+                + size_of::<Values>()
+                + 2 * size_of::<Result<RowInputPlan, InsertError>>(),
+            in_update_validate
+                + size_of::<Values>()
+                + size_of::<Result<RowInputPlan, InsertError>>(),
+        ),
+        Site::new(
+            "update.reserve",
+            Bound::Write,
+            update_reserving
+                + size_of::<RowInputPlan>()
+                + 2 * size_of::<Result<R<B>, RowOwnedError<P<B>>>>(),
+            in_update_reserve + size_of::<Result<R<B>, RowOwnedError<P<B>>>>(),
+        ),
+        Site::new(
+            "update.finish_preflight",
+            Bound::Write,
+            update_reserving + 2 * failure + 2 * size_of::<Result<(), RetentionError>>(),
+            in_update_reserve + finish_preflight_frame + size_of::<Result<(), RetentionError>>(),
+        ),
+        Site::new(
+            "update.producer_lane",
+            Bound::Write,
+            update_producing + 2 * size_of::<Result<L<B>, RetentionError>>() + r,
+            in_update_produce + size_of::<Result<L<B>, RetentionError>>() + r,
+        ),
+        Site::new(
+            "update.forward",
+            Bound::A,
+            update_producing
+                + size_of::<L<B>>()
+                + 2 * size_of::<Result<RowProposal, InsertError>>(),
+            in_update_produce + size_of::<Result<RowProposal, InsertError>>(),
+        ),
+        Site::new(
+            "update.prepare",
+            Bound::Write,
+            update_forwarding
+                + size_of::<RowProposal>()
+                + 2 * size_of::<Result<D<B>, RowOwnedError<R<B>>>>(),
+            in_update_prepare + size_of::<Result<D<B>, RowOwnedError<R<B>>>>(),
+        ),
+        Site::new(
+            "update.apply",
+            Bound::Write,
+            rewriting + size_of::<D<B>>() + 2 * size_of::<Result<A<B>, RowOwnedError<D<B>>>>(),
+            in_update_apply + size_of::<Result<A<B>, RowOwnedError<D<B>>>>(),
+        ),
+        Site::new(
+            "update.reopen",
+            Bound::Write,
+            rewriting + size_of::<D<B>>() + size_of::<RetentionError>() + 2 * size_of::<R<B>>(),
+            in_update_apply + size_of::<R<B>>(),
+        ),
+        Site::new(
+            "update.cancel",
+            Bound::Write,
+            rewriting
+                + size_of::<R<B>>()
+                + 2 * failure
+                + 2 * size_of::<Result<(), RowOwnedError<R<B>>>>(),
+            in_update_apply + cancel_frame + size_of::<Result<(), RowOwnedError<R<B>>>>(),
+        ),
+        // As `delete.finish_statement`, below the UPDATE statement's frame.
+        Site::new(
+            "update.finish_statement",
+            Bound::Write,
+            slack
+                + size_of::<&mut B>()
+                + size_of::<usize>()
+                + size_of::<Result<usize, DriveError<S<B>>>>()
+                + size_of::<Result<(), DriveError<S<B>>>>()
+                + size_of::<S<B>>()
+                + 2 * size_of::<Result<(), StatementFinishError<S<B>>>>()
+                + r,
+            in_update_end
                 + finish_statement_frame
                 + size_of::<Result<(), StatementFinishError<S<B>>>>()
                 + r,

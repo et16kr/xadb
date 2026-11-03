@@ -21,6 +21,12 @@ pub(crate) trait RowPreflightOperation: sealed::State + Sized {
     /// A DELETE preflight's first effect (dev3-row-delete.md#api): the
     /// delete RowReserve of its classified target, with no candidate.
     fn reserve_delete(self) -> std::result::Result<Self::Reserved, RowOwnedError<Self>>;
+    /// An UPDATE preflight's first effect (dev3-row-update.md#api): the
+    /// update RowReserve of its classified target for A's new value.
+    fn reserve_update(
+        self,
+        input: RowInputPlan,
+    ) -> std::result::Result<Self::Reserved, RowOwnedError<Self>>;
     /// Checked release of the source/gate/loan. The observed read set stays.
     fn finish(self) -> Result<()>;
 }
@@ -62,6 +68,12 @@ impl<'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> Row
     }
     fn reserve_delete(self) -> std::result::Result<Self::Reserved, RowOwnedError<Self>> {
         PreflightRow::reserve_delete(self)
+    }
+    fn reserve_update(
+        self,
+        input: RowInputPlan,
+    ) -> std::result::Result<Self::Reserved, RowOwnedError<Self>> {
+        PreflightRow::reserve_update(self, input)
     }
     fn finish(self) -> Result<()> {
         PreflightRow::finish(self).map(|_| ())

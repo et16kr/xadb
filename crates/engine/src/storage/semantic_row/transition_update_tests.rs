@@ -549,6 +549,136 @@ pub(crate) fn u_leaves(names: &[&str]) -> Vec<delete::DLeaf> {
     out
 }
 
+/// C's whole-group observer over `frame`, one of A's history U groups
+/// `group` (U-558 growing UpdateForward, U-562 UpdateClr of the shrinking
+/// root), at the state before it with the RowLeaf `leaf` in place of the
+/// World's (#leaf-reservation). A refusal precedes output.
+pub(crate) fn a_update_over(group: &str, leaf: &Page, frame: &[u8]) -> Result<(), Error> {
+    let (before, change, pages) = match group {
+        "U-558" => (
+            "U-557",
+            Change::UpdateForward {
+                ordinal: 23,
+                statement: boundary(2, None),
+            },
+            row_pages(10, None),
+        ),
+        "U-562" => (
+            "U-561",
+            Change::UpdateClr {
+                ordinal: 24,
+                statement: Some(boundary(3, Some(undo_ref(10, 5)))),
+            },
+            row_pages(11, Some(10)),
+        ),
+        _ => panic!("{group}"),
+    };
+    let mut result = None;
+    history_u_with(false, |name, world| {
+        if name != before {
+            return;
+        }
+        let mut after = loans(0xa5);
+        let observed = observe(&over_leaf(world, change, pages, leaf), frame, &mut after);
+        if observed.is_err() {
+            assert!(after.iter().flatten().all(|byte| *byte == 0xa5));
+        }
+        result = Some(observed.map(|_| ()));
+    });
+    result.unwrap_or_else(|| panic!("history U reaches {before}"))
+}
+
+/// The new value of row 11 that grows beside a reservation (review r1 #1):
+/// 14 B longer than row 11's U-566 value, so C' − C = `grown().len()` − 14.
+pub(crate) fn grown() -> Vec<u8> {
+    canonical(11, Some(b"eleven, now twenty bytes"))
+}
+
+/// The ordinal of the growing update root `grown_world` reserves.
+pub(crate) const GROWN_ORDINAL: usize = 25;
+
+/// A state history U does not reach (review r1 #1): the U-560 state, where
+/// the Retained shrinking root 24 holds D = 10, with C's growing update
+/// Reserve of row 11 (statement 4, container 14, `grown`) produced over it
+/// and installed. It has no literal: C's producer is RUP-C's
+/// (`rup_c_leaf_reservation_bounds_update_reserve` takes the same Reserve
+/// at its exact fit), and A's UpdateForward over it is checked by C's
+/// observer at the leaf boundary (`grown_forward_over`).
+fn grown_world() -> Box<World> {
+    let mut out = None;
+    let value = grown();
+    history_u_with(false, |name, world| {
+        if name != "U-560" {
+            return;
+        }
+        let mut world = Box::new(world.clone());
+        let plan = update_plan(4, 14, 11, &value);
+        let mut after = loans(0xa5);
+        let mut frame = vec![0xa5; FRAME_BYTES];
+        let observation = produce(
+            &world.inputs(Change::ReserveUpdate(&plan), reserve_pages(14)),
+            &mut after,
+            &mut frame,
+        )
+        .expect("the growing update Reserve beside D");
+        assert_eq!(observation.job_ordinal, Some(GROWN_ORDINAL));
+        world.install(
+            "U-560-grow",
+            &observation,
+            &after,
+            &frame[..observation.frame_bytes],
+        );
+        out = Some(world);
+    });
+    out.expect("history U reaches U-560")
+}
+
+/// `grown_world` as A's before state (`delete::ABefore`, no literal frame).
+pub(crate) fn grown_before() -> delete::ABefore {
+    let world = grown_world();
+    delete::ABefore {
+        name: "U-560-grow",
+        previous_lsn: world.lsn,
+        root: Box::new(world.root),
+        jobs: Box::new(world.jobs[1].expect("Jobs page 1")),
+        bank: Box::new(world.bank),
+        status: Box::new(*World::find(&world.status, 21)),
+        undo: world
+            .undo
+            .iter()
+            .map(|(page_no, page)| (*page_no, Box::new(*page)))
+            .collect(),
+        leaf: Box::new(world.leaf.expect("RowLeaf")),
+        transaction: Box::new(world.transaction.expect("Tx descriptor")),
+        aging: Box::new(world.aging.expect("Aging descriptor")),
+        frame: &[],
+    }
+}
+
+/// C's whole-group observer over A's growing UpdateForward `frame` of row
+/// 11 at `grown_world`'s state with the RowLeaf `leaf` in place of the
+/// World's: `entries + (C' − C) + D` is re-checked with D = 10.
+pub(crate) fn grown_forward_over(leaf: &Page, frame: &[u8]) -> Result<(), Error> {
+    let mut world = grown_world();
+    world.leaf = Some(*leaf);
+    let change = Change::UpdateForward {
+        ordinal: GROWN_ORDINAL,
+        statement: boundary(4, None),
+    };
+    let mut after = loans(0xa5);
+    let result = observe(
+        &world.inputs(change, row_pages(14, Some(11))),
+        frame,
+        &mut after,
+    )
+    .map(|_| ());
+    if result.is_err() {
+        // A reservation refusal precedes output.
+        assert!(after.iter().flatten().all(|byte| *byte == 0xa5));
+    }
+    result
+}
+
 #[test]
 fn rup_c_update_history_matches_literals() {
     assert_eq!(history_u(false), 0);
@@ -721,7 +851,11 @@ fn rup_c_leaf_reservation_bounds_update_reserve() {
 /// #leaf-reservation: Reserve proved the fit under the same gate). C's
 /// UpdatePrune (U-569 at the U-568 state, D 0) takes a full leaf (it keeps
 /// C'), and A's UpdateClr of the shrinking root (U-562 at the U-561 state,
-/// D 10) is refused over a leaf already inside D.
+/// D 10) is refused over a leaf already inside D. Their acceptance at
+/// exactly capacity needs A's frame over that leaf, not the literal: it is
+/// RUP-A's (`rup_a_update_groups_at_the_leaf_reservation_boundary`), as is
+/// a growing UpdateForward beside D > 0
+/// (`rup_a_growing_update_forward_beside_d`, over `grown_world`).
 #[test]
 fn rup_c_leaf_reservation_forward_prune_and_clr() {
     let mut seen = Vec::new();

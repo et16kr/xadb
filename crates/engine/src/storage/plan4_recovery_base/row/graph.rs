@@ -358,9 +358,11 @@ impl<'a> Graph<'a> {
         }
         Ok(decoded.version())
     }
-    /// The leaf reservation (dev3-row-delete.md#leaf-reservation): each
-    /// RowLeaf keeps `TREE_ENTRY_CAPACITY - entry_bytes >= D`, D the sum of
-    /// `C-180` over its table's Retained DELETE roots of every actor.
+    /// The leaf reservation (dev3-row-delete.md#leaf-reservation,
+    /// dev3-row-update.md#leaf-reservation): each RowLeaf keeps
+    /// `TREE_ENTRY_CAPACITY - entry_bytes >= D`, D the sum over its table's
+    /// Retained roots of every actor of DELETE's `C-180` and UPDATE's
+    /// `max(0, C-C')`, from the Job's bytes.
     fn leaf_reservation(&self, index: usize, table: &Table<'a>) -> Result<()> {
         let object = self.record_at(index)?.1.header().identity;
         let mut used = 0usize;
@@ -374,15 +376,18 @@ impl<'a> Graph<'a> {
         let mut reserved = 0usize;
         for ordinal in 0..JOB_COUNT {
             let job = self.job(ordinal)?;
-            if job.row_scope()
-                && job.state() == JobState::RootRetained
-                && job.effect() == row::RowEffect::Delete
-                && job.object() == Some(object)
+            if !job.row_scope()
+                || job.state() != JobState::RootRetained
+                || job.object() != Some(object)
             {
-                reserved += (job.cell_bytes() as usize)
-                    .checked_sub(180)
-                    .ok_or(Error::Identity)?;
+                continue;
             }
+            let cell = job.cell_bytes() as usize;
+            reserved += match job.effect() {
+                row::RowEffect::Insert => 0,
+                row::RowEffect::Delete => cell.checked_sub(180).ok_or(Error::Identity)?,
+                row::RowEffect::Update => cell.saturating_sub(job.new_cell() as usize),
+            };
         }
         if used + reserved > crate::storage::tree_page::TREE_ENTRY_CAPACITY {
             return Err(Error::Corrupt);
@@ -427,12 +432,6 @@ impl<'a> Graph<'a> {
         let cells = bank(scratch);
         for (ordinal, cell) in cells.iter_mut().enumerate() {
             let job = self.job(ordinal)?;
-            // Base4 knows INSERT and DELETE roots. An UPDATE root
-            // (dev3-row-update.md#job-effect) needs the effect-2 rules of
-            // #recovery, which stage 3 adds with the product path.
-            if job.effect() == row::RowEffect::Update {
-                return Err(Error::Unsupported);
-            }
             cell.copy_from_slice(job.bytes());
         }
         let mut aggregate = [0; 640];
