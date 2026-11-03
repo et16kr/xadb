@@ -1398,17 +1398,70 @@ fn s1b_row_arm_replays_n1_and_a_literals() {
     );
 }
 
-/// Stage 2b-1 keeps DELETE out of replay (dev3-row-delete.md#implementation-2b1):
-/// after history H and D-516..D-520 (T2's Begin, T's root 15 released and
-/// freed) replay the same as C produced them, the valid delete Reserve D-521
-/// (effect 1, adopted by C's `ReserveAdopted`) is refused Unsupported with no
-/// effect; its replay arrives with opcodes 8/9/23 in stage 2b-2.
+/// RDL-J replay (dev3-row-delete.md#recovery): after history H, every group
+/// of history D (D-516..D-545: T2's Begin, delete Reserves and their Cancel,
+/// DeleteForward over no, an effect-1 and an effect-0 H, the statement
+/// RollbackStart, DeleteClr and StatementFinish, an INSERT over an effect-1
+/// H, Commit, DeletePrune and Prune, the ReleaseRoles and RootFrees of the
+/// committed and the compensated delete roots) replays through the Row arm
+/// to the independent redo afters, Jobs and ATT, and to C's own live record
+/// of the same frame (`Mode::live`). The closure mode stays off: D's
+/// pre-initialized Status 20 and Undo 15/16 have no INIT provenance in this
+/// world; base4 over effect-1 states is RDL-R's, over actual captured bases.
 #[test]
-fn rdl_c_row_arm_refuses_delete_reserve_until_its_replay() {
-    let mut r = history_h_replay(Mode::default());
+fn rdl_j_row_arm_replays_history_d() {
+    let mode = Mode {
+        live: true,
+        ..Mode::default()
+    };
+    let mut r = history_h_replay(mode);
     for name in ["D-status20-0", "D-undo15-0", "D-undo16-0"] {
         r.set_page(page_of(d(name)));
     }
+    // D's Free containers 15 and 16 were allocated as Undo at incarnation 2
+    // by their provisioning owner (the allocator literal names Undo 10, 11
+    // and 14 only): `Allocated{2, object 3/1, Undo}` in page 0's cell.
+    let mut allocator = Box::new(*r.page(0));
+    let at = usize::from(u16::from_le_bytes([allocator[128], allocator[129]]));
+    for page_no in [15usize, 16] {
+        let entry = &mut allocator[at + 64 + page_no * 96..at + 64 + (page_no + 1) * 96];
+        entry.fill(0);
+        entry[0] = 2;
+        entry[1] = PageKind::Undo as u8;
+        entry[8..16].copy_from_slice(&2u64.to_le_bytes());
+        entry[16..24].copy_from_slice(&3u64.to_le_bytes());
+        entry[24..32].copy_from_slice(&1u64.to_le_bytes());
+    }
+    let digest = content_digest(&allocator[..DIGEST_OFFSET]);
+    allocator[DIGEST_OFFSET..].copy_from_slice(&digest);
+    r.set_page(&allocator);
+    const TERMINAL: usize = 18;
+    let delete_plan = |statement: u64, container: u64, row: u64| transition::DeletePlan {
+        terminal: TERMINAL,
+        container: page_ref(container, 2),
+        table: table(),
+        statement,
+        row: foundation::identity::RowId::new(row).unwrap(),
+    };
+    let reserve = |container: u64| Pages {
+        jobs: Some(1),
+        status: Some(20),
+        undo: Some(container),
+        table: true,
+        ..pages()
+    };
+    let row = |undo: u64, previous: Option<u64>| Pages {
+        jobs: Some(1),
+        status: Some(20),
+        undo: Some(undo),
+        previous,
+        table: true,
+    };
+    let status = Pages {
+        jobs: Some(1),
+        status: Some(20),
+        ..pages()
+    };
     r.step(
         "D-516",
         d("D-516"),
@@ -1417,11 +1470,7 @@ fn rdl_c_row_arm_refuses_delete_reserve_until_its_replay() {
             status: slot(20, 2),
             scope: job3::JobScope::Row,
         },
-        Pages {
-            jobs: Some(1),
-            status: Some(20),
-            ..pages()
-        },
+        status,
     );
     let undo10 = Pages {
         jobs: Some(1),
@@ -1437,8 +1486,156 @@ fn rdl_c_row_arm_refuses_delete_reserve_until_its_replay() {
         Change::RootFree { ordinal: 15 },
         undo10,
     );
-    let cause = r.refused("D-521", d("D-521"));
-    assert_eq!(cause, "Some(RowSemantic(Unsupported))", "D-521");
+    r.step(
+        "D-521",
+        d("D-521"),
+        Change::ReserveDelete(&delete_plan(1, 11, 2)),
+        reserve(11),
+    );
+    r.step(
+        "D-522",
+        d("D-522"),
+        Change::Cancel { ordinal: 16 },
+        Pages {
+            undo: Some(11),
+            ..status
+        },
+    );
+    r.step(
+        "D-523",
+        d("D-523"),
+        Change::ReserveDelete(&delete_plan(2, 11, 2)),
+        reserve(11),
+    );
+    r.step(
+        "D-524",
+        d("D-524"),
+        Change::DeleteForward {
+            ordinal: 16,
+            statement: boundary(2, None),
+        },
+        row(11, None),
+    );
+    r.step(
+        "D-525",
+        d("D-525"),
+        Change::ReserveDelete(&delete_plan(3, 10, 9)),
+        reserve(10),
+    );
+    r.step(
+        "D-526",
+        d("D-526"),
+        Change::DeleteForward {
+            ordinal: 19,
+            statement: boundary(3, None),
+        },
+        row(10, Some(11)),
+    );
+    let mark = boundary(3, Some(undo_ref(11, 5)));
+    r.step(
+        "D-527",
+        d("D-527"),
+        Change::RollbackStart {
+            terminal: TERMINAL,
+            statement: Some(mark),
+        },
+        Pages {
+            status: Some(20),
+            undo: Some(10),
+            ..pages()
+        },
+    );
+    r.step(
+        "D-528",
+        d("D-528"),
+        Change::DeleteClr {
+            ordinal: 19,
+            statement: Some(mark),
+        },
+        row(10, Some(11)),
+    );
+    r.step(
+        "D-529",
+        d("D-529"),
+        Change::StatementFinish {
+            terminal: TERMINAL,
+            statement: mark,
+        },
+        Pages {
+            status: Some(20),
+            ..pages()
+        },
+    );
+    let plan = ReservePlan {
+        terminal: TERMINAL,
+        container: page_ref(15, 2),
+        table: table(),
+        statement: 4,
+        canonical: d("D-530-canonical"),
+    };
+    r.step("D-530", d("D-530"), Change::Reserve(&plan), reserve(15));
+    r.step(
+        "D-531",
+        d("D-531"),
+        Change::Forward {
+            ordinal: 20,
+            statement: boundary(4, None),
+        },
+        row(15, Some(11)),
+    );
+    r.step(
+        "D-532",
+        d("D-532"),
+        Change::ReserveDelete(&delete_plan(5, 16, 4)),
+        reserve(16),
+    );
+    r.step(
+        "D-533",
+        d("D-533"),
+        Change::DeleteForward {
+            ordinal: 21,
+            statement: boundary(5, None),
+        },
+        row(16, Some(15)),
+    );
+    r.step(
+        "D-534",
+        d("D-534"),
+        Change::Commit { terminal: TERMINAL },
+        status,
+    );
+    r.step(
+        "D-535",
+        d("D-535"),
+        Change::DeletePrune { ordinal: 21 },
+        row(16, Some(15)),
+    );
+    r.step(
+        "D-536",
+        d("D-536"),
+        Change::Prune { ordinal: 20 },
+        row(15, Some(11)),
+    );
+    r.step(
+        "D-537",
+        d("D-537"),
+        Change::DeletePrune { ordinal: 16 },
+        row(11, None),
+    );
+    for (ordinal, page_no, names) in [
+        (16, 11, ["D-538", "D-539", "D-540", "D-541"]),
+        (19, 10, ["D-542", "D-543", "D-544", "D-545"]),
+    ] {
+        let undo = Pages {
+            jobs: Some(1),
+            undo: Some(page_no),
+            ..pages()
+        };
+        for name in &names[..3] {
+            r.step(name, d(name), Change::ReleaseRole { ordinal }, undo);
+        }
+        r.step(names[3], d(names[3]), Change::RootFree { ordinal }, undo);
+    }
 }
 
 /// H02: every R- variant of the corpus and every replay precondition is

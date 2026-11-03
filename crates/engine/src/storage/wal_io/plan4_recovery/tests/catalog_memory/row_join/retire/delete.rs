@@ -705,6 +705,406 @@ fn rdl_j07_reserved_delete_is_cancelled_by_recovery() {
     });
 }
 
+/// RDL-J08 (dev3-row-delete.md#effect-1-h, #leaf-reservation): one
+/// explicit transaction deletes a row (1 row) and then INSERTs a new one
+/// into the same leaf (1 row). The INSERT root's previous root H is the
+/// Retained DELETE root (effect 1, proved through the metadata entry), and
+/// its Reserve keeps the DELETE root's leaf reservation. The transaction
+/// commits at q 3 with the caller's 2 rows; the drain installs DeletePrune
+/// and Prune with each root's three ReleaseRoles and RootFree and the
+/// TerminalFinish (5 + 5 + 1 groups). A new statement reads no row at the
+/// deleted RowId, the kept row and the new one; C's restart reaches READY at
+/// q 3 with no CLR and B's cursor reads the same two rows.
+#[test]
+fn rdl_j08_delete_then_insert_in_one_transaction() {
+    case_within("RDL-J08", std::time::Duration::from_secs(300), || {
+        let oracle = Oracle::new();
+        let (images, rows) = with_fresh!(
+            oracle,
+            frames = 28,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let (row_status, _) =
+                    create_table(live, owner, flusher, status, undo, private, true);
+                for _ in 0..3 {
+                    system_init(live, owner, flusher, true);
+                }
+                let (mut writer, reader, mut flush) = live.split();
+                let (out, slots) = autocommit!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    reader,
+                    reader_private,
+                    &row_status,
+                    private,
+                    6,
+                    ints(&[100, 101])
+                );
+                assert_eq!(committed(out), (2, 2));
+                let rows = applied(slots, &[100, 101]);
+                assert_eq!(
+                    drains!(&mut writer, owner, flush, flusher, private),
+                    [drain(11, true)]
+                );
+                let (target, kept) = (rows[0].0, rows[1]);
+                let mut holder = None;
+                begun(begin!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    &row_status,
+                    private,
+                    &mut holder
+                ));
+                let (out, slot) = delete_statement!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    reader,
+                    reader_private,
+                    &mut holder,
+                    private,
+                    6,
+                    target
+                );
+                assert_eq!(done(out), 1);
+                assert_eq!(slot.expect("deleted row").row(), target);
+                let (out, slots) = statement!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    reader,
+                    reader_private,
+                    &mut holder,
+                    private,
+                    6,
+                    ints(&[102])
+                );
+                assert_eq!(done(out), 1);
+                let new = applied(slots, &[102])[0];
+                assert!(new.0 != target && new.0 != kept.0);
+                assert_eq!(
+                    explicit_committed(commit!(
+                        &mut writer,
+                        owner,
+                        flush,
+                        flusher,
+                        &mut holder,
+                        private,
+                        2
+                    )),
+                    (3, 2)
+                );
+                assert_eq!(
+                    drains!(&mut writer, owner, flush, flusher, private),
+                    [drain(11, true)]
+                );
+                assert_row_jobs_free(writer.catalog_test_jobs());
+                assert_eq!(
+                    read_rows!(
+                        writer,
+                        reader,
+                        core,
+                        reader_private,
+                        flush,
+                        flusher,
+                        [target, kept.0, new.0]
+                    ),
+                    [None, Some(101), Some(102)]
+                );
+                assert!(!fence.is_fenced());
+                (
+                    state.lock().unwrap().images(),
+                    vec![(kept.0.get(), kept.1), (new.0.get(), new.1)],
+                )
+            }
+        );
+        let joined = join_restart(
+            &clone_directory(&images),
+            RowRecoveryPolicy::RejectInitialLosers,
+            None,
+        );
+        assert_eq!((joined.ready.0, joined.clrs, joined.row_cells), (3, 0, 0));
+        assert_eq!(joined.rows, rows);
+        println!("RDL_J08 q=3 drains=11 restart_steps={}", joined.steps);
+    });
+}
+
+/// RDL-J09 (dev3-row-delete.md#classification, #api): in one explicit
+/// transaction, a DELETE of the row its own INSERT statement just wrote
+/// (undo Some, the actor's `Transaction` stamp) is Unsupported at C's
+/// preflight: the statement fails holding nothing and the transaction goes
+/// on. Its next DELETE of a committed row deletes it (1 row) and the
+/// transaction commits at q 3 with the caller's 2 rows; the drain cleans
+/// both roots and the Terminal (5 + 5 + 1 groups). A RowId still held by
+/// another transaction's root (Busy) is not reachable through A here: the
+/// first Row profile has one Row Status slot, so a new transaction begins
+/// only after the previous one's Terminal, the last of its cleanup, is
+/// freed. RDL-A03 and C's classification table cover Busy.
+#[test]
+fn rdl_j09_own_insert_row_is_unsupported_and_the_transaction_goes_on() {
+    case_within("RDL-J09", std::time::Duration::from_secs(300), || {
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 28,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let _ = state;
+                let (row_status, _) =
+                    create_table(live, owner, flusher, status, undo, private, true);
+                for _ in 0..3 {
+                    system_init(live, owner, flusher, true);
+                }
+                let (mut writer, reader, mut flush) = live.split();
+                let (out, slots) = autocommit!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    reader,
+                    reader_private,
+                    &row_status,
+                    private,
+                    6,
+                    ints(&[100, 101])
+                );
+                assert_eq!(committed(out), (2, 2));
+                let rows = applied(slots, &[100, 101]);
+                assert_eq!(
+                    drains!(&mut writer, owner, flush, flusher, private),
+                    [drain(11, true)]
+                );
+                let (target, kept) = (rows[0].0, rows[1]);
+                let mut holder = None;
+                begun(begin!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    &row_status,
+                    private,
+                    &mut holder
+                ));
+                let (out, slots) = statement!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    reader,
+                    reader_private,
+                    &mut holder,
+                    private,
+                    6,
+                    ints(&[102])
+                );
+                assert_eq!(done(out), 1);
+                let new = applied(slots, &[102])[0];
+                let (out, slot) = delete_statement!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    reader,
+                    reader_private,
+                    &mut holder,
+                    private,
+                    6,
+                    new.0
+                );
+                let failure = statement_failed(out);
+                let DriverError::Disk(error) = &failure.error else {
+                    panic!("expected C's refusal, got {failure:?}");
+                };
+                assert_eq!(failure.stage, Stage::Preflight);
+                assert!(
+                    matches!(error.cause, RetentionCause::Unsupported)
+                        && error.effect == Effect::Unchanged,
+                    "{error:?}"
+                );
+                assert!(slot.is_none());
+                let (out, slot) = delete_statement!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    reader,
+                    reader_private,
+                    &mut holder,
+                    private,
+                    6,
+                    target
+                );
+                assert_eq!(done(out), 1);
+                assert_eq!(slot.expect("deleted row").row(), target);
+                assert_eq!(
+                    explicit_committed(commit!(
+                        &mut writer,
+                        owner,
+                        flush,
+                        flusher,
+                        &mut holder,
+                        private,
+                        2
+                    )),
+                    (3, 2)
+                );
+                assert_eq!(
+                    drains!(&mut writer, owner, flush, flusher, private),
+                    [drain(11, true)]
+                );
+                assert_row_jobs_free(writer.catalog_test_jobs());
+                assert_eq!(
+                    read_rows!(
+                        writer,
+                        reader,
+                        core,
+                        reader_private,
+                        flush,
+                        flusher,
+                        [target, kept.0, new.0]
+                    ),
+                    [None, Some(101), Some(102)]
+                );
+                assert!(!fence.is_fenced());
+                println!("RDL_J09 unsupported then q=3 drains=11");
+            }
+        );
+    });
+}
+
+/// RDL-J10 (dev3-row-delete.md#delete-states): two DELETE statements of one
+/// explicit transaction (1 row each) chain their roots (the second root's H
+/// is the first, effect 1). A new statement of the same transaction reads
+/// neither row (its own tombstones) while another statement reads both old
+/// values. The caller's rollback compensates both with DeleteClr (the
+/// second first) and its drain frees both roots and the Terminal (4 + 4 + 1
+/// groups); both rows read again. A second transaction deletes both and
+/// commits at q 3 with 2 rows; its drain installs both DeletePrunes (5 + 5
+/// + 1 groups). C's restart reaches READY at q 3 with no row left.
+#[test]
+fn rdl_j10_two_deletes_roll_back_then_commit() {
+    case_within("RDL-J10", std::time::Duration::from_secs(300), || {
+        let oracle = Oracle::new();
+        let images = with_fresh!(
+            oracle,
+            frames = 28,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let (row_status, _) =
+                    create_table(live, owner, flusher, status, undo, private, true);
+                for _ in 0..3 {
+                    system_init(live, owner, flusher, true);
+                }
+                let (mut writer, reader, mut flush) = live.split();
+                let (out, slots) = autocommit!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    reader,
+                    reader_private,
+                    &row_status,
+                    private,
+                    6,
+                    ints(&[100, 101])
+                );
+                assert_eq!(committed(out), (2, 2));
+                let rows = applied(slots, &[100, 101]);
+                assert_eq!(
+                    drains!(&mut writer, owner, flush, flusher, private),
+                    [drain(11, true)]
+                );
+                let ids = [rows[0].0, rows[1].0];
+                for commit in [false, true] {
+                    let mut holder = None;
+                    begun(begin!(
+                        &mut writer,
+                        owner,
+                        flush,
+                        flusher,
+                        &row_status,
+                        private,
+                        &mut holder
+                    ));
+                    for id in ids {
+                        let (out, slot) = delete_statement!(
+                            &mut writer,
+                            owner,
+                            flush,
+                            flusher,
+                            reader,
+                            reader_private,
+                            &mut holder,
+                            private,
+                            6,
+                            id
+                        );
+                        assert_eq!(done(out), 1);
+                        assert_eq!(slot.expect("deleted row").row(), id);
+                    }
+                    assert_eq!(
+                        read_rows!(writer, reader, core, reader_private, flush, flusher, ids),
+                        [Some(100), Some(101)]
+                    );
+                    if commit {
+                        assert_eq!(
+                            explicit_committed(commit!(
+                                &mut writer,
+                                owner,
+                                flush,
+                                flusher,
+                                &mut holder,
+                                private,
+                                2
+                            )),
+                            (3, 2)
+                        );
+                        assert_eq!(
+                            drains!(&mut writer, owner, flush, flusher, private),
+                            [drain(11, true)]
+                        );
+                    } else {
+                        let out =
+                            rollback!(&mut writer, owner, flush, flusher, &mut holder, private);
+                        assert!(
+                            matches!(out, Explicit::RolledBack),
+                            "expected RolledBack, got {out:?}"
+                        );
+                        assert_eq!(
+                            drains!(&mut writer, owner, flush, flusher, private),
+                            [drain(9, true)]
+                        );
+                    }
+                    assert!(holder.is_none());
+                    assert_row_jobs_free(writer.catalog_test_jobs());
+                    let expected = if commit {
+                        [None, None]
+                    } else {
+                        [Some(100), Some(101)]
+                    };
+                    assert_eq!(
+                        read_rows!(writer, reader, core, reader_private, flush, flusher, ids),
+                        expected
+                    );
+                }
+                assert!(!fence.is_fenced());
+                state.lock().unwrap().images()
+            }
+        );
+        let joined = join_restart(
+            &clone_directory(&images),
+            RowRecoveryPolicy::RejectInitialLosers,
+            None,
+        );
+        assert_eq!((joined.ready.0, joined.clrs, joined.row_cells), (3, 0, 0));
+        assert!(joined.rows.is_empty());
+        println!("RDL_J10 drains=9,11 q=3 restart_steps={}", joined.steps);
+    });
+}
+
 /// RDL-R: C's base4 of the DELETE crash states, over actual captured
 /// bases.
 #[path = "delete_base.rs"]

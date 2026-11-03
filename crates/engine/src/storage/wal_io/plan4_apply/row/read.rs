@@ -902,11 +902,7 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     ) -> Result<ReadStep<RowValueBefore<'b>>> {
         use crate::storage::{
             row_record::RowSchemaInput,
-            transaction_record::VersionStamp,
-            undo_record::{
-                self, UndoBeforeKind, UndoPayload, UndoRecordExpectation, UndoTargetKind,
-                UndoTargetView,
-            },
+            undo_record::{self, UndoRecordExpectation, UndoTargetKind, UndoTargetView},
         };
         let storage = self.backend.storage;
         let bad = || fatal(storage, RetentionPhase::Census, RetentionCause::Invariant);
@@ -946,29 +942,8 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                 undo_record::decode_undo_record(cell, expected, &RowSchemaInput::Catalog(schema))
                     .and_then(|view| view.live_before())
                     .map_err(|e| fatal(storage, RetentionPhase::Census, RetentionCause::Undo(e)))?;
-            if record.creator.id != candidate.version.logical.transaction()
-                || matches!(candidate.version.stamp,VersionStamp::Transaction(actor) if actor.id()!=record.creator.id || actor.generation()!=record.creator.status_generation)
-                || record.mutation_sequence != candidate.version.logical.mutation_sequence()
-                || record.sequence == 0
-            {
-                return Err(bad());
-            }
-            // A tombstone has only a RowValue U whose before is the committed
-            // Inline row it replaced; any other combination is corruption.
-            let (
-                UndoBeforeKind::RowValue,
-                Some(VersionStamp::Committed(q_old)),
-                Some(logical),
-                UndoPayload::Inline(value),
-            ) = (
-                record.before_kind,
-                record.before_stamp,
-                record.before_logical,
-                record.payload,
-            )
-            else {
-                return Err(bad());
-            };
+            let (q_old, logical, value) =
+                tombstone_before(&record, &candidate.version).ok_or_else(bad)?;
             copy[..value.len()].copy_from_slice(value);
             Ok(RowValueBefore {
                 binding: std::marker::PhantomData,
@@ -1348,6 +1323,55 @@ impl<W: WriterNamespace> RowReadOperation<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_
         self.capture_sequence = sequence;
     }
 }
+
+/// The before of a tombstone's Live U (dev3-row-delete.md#read): the U of the
+/// tombstone's own transaction (and Status generation) and mutation, whose
+/// before is the committed Inline row it replaced (RowValue kind,
+/// `Committed(q_old)`, its logical and value). Any other U under a tombstone
+/// (a Missing or RowDeleted before, a `Transaction` before stamp, no value,
+/// another creator or mutation, sequence 0) is corruption: None. A
+/// Releasing U never reaches here (`live_before` refuses it).
+#[inline(always)]
+fn tombstone_before<'r>(
+    record: &crate::storage::undo_record::UndoRecord<'r>,
+    version: &crate::storage::row_record::RecordVersion,
+) -> Option<(
+    foundation::identity::CommitSeq,
+    crate::storage::transaction_record::LogicalRowVersion,
+    &'r [u8],
+)> {
+    use crate::storage::{
+        transaction_record::VersionStamp,
+        undo_record::{UndoBeforeKind, UndoPayload},
+    };
+    if record.creator.id != version.logical.transaction()
+        || matches!(version.stamp, VersionStamp::Transaction(actor)
+            if actor.id() != record.creator.id
+                || actor.generation() != record.creator.status_generation)
+        || record.mutation_sequence != version.logical.mutation_sequence()
+        || record.sequence == 0
+    {
+        return None;
+    }
+    match (
+        record.before_kind,
+        record.before_stamp,
+        record.before_logical,
+        record.payload,
+    ) {
+        (
+            UndoBeforeKind::RowValue,
+            Some(VersionStamp::Committed(q_old)),
+            Some(logical),
+            UndoPayload::Inline(value),
+        ) => Some((q_old, logical, value)),
+        _ => None,
+    }
+}
+
+#[cfg(test)]
+#[path = "read/tombstone_tests.rs"]
+mod tombstone_tests;
 
 #[cfg(test)]
 #[path = "read/census.rs"]
