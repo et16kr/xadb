@@ -1180,3 +1180,9 @@ mod read;
 /// captured bases.
 #[path = "update_base.rs"]
 mod base;
+
+/// RUP-N: native crashes on either side of each UPDATE group, and their
+/// memory twins.
+#[cfg(target_os = "linux")]
+#[path = "update_native.rs"]
+mod native;
