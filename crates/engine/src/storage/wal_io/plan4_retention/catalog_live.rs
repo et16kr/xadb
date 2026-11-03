@@ -2170,7 +2170,7 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
         + source::commit_carrier_bytes()
         + 2 * size_of::<crate::storage::session_fence::UnwindFence<'_>>()
         + lifecycle::entry_carrier_bytes::<W>()
-        + row.carriers
+        + lifecycle::row::row_lifecycle_carriers()
         + transaction::writable::row_lifecycle_caller_bytes();
     // The live Row retirement (reclamation `#live-row-retirement`): the same
     // shell and its own entry packet and RowRetireStep slots throughout;
@@ -2309,7 +2309,7 @@ pub(in super::super) fn row_write_bodies<W: WriterNamespace>() -> RowWriteBodies
         + source::commit_carrier_bytes()
         + 2 * size_of::<crate::storage::session_fence::UnwindFence<'_>>()
         + lifecycle::entry_carrier_bytes::<W>()
-        + row.carriers
+        + lifecycle::row::row_lifecycle_carriers()
         + transaction::writable::row_lifecycle_caller_bytes();
     // The Row group over the whole write target set T (≤ 9 targets).
     let group = lifecycle::row::row_group_terms::<9>();

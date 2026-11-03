@@ -1112,9 +1112,14 @@ pub(in crate::storage) struct ExecutorCensus {
     /// not complete) and the cleanup sites with it.
     pub(in crate::storage) drain_caller: usize,
     pub(in crate::storage) cleanup: [(&'static str, usize, usize); super::CLEANUP_SITES],
-    /// The shares at C's Begin, statement start and the caller's table
-    /// issue, for the record: C's census of these entries has no A term.
-    pub(in crate::storage) unbounded: [(&'static str, usize); 3],
+    /// The frame-static share at C's Row Begin (`begin_row_transaction`).
+    pub(in crate::storage) begin: usize,
+    /// The frame-static share at C's statement start (`begin_statement`).
+    pub(in crate::storage) statement_start: usize,
+    /// The share at the caller's table issue (C's Catalog statement call),
+    /// for the record: C's CatalogFull charge has no A term
+    /// (`dev3-module-boundaries.md#begin-statement-ceilings`).
+    pub(in crate::storage) unbounded: [(&'static str, usize); 1],
 }
 
 #[cfg(test)]
@@ -1299,11 +1304,9 @@ fn executor_sites<W: WriterNamespace + 'static>(path: PathTerms) -> ExecutorCens
     let cleanup = super::cleanup_sites::<L<W>>(drain_caller);
     // Begin: C's five arguments; the statement start: its two; the issue:
     // the source's four (the source's own frame is the caller's).
-    let unbounded = [
-        ("begin_row_transaction", slack + caller + begin + 5 * r),
-        ("begin_statement", slack + below_statement + 2 * r),
-        ("table_issue", slack + below_statement + 4 * r),
-    ];
+    let begin = slack + caller + begin + 5 * r;
+    let statement_start = slack + below_statement + 2 * r;
+    let unbounded = [("table_issue", slack + below_statement + 4 * r)];
     ExecutorCensus {
         caller,
         commit,
@@ -1312,6 +1315,8 @@ fn executor_sites<W: WriterNamespace + 'static>(path: PathTerms) -> ExecutorCens
         sites,
         drain_caller,
         cleanup,
+        begin,
+        statement_start,
         unbounded,
     }
 }

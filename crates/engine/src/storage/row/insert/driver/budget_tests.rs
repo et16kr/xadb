@@ -149,6 +149,13 @@ fn executor(label: &str, kind: &str, refs: usize, census: live::ExecutorCensus, 
         budget::ROLLBACK_CALLER,
         &mut output,
     );
+    check("begin", census.begin, budget::BEGIN, &mut output);
+    check(
+        "statement_start",
+        census.statement_start,
+        budget::STATEMENT_START,
+        &mut output,
+    );
     let mut seen = BTreeSet::new();
     for (name, path, share, frame) in &census.sites {
         assert!(share <= frame, "{label} {name}/{path}: {share} > {frame}");
