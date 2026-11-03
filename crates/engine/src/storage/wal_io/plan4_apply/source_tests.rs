@@ -412,12 +412,15 @@ fn live_row_retirement_fits_the_progress_charge() {
 /// F4 Begin and statement start ceilings (boundaries
 /// `#begin-statement-ceilings`), C's side. Row Begin runs its Row lifecycle
 /// body under the one CatalogProgressCharge it reserves (RowProgress), with
-/// A's frames below it: body + `BEGIN` fits the charge. `begin_statement`
-/// takes no short admission; its body runs in the session's
-/// single-operation window, which `source_census().peak` holds beside the
-/// retained source and the split ports: body + `STATEMENT_START` fits there
-/// without raising the peak. The caller's table issue (a Catalog statement
-/// call, CatalogFull) has no ceiling: its charge is its body, and a Full read
+/// A's frames below it: body + `BEGIN` fits the charge. Begin's entry,
+/// capsule reservation and binding run before that admission, and a Row
+/// `begin_statement` takes no short admission at all (its Row statement
+/// head included); both run in the session's single-operation window, whose
+/// largest Row writer body is `writable::source_bytes()` and which
+/// `source_census().peak` holds beside the retained source and the split
+/// ports: that body + `BEGIN` and + `STATEMENT_START` fit there without
+/// raising the peak. The caller's table issue (a Catalog statement call,
+/// CatalogFull) has no ceiling: its charge is its body, and a Full read
 /// beside a Pending Catalog Commit leaves less room under the short cap than
 /// any A share, so the line only records it.
 #[test]
@@ -427,22 +430,27 @@ fn f4_c_begin_statement_budget() {
         let phases = create_pair::catalog_live::catalog_live_source_bytes::<W>();
         let charge = CatalogProgressCharge::new::<W>().0;
         let live = resources::source_census::<W>();
-        let statement = transaction::source_bytes();
-        let window = live.retained + live.split_ports + statement + STATEMENT_START;
+        let body = transaction::writable::source_bytes();
+        let window = |ceiling: usize| live.retained + live.split_ports + body + ceiling;
         let [shared, full, _] = CatalogSourceCharges::new::<W>().observations();
         let [_, _, pending, _, _] = CatalogCommitCharges::new::<W>().observations();
         println!(
-            "F4_C_BEGIN_{kind} row_lifecycle={} ceiling={BEGIN} charge={charge} room={}",
+            "F4_C_BEGIN_{kind} row_lifecycle={} ceiling={BEGIN} charge={charge} room={} \
+             unadmitted_sum={} peak={} unadmitted_room={}",
             phases.row_lifecycle,
-            charge as i64 - (phases.row_lifecycle + BEGIN) as i64
+            charge as i64 - (phases.row_lifecycle + BEGIN) as i64,
+            window(BEGIN),
+            live.peak,
+            live.peak as i64 - window(BEGIN) as i64
         );
         println!(
-            "F4_C_STATEMENT_START_{kind} body={statement} ceiling={STATEMENT_START} \
-             retained={} split_ports={} sum={window} peak={} room={}",
+            "F4_C_STATEMENT_START_{kind} body={body} ceiling={STATEMENT_START} \
+             retained={} split_ports={} sum={} peak={} room={}",
             live.retained,
             live.split_ports,
+            window(STATEMENT_START),
             live.peak,
-            live.peak as i64 - window as i64
+            live.peak as i64 - window(STATEMENT_START) as i64
         );
         println!(
             "F4_C_TABLE_ISSUE_{kind} full_charge={full} lookup_body={} shared={shared} \
@@ -451,7 +459,8 @@ fn f4_c_begin_statement_budget() {
             SHORT_BYTES as i64 - (shared + pending + full) as i64
         );
         assert!(phases.row_lifecycle + BEGIN <= charge);
-        assert!(window <= live.peak);
+        assert!(window(BEGIN) <= live.peak);
+        assert!(window(STATEMENT_START) <= live.peak);
     }
     inspect::<crate::storage::wal_io::plan4_test_support::Writer>("MEMORY");
     inspect::<super::super::super::native::Writer>("NATIVE_TYPE");

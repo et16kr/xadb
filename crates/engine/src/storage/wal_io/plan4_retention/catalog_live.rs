@@ -2163,10 +2163,12 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
             .control
             .max(physical)
             .max(visibility::epoch_transition_source_bytes());
-    let row_lifecycle = (row.caller + row_prepare.max(row_install))
-        .max(start_health)
-        .max(start_root)
-        .max(start_status)
+    // The action (never inlined, boundaries `#begin-statement-ceilings`)
+    // holds its entry packets through its own selection only; it has
+    // returned its input before the preparation.
+    let row_lifecycle = row_prepare
+        .max(row_install)
+        .max(row.caller + start_health.max(start_root).max(start_status))
         + source::commit_carrier_bytes()
         + 2 * size_of::<crate::storage::session_fence::UnwindFence<'_>>()
         + lifecycle::entry_carrier_bytes::<W>()
@@ -2301,11 +2303,9 @@ pub(in super::super) fn row_write_bodies<W: WriterNamespace>() -> RowWriteBodies
         .max(scalar + row.outer + row.inventory)
         .max(scalar + row.outer + row.assembled)
         .max(ledger);
-    let lifecycle_check = (row.caller
-        + row_prepare.max(install(targets::call_bytes::<4>(), row.control)))
-    .max(start_health)
-    .max(start_root)
-    .max(start_status)
+    let lifecycle_check = row_prepare
+        .max(install(targets::call_bytes::<4>(), row.control))
+        .max(row.caller + start_health.max(start_root).max(start_status))
         + source::commit_carrier_bytes()
         + 2 * size_of::<crate::storage::session_fence::UnwindFence<'_>>()
         + lifecycle::entry_carrier_bytes::<W>()

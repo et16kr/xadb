@@ -7,17 +7,20 @@
 //! `live::transaction_insert_live`, `live::commit_transaction_live`,
 //! `live::rollback_transaction_live`) run the autocommit executor's steps
 //! (module `autocommit`) over this slot instead of `Autocommit`. The
-//! transaction is in the caller's holder (`Option`), which may live off the
-//! stack; every entry borrows the holder and writes the slot, and the entry
-//! that ends the transaction takes it out. A failed statement is rolled back
-//! to its own mark and finished, as in the autocommit executor, but the
+//! transaction is in the caller's holder (`Option`), which the census puts
+//! off the stack (a caller that keeps it on the stack adds its 168 B to its
+//! term, more than the drain's 117 B margin, and redoes the census); every
+//! entry borrows the holder and writes the slot, and the entry that ends
+//! the transaction takes it out. A failed statement is rolled back to its
+//! own mark and finished, as in the autocommit executor, but the
 //! transaction is not ended: the statements before it stand, and the caller
 //! goes on with another statement, the Commit or its rollback. After
 //! `Fenced` the entry has dropped the transaction into C's fence and
-//! recovery obligations (the holder is empty).
+//! recovery obligations (the holder is empty), and the caller makes no
+//! further entry call until C's recovery: C refuses on its fence.
 //!
 //! The cleanup of the ended transaction is the caller's, as after the
-//! autocommit executor (`retire_finished`).
+//! autocommit executor (`live::retire_finished_live`).
 use super::{
     Failure,
     autocommit::{Committing, Ending},

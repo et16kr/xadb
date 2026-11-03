@@ -387,7 +387,7 @@ fn lac_j02_refused_row_and_missing_table_abort_then_a_commit() {
     });
 }
 
-// ---- An explicit transaction (`#explicit-transaction`, LXT-J01..J04) ----
+// ---- An explicit transaction (`#explicit-transaction`, LXT-J01..J05) ----
 
 use foundation::identity::RowId;
 
@@ -1032,6 +1032,96 @@ fn lxt_j04_holder_order_and_missing_table() {
                 );
                 assert!(!fence.is_fenced());
                 println!("LXT_J04 order_mismatch=Begin,Statement,Commit,Rollback drain=6 q=2");
+            }
+        );
+    });
+}
+
+/// LXT-J05: refusals that leave the holder empty. C refuses a Begin on the
+/// Root target (not a Status page) unchanged (Membership): `NoTransaction`
+/// with C's refusal, and the holder stays empty. Then a Begin on the Status
+/// page, and one live control byte flipped (as R1D-A5N): C's statement
+/// start (the Row statement head's ledger check) answers CallerMustResolve,
+/// so the entry calls C no more, drops the transaction into C's fence
+/// (`Fenced`, must resolve) and empties the holder; no row was applied.
+#[test]
+fn lxt_j05_refused_begin_and_fenced_statement_leave_the_holder_empty() {
+    case_within("LXT-J05", std::time::Duration::from_secs(300), || {
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 28,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let _ = (core, state);
+                let (row_status, _) =
+                    create_table(live, owner, flusher, status, undo, private, true);
+                let wrong = live.target(Plan4Page::Root).unwrap();
+                let (mut writer, reader, mut flush) = live.split();
+                let mut holder = None;
+                match begin!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    &wrong,
+                    private,
+                    &mut holder
+                ) {
+                    Explicit::NoTransaction(failure) => assert!(
+                        failure.stage == Stage::Begin
+                            && !failure.must_resolve
+                            && matches!(
+                                &failure.error,
+                                DriverError::Disk(error)
+                                    if error.effect == Effect::Unchanged
+                                        && matches!(error.cause, RetentionCause::Membership)
+                            ),
+                        "{failure:?}"
+                    ),
+                    other => panic!("expected NoTransaction, got {other:?}"),
+                }
+                assert!(holder.is_none(), "a refused Begin holds nothing");
+                assert!(!fence.is_fenced());
+                begun(begin!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    &row_status,
+                    private,
+                    &mut holder
+                ));
+                // The ATT actor field of the live control bank (R1D-A5N).
+                writer.row_test_flip_control(1576 + 40);
+                let (out, slots) = statement!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    reader,
+                    reader_private,
+                    &mut holder,
+                    private,
+                    6,
+                    ints(&[7])
+                );
+                match out {
+                    Explicit::Fenced(failure) => assert!(
+                        failure.must_resolve
+                            && failure.cleanup.is_none()
+                            && matches!(
+                                &failure.error,
+                                DriverError::Disk(error)
+                                    if error.effect == Effect::CallerMustResolve
+                            ),
+                        "{failure:?}"
+                    ),
+                    other => panic!("expected Fenced, got {other:?}"),
+                }
+                assert!(holder.is_none(), "the fenced transaction is not held");
+                assert!(slots[0].is_none());
+                assert!(fence.is_fenced());
+                println!("LXT_J05 begin=NoTransaction(Membership) statement=Fenced holder=None");
             }
         );
     });

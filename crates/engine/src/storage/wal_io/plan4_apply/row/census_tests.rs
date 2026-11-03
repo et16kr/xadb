@@ -185,9 +185,11 @@ fn s2w_c02_row_write_phase_census_native() {
 /// terms are the generic Row group terms at its four targets. The contract's
 /// native 43113 B was taken with the test adapter's 160-byte File; with the
 /// 32-byte File (94ede44) native equals memory, 42089 B. The F4 Begin
-/// ceiling (boundaries `#begin-statement-ceilings`) took the action adapter's
-/// forwarded `Result<PreparedRowGroup>` out of the lifecycle shell: 41217 B
-/// in both writers. The Row write census repeats some split census terms;
+/// ceiling (boundaries `#begin-statement-ceilings`) made each lifecycle
+/// action a never-inlined frame that returns its input packet: the shell no
+/// longer holds a forwarded `Result<PreparedRowGroup>`, and the action's
+/// entry packets are not below the preparation. 40881 B in both writers.
+/// The Row write census repeats some split census terms;
 /// its own recomputation of the Row lifecycle must equal the split value, so
 /// the copies cannot drift.
 #[test]
@@ -210,8 +212,8 @@ fn s2w_c03_row_lifecycle_unchanged_beside_the_row_write_layout() {
         assert_eq!(charge, 44_304);
         assert!(phases.row_lifecycle <= charge);
     }
-    inspect::<Memory>("memory", 41_217);
-    inspect::<Native>("native", 41_217);
+    inspect::<Memory>("memory", 40_881);
+    inspect::<Native>("native", 40_881);
 }
 
 /// S2W-C04: the live and recovered short-source peaks are unchanged. No port

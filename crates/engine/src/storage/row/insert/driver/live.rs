@@ -1302,11 +1302,12 @@ fn executor_sites<W: WriterNamespace + 'static>(path: PathTerms) -> ExecutorCens
     // (as `cleanup_caller_source`), and the sum of its drains.
     let drain_caller = caller + 2 * size_of::<Retire>() + 2 * r + size_of::<Retired>();
     let cleanup = super::cleanup_sites::<L<W>>(drain_caller);
-    // Begin: C's five arguments; the statement start: its two; the issue:
-    // the source's four (the source's own frame is the caller's).
+    // C's references at each call, its receiver included: Begin's five,
+    // the statement start's three, the issue's five (the source's own frame
+    // is the caller's).
     let begin = slack + caller + begin + 5 * r;
-    let statement_start = slack + below_statement + 2 * r;
-    let unbounded = [("table_issue", slack + below_statement + 4 * r)];
+    let statement_start = slack + below_statement + 3 * r;
+    let unbounded = [("table_issue", slack + below_statement + 5 * r)];
     ExecutorCensus {
         caller,
         commit,
@@ -1369,6 +1370,14 @@ pub(in crate::storage) fn autocommit_sites<W: WriterNamespace + 'static>() -> Ex
         commit: executor + commit_step,
         begin: executor,
     })
+}
+
+/// The holder of an explicit transaction, which `explicit_sites` puts off
+/// the caller's stack: what a caller that keeps it on the stack adds to its
+/// term.
+#[cfg(test)]
+pub(in crate::storage) fn explicit_holder_bytes() -> usize {
+    std::mem::size_of::<Option<CensusTransaction>>()
 }
 
 /// An explicit transaction's share at every C call under its entries

@@ -63,9 +63,10 @@ enum RowLifecycle<'q> {
 
 /// What a Row lifecycle action hands the common preparer once its own
 /// checks, selection and (Begin) identity are done: the Change, its Status
-/// slot and its original targets. The action's frame has returned before the
-/// shell calls `prepare_existing_row`, so the shell holds this packet and
-/// not a `Result<PreparedRowGroup>` forwarded through the action
+/// slot and its original targets. Each action is a never-inlined frame that
+/// has returned before the shell calls `prepare_existing_row`, so the shell
+/// holds this packet and not a `Result<PreparedRowGroup>` forwarded through
+/// the action, and the action's own slots are not below the preparation
 /// (boundaries `#begin-statement-ceilings`).
 enum RowLifecycleInput {
     Three(row_group::Change<'static>, usize, [(TargetRequest, u8); 3]),
@@ -350,6 +351,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     /// Full transaction RollbackStart of an empty Row actor: no root of the
     /// actor exists and its Status has no undo head (the producer requires
     /// no Undo proof page then), so the group changes only the Status.
+    #[inline(never)]
     fn row_rollback_start_input(&self, actor: TxnRef) -> Result<RowLifecycleInput> {
         let (terminal, status) = self.row_terminal(actor)?;
         let slot = self.control.slot(actor).ok_or_else(|| {
@@ -384,6 +386,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         ))
     }
 
+    #[inline(never)]
     fn row_abort_end_input(&self, actor: TxnRef) -> Result<RowLifecycleInput> {
         let (terminal, status) = self.row_terminal(actor)?;
         let slot = self.control.slot(actor).ok_or_else(|| {
@@ -789,6 +792,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         )
     }
 
+    #[inline(never)]
     fn row_begin_input(
         &mut self,
         owner: &mut Owner<'c, 's>,
@@ -845,9 +849,11 @@ pub(in super::super) struct RowLifecycleTerms {
     /// output). The lifecycle's own shell no longer forwards it and counts
     /// `row_lifecycle_carriers` instead; the Row write estimates keep this.
     pub(in super::super) carriers: usize,
-    /// Entry packets of the action. The lifecycle's action now returns its
-    /// input before common preparation; the term is still added beside
-    /// preparation and installation, an upper bound.
+    /// Entry packets of the action: its arguments, selection and identity
+    /// results and requests. The lifecycle's action is a never-inlined frame
+    /// that returns its input before common preparation, so `row_lifecycle`
+    /// adds this term to the action's own phase (the start selection), not
+    /// beside preparation and installation.
     pub(in super::super) caller: usize,
     /// `produce` with the borrowed observer of a producer-supplied frame
     /// (`observe_borrowed`) in place of C's producer. No lifecycle group
@@ -859,16 +865,16 @@ pub(in super::super) fn row_lifecycle_terms() -> RowLifecycleTerms {
     row_group_terms::<ROW_TARGETS>()
 }
 
-/// The carriers `row_lifecycle`'s shell holds through preparation and
-/// installation: the action's input packet (the first match's output), the
-/// common preparer's `Result<PreparedRowGroup>` and the second match's
-/// output (two Prepared carriers where `carriers` counts three, since no
-/// action frame forwards the group), the Observation results, the action and
-/// the ExistingGroup borrow (boundaries `#begin-statement-ceilings`).
+/// The carriers `row_lifecycle`'s shell holds through the action,
+/// preparation and installation: the action's result and the first match's
+/// output (two input packets), the common preparer's result and the second
+/// match's output (two Prepared carriers where `carriers` counts three, since
+/// no action frame forwards the group), the Observation results, the action
+/// and the ExistingGroup borrow (boundaries `#begin-statement-ceilings`).
 pub(in super::super) fn row_lifecycle_carriers() -> usize {
     use std::mem::size_of;
     type Prepared<'a> = PreparedRowGroup<'a, 'a, 'a>;
-    size_of::<Result<RowLifecycleInput>>()
+    2 * size_of::<Result<RowLifecycleInput>>()
         + 2 * size_of::<Result<Prepared<'_>>>()
         + 3 * size_of::<Result<row_group::Observation>>()
         + 2 * size_of::<RowLifecycle<'_>>()

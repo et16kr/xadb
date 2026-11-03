@@ -216,6 +216,12 @@ fn f4_a_autocommit_budgets_native() {
 }
 
 fn explicit<W: WriterNamespace + 'static>(label: &str) {
+    // Off the caller's stack by the census; on it, this is added to the
+    // caller's term (boundaries `#explicit-transaction`).
+    println!(
+        "writer={label} explicit holder_on_stack={}",
+        live::explicit_holder_bytes()
+    );
     executor(
         label,
         "explicit",
