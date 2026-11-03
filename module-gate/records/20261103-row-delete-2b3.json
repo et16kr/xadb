@@ -1,0 +1,454 @@
+{
+ "schema": "XADB_MODULE_GATE_RECORD_V1",
+ "change": "DEV3 Row DELETE first path, stage 2b-3 (dev3-row-delete.md#implementation-2b3): the test-only scope3 per-native observers semantic_row/{status,undo,leaf}.rs learn DeleteForward/DeleteClr/DeletePrune, the N1 cross-check runs every observer, leaf.rs included, over every history D group, and the cases 2b-1/2b-2 left are added (another RowId refused by C, leaf.rs and A; A's INSERT Forward at the leaf reservation boundary 16188/16189; RDL-B06; RDL-R07). No product path changes; native fault cuts are stage 3.",
+ "rust_tests": [
+  {
+   "paths": [
+    "crates/engine/src/storage/semantic_row/status.rs",
+    "crates/engine/src/storage/semantic_row/undo.rs",
+    "crates/engine/src/storage/semantic_row/leaf.rs",
+    "crates/engine/src/storage/semantic_row/transition_tests.rs",
+    "crates/engine/src/storage/semantic_row/transition_delete_tests.rs"
+   ],
+   "reason": "The scope3 per-native observers learn DELETE (dev3-row-delete.md#implementation-2b3); they stay test-only oracles with no product caller (product code only names status.rs's unchanged StatementBoundary type). status.rs moves Status for DeleteForward/DeleteClr/DeletePrune by their INSERT role (Commit and the Prune role take the commit Q). undo.rs binds the selected Job's effect to the opcode (IdentityMismatch otherwise, the 2b-1 transition rule; defence in depth, since the opcode's native size rule, U 432 B or 432+L B, refuses a mismatched frame first) and reads an effect-1 root's U through entry (b): Live 432+L with a RowValue Committed/logical/Inline before, Releasing 432 B with no payload and no before stamp from cursor 3; the one-slot Undo page check now takes a cell ending at INITIAL_UNDO_CELL's end of at least 432 B, and the H proof over a DELETE predecessor uses the same entry (b) against its Job. leaf.rs checks the leaf reservation before (entries + D <= 16188, Corrupt) and after the group with DELETE's C-180 change of D (OrderMismatch), types every row (a tombstone only with a Transaction stamp and its U), checks the actor's record (tombstone 180 B for DELETE) and, for DeleteForward/DeleteClr/DeletePrune, the committed old or restored row against U's Live before read through entry (a) with the table schema and U's Releasing after byte-for-byte. The N1 cross-check drops the effect-1 and DELETE-opcode skips: status/undo/jobs observe every history D group, and leaf.rs joins it for the first time (the World encodes the table's Catalog record and keeps each produced RowReserve's sealed value) over the 15 groups that change the leaf; A's three literal INSERT Forwards have no sealed value in this World and are covered by A's literal comparison. For each of the six DELETE groups a rebound candidate with U's before logical +1 is accepted by undo.rs (entry (b)) and refused by leaf.rs (IdentityMismatch: the old row at DeleteForward, the Releasing after at DeleteClr/DeletePrune); at the DeleteClr, a candidate with the restored row's logical +1 and the core's after projection rewritten to match is refused by leaf.rs's comparison with U's Live before; at the four groups whose H is a DELETE predecessor, the H page's U with its incoming count +1 (page digest resealed) is refused by undo.rs's entry-(b) H proof (IdentityMismatch; an edit of that root's Job would break its budget and be refused by the Job codec first). Each of these mutants fails its case in a build with its target check disabled. RDL-C: a DeleteForward of another RowId (D-524's tombstone key and row 2 -> 3, rebound) is refused by C's observer (Corrupt) and leaf.rs (IdentityMismatch). The status/undo/leaf unit cases (status_tests.rs, undo_tests.rs, leaf_tests.rs, unchanged) and the N1/S1 cases keep the INSERT observations unchanged.",
+   "cases": [
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
+     "case": "storage::semantic_row::transition::tests::delete::rdl_c_delete_forward_of_another_row_is_refused",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
+     "case": "storage::semantic_row::transition::tests::delete::rdl_c_delete_history_matches_literals",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
+     "case": "storage::semantic_row::transition::tests::delete::rdl_c_delete_history_rejects_variants",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
+     "case": "storage::semantic_row::transition::tests::delete::rdl_c_delete_history_borrowed_observer",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
+     "case": "storage::semantic_row::transition::tests::delete::rdl_c_delete_history_borrowed_producer",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
+     "case": "storage::semantic_row::transition::tests::delete::rdl_c_leaf_reservation_bounds_every_leaf_step",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
+     "case": "storage::semantic_row::transition::tests::delete::rdl_c_leaf_reservation_forward_and_delete_prune",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+     "case": "storage::semantic_row::transition::tests::n1_statement_reserve_commit_prune_match_literals",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+     "case": "storage::semantic_row::transition::tests::n1_empty_transactions_match_literals",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+     "case": "storage::semantic_row::transition::tests::n1_full_rollback_cleanup_match_literals",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+     "case": "storage::semantic_row::transition::tests::n1_observer_accepts_a_forward_clr_literals",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+     "case": "storage::semantic_row::transition::tests::n1_observer_rejects_mutated_literals",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+     "case": "storage::semantic_row::transition::tests::n1_producer_refusals_precede_output",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+     "case": "storage::semantic_row::transition::tests::s1a_borrowed_observer_accepts_n1_and_a_literals",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+     "case": "storage::semantic_row::transition::tests::s1d_borrowed_producer_matches_owned_groups",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+     "case": "storage::semantic_row::transition::tests::s1g_reserve_adopted_equals_produced",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/status_tests.rs",
+     "case": "storage::semantic_row::status_tests::status_counts_never_wrap_or_discard_retained_heads",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/status_tests.rs",
+     "case": "storage::semantic_row::status_tests::status_generation_and_original_context_binding",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/status_tests.rs",
+     "case": "storage::semantic_row::status_tests::status_independent_twenty_four_local_pairs",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/status_tests.rs",
+     "case": "storage::semantic_row::status_tests::status_native_and_redo_are_bound_to_both_pages",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/status_tests.rs",
+     "case": "storage::semantic_row::status_tests::status_page_identity_lsn_and_canonical_single_cell",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/status_tests.rs",
+     "case": "storage::semantic_row::status_tests::status_rejects_canonical_wrong_source_states",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/status_tests.rs",
+     "case": "storage::semantic_row::status_tests::status_rejects_local_state_and_head_mutants",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/status_tests.rs",
+     "case": "storage::semantic_row::status_tests::status_rejects_non_status_operations_and_older_profiles",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/status_tests.rs",
+     "case": "storage::semantic_row::status_tests::status_statement_marks_and_full_recovery_are_distinct",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/status_tests.rs",
+     "case": "storage::semantic_row::status_tests::status_undo_reference_shape_and_unsupported_operations",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/undo_tests.rs",
+     "case": "storage::semantic_row::undo_tests::undo_actual_predecessor_uses_its_own_target_and_nearest_job",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/undo_tests.rs",
+     "case": "storage::semantic_row::undo_tests::undo_independent_seventeen_pairs_and_same_frame_status",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/undo_tests.rs",
+     "case": "storage::semantic_row::undo_tests::undo_material_cut_and_incoming_are_exact",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/undo_tests.rs",
+     "case": "storage::semantic_row::undo_tests::undo_native_redo_page_identity_and_lsn_binding",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/undo_tests.rs",
+     "case": "storage::semantic_row::undo_tests::undo_original_job_and_scalar_binding",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/undo_tests.rs",
+     "case": "storage::semantic_row::undo_tests::undo_rejects_operations_without_undo_native",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/undo_tests.rs",
+     "case": "storage::semantic_row::undo_tests::undo_release_cursor_material_and_same_generation_free",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/undo_tests.rs",
+     "case": "storage::semantic_row::undo_tests::undo_reserve_uses_external_plan_and_generation_without_wrap",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/undo_tests.rs",
+     "case": "storage::semantic_row::undo_tests::undo_same_frame_status_proof_is_required_and_checked",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/leaf_tests.rs",
+     "case": "storage::semantic_row::leaf_tests::leaf_current_version_and_prune_payload_are_exact",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/leaf_tests.rs",
+     "case": "storage::semantic_row::leaf_tests::leaf_fifteen_raw_pairs_and_current_anchor",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/leaf_tests.rs",
+     "case": "storage::semantic_row::leaf_tests::leaf_forward_original_seal_job_size_and_projection",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/leaf_tests.rs",
+     "case": "storage::semantic_row::leaf_tests::leaf_native_slots_offsets_bytes_redo_and_lsn",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/leaf_tests.rs",
+     "case": "storage::semantic_row::leaf_tests::leaf_preserves_every_neighbor_and_validates_all_rows",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/leaf_tests.rs",
+     "case": "storage::semantic_row::leaf_tests::leaf_requires_same_frame_undo_status_and_supported_operation",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/leaf_tests.rs",
+     "case": "storage::semantic_row::leaf_tests::leaf_schema_and_inline_payload_validation",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/leaf_tests.rs",
+     "case": "storage::semantic_row::leaf_tests::leaf_table_identity_anchor_and_physical_alias",
+     "sources": [
+      "head"
+     ]
+    }
+   ]
+  },
+  {
+   "paths": [
+    "crates/engine/src/storage/row/insert/group_delete_tests.rs"
+   ],
+   "reason": "RDL-A cases the 2b-1/2b-2 records left to this PR (dev3-row-delete.md#implementation-2b3): A's producer refuses a DeleteForward bound to another committed row (row 9, its own sealed cell and projection) before output (IdentityMismatch); and three of A's history D groups are produced over their before RowLeaf padded with committed rows at the leaf reservation's edge, where C's whole-group observer and leaf.rs (with status.rs, undo.rs and jobs.rs over the same leaf when C accepts) give the same answer: the INSERT Forward over the effect-1 H (D-531, D = 19 from row 2's Retained delete root) is accepted at exactly entries + cell + D = 16188 and refused as OrderMismatch at 16189; row 9's DeleteForward (D-526, D = 19) and DeleteClr (D-528, D = 33) are accepted at exactly entries + D = 16188 before the group (the group moves entries and D by the same C - 180) and refused as Corrupt at 16189. The MCA00-V06 cases (group_tests.rs, unchanged), whose C-observer case runs status.rs and undo.rs over A's INSERT groups, keep them unchanged.",
+   "cases": [
+    {
+     "file": "crates/engine/src/storage/row/insert/group_delete_tests.rs",
+     "case": "storage::row::insert::group_delete_tests::rdl_a_groups_at_the_leaf_reservation_boundary",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/group_delete_tests.rs",
+     "case": "storage::row::insert::group_delete_tests::rdl_a_delete_producer_refuses_before_output",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/group_delete_tests.rs",
+     "case": "storage::row::insert::group_delete_tests::rdl_a_delete_groups_match_literals",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+     "case": "storage::row::insert::group_tests::mca00_v06_produced_groups_pass_c_observers",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+     "case": "storage::row::insert::group_tests::mca00_v06_forward_with_h_matches_literals",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+     "case": "storage::row::insert::group_tests::mca00_v06_clr_with_h_matches_literals",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+     "case": "storage::row::insert::group_tests::rdl_f_insert_producer_refuses_delete_root",
+     "sources": [
+      "head"
+     ]
+    }
+   ]
+  },
+  {
+   "paths": [
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_read.rs",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_base.rs"
+   ],
+   "reason": "Memory cases over the actual C supply that 2b-2 left to this PR (dev3-row-delete.md#implementation-2b3). RDL-B06: a DeleteClr waits at the terminal read gate for a read that has captured the tombstone (as MCI03-V01 for INSERT): the rollback closes the gate at its start, before RollbackStart and the DeleteClr: the WAL is as it was before the rollback was called at the gate wait and while the paused reader holds the tombstone's Txn and U pins; it refuses a late reader Unchanged InstallationPending, and once the reader has read the old value through U's before ends RolledBack; the late reader's retry reads the restored value, the drain cleans 5 groups and a new statement reads both rows. RDL-R07: base4 checks a ReleasingCompensated delete root at release cursor 3, where U's before has no stamp: the captured bases at cursor 0 and cursor 3 are accepted, the restored row's logical changed is refused at both (Identity), and the row restamped Committed(1) is refused by U's stamp at cursor 0 (Identity) and by the graph's committed-row order at cursor 3 (Order). RDL-B07..B09 and RDL-R01..R06 keep the 2b-2 states unchanged.",
+   "cases": [
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_read.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::read::rdl_b06_delete_clr_waits_for_a_captured_read",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_read.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::read::rdl_b07_b09_broken_delete_states_are_fatal",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_base.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::base::rdl_r07_base4_takes_the_cursor_three_compensated_row_by_its_logical",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_base.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::base::rdl_r01_base4_takes_each_delete_state",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_base.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::base::rdl_r02_to_r06_base4_refuses_broken_delete_states",
+     "sources": [
+      "head"
+     ]
+    }
+   ]
+  }
+ ],
+ "na": [],
+ "reviews": [
+  {
+   "id": "row-delete-2b3-d2",
+   "class": "D2",
+   "scopes": [
+    "common",
+    "joint"
+   ],
+   "author": "claude-thread-session/claude-project-thread-9inq97",
+   "reviewer": "claude-independent-review/row-delete-2b3",
+   "verdict": "ACCEPT",
+   "required_open": 0,
+   "log": "module-gate/evidence/row-delete-2b3/review.md",
+   "log_sha256": "2fc77a7572a2dc8e7d5894737c665193e146016557035a8bb4839f7f9a88afd4",
+   "files": {
+    "crates/engine/src/storage/row/insert/group_delete_tests.rs": "2221eaac1e8cedfdf07aee3c7a674046df5de1d6",
+    "crates/engine/src/storage/row/insert/group_tests.rs": "c9412f917321e2be3f6fe5c5792da45e03391d68",
+    "crates/engine/src/storage/semantic_row/leaf.rs": "099a04d5355524fef51823a4207388be073d3661",
+    "crates/engine/src/storage/semantic_row/leaf_tests.rs": "08003546e9ceb4e024bf191ac9d6c33915b87b89",
+    "crates/engine/src/storage/semantic_row/status.rs": "fcea67aa519d5223a21660892549f788ba0e125b",
+    "crates/engine/src/storage/semantic_row/status_tests.rs": "24641c3449eb2c382be1890f57d5bddac7a4fd17",
+    "crates/engine/src/storage/semantic_row/transition_delete_tests.rs": "c136c1e9235f0a8e519ccbedb2d219777bbcc35c",
+    "crates/engine/src/storage/semantic_row/transition_tests.rs": "5d8ba6488cc0bbdf0be141c1043ab4a2a1cc10bc",
+    "crates/engine/src/storage/semantic_row/undo.rs": "54cba59436fc749743164aeb923175047e4f92bf",
+    "crates/engine/src/storage/semantic_row/undo_tests.rs": "0a5117c8266d439b475d3413161ee98724c9fd27",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_base.rs": "1b5acf165f4f35d2700ef67bb7e18c7ba9f845d3",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_read.rs": "905faeaca6c1b3d5cfb962d201a0f8813986abdf",
+    "devdoc/README.md": "387456a93ae4c294c15a467529237ffe5e3bed91",
+    "devdoc/contracts/dev3-row-delete.md": "5b969ed2029a6f353ec321d8c702da84425447a8",
+    "devdoc/document-validation.json": "2f9a6eed91c182cedccbe5c07315777cfef36717"
+   }
+  }
+ ]
+}

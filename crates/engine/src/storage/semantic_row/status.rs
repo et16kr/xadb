@@ -97,8 +97,10 @@ fn validate_context(layout: LayoutView<'_>, context: StatusContext) -> Result<()
     {
         return Err(Error::IdentityMismatch);
     }
-    if matches!(layout.operation(), Operation::Commit | Operation::Prune)
-        != context.commit.is_some()
+    if matches!(
+        layout.operation().role(),
+        Operation::Commit | Operation::Prune
+    ) != context.commit.is_some()
     {
         return Err(Error::InvalidInput);
     }
@@ -207,7 +209,9 @@ fn transition(
     before: StatusHome,
 ) -> Result<StatusHome> {
     let core = layout.core();
-    let op = layout.operation();
+    // DeleteForward/DeleteClr/DeletePrune move Status exactly as their INSERT
+    // roles do (dev3-row-delete.md#delete-states).
+    let op = layout.operation().role();
     if op == Operation::Begin {
         require(context.statement.is_none())?;
         let TransactionStatusCell::Free(generation) = before.core() else {
