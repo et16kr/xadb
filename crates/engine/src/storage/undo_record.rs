@@ -595,6 +595,10 @@ fn validate_record(
         {
             0
         }
+        // A Releasing Row value may drop its body (dev3-row-delete.md
+        // #delete-undo): the scope3 delete U leaves Live without its payload.
+        // Live RowValue still needs one, and Releasing Inline stays accepted.
+        UndoPayload::None if releasing && record.before_kind == UndoBeforeKind::RowValue => 0,
         UndoPayload::Inline(bytes)
             if record.before_kind == UndoBeforeKind::RowValue
                 && (5..=2048).contains(&bytes.len()) =>

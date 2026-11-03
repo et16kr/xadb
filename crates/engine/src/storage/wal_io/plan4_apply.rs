@@ -1090,9 +1090,10 @@ pub(crate) struct RowLoanLayout;
     reason = "the producer lane and prepare (S2-c) carve XOI, C_SCRATCH and A_SCRATCH by name"
 )]
 impl RowLoanLayout {
-    /// Row frame (largest Row frame 94080 B; Forward ≤ 93660 B, CLR ≤ 93452
-    /// B). Inside preflight, before any frame is produced, it is first the
-    /// retention LOAD scratch of six pages.
+    /// Row frame (largest Row frame 95888 B, DeleteForward; INSERT Prune ≤
+    /// 94080 B, Forward ≤ 93660 B, CLR ≤ 93452 B; dev3-row-delete.md
+    /// #delete-costs). Inside preflight, before any frame is produced, it is
+    /// first the retention LOAD scratch of six pages.
     pub(crate) const FRAME: std::ops::Range<usize> = 0..98_304;
     /// Nine stable before/proof images of the write target set T.
     pub(crate) const BEFORE: std::ops::Range<usize> = 98_304..245_760;

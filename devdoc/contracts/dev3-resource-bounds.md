@@ -136,7 +136,7 @@ first Row 전용 private backing은 **425984B**이며 다음처럼 배분한다.
 
 | 구간 | bytes | 소유·동시 생존 |
 | --- | ---: | --- |
-| `[0,98304)` frame |98304|최대 Row frame94080B를 보존. Pending에는 immutable frame/plan으로 인계 |
+| `[0,98304)` frame |98304|최대 Row frame94080B를 보존(2026-11-03 DELETE 첫 경로부터 DeleteForward 95888B, [row-delete](dev3-row-delete.md#delete-shape)). Pending에는 immutable frame/plan으로 인계 |
 | `[98304,245760)` before/proof9page |147456|원 target의 stable before·변하지 않는 proof를 담는 최대9page. pool frame과 다른 private copy이므로 별도 회계 |
 | `[245760,327680)` after5page |81920|실제 변경 최대5page. pin9라고 after9page를 생성하지 않음 |
 | `[327680,344064)` row candidate |16384|tree cell 최대2228B 및 canonical row 후보. A가 생산하고 observer가 독립 검산 |
@@ -144,7 +144,7 @@ first Row 전용 private backing은 **425984B**이며 다음처럼 배분한다.
 | `[360448,425984)` 미사용 |65536|다른 원 owner의 비용을 숨기지 않음. 추가 사용 시 이름·수명·선예약을 다시 고정 |
 
 2026-10-29 개정(S2-0, [Row 쓰기 개정](dev3-module-boundaries.md#row-write-budget)): Row 쓰기(S2)는 위 미사용 65536B를 다음처럼 이름·수명·선예약을 고정해 쓴다. 선예약은 caller가 이미 보유한 이 loan 자체이며 새 할당·owner·authority는 없다. 한 구간을 두 사용자가 동시에 쓰지 않는다.
-- `[360448,376832)` XOI page 16384B: Row layout의 Reserve·Forward·Cancel·CLR 준비에서 XOI inventory projection을 둔다. 한 C 단계 안에서만 산다. Forward frame 최대93660B의 tail 4644B가 page 하나보다 작기 때문이다.
+- `[360448,376832)` XOI page 16384B: Row layout의 Reserve·Forward·Cancel·CLR 준비에서 XOI inventory projection을 둔다. 한 C 단계 안에서만 산다. Forward frame 최대93660B의 tail 4644B가 page 하나보다 작기 때문이다. 2026-11-03부터 가장 큰 Row frame은 DeleteForward 95888B이고 tail 2416B도 page 하나보다 작다([row-delete](dev3-row-delete.md#delete-costs)).
 - `[376832,393216)` C scratch 16384B: C의 `produce_borrowed`·`observe_borrowed` scratch(9076B)다. 한 C 단계 안에서만 살고 진입 때 0이다.
 - `[393216,425984)` A scratch 32768B: `RowProducerLane`의 8번째 part다. lane borrow 동안만 A가 쓰며, 발급 전 C가 0으로 채우고 반환 뒤에는 읽지 않는다. byte만 담고 Rust reference 배열은 아래 규칙대로 두지 않는다.
 
@@ -190,6 +190,8 @@ capsule·statement·cursor처럼 호출 뒤에도 사는 engine handle에는 **�
 
 cell 크기 `C=185..2228`, predecessor 존재 `h∈{0,1}`에서 Forward는`91304+C+128h`(최대93660), CLR은`91096+C+128h`(최대93452), Prune는`89496+2C+128h`(최대94080)다. RowReserve57336·Cancel40000·Begin/Commit/AbortEnd56712·RollbackStart/실패 StatementFinish3040·ReleaseRole/RootFree55528·TerminalFinish55112를 같은 profile의 exact group bytes로 제안한다. 원 native/edge/count/redo 항의 정의는 소비자 계약 한 곳에 둔다.
 
+2026-11-03 개정([DELETE 첫 경로](dev3-row-delete.md#delete-costs), C는 지우는 옛 행의 cell): DeleteForward는`91304+2C+128h`(최대95888), DeleteClr은`91096+2C+128h`(최대95680), DeletePrune은`89496+C+128h`(최대91852)다. 위 INSERT 식과 RowReserve·Cancel·ReleaseRole·RootFree의 수치는 바뀌지 않는다.
+
 거래의 mandatory remaining은 live root마다 CLR 비용의 합, terminal56712, full-abort RollbackStart3040이다. 진행 중 Reserved row에는 Forward와 그 후 CLR 몫도 포함한다. active mutating statement에는 **별도로6080=statement RollbackStart3040+StatementFinish3040**을 첫 효과 전에 확보한다. full-abort3040을 여기에 중복 배정하지 않는다.
 
 - 성공 statement는 WAL0으로 view/mark를 종료하며 미소비6080을 다음 statement에 인계할 수 있다. 새 행의 Reserve/Forward/Undo/cleanup 비용은 매번 별도 admission이다.
@@ -197,7 +199,7 @@ cell 크기 `C=185..2228`, predecessor 존재 `h∈{0,1}`에서 Forward는`91304
 - Cancel은 이번 미사용 Forward/CLR·root cleanup 예약을 반환하고 이미 consumed Reserve·발급 high-water를 되감지 않는다. statement가 앞서 변경한 행의 의무는 그대로다.
 - Commit은 원 terminal 비용을 소비하고 unused full-abort/CLR/statement 몫을 반환하지만 Aging의 retained cleanup은 보존한다. full abort는 실제 CLR·종료 소비를 기록하고 미소비 statement-finish 몫만 반환한다.
 
-root별 Aging의 complete cleanup 상계는 `Prune+3×ReleaseRole+RootFree =311608+2C+128h`(최대316192)다. compensated root는 불필요한 Prune 몫을 반환하고4step222112를 남긴다. TerminalFinish55112는 actor당 한 번 별도로 합산한다. 서로 다른 root의 WAL/step 합과 단일 Aging의 sequential scratch max를 구별한다. 실패 statement의 Compensated root가 남은 거래가 이후 Commit할 수 있으므로 그 root q0와 source Commit q를 같게 강제하지 않는다. TerminalFinish는 disposition과 관계없이 해당 actor의 RootJobs0·실제 참조/Status 종료 조건을 요구한다.
+root별 Aging의 complete cleanup 상계는 `Prune+3×ReleaseRole+RootFree =311608+2C+128h`(최대316192)다. DELETE root(Job 효과 byte 1)는 `DeletePrune+4×55528 =311608+C+128h`(최대313964)이며 root당 최대 316192 안이다([row-delete](dev3-row-delete.md#delete-costs)). compensated root는 불필요한 Prune 몫을 반환하고4step222112를 남긴다. TerminalFinish55112는 actor당 한 번 별도로 합산한다. 서로 다른 root의 WAL/step 합과 단일 Aging의 sequential scratch max를 구별한다. 실패 statement의 Compensated root가 남은 거래가 이후 Commit할 수 있으므로 그 root q0와 source Commit q를 같게 강제하지 않는다. TerminalFinish는 disposition과 관계없이 해당 actor의 RootJobs0·실제 참조/Status 종료 조건을 요구한다.
 
 각 adopted group에서 `δ_r+r_new ≤ r_old+d_r`를 실제 before/after descriptor와 검산한다. 시작된 CLR·terminal·recovery에 새 admission을 요구하지 않는다. crash 뒤 같은 descriptor/소유를 한 번 복원하고, 이미 보상된 suffix는 CLR로 다시 undo하지 않는다. 실제 failed statement 뒤 새 statement 재admission·full abort 분기를 별도 경계 입력으로 둔다.
 

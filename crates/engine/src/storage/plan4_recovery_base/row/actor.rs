@@ -604,6 +604,11 @@ pub(in crate::storage) fn observe(
     let mut terminal = None;
     for ordinal in 0..JOB_COUNT {
         let job = row::decode_job(jobs.cell(ordinal), namespace)?;
+        // Base4 knows only INSERT roots (Missing U, Inline row); a DELETE root
+        // (dev3-row-delete.md#job-effect) needs the effect-1 rules of #recovery.
+        if job.effect() != row::RowEffect::Insert {
+            return Err(Error::Unsupported);
+        }
         if job.source() == Some(actor)
             && job.state().is_terminal()
             && (terminal.replace(job).is_some() || job.scope() != Some(JobScope::Row))

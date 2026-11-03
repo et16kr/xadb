@@ -891,7 +891,11 @@ pub(super) fn prepare<'a>(
             cells::put32(job, 280, cell_bytes as u32);
             job[288..320].copy_from_slice(&projection);
             put(job, 320, row.get());
-            set_budget(job, 5, 311_608 + 2 * cell_bytes as u64 + 128 * u64::from(h));
+            set_budget(
+                job,
+                5,
+                row::row_cleanup_wal(row::RowEffect::Insert, cell_bytes as u32, h),
+            );
             undo_record::encode_free_undo_record(generation, out.undo)?;
             out.issued = Some(Issued {
                 row,

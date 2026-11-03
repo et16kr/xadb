@@ -1575,3 +1575,151 @@ fn undo_generated_profiles_match_independent_fields() {
 
 #[path = "undo_free_page_tests.rs"]
 mod free_page;
+
+/// RDL-F07 (dev3-row-delete.md#delete-undo): a Releasing RowValue may drop
+/// its body (payload None, 432 B plus key) with any schema input; a Live
+/// RowValue without a body is still refused; U09–U12 (Releasing RowValue
+/// Inline, cursors 0..3) are unchanged and still need their schema. The
+/// expected None images are the frozen literals with the inline length,
+/// payload tag and body removed by hand, never an encoder result.
+#[test]
+fn rdl_f07_releasing_row_value_may_drop_its_body() {
+    let f = Fixtures::new();
+    let inline = f.inline.len();
+    for (i, hash) in HASHES.iter().enumerate().take(12).skip(8) {
+        // U09–U12 bytes, hash, round trip and schema need are unchanged.
+        let b = literal(i);
+        assert_eq!(content_digest(&b).as_slice(), hex(hash), "U{}", i + 1);
+        assert_eq!(encode_record(f.cell(i), f.expect(i), &inline_schema()), b);
+        decode_undo_record(&b, f.expect(i), &inline_schema()).unwrap();
+        assert_eq!(
+            decode_undo_record(&b, f.expect(i), &[]).err(),
+            Some(UndoError::Corrupt)
+        );
+        // The same record without its body.
+        let mut none = b[..b.len() - inline].to_vec();
+        none[320..324].fill(0);
+        none[325] = 0;
+        assert_eq!(none.len(), UNDO_RECORD_BYTES);
+        let mut record = f.record(i);
+        record.payload = UndoPayload::None;
+        for columns in [&[][..], &inline_schema()[..]] {
+            assert_eq!(
+                undo_record_encoded_len(UndoCell::Releasing(record), f.expect(i), columns),
+                Ok(UNDO_RECORD_BYTES)
+            );
+            assert_eq!(
+                encode_record(UndoCell::Releasing(record), f.expect(i), columns),
+                none
+            );
+            let view = decode_undo_record(&none, f.expect(i), columns).unwrap();
+            assert_eq!(view.state(), UndoRecordState::Releasing);
+            assert_eq!(view.live_before(), Err(UndoError::StateMismatch));
+            assert_eq!(view.release_progress().unwrap().chunk_count, 0);
+        }
+        // A Live RowValue never drops its body.
+        let mut live = record;
+        live.incoming = 2;
+        live.release.cursor = 0;
+        live.edges = [UndoEdge::Never; 2];
+        live.before_stamp = Some(VersionStamp::Committed(CommitSeq::new(22).unwrap()));
+        let mut out = vec![0xa5; 2 * UNDO_RECORD_BYTES];
+        assert_eq!(
+            encode_undo_record(
+                UndoCell::Live(live),
+                f.expect(i),
+                &inline_schema(),
+                &mut out
+            ),
+            Err(UndoError::InvalidInput)
+        );
+        assert!(out.iter().all(|&b| b == 0xa5));
+    }
+    // The Live image of U04 (Live RowValue Inline) without its body: Corrupt.
+    let mut live = literal(3)[..UNDO_RECORD_BYTES].to_vec();
+    live[320..324].fill(0);
+    live[325] = 0;
+    for columns in [&[][..], &inline_schema()[..]] {
+        assert_eq!(
+            decode_undo_record(&live, f.expect(3), columns).err(),
+            Some(UndoError::Corrupt)
+        );
+    }
+}
+
+/// RDL-F07 continued: the delete U of the contract table through its whole
+/// life. Live (RowValue, `Committed(q_old)`, the old logical, inline body,
+/// incoming 2, edges `[Never or H, Never]`) needs the row schema; every
+/// Releasing cursor is 432 B without a body and needs none.
+#[test]
+fn rdl_f07_delete_undo_live_then_releasing_cursors() {
+    let f = Fixtures::new();
+    let e = f.expect(3);
+    let logical = LogicalRowVersion::new(
+        TxnId {
+            writer_epoch: 17,
+            local: 23,
+            ..id()
+        },
+        24,
+    )
+    .unwrap();
+    for previous in [UndoEdge::Never, link()] {
+        let live = UndoRecord {
+            creator: UndoCreator {
+                id: id(),
+                status_generation: g(20),
+            },
+            sequence: 100,
+            mutation_sequence: 21,
+            incoming: 2,
+            target: target(UndoTargetKind::Row),
+            edges: [previous, UndoEdge::Never],
+            before_kind: UndoBeforeKind::RowValue,
+            before_stamp: Some(VersionStamp::Committed(CommitSeq::new(22).unwrap())),
+            before_logical: Some(logical),
+            payload: UndoPayload::Inline(&f.inline),
+            release: UndoRelease {
+                cursor: 0,
+                chunks_released: 0,
+                next: None,
+            },
+        };
+        let bytes = encode_record(UndoCell::Live(live), e, &inline_schema());
+        assert_eq!(bytes.len(), UNDO_RECORD_BYTES + f.inline.len());
+        assert_eq!(&bytes[UNDO_RECORD_BYTES..], f.inline.as_slice());
+        let view = decode_undo_record(&bytes, e, &inline_schema()).unwrap();
+        assert_eq!(
+            view.live_before().unwrap().payload,
+            UndoPayload::Inline(&f.inline)
+        );
+        assert_eq!(
+            decode_undo_record(&bytes, e, &[]).err(),
+            Some(UndoError::Corrupt)
+        );
+        for cursor in 0..=3u8 {
+            let mut releasing = live;
+            releasing.incoming = 0;
+            releasing.payload = UndoPayload::None;
+            releasing.release.cursor = cursor;
+            if previous != UndoEdge::Never {
+                releasing.edges[0] = UndoEdge::Cut;
+            }
+            if cursor >= 1 {
+                releasing.edges[1] = UndoEdge::Released;
+            }
+            if cursor >= 2 {
+                releasing.edges[0] = UndoEdge::Released;
+            }
+            if cursor == 3 {
+                releasing.before_stamp = None;
+            }
+            let bytes = encode_record(UndoCell::Releasing(releasing), e, &[]);
+            assert_eq!(bytes.len(), UNDO_RECORD_BYTES);
+            assert_eq!((bytes[324], bytes[325], bytes[328]), (2, 0, cursor));
+            let view = decode_undo_record(&bytes, e, &[]).unwrap();
+            assert_eq!(view.state(), UndoRecordState::Releasing);
+            assert_eq!(view.release_progress().unwrap().progress.cursor, cursor);
+        }
+    }
+}

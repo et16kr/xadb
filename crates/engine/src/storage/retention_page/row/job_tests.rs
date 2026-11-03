@@ -207,7 +207,9 @@ fn job3_closed_grammar_and_identity_rejections() {
         bad[7] = kind;
         rejected(&bad, RetentionError::UnsupportedState);
     }
-    for at in [0, 122, 127, 284, 287, 360, 375] {
+    // `@284` is the effect byte since dev3-row-delete.md#job-effect; its
+    // accept/reject rules are rdl_f05 below.
+    for at in [0, 122, 127, 285, 287, 360, 375] {
         let mut bad = cell(19);
         bad[at] ^= 1;
         rejected(&bad, RetentionError::Corrupt);
@@ -581,4 +583,159 @@ fn job3_selected_cell_borrows_original_census() {
     )
     .unwrap();
     assert_eq!(jobs[4][6], 1);
+}
+
+// ---- RDL-F: the Row root effect byte and its recipes
+// (dev3-row-delete.md#job-effect, #delete-costs). Expected values are the
+// contract's integers, never the product recipe functions. ----
+
+/// Literal cell index → (C, h) of the four live Row roots.
+const LIVE_ROOTS: [(usize, u64, bool); 4] = [
+    (19, 185, false),
+    (20, 2228, true),
+    (21, 185, false),
+    (22, 2228, true),
+];
+
+/// The live root `i` turned into a DELETE root: effect 1 and the delete
+/// cleanup budget `311608 + C + 128h` (WAL and protected).
+fn delete_root(i: usize, c: u64, h: bool) -> [u8; JOB_BYTES] {
+    let mut bytes = cell(i);
+    bytes[284] = 1;
+    let wal = 311_608 + c + 128 * u64::from(h);
+    put(&mut bytes, 784, wal);
+    put(&mut bytes, 880, wal);
+    bytes
+}
+
+/// RDL-F05: the effect byte is accepted as 0 or 1 on a Row Reserved,
+/// Retained or Releasing root and kept through Releasing; 2, any other Job
+/// kind/state, `[285,288)` and the Releasing zero rule `[280,284)` and
+/// `[285,320)` are refused, and an INSERT budget under effect 1 is not a
+/// DELETE root.
+#[test]
+fn rdl_f05_effect_byte_accept_and_reject() {
+    for (i, c, h) in LIVE_ROOTS {
+        let bytes = delete_root(i, c, h);
+        let view = decode_job(&bytes, ns()).unwrap();
+        assert_eq!(view.effect(), RowEffect::Delete);
+        assert_eq!(view.cell_bytes() as u64, c);
+        assert_eq!(view.has_previous_transaction(), Some(h));
+        let mut out = [0xa5; JOB_BYTES];
+        encode_job(&bytes, ns(), &mut out).unwrap();
+        assert_eq!(out, bytes);
+        assert_eq!(
+            decode_job(&cell(i), ns()).unwrap().effect(),
+            RowEffect::Insert
+        );
+        for value in [2, 3, 128, 255] {
+            let mut bad = bytes;
+            bad[284] = value;
+            rejected(&bad, RetentionError::Corrupt);
+        }
+        for at in [285, 286, 287] {
+            let mut bad = bytes;
+            bad[at] = 1;
+            rejected(&bad, RetentionError::Corrupt);
+        }
+        // The INSERT recipe's budget with effect 1 (and the reverse).
+        let mut bad = cell(i);
+        bad[284] = 1;
+        rejected(&bad, RetentionError::BudgetMismatch);
+        let mut bad = bytes;
+        bad[284] = 0;
+        rejected(&bad, RetentionError::BudgetMismatch);
+    }
+    // Releasing Committed/Compensated, every cursor: the byte stays, the
+    // release budget does not depend on it.
+    for i in 23..31 {
+        let mut bytes = cell(i);
+        bytes[284] = 1;
+        let view = decode_job(&bytes, ns()).unwrap();
+        assert_eq!(view.effect(), RowEffect::Delete);
+        assert_eq!(
+            view.cleanup(),
+            decode_job(&cell(i), ns()).unwrap().cleanup()
+        );
+        for at in [280, 283, 285, 287, 288, 319] {
+            let mut bad = bytes;
+            bad[at] = 1;
+            rejected(&bad, RetentionError::Corrupt);
+        }
+    }
+    // Free, Catalog/Row Terminal and every Catalog root keep it zero.
+    for i in 0..19 {
+        let mut bad = cell(i);
+        bad[284] = 1;
+        rejected(&bad, RetentionError::Corrupt);
+    }
+}
+
+/// RDL-F06: per-effect cleanup, Forward/CLR ledger rows and `has_previous`
+/// at C 185/2228 and h 0/1; the delete maximum 313964 stays under the INSERT
+/// root maximum 316192; equal numbers of the two recipes stay distinct.
+#[test]
+fn rdl_f06_effect_recipes_and_has_previous() {
+    for c in [185u32, 2228] {
+        for h in [false, true] {
+            let (c64, h128) = (u64::from(c), 128 * u64::from(h));
+            for (effect, forward, clr, cleanup) in [
+                (
+                    RowEffect::Insert,
+                    91_304 + c64,
+                    91_096 + c64,
+                    311_608 + 2 * c64,
+                ),
+                (
+                    RowEffect::Delete,
+                    91_304 + 2 * c64,
+                    91_096 + 2 * c64,
+                    311_608 + c64,
+                ),
+            ] {
+                assert_eq!(row_forward_wal(effect, c, h), forward + h128);
+                assert_eq!(row_clr_wal(effect, c, h), clr + h128);
+                assert_eq!(row_cleanup_wal(effect, c, h), cleanup + h128);
+            }
+        }
+    }
+    assert_eq!(row_cleanup_wal(RowEffect::Delete, 2228, true), 313_964);
+    assert_eq!(row_cleanup_wal(RowEffect::Insert, 2228, true), 316_192);
+    assert_eq!(row_forward_wal(RowEffect::Delete, 2228, true), 95_888);
+    assert_eq!(row_clr_wal(RowEffect::Delete, 2228, true), 95_680);
+    for (i, c, h) in LIVE_ROOTS {
+        let bytes = delete_root(i, c, h);
+        let view = decode_job(&bytes, ns()).unwrap();
+        let h128 = 128 * u64::from(h);
+        assert_eq!(view.cleanup().steps, 5);
+        assert_eq!(view.cleanup().wal, 311_608 + c + h128);
+        assert_eq!(view.forward_wal(), Some(91_304 + 2 * c + h128));
+        assert_eq!(view.clr_wal(), Some(91_096 + 2 * c + h128));
+        let original = cell(i);
+        let insert = decode_job(&original, ns()).unwrap();
+        assert_eq!(insert.forward_wal(), Some(91_304 + c + h128));
+        assert_eq!(insert.clr_wal(), Some(91_096 + c + h128));
+    }
+    for i in [0, 4, 7, 23, 27] {
+        let bytes = cell(i);
+        let view = decode_job(&bytes, ns()).unwrap();
+        assert_eq!((view.forward_wal(), view.clr_wal()), (None, None));
+    }
+    // INSERT C185 h0 and DELETE C370 h0 share 311978 B; the byte decides.
+    let mut delete = delete_root(19, 370, false);
+    delete[280..284].copy_from_slice(&370u32.to_le_bytes());
+    let view = decode_job(&delete, ns()).unwrap();
+    assert_eq!(view.cleanup().wal, 311_978);
+    assert_eq!(decode_job(&cell(19), ns()).unwrap().cleanup().wal, 311_978);
+    assert_eq!(view.has_previous_transaction(), Some(false));
+    // has_previous for a DELETE root is `budget@400 == 311736 + C`.
+    let mut previous = delete_root(19, 370, true);
+    previous[280..284].copy_from_slice(&370u32.to_le_bytes());
+    assert_eq!(get(&previous, 784), 311_736 + 370);
+    assert_eq!(
+        decode_job(&previous, ns())
+            .unwrap()
+            .has_previous_transaction(),
+        Some(true)
+    );
 }

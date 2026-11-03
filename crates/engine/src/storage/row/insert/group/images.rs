@@ -5,8 +5,7 @@
 //! inputs `observe` checked.
 
 use super::{
-    CLR_FIXED, Change, GroupInput, InsertError, Observed, Result, debt, encode_material, leaf,
-    require,
+    Change, GroupInput, InsertError, Observed, Result, debt, encode_material, leaf, require,
 };
 use crate::storage::{
     disk::RowPageRole,
@@ -320,7 +319,14 @@ fn descriptor(observed: &Observed<'_>, status: StatusHome, output: &mut [u8]) ->
         };
         spec.remaining[1] = RemainingBudget::default();
     } else {
-        let clr = debt(CLR_FIXED, observed.cell, observed.predecessor.is_some(), 0);
+        let clr = debt(
+            row::row_clr_wal(
+                row::RowEffect::Insert,
+                observed.cell as u32,
+                observed.predecessor.is_some(),
+            ),
+            0,
+        );
         let old = spec.remaining[0];
         let steps = old
             .steps

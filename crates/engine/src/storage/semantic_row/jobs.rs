@@ -82,6 +82,11 @@ pub(crate) fn observe(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<JobOb
     let namespace = input.context.profile.spec().namespace;
     let before = row::decode_job(before_page.cell(slot).ok_or(Error::Corrupt)?, namespace)?;
     let after = row::decode_job(after_page.cell(slot).ok_or(Error::Corrupt)?, namespace)?;
+    // Every opcode this observer knows is an INSERT-root step; a DELETE root
+    // (dev3-row-delete.md#job-effect) is refused until its own rules exist.
+    if before.effect() != row::RowEffect::Insert || after.effect() != row::RowEffect::Insert {
+        return Err(Error::Unsupported);
+    }
     if matches!(op, Operation::Forward | Operation::Clr | Operation::Prune) {
         require(
             before.cell_bytes() as usize == layout.shape().cell

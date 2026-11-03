@@ -48,6 +48,49 @@ pub(crate) enum JobScope {
     Row,
 }
 
+/// The Row root's effect byte `@284` (dev3-row-delete.md#job-effect): which
+/// cost recipe and Undo before kind the root carries. Reserved, Retained and
+/// Releasing keep it; Free, Terminal and Catalog roots are always Insert (0).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum RowEffect {
+    Insert,
+    Delete,
+}
+
+/// Fixed WAL terms of the Row cost recipes (contract row-shape, row-delete
+/// #delete-costs): the Forward, CLR and Prune frames without their C and h
+/// terms, and the four release steps after a Prune or CLR.
+const FORWARD_FIXED: u64 = 91_304;
+const CLR_FIXED: u64 = 91_096;
+const PRUNE_FIXED: u64 = 89_496;
+const RELEASE_STEPS: u64 = 4 * RELEASE_BYTES;
+const _: () = assert!(PRUNE_FIXED + RELEASE_STEPS == 311_608);
+
+/// Each recipe's C coefficient: INSERT's Forward and CLR carry the cell once
+/// and its Prune twice; DELETE's Forward and CLR carry both the old cell and
+/// its U payload, and its Prune the U payload with the removed tombstone.
+fn coefficients(effect: RowEffect) -> (u64, u64, u64) {
+    match effect {
+        RowEffect::Insert => (1, 1, 2),
+        RowEffect::Delete => (2, 2, 1),
+    }
+}
+
+/// The exact Row root recipes of one effect, cell and h. Reserve's budget,
+/// the ledger and the census all take these, never their own copies.
+pub(crate) fn row_forward_wal(effect: RowEffect, cell: u32, previous: bool) -> u64 {
+    FORWARD_FIXED + coefficients(effect).0 * u64::from(cell) + 128 * u64::from(previous)
+}
+pub(crate) fn row_clr_wal(effect: RowEffect, cell: u32, previous: bool) -> u64 {
+    CLR_FIXED + coefficients(effect).1 * u64::from(cell) + 128 * u64::from(previous)
+}
+pub(crate) fn row_cleanup_wal(effect: RowEffect, cell: u32, previous: bool) -> u64 {
+    PRUNE_FIXED
+        + RELEASE_STEPS
+        + coefficients(effect).2 * u64::from(cell)
+        + 128 * u64::from(previous)
+}
+
 #[derive(Clone, Copy)]
 pub(crate) struct JobView<'a> {
     bytes: &'a [u8; JOB_BYTES],
@@ -73,7 +116,25 @@ impl<'a> JobView<'a> {
     pub(crate) fn has_previous_transaction(self) -> Option<bool> {
         (self.scope == Some(JobScope::Row)
             && matches!(self.state, JobState::RootReserved | JobState::RootRetained))
-        .then(|| get(self.budget(), 400) == 311_736 + 2 * u64::from(self.cell_bytes()))
+        .then(|| get(self.budget(), 400) == row_cleanup_wal(self.effect(), self.cell_bytes(), true))
+    }
+    /// The root's effect byte; validated by `decode_job`.
+    pub(crate) fn effect(self) -> RowEffect {
+        if self.bytes[284] == 1 {
+            RowEffect::Delete
+        } else {
+            RowEffect::Insert
+        }
+    }
+    /// The Reserved root's remaining Forward and a live root's remaining CLR
+    /// (ledger rows 1 and 0); `None` outside a Row Reserved/Retained root.
+    pub(crate) fn forward_wal(self) -> Option<u64> {
+        self.has_previous_transaction()
+            .map(|h| row_forward_wal(self.effect(), self.cell_bytes(), h))
+    }
+    pub(crate) fn clr_wal(self) -> Option<u64> {
+        self.has_previous_transaction()
+            .map(|h| row_clr_wal(self.effect(), self.cell_bytes(), h))
     }
     pub(crate) fn generation(self) -> Generation {
         Generation::new(get(self.bytes, 8)).expect("validated Job generation")
@@ -154,9 +215,11 @@ impl<'a> JobView<'a> {
             JobState::TerminalLeased | JobState::TerminalReady => (1, 55_112),
             JobState::RootReserved | JobState::RootRetained => (
                 5,
-                311_608
-                    + 2 * u64::from(self.cell_bytes())
-                    + 128 * u64::from(self.has_previous_transaction().unwrap_or(false)),
+                row_cleanup_wal(
+                    self.effect(),
+                    self.cell_bytes(),
+                    self.has_previous_transaction().unwrap_or(false),
+                ),
             ),
             _ => {
                 let steps = 4 - u64::from(self.release_cursor());
@@ -263,8 +326,11 @@ pub(crate) fn decode_job(input: &[u8], namespace: Namespace) -> Result<JobView<'
     {
         return Err(RetentionError::OrderMismatch);
     }
+    // `@284` is the Row root effect byte (0 INSERT, 1 DELETE); every other
+    // Job keeps it zero, and `[285,288)` stays zero.
     if !zero(&bytes[122..128])
-        || !zero(&bytes[284..288])
+        || bytes[284] > u8::from(bytes[7] == 3 && state.is_root())
+        || !zero(&bytes[285..288])
         || (bytes[7] != 3 && !zero(&bytes[320..328]))
         || !zero(&bytes[360..376])
     {
@@ -337,7 +403,8 @@ fn validate_root(job: JobView<'_>, status: StatusSlotRef) -> Result<()> {
         return Err(RetentionError::Corrupt);
     }
     if job.state.is_releasing() {
-        if !zero(&bytes[200..248]) || !zero(&bytes[280..320]) {
+        // Releasing keeps only the effect byte of `[280,320)`.
+        if !zero(&bytes[200..248]) || !zero(&bytes[280..284]) || !zero(&bytes[285..320]) {
             return Err(RetentionError::Corrupt);
         }
         if job.adoption_lsn() <= job.lease_lsn()

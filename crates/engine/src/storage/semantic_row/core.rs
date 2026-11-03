@@ -101,8 +101,11 @@ pub(crate) fn decode_core(bytes: &[u8], operation: Operation) -> Result<CoreView
         }
     }
     let v = CoreView { bytes, operation };
+    // A DELETE operation keeps its INSERT role's core rules
+    // (dev3-row-delete.md#delete-states); its opcode is checked above.
+    let role = operation.role();
     let planned = matches!(
-        operation,
+        role,
         Operation::Reserve | Operation::Forward | Operation::Cancel | Operation::Clr
     );
     if planned {
@@ -110,7 +113,7 @@ pub(crate) fn decode_core(bytes: &[u8], operation: Operation) -> Result<CoreView
             return Err(Error::Corrupt);
         }
     } else if v.mutation() != 0
-        || match operation {
+        || match role {
             Operation::RollbackStart => false,
             Operation::StatementFinish => v.statement() == 0,
             _ => v.statement() != 0,
@@ -119,7 +122,7 @@ pub(crate) fn decode_core(bytes: &[u8], operation: Operation) -> Result<CoreView
         return Err(Error::Corrupt);
     }
     let refs = flags & 7;
-    let valid = match operation {
+    let valid = match role {
         Operation::Reserve | Operation::Cancel | Operation::ReleaseRole | Operation::RootFree => {
             refs == 1
         }
@@ -140,10 +143,7 @@ pub(crate) fn decode_core(bytes: &[u8], operation: Operation) -> Result<CoreView
     if !valid || (v.sequence() != 0) != v.current().is_some() {
         return Err(Error::OrderMismatch);
     }
-    let projection = matches!(
-        operation,
-        Operation::Forward | Operation::Clr | Operation::Prune
-    );
+    let projection = role.row();
     if flags & 24 != if projection { 24 } else { 0 }
         || (v.q() != 0) != (operation == Operation::Commit)
     {
@@ -151,7 +151,7 @@ pub(crate) fn decode_core(bytes: &[u8], operation: Operation) -> Result<CoreView
     }
     let cursors = v.cursors();
     if matches!(
-        operation,
+        role,
         Operation::Prune | Operation::ReleaseRole | Operation::RootFree | Operation::TerminalFinish
     ) {
         if cursors.0 >= 64 || cursors.1 >= 64 {
