@@ -78,8 +78,6 @@ fn live() -> UndoRecord<'static> {
 
 #[test]
 fn rdl_b_tombstone_before_takes_the_committed_inline_row() {
-    // A Committed tombstone never reaches here: C's capture takes a
-    // tombstone only as `Transaction(T)` with its U.
     assert_eq!(
         tombstone_before(&live(), &tombstone()),
         Some((q(2), old(), VALUE))
@@ -115,10 +113,13 @@ fn rdl_b_tombstone_before_refuses_every_other_u() {
         assert_eq!(tombstone_before(&record, &tombstone()), None, "{name}");
     }
     // The tombstone side: a Transaction stamp of another transaction or
-    // generation than the logical's creator.
+    // generation than the logical's creator, or a Committed stamp (which
+    // C's capture also refuses before this).
     let mut other = tombstone();
     other.stamp = VersionStamp::Transaction(TxnRef::new(id(8), g(4)).unwrap());
     assert_eq!(tombstone_before(&live(), &other), None);
     other.stamp = VersionStamp::Transaction(TxnRef::new(id(9), g(5)).unwrap());
+    assert_eq!(tombstone_before(&live(), &other), None);
+    other.stamp = VersionStamp::Committed(q(3));
     assert_eq!(tombstone_before(&live(), &other), None);
 }

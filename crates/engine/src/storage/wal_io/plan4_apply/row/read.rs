@@ -1329,8 +1329,9 @@ impl<W: WriterNamespace> RowReadOperation<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_
 /// before is the committed Inline row it replaced (RowValue kind,
 /// `Committed(q_old)`, its logical and value). Any other U under a tombstone
 /// (a Missing or RowDeleted before, a `Transaction` before stamp, no value,
-/// another creator or mutation, sequence 0) is corruption: None. A
-/// Releasing U never reaches here (`live_before` refuses it).
+/// another creator or mutation, sequence 0), or a tombstone not stamped
+/// `Transaction` by that creator, is corruption: None. A Releasing U never
+/// reaches here (`live_before` refuses it).
 #[inline(always)]
 fn tombstone_before<'r>(
     record: &crate::storage::undo_record::UndoRecord<'r>,
@@ -1344,10 +1345,12 @@ fn tombstone_before<'r>(
         transaction_record::VersionStamp,
         undo_record::{UndoBeforeKind, UndoPayload},
     };
+    let VersionStamp::Transaction(actor) = version.stamp else {
+        return None;
+    };
     if record.creator.id != version.logical.transaction()
-        || matches!(version.stamp, VersionStamp::Transaction(actor)
-            if actor.id() != record.creator.id
-                || actor.generation() != record.creator.status_generation)
+        || actor.id() != record.creator.id
+        || actor.generation() != record.creator.status_generation
         || record.mutation_sequence != version.logical.mutation_sequence()
         || record.sequence == 0
     {

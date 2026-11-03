@@ -685,7 +685,8 @@ impl World {
             return;
         };
         // The scope3 local Undo observer learns the DELETE effect in stage
-        // 2b-2 (dev3-row-delete.md#files: semantic_row/{undo,leaf}.rs). Until
+        // 2b-3 (dev3-row-delete.md#implementation-2b2: semantic_row/{undo,
+        // leaf}.rs). Until
         // then it skips a group of an actor with an effect-1 root, before or
         // after; status.rs skips only the DELETE opcodes themselves; jobs.rs
         // observes every group.

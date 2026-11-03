@@ -334,9 +334,6 @@ fn rdl_r02_to_r06_base4_refuses_broken_delete_states() {
         println!("RDL_R06 over={over} {r06:?} at={at} {held:?}");
         assert_eq!((over, at), (16_201, 16_188));
         assert_eq!(r06, Err(RowBaseError::Corrupt));
-        assert!(
-            held.is_err() && held != Err(RowBaseError::Corrupt),
-            "{held:?}"
-        );
+        assert_eq!(held, Err(RowBaseError::Order));
     });
 }

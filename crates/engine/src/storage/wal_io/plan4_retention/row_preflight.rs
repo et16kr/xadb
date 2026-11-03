@@ -531,20 +531,13 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             let schema = read
                 .bytes(catalog_at)
                 .map_err(|e| frame(RetentionPhase::Prepare, e))?;
-            let definition =
-                table_definition(schema, catalog.identity, table, namespace).map_err(census)?;
             let bytes = read
                 .bytes(leaf_at)
                 .map_err(|e| frame(RetentionPhase::Prepare, e))?;
-            delete_class(
-                bytes,
-                TreeExpectation {
-                    identity: leaf.identity,
-                    kind: PageKind::RowLeaf,
-                    level: 0,
-                    arity: 0,
-                },
-                RowSchemaInput::Catalog(definition),
+            target_class(
+                (schema, catalog.identity),
+                table,
+                (bytes, leaf.identity),
                 (self.control.jobs(), namespace),
                 target,
                 snapshot,
@@ -1197,6 +1190,39 @@ pub(super) fn table_value(
     Ok(value)
 }
 
+/// The DELETE target's class over the Catalog leaf and RowLeaf images
+/// (dev3-row-delete.md#classification): the issued table's schema, then an
+/// indexed table (dev3-row-delete.md#scope) is Unsupported ahead of the
+/// target's class, by the complete census that gives INSERT's
+/// `RowPreflightContext::index_count`, then `delete_class`. A cause only,
+/// as `table_value`.
+pub(in super::super::super) fn target_class(
+    (catalog, catalog_identity): (&[u8; PAGE_BYTES], PageIdentity),
+    table: RowTableSource,
+    (leaf, leaf_identity): (&[u8; PAGE_BYTES], PageIdentity),
+    (jobs, namespace): (&[[u8; JOB_BYTES]; JOB_COUNT], crate::api::Namespace),
+    target: (TxnRef, RowId),
+    snapshot: (u64, bool),
+) -> std::result::Result<DeleteClass, RetentionCause> {
+    let definition = table_definition(catalog, catalog_identity, table, namespace)?;
+    if table_index_count(catalog, catalog_identity, table, namespace)? != 0 {
+        return Ok(DeleteClass::Unsupported);
+    }
+    delete_class(
+        leaf,
+        TreeExpectation {
+            identity: leaf_identity,
+            kind: PageKind::RowLeaf,
+            level: 0,
+            arity: 0,
+        },
+        RowSchemaInput::Catalog(definition),
+        (jobs, namespace),
+        target,
+        snapshot,
+    )
+}
+
 /// The Index records of the issued table in a Catalog leaf image: every
 /// Index definition whose parent is the table's object, retired or not (the
 /// conservative count; `RowPreflightContext::index_count`, which A refuses
@@ -1601,8 +1627,10 @@ pub(in super::super) fn row_preflight_body<W: WriterNamespace>(
         );
     // `delete_target`: the snapshot (a statement check, the isolation leaf
     // and the visibility row, as `register` counts the first two), then the
-    // typed read of the Catalog leaf and the RowLeaf with the table record's
-    // decode and `delete_class` one after the other. `delete_class` holds the
+    // typed read of the Catalog leaf and the RowLeaf with `target_class`: the
+    // table record's decode, the index census (`table_index_count`, as
+    // `row_write` counts it) and `delete_class` one after the other, the
+    // definition held across the last two. `delete_class` holds the
     // tree view, the search position and the record view beside the RowLeaf
     // search, the record decode or one Job decode at a time.
     let snapshot = register
@@ -1629,6 +1657,7 @@ pub(in super::super) fn row_preflight_body<W: WriterNamespace>(
         + size_of::<(u64, bool)>()
         + size_of::<TableDefinitionView<'_>>()
         + 2 * size_of::<std::result::Result<TableDefinitionView<'_>, RetentionCause>>()
+        + 2 * size_of::<std::result::Result<u16, RetentionCause>>()
         + 2 * size_of::<Result<DeleteClass>>()
         + 2 * size_of::<dirty_frame::Result<&[u8; PAGE_BYTES]>>()
         + 2 * size_of::<RetentionError>()
@@ -1643,6 +1672,10 @@ pub(in super::super) fn row_preflight_body<W: WriterNamespace>(
                                 catalog_record::CatalogError,
                             >,
                         >())
+                    .max(
+                        super::super::super::read::catalog_source_bytes::<W>()
+                            + 2 * size_of::<std::result::Result<u16, RetentionCause>>(),
+                    )
                     .max(class),
             ),
         );

@@ -1109,3 +1109,6 @@ fn rdl_j10_two_deletes_roll_back_then_commit() {
 /// bases.
 #[path = "delete_base.rs"]
 mod base;
+
+#[path = "delete_read.rs"]
+mod read;

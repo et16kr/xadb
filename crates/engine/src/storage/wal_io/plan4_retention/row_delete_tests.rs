@@ -6,23 +6,28 @@
 //! zero rows. Literal observations confer no actual source, reservation,
 //! pin, staging, installation or recovery authority.
 
-use super::{DeleteClass, delete_class};
+use super::{DeleteClass, RowTableSource, delete_class, target_class};
 use crate::{
-    api::{Column, DataType, DatabaseId, Namespace},
+    api::{Column, DataType, DatabaseId, Namespace, TableSpec},
     storage::{
-        page::{FileId, PAGE_BYTES, PageIdentity, PageKind, PageLsn, PageRef},
+        catalog_record::{
+            CatalogDefinition, CatalogExpectation, CatalogHeader, IndexDefinition, IndexMode,
+            encode_catalog_record,
+        },
+        overflow::{INLINE_ROW_BYTES, OverflowHead},
+        page::{FileId, PAGE_BYTES, PageHeader, PageIdentity, PageKind, PageLsn, PageRef},
         retention_page::{
             JOB_BYTES, JOB_COUNT,
             row::{self as job3, JobState},
         },
         row_record::{self, RecordExpectation, RecordVersion, RowPayload, RowSchemaInput},
         semantic_row::transition::tests::delete::{D_TERMINAL, a_actor, d_leaves},
-        transaction_record::{TxnRef, VersionStamp},
+        transaction_record::{LogicalRowVersion, TxnRef, VersionStamp},
         tree_page::{self, EntryPayload, TreeExpectation, edit::LeafEdit},
     },
     transaction::TxnId,
 };
-use foundation::identity::{CommitSeq, Generation, ObjectId, RowId};
+use foundation::identity::{CommitSeq, Generation, ObjectHandle, ObjectId, RowId, SchemaEpoch};
 
 type Page = [u8; PAGE_BYTES];
 type Bank = [[u8; JOB_BYTES]; JOB_COUNT];
@@ -134,6 +139,17 @@ fn committed_q(leaf: &Page, row: u64) -> u64 {
 /// `row`'s record re-encoded with `version` and `payload` (a Deleted payload
 /// or the row's own value), over the same RowLeaf image.
 fn restamp(leaf: &Page, row: u64, version: RecordVersion, deleted: bool) -> Box<Page> {
+    rewrite(leaf, row, version, deleted.then_some(RowPayload::Deleted))
+}
+
+/// `row`'s record re-encoded with `version` and `payload` (None keeps the
+/// row's own payload), over the same RowLeaf image.
+fn rewrite(
+    leaf: &Page,
+    row: u64,
+    version: RecordVersion,
+    payload: Option<RowPayload<'_>>,
+) -> Box<Page> {
     let view = tree_page::decode_tree_page(leaf, expected()).unwrap();
     let position = view.lower_bound(&row.to_be_bytes()).unwrap();
     let EntryPayload::Value(value) = view.entry(position.index).unwrap().payload else {
@@ -146,11 +162,7 @@ fn restamp(leaf: &Page, row: u64, version: RecordVersion, deleted: bool) -> Box<
     };
     let schema = RowSchemaInput::Columns(&columns);
     let old = row_record::decode_row_record_with_schema(value, expectation, schema).unwrap();
-    let payload = if deleted {
-        RowPayload::Deleted
-    } else {
-        old.payload()
-    };
+    let payload = payload.unwrap_or(old.payload());
     let mut record = vec![0; PAGE_BYTES];
     let length = row_record::encode_row_record_with_schema(
         expectation,
@@ -371,5 +383,209 @@ fn rdl_c_delete_class_never_lowers_a_contradiction() {
         for actor in [t2(), stranger()] {
             assert!(classify((leaf, bank), actor, row, all).is_none(), "{label}");
         }
+    }
+}
+
+/// History D's table (object 6, anchor page 12) as an issued source.
+fn table_source() -> RowTableSource {
+    let table = ObjectId::new(6).unwrap();
+    RowTableSource {
+        handle: ObjectHandle {
+            object: table,
+            generation: generation(1),
+            schema_epoch: SchemaEpoch::new(1).unwrap(),
+        },
+        slot: 0,
+        anchor: PageIdentity {
+            database: namespace().database,
+            page: PageRef {
+                file: FileId::new(0x1_0000_0001).unwrap(),
+                page_no: 12,
+                incarnation: generation(2),
+            },
+            owner: table,
+            owner_generation: generation(1),
+        },
+    }
+}
+fn catalog_identity() -> PageIdentity {
+    PageIdentity {
+        database: namespace().database,
+        page: PageRef {
+            file: FileId::new(0x1_0000_0001).unwrap(),
+            page_no: 8,
+            incarnation: generation(1),
+        },
+        owner: ObjectId::new(5).unwrap(),
+        owner_generation: generation(1),
+    }
+}
+/// A Catalog leaf with history D's Table record (`columns`) and, when
+/// `parent` is given, one Index record (object 7) whose parent is that
+/// object, as the MCA01-V12-P census leaf (`row_write_tests.rs`).
+fn catalog(parent: Option<u64>) -> Box<Page> {
+    let source = table_source();
+    let spec = TableSpec {
+        name: "row_table".into(),
+        columns: columns().to_vec(),
+    };
+    let header = |object: u64| CatalogHeader {
+        identity: ObjectHandle {
+            object: ObjectId::new(object).unwrap(),
+            ..source.handle
+        },
+        retired: false,
+        stamp: VersionStamp::Committed(CommitSeq::new(1).unwrap()),
+        logical: LogicalRowVersion::new(stranger().id(), 1).unwrap(),
+        undo: None,
+        anchor: source.anchor.page,
+    };
+    let mut definitions = vec![(6, CatalogDefinition::Table(&spec))];
+    if let Some(parent) = parent {
+        definitions.push((
+            7,
+            CatalogDefinition::Index(IndexDefinition {
+                parent: ObjectHandle {
+                    object: ObjectId::new(parent).unwrap(),
+                    ..source.handle
+                },
+                name: "row_index",
+                mode: IndexMode::Nonunique,
+                columns: &[0],
+            }),
+        ));
+    }
+    let mut metadata = [0; 32];
+    let metadata =
+        tree_page::encode_metadata(PageKind::CatalogLeaf, 0, None, &mut metadata).unwrap();
+    let mut cells = vec![metadata.to_vec()];
+    for (object, definition) in definitions {
+        let mut record = vec![0; 4096];
+        let length = encode_catalog_record(
+            CatalogExpectation {
+                namespace: namespace(),
+                object: ObjectId::new(object).unwrap(),
+            },
+            header(object),
+            definition,
+            &mut record,
+        )
+        .unwrap();
+        let key = u64::to_be_bytes(object);
+        let mut entry = vec![0; 4 + key.len() + length];
+        let entry = tree_page::encode_leaf_cell(
+            PageKind::CatalogLeaf,
+            0,
+            &key,
+            &record[..length],
+            &mut entry,
+        )
+        .unwrap();
+        cells.push(entry.to_vec());
+    }
+    let refs: Vec<&[u8]> = cells.iter().map(Vec::as_slice).collect();
+    let mut page = Box::new([0; PAGE_BYTES]);
+    tree_page::encode_tree_page(
+        PageHeader {
+            identity: catalog_identity(),
+            kind: PageKind::CatalogLeaf,
+            level: 0,
+            lsn: PageLsn(1),
+        },
+        0,
+        &refs,
+        &mut page[..],
+    )
+    .unwrap();
+    page
+}
+
+/// RDL-C (dev3-row-delete.md#scope, #classification; 2b-2 review R1): an
+/// indexed table is Unsupported ahead of the target's class, by the same
+/// complete census that gives INSERT's `index_count`: for the row a delete
+/// would take, an absent key and a row a root holds alike. An Index of
+/// another table changes nothing. (No product path creates an Index yet:
+/// the Catalog wire refuses Index definitions.)
+#[test]
+fn rdl_c_indexed_table_is_unsupported_before_the_class() {
+    let states = d_leaves(&["D-523"]);
+    let (_, leaf, bank) = &states[0];
+    let q9 = committed_q(leaf, 9);
+    let class = |parent: Option<u64>, row: u64| {
+        target_class(
+            (&catalog(parent), catalog_identity()),
+            table_source(),
+            (leaf, expected().identity),
+            (bank, namespace()),
+            (t2(), RowId::new(row).unwrap()),
+            (q9, true),
+        )
+        .ok()
+    };
+    assert_eq!(class(None, 9), Some(DeleteClass::Delete), "no Index");
+    assert_eq!(class(None, 1000), Some(DeleteClass::NoRow), "absent key");
+    assert_eq!(class(None, 2), Some(DeleteClass::Busy), "held row");
+    assert_eq!(
+        class(Some(99), 9),
+        Some(DeleteClass::Delete),
+        "another table's Index"
+    );
+    for (row, label) in [(9, "the row"), (1000, "absent key"), (2, "held row")] {
+        assert_eq!(
+            class(Some(6), row),
+            Some(DeleteClass::Unsupported),
+            "indexed table, {label}"
+        );
+    }
+}
+
+/// RDL-C (dev3-row-delete.md#classification; 2b-2 review R7): an overflow
+/// target is Unsupported, committed or another transaction's, and a
+/// `Transaction` row with no undo is a contradiction (Corrupt), never a
+/// refusal or zero rows.
+#[test]
+fn rdl_c_delete_class_overflow_and_undo_less_rows() {
+    let states = d_leaves(&["D-523", "D-524"]);
+    let all = (u64::MAX, true);
+    let (_, d523_leaf, d523_bank) = &states[0];
+    let (_, d524_leaf, d524_bank) = &states[1];
+    let root = PageRef {
+        file: FileId::new(0x1_0000_0001).unwrap(),
+        page_no: 40,
+        incarnation: generation(1),
+    };
+    let head = OverflowHead::new(root, INLINE_ROW_BYTES + 1, [0; 32]).unwrap();
+
+    let (row9, _) = version(d523_leaf, 9);
+    let committed = rewrite(d523_leaf, 9, row9, Some(RowPayload::Overflow(head)));
+    assert_eq!(
+        classify((&committed, d523_bank), t2(), 9, all),
+        Some(DeleteClass::Unsupported),
+        "committed overflow row"
+    );
+
+    // T2's tombstone at row 2 carried as T2's overflow row (T2 Leased).
+    let (tombstone, _) = version(d524_leaf, 2);
+    let foreign = rewrite(d524_leaf, 2, tombstone, Some(RowPayload::Overflow(head)));
+    assert_eq!(
+        classify((&foreign, d524_bank), stranger(), 2, all),
+        Some(DeleteClass::Unsupported),
+        "another transaction's overflow row"
+    );
+
+    let undo_less = rewrite(
+        d524_leaf,
+        2,
+        RecordVersion {
+            undo: None,
+            ..tombstone
+        },
+        None,
+    );
+    for actor in [t2(), stranger()] {
+        assert!(
+            classify((&undo_less, d524_bank), actor, 2, all).is_none(),
+            "Transaction row with no undo"
+        );
     }
 }
