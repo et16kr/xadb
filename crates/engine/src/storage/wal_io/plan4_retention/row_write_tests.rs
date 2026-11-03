@@ -77,6 +77,49 @@ fn s2b2_a6_check_candidate_leaf_shortage_is_capacity() {
     );
 }
 
+/// RDL-C (dev3-row-delete.md#leaf-reservation, #target): an INSERT's
+/// Capacity also keeps the leaf reservation D of the table's Retained
+/// DELETE roots, so their DeleteClr can restore each old row. The same
+/// boundary as above moves by exactly D: free bytes of need + D fit, one
+/// byte fewer is Unchanged Capacity in Prepare. D = 0 is the rule above.
+#[test]
+fn rdl_c_insert_capacity_keeps_the_leaf_reservation() {
+    let length = 64;
+    let mut candidate = [0u8; PAGE_BYTES];
+    candidate[..length].fill(0x5a);
+    let plan = RowInputPlan::new(
+        length,
+        SchemaEpoch::new(1).expect("epoch"),
+        content_digest(&candidate[..length]),
+    );
+    let need = length + ROW_HEADER_BYTES + 16;
+    // Two Retained delete roots whose old cells are 189 and 194 B:
+    // D = Σ(C − 180) = 9 + 14.
+    let reserved = (189 - 180) + (194 - 180);
+    let free = |bytes: usize| u16::try_from(bytes).expect("free");
+    check_candidate(
+        &plan,
+        &candidate,
+        table(),
+        (&cut(free(need + reserved)), reserved),
+    )
+    .expect("fits exactly beside D");
+    let error = check_candidate(
+        &plan,
+        &candidate,
+        table(),
+        (&cut(free(need + reserved - 1)), reserved),
+    )
+    .expect_err("one byte inside D");
+    assert_eq!(error.effect, Effect::Unchanged);
+    assert_eq!(error.phase, RetentionPhase::Prepare);
+    assert!(
+        matches!(error.cause, RetentionCause::Capacity),
+        "{:?}",
+        error.cause
+    );
+}
+
 /// MCA01-V12-P (consumers §9.1, the variant's one C0 case): the pure
 /// complete Catalog census (`table_index_count`, the source of
 /// `RowPreflightContext::index_count`) over a Catalog leaf holding T's Table

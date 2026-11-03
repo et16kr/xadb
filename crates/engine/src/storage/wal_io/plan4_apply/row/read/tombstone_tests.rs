@@ -78,16 +78,10 @@ fn live() -> UndoRecord<'static> {
 
 #[test]
 fn rdl_b_tombstone_before_takes_the_committed_inline_row() {
+    // A Committed tombstone never reaches here: C's capture takes a
+    // tombstone only as `Transaction(T)` with its U.
     assert_eq!(
         tombstone_before(&live(), &tombstone()),
-        Some((q(2), old(), VALUE))
-    );
-    // A tombstone whose stamp is already Committed (cleanup not yet run
-    // after the commit) still names its creator only through the logical.
-    let mut committed = tombstone();
-    committed.stamp = VersionStamp::Committed(q(5));
-    assert_eq!(
-        tombstone_before(&live(), &committed),
         Some((q(2), old(), VALUE))
     );
 }
