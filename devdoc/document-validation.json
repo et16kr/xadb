@@ -1,21 +1,21 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-11-04T03:43:42.821731+09:00",
+  "date": "2026-11-04T06:24:27.571990+09:00",
   "status": "PASS",
   "errors": [],
   "markdown_documents": [
     {
       "file": "devdoc/README.md",
-      "links": 303,
+      "links": 305,
       "duplicate_ids": 0,
-      "sha256": "8b048ad0482eed773bef0ec291c47cacb907a01de6a431b236b7393327e6c139"
+      "sha256": "8c6843c21251fa6a3496146fba36cc8608e16849e94e39a008fc974ca75bbdf2"
     },
     {
       "file": "devdoc/contracts/README.md",
       "links": 133,
       "duplicate_ids": 0,
-      "sha256": "37706821bc51ea74f3f00f1be521aae2b9205b94c2b0e597a5cb0a751be07767"
+      "sha256": "220e69b2bd2f7ac098fe1a4471cad644e346cd233bdc20208ce49de51af7e5a8"
     },
     {
       "file": "devdoc/contracts/ai-performance-engineering.md",
@@ -157,15 +157,15 @@
     },
     {
       "file": "devdoc/contracts/dev3-module-boundaries.md",
-      "links": 363,
+      "links": 364,
       "duplicate_ids": 0,
-      "sha256": "85a57f7c98e5f8a941e529fbffe62a256f8d3c0256f9ddd7959a7d46de4c52c3"
+      "sha256": "dc86773836bf9a15feddd883bdfc0437c7dc853d7d8158a6d19f2bd41022b887"
     },
     {
       "file": "devdoc/contracts/dev3-module-consumers.md",
-      "links": 96,
+      "links": 99,
       "duplicate_ids": 0,
-      "sha256": "656e1f853023203796c1a0a49001a1ee1a25023aa0d93e9423a25fc94f103569"
+      "sha256": "6bda218de54aacf8587fa013bb5d6bf83ab128eb486a7362ee7fe10d6f857bb9"
     },
     {
       "file": "devdoc/contracts/dev3-obligation-format.md",
@@ -277,9 +277,9 @@
     },
     {
       "file": "devdoc/contracts/dev3-resource-bounds.md",
-      "links": 37,
+      "links": 41,
       "duplicate_ids": 0,
-      "sha256": "ea72a85cb3f22aaff6be689ed64655299bf3182147ac0b473f62083304d88d1d"
+      "sha256": "8f9c44cd659e15109b927c1b6a1569b972acc8511d0b2f91c90e57f0f29a8bb0"
     },
     {
       "file": "devdoc/contracts/dev3-retention-live.md",
@@ -301,9 +301,9 @@
     },
     {
       "file": "devdoc/contracts/dev3-row-update.md",
-      "links": 30,
+      "links": 31,
       "duplicate_ids": 0,
-      "sha256": "835647b8960530fad6600c79919565720566c34ff62656649b4edab3b1b6727d"
+      "sha256": "149623cce0e586985b279f9683b3f2f77b804ec18c095f258209a3a9cafb0a4a"
     },
     {
       "file": "devdoc/contracts/dev3-selector-port.md",
@@ -1459,9 +1459,9 @@
     },
     {
       "file": "devdoc/plans/dev3-schedule-baseline.md",
-      "links": 108,
+      "links": 112,
       "duplicate_ids": 0,
-      "sha256": "3d3c38fafe9af0524f81d86230651eded342727ea7c981a169e46e8ad174c989"
+      "sha256": "25dfbae98d54725e36cb0dd8b4193348fe01544f7ef0b82b4ed2bae592381026"
     },
     {
       "file": "devdoc/plans/dev3-test-plan.md",

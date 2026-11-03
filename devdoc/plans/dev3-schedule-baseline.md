@@ -1,10 +1,10 @@
 # DEV3 전체 예상 일정과 누적 진척률 기준선
 
-2026-11-03 · **D3-SCHEDULE-001 / V1 · 사용자 요청에 따른 일정 가중치 기준선 · 초안 독립 D2 ACCEPT; 공급 단위 재배정 독립 D2 ACCEPT(r2, 필수 지적 0); 일정 항목 적립 독립 D2 ACCEPT(r2 필수 1건 반영) · PR #45 병합, 06 완료 반영(PR #47), 07-1 반영(PR #49)**
+2026-11-03 · **D3-SCHEDULE-001 / V1 · 사용자 요청에 따른 일정 가중치 기준선 · 초안 독립 D2 ACCEPT; 공급 단위 재배정 독립 D2 ACCEPT(r2, 필수 지적 0); 일정 항목 적립 독립 D2 ACCEPT(r2 필수 1건 반영) · PR #45 병합, 06 완료 반영(PR #47), 07-1–07-3 반영(PR #49)**
 
-기준 source: main `7692631`(PR #45 병합)과 PR #47(DELETE 3단계)의 병합이다. 07-1 적립은 PR #49(UPDATE 계약)의 병합이다. 그 앞 V1은 main `ab2537eb`(PR #46 병합) 기준이었다. PR 초안은 `cd41b174`(PR #43) 기준 58일·39.66%였다. 병합 전에 PR #44·#46(DELETE 2-b-2·2-b-3) 상태를 반영하고, 사용자 결정으로 01–19 전체를 [공급 단위](#units)로 다시 배정했다([개정 기록](#decision)). 실제 제품 인수 상태는 [단계 완료 정본](stage-completion.json)과 각 source별 증거가 소유한다. 이 문서는 DEV3 일정 보고의 분모·가중치·적립 규칙을 소유한다.
+기준 source: main `7692631`(PR #45 병합)과 PR #47(DELETE 3단계)의 병합이다. 07-1–07-3 적립은 PR #49(UPDATE 계약, 2단계 C 형식·전이, 3단계 제품 경로)의 병합이다. 그 앞 V1은 main `ab2537eb`(PR #46 병합) 기준이었다. PR 초안은 `cd41b174`(PR #43) 기준 58일·39.66%였다. 병합 전에 PR #44·#46(DELETE 2-b-2·2-b-3) 상태를 반영하고, 사용자 결정으로 01–19 전체를 [공급 단위](#units)로 다시 배정했다([개정 기록](#decision)). 실제 제품 인수 상태는 [단계 완료 정본](stage-completion.json)과 각 source별 증거가 소유한다. 이 문서는 DEV3 일정 보고의 분모·가중치·적립 규칙을 소유한다.
 
-**전체 기준 86일, 적립 30.5일, 현재 누적 35.47%, 잔여 가중치 64.53%(07-1은 PR #49 병합 시).** 적립은 [일정 항목](#items) 단위다. 기준선의 남은 중앙 예상 기간은 56일이며, 2026-11-04 뒤 같은 투입을 유지할 때 중앙 완료 예상일은 2026-12-30이다. 낙관/보수 범위는 45~67일(12-19~2027-01-10)이며 확정 납기가 아니다. DELETE는 제품 경로(2-b-2: A 실행기·C preflight/Reserve·B tombstone 읽기·live 정리·replay·loser/winner 복구·base4, 메모리 시험)와 시험 전용 관찰자 대조(2-b-3)까지 병합돼 06의 일정 항목 06-1–06-5(1.5일)를 적립했다. 3단계 native fault cut과 남은 시험(06-6, 0.5일)은 PR #47의 병합으로 적립되고, 그때 06(2일)이 완료된다.
+**전체 기준 86일, 적립 32.5일, 현재 누적 37.79%, 잔여 가중치 62.21%(07-1–07-3은 PR #49 병합 시).** 적립은 [일정 항목](#items) 단위다. 기준선의 남은 중앙 예상 기간은 56일이며, 2026-11-04 뒤 같은 투입을 유지할 때 중앙 완료 예상일은 2026-12-30이다. 낙관/보수 범위는 45~67일(12-19~2027-01-10)이며 확정 납기가 아니다. DELETE는 제품 경로(2-b-2: A 실행기·C preflight/Reserve·B tombstone 읽기·live 정리·replay·loser/winner 복구·base4, 메모리 시험)와 시험 전용 관찰자 대조(2-b-3)까지 병합돼 06의 일정 항목 06-1–06-5(1.5일)를 적립했다. 3단계 native fault cut과 남은 시험(06-6, 0.5일)은 PR #47의 병합으로 적립되고, 그때 06(2일)이 완료된다.
 
 [구현 순서·선행](dev3-implementation-plan.md#remaining-work) · [16개 소유 명세](../contracts/dev3-task-designs.md#catalogue) · [최종 테스트](dev3-test-plan.md#final-suite)
 
@@ -33,7 +33,7 @@ ID는 모두 `D3-SCH-` 접두어를 갖는다. 아래는 보고용 기본 배치
 | 04 | 모듈 분리·첫 Row 거래 통합 | 10 | E14–E23 | 11.63% | 26.74% | 완료 | 03 |
 | 05 | 안정화·정리·거래 실행기 | 5 | E24–E28 | 5.81% | 32.56% | 완료 | 04 |
 | 06 | 첫 DELETE 제품 경로 | 2 | E29–E30 | 2.33% | 34.88% | 완료(PR #47 병합 시) | 05 |
-| 07 | UPDATE 제품 경로 | 3 | E31–E33 | 3.49% | 38.37% | 진행 중(0.5/3일, PR #49 병합 시) | 06 |
+| 07 | UPDATE 제품 경로 | 3 | E31–E33 | 3.49% | 38.37% | 진행 중(2.5/3일, PR #49 병합 시) | 06 |
 | 08 | 트리·overflow·cursor 및 일반 행 변경 | 7 | E34–E40 | 8.14% | 46.51% | 대기 | 05; 일반 행 변경 최종 닫기는 06·07 |
 | 09 | 인덱스·PK/UNIQUE | 6 | E41–E46 | 6.98% | 53.49% | 대기 | 07·08 |
 | 10 | 일반 Catalog·DDL와 공급 잔여 | 4 | E47–E50 | 4.65% | 58.14% | 대기 | 09 |
@@ -46,7 +46,7 @@ ID는 모두 `D3-SCH-` 접두어를 갖는다. 아래는 보고용 기본 배치
 | 17 | S5 정확성·복구 전수 | 4 | E77–E80 | 4.65% | 93.02% | 대기 | 06–16; 17-4는 18-1·18-2 |
 | 18 | S5 대형 profile·PF09 | 3 | E81–E83 | 3.49% | 96.51% | 대기 | 06–16 |
 | 19 | 최종 결함 수정·영향 재검증·인수 | 3 | E84–E86 | 3.49% | 100.00% | 대기 | 17·18 |
-| **합계** | **DEV3 전체** | **86** | **E1–E86** | **100%** | **100%** | **30.5일 적립 / 55.5일 미적립** | — |
+| **합계** | **DEV3 전체** | **86** | **E1–E86** | **100%** | **100%** | **32.5일 적립 / 53.5일 미적립** | — |
 
 표시된 행별 %를 반올림한 뒤 더하지 않는다. 원 배정일을 합한 다음 86으로 나눠 최종값만 소수 둘째 자리로 반올림한다. 기존 기능 분류 3.01–3.16 또는 DEV3 내부 S0–S5를 개수로 나누는 방식이 아니다.
 
@@ -76,7 +76,7 @@ ID는 모두 `D3-SCH-` 접두어를 갖는다. 아래는 보고용 기본 배치
 | 17 | 2 | 4 | 3 | FT01–FT05·FT07·FT09–FT10 확정 inventory의 전수 캠페인(256 seed·fuzz 30분·stress 30분·fault 셀 3회)과 결과 검토 2 |
 | 18 | 1.5 | 3 | 2 | FT06·FT08(64GiB·buffer 4배·자원 경계·PF09) 전수 실행과 결과 검토 1, 실행 선행 WAL 재검증 개선(F6-b) 0.5. F6 M0에서 거래당 WAL 읽기가 30·E₀+8.7 MB로 WAL 길이에 비례해 넣었고, M1에서 병목이 아니면 개선 없이 18을 닫으며 가중치는 그대로 둠 |
 | 19 | 1.5 | 3 | 2 | 처음 하는 전수 캠페인의 결함·성능 미달 수정과 영향 재검증·최종 인수 1.5. 17/18의 결함 목록이 이 배정을 크게 넘으면 §6의 V2로 다시 견적 |
-| **합계** | **43** | **86** | **58** | **완료 행 15단위·미완료 행 28단위(적립 15.25단위 = 30.5일)** |
+| **합계** | **43** | **86** | **58** | **완료 행 15단위·미완료 행 28단위(적립 16.25단위 = 32.5일)** |
 
 검산: 완료분의 `실제 경과 / 배정`은 PR 초안 0.33–0.75에서 0.33–0.60으로 좁아졌다(01 1/3, 02 2/4, 03 3/6, 04 6/10, 05 2/5). 01이 가장 낮은 것은 첫 commit `d58c26b9`가 그 전에 준비한 표현·모델을 한 번에 넣었고, 그 앞의 계약·설계 시간은 이 기준선 밖이기 때문으로 보인다(측정 아님). 06은 DELETE PR #41–44·#46이 약 11시간(11-03 14:16~11-04 00:46 KST) 사이에 병합돼 같은 척도와 어긋나지 않는다. 실제 경과에는 중단·병행·병합 대기가 섞여 있으므로 배정의 근거가 아니라 검산에만 쓴다. 15·17·19는 DEV3 전체를 처음 전수로 다루므로 같은 척도에서 앞의 inventory 작업(04의 소비자 inventory)보다 크게 셌다. 19의 크기는 미리 알 수 없어, 17/18의 결함 목록이 나오면 다시 견적한다.
 
@@ -112,8 +112,8 @@ ID는 모두 `D3-SCH-` 접두어를 갖는다. 아래는 보고용 기본 배치
 | 06-5 | 2-b-3 시험 전용 관찰자 DELETE 대조와 넘겨받은 시험(다른 RowId, A frame 예약 경계, RDL-B06, RDL-R07) | 0.25 | 완료 | PR #46 `ab2537eb` |
 | 06-6 | 3단계 native fault cut(RDL-N)과 남은 시험 | 0.5 | 완료(PR #47 병합 시) | PR #47, [3단계 구현 기록](../contracts/dev3-row-delete.md#implementation-3)(RDL-N01..N06 native 18 process, RDL-J11) |
 | 07-1 | UPDATE 형식·전이 계약과 독립 검토 | 0.5 | 완료(PR #49 병합 시) | PR #49, [계약](../contracts/dev3-row-update.md)(독립 D2 2회차 ACCEPT) |
-| 07-2 | C 형식·전이(before/after 값, 크기 변화의 leaf 공간) | 1 | 대기 | — |
-| 07-3 | A/B 제품 경로와 Undo/CLR·읽기·reopen·복구(메모리 시험) | 1 | 대기 | — |
+| 07-2 | C 형식·전이(before/after 값, 크기 변화의 leaf 공간) | 1 | 완료(PR #49 병합 시) | PR #49, [2단계 구현 기록](../contracts/dev3-row-update.md#implementation-2) |
+| 07-3 | A/B 제품 경로와 Undo/CLR·읽기·reopen·복구(메모리 시험) | 1 | 완료(PR #49 병합 시) | PR #49, [3단계 구현 기록](../contracts/dev3-row-update.md#implementation-3) |
 | 07-4 | native fault cut | 0.5 | 대기 | — |
 | 08-1 | split/root SMO(system group)의 계약·구현·복구 | 2 | 대기 | — |
 | 08-2 | SMO를 건너는 stable cursor/locator | 1 | 대기 | — |
@@ -203,12 +203,12 @@ ID는 모두 `D3-SCH-` 접두어를 갖는다. 아래는 보고용 기본 배치
 | 04 | 8–12일 / 10일 | 10-26→11-01 / 6일 | 10 | [모듈 분리·Row 통합 기록](../evidence/module-independence-survey-20261026.md), [M5 한정 완료](../evidence/module-independence-survey-20261026.md#s11-m5), [module gate](../evidence/module-independence-survey-20261026.md#s12-module-gate)와 [원격 시행](../evidence/module-independence-survey-20261026.md#s12-remote-rollout); MCB03-V01 한계 수용을 보존 |
 | 05 | 4–6일 / 5일 | 11-01→11-03 / 2일 | 5 | [후속 계획 F0–F7](module-independence-followup-plan.md): [F0](../evidence/main-preexisting-failures-20261030.md#f0-completion), [F1](../evidence/module-independence-survey-20261026.md#f1-python-gate), [F2](../evidence/module-independence-survey-20261026.md#f2-contract-selection), [F3](../evidence/module-independence-survey-20261026.md#f3-catalog-call), [F4](../evidence/module-independence-survey-20261026.md#f4-caller-budgets), [F5](../evidence/module-independence-survey-20261026.md#f5-scope3-fixture), [F6 M0](../evidence/f6-wal-revalidation-survey-20261102.md#f6a-m0), [F7](../evidence/module-independence-survey-20261026.md#f7-current-comments); [live 정리](../evidence/live-row-retirement-20261102.md), [호출자](../evidence/live-row-cleanup-caller-20261102.md), [자동커밋](../evidence/autocommit-insert-20261102.md), [명시 거래](../evidence/explicit-transaction-20261103.md), PR #40 `c7a6425c`; 표 발급 상한은 미공급 |
 | 06 | 배정 2일 | 11-03→11-04 / 1일 | 2 | [계약](../contracts/dev3-row-delete.md)·[단계](../contracts/dev3-row-delete.md#stages)·[2-b-1](../contracts/dev3-row-delete.md#implementation-2b1)·[2-b-2](../contracts/dev3-row-delete.md#implementation-2b2)·[2-b-3](../contracts/dev3-row-delete.md#implementation-2b3)·[3단계](../contracts/dev3-row-delete.md#implementation-3) 구현 기록, PR #41–44·#46·#47; committed·Prune된 행 하나를 RowId로 지우는 첫 DELETE 한정 |
-| 07 (진행 중) | 배정 3일 중 07-1 0.5일 | 11-04→ / 진행 중 | 0.5 | [계약](../contracts/dev3-row-update.md), PR #49; committed·Prune된 행 하나의 값 교체 첫 UPDATE의 형식·전이 설계(독립 D2 2회차 ACCEPT). 07-2–07-4 미적립 |
-| **합계** | **01–05 22–34일 / 28일, 06 2일, 07 항목 0.5일** | **약 15일** | **30.5** | **30.5 / 86 = 35.47%** |
+| 07 (진행 중) | 배정 3일 중 07-1–07-3 2.5일 | 11-04→ / 진행 중 | 2.5 | [계약](../contracts/dev3-row-update.md)·[2단계](../contracts/dev3-row-update.md#implementation-2)·[3단계](../contracts/dev3-row-update.md#implementation-3) 구현 기록, PR #49; committed·Prune된 행 하나의 값을 바꾸는 첫 UPDATE 한정(형식·전이, A 실행기·생산자, C preflight·Reserve, B 옛 값 읽기, live·복구 UpdatePrune, replay, loser UpdateClr, base4, 메모리 시험). 07-4 미적립 |
+| **합계** | **01–05 22–34일 / 28일, 06 2일, 07 항목 2.5일** | **약 15일** | **32.5** | **32.5 / 86 = 37.79%** |
 
-06은 PR #41–44·#46이 병합됐고 PR #47의 병합으로 끝난다. [2-b-1 구현 기록](../contracts/dev3-row-delete.md#implementation-2b1)에 형식·전이층, [2-b-2 구현 기록](../contracts/dev3-row-delete.md#implementation-2b2)에 제품 진입점(A 자동커밋·명시 거래 DELETE, C preflight·Reserve)과 그 상태를 읽고 복구하는 경로(B tombstone 읽기, live DeletePrune, replay, loser DeleteClr, winner DeletePrune, base4)의 메모리 시험 공급이 있다. [2-b-3 구현 기록](../contracts/dev3-row-delete.md#implementation-2b3)에는 시험 전용 status·undo·leaf 관찰자의 DELETE 대조, N1 cross-check의 효과1·DELETE skip 제거, 넘겨받은 시험(다른 RowId, A frame의 leaf 예약 경계, RDL-B06, RDL-R07)이 있다. 06-1–06-5는 끝나 1.5일을 적립했다. [3단계 구현 기록](../contracts/dev3-row-delete.md#implementation-3)에는 06-6의 native fault cut(DeleteForward·DeleteClr·DeletePrune 앞뒤의 crash, 사례마다 produce·recover·reenter 세 process, RDL-N01..N06)과 남은 시험 RDL-J11(다른 거래가 쥔 행의 Busy·SerializationConflict)이 있다. 06-6은 06의 마지막 항목이라 §3의 행 조건(C/A/B·loser·replay/base4 연결, rollback·회수·native fault cut)을 모두 채워야 적립한다. 연결·rollback·회수는 2-b-2·2-b-3이, native fault cut은 3단계가 채웠으므로 PR #47의 병합으로 06-6의 0.5일을 적립하고 06은 **완료**다. 첫 DELETE 한정이며 일반 행 변경은 08, 여러 Status의 동시 거래 일반화는 11에 남는다. 07–19는 이 기준선에서 미완료이며 기존 부분 공급을 다시 개발하라는 뜻은 아니다. 착수 때 source별 기존 공급을 확인한다.
+06은 PR #41–44·#46이 병합됐고 PR #47의 병합으로 끝난다. [2-b-1 구현 기록](../contracts/dev3-row-delete.md#implementation-2b1)에 형식·전이층, [2-b-2 구현 기록](../contracts/dev3-row-delete.md#implementation-2b2)에 제품 진입점(A 자동커밋·명시 거래 DELETE, C preflight·Reserve)과 그 상태를 읽고 복구하는 경로(B tombstone 읽기, live DeletePrune, replay, loser DeleteClr, winner DeletePrune, base4)의 메모리 시험 공급이 있다. [2-b-3 구현 기록](../contracts/dev3-row-delete.md#implementation-2b3)에는 시험 전용 status·undo·leaf 관찰자의 DELETE 대조, N1 cross-check의 효과1·DELETE skip 제거, 넘겨받은 시험(다른 RowId, A frame의 leaf 예약 경계, RDL-B06, RDL-R07)이 있다. 06-1–06-5는 끝나 1.5일을 적립했다. [3단계 구현 기록](../contracts/dev3-row-delete.md#implementation-3)에는 06-6의 native fault cut(DeleteForward·DeleteClr·DeletePrune 앞뒤의 crash, 사례마다 produce·recover·reenter 세 process, RDL-N01..N06)과 남은 시험 RDL-J11(다른 거래가 쥔 행의 Busy·SerializationConflict)이 있다. 06-6은 06의 마지막 항목이라 §3의 행 조건(C/A/B·loser·replay/base4 연결, rollback·회수·native fault cut)을 모두 채워야 적립한다. 연결·rollback·회수는 2-b-2·2-b-3이, native fault cut은 3단계가 채웠으므로 PR #47의 병합으로 06-6의 0.5일을 적립하고 06은 **완료**다. 첫 DELETE 한정이며 일반 행 변경은 08, 여러 Status의 동시 거래 일반화는 11에 남는다. 07은 PR #49에 계약(07-1), C 형식·전이(07-2), 제품 경로와 메모리 시험(07-3)이 함께 있어 그 병합으로 2.5일을 적립한다. 07-4(native fault cut)가 07의 마지막 항목이라 §3의 행 조건을 채울 때 07이 완료된다. 07–19는 이 기준선에서 미완료이며 기존 부분 공급을 다시 개발하라는 뜻은 아니다. 착수 때 source별 기존 공급을 확인한다.
 
-01–05의 과거 비교는 `실제 14 / 사후 예상 28 = 0.500`이고, 중앙 견적보다 경과가 50% 짧다. 사후 견적이므로 AI 생산성 개선이나 미래 일정 단축의 실증값은 아니다. 앞선 대화의 약 30%는 실제 경과 14일과 미래 예상 기간을 혼합한 값이고, 약 40%와 PR 초안의 39.66%(23/58)는 잔여를 35일로 배정한 예상량끼리의 비교였다. V1은 **34.30%**에서 적립을 시작했고, PR #47의 병합으로 34.88%, PR #49(07-1)의 병합으로 35.47%가 된다.
+01–05의 과거 비교는 `실제 14 / 사후 예상 28 = 0.500`이고, 중앙 견적보다 경과가 50% 짧다. 사후 견적이므로 AI 생산성 개선이나 미래 일정 단축의 실증값은 아니다. 앞선 대화의 약 30%는 실제 경과 14일과 미래 예상 기간을 혼합한 값이고, 약 40%와 PR 초안의 39.66%(23/58)는 잔여를 35일로 배정한 예상량끼리의 비교였다. V1은 **34.30%**에서 적립을 시작했고, PR #47의 병합으로 34.88%, PR #49(07-1–07-3)의 병합으로 37.79%가 된다.
 
 <a id="forecast"></a>
 ## 5. 앞으로의 날짜 예측 — 가중치와 별도 갱신
@@ -272,4 +272,4 @@ ID는 모두 `D3-SCH-` 접두어를 갖는다. 아래는 보고용 기본 배치
 | V1 재배정 | 2026-11-03 / `f5b731c9`→`ab2537eb` | 86일 / 28일 | 32.56% | 병합 전 PR #44(DELETE 2-b-2) 상태를 반영하고, 사용자 결정(카드 "병합 전 잔여 재배정"과 "기존 가중치도 필요하면 변경")으로 01–19를 공급 단위로 재배정. 재배정 독립 D2 r2 ACCEPT. 행 단위 0/100 적립이라 06은 0일. PR #46 반영 뒤에도 같은 값. 병합되지 않음 |
 | V1 | 2026-11-03 / `ab2537eb` | 86일 / 29.5일 | 34.30% | 사용자 요청("일정 기준", "작업을 세분화", "이미 끝난 작업도 세분화")으로 적립을 일정 항목 단위로 바꾸고 01–19를 항목으로 나눔. 분모·행 배정일은 그대로. 이미 병합된 PR #41–44·#46에 맞춰 06을 사후 분할해 06-1–06-5의 1.5일을 소급 적립(새 작업 아님). 06은 진행 중 |
 | V1 | 2026-11-04 / PR #47 병합 | 86일 / 30일 | 34.88% | 06-6(DELETE 3단계: native fault cut RDL-N01..N06, RDL-J11)의 병합으로 06 완료. 분모·행 배정일·항목은 그대로 |
-| V1 | 2026-11-04 / PR #49 병합 | 86일 / 30.5일 | 35.47% | 07-1(UPDATE 형식·전이 계약, 독립 D2 2회차 ACCEPT)의 병합. 07은 진행 중(0.5/3일). 분모·행 배정일·항목·중앙 예측은 그대로(07은 예측보다 하루 먼저 11-04에 시작) |
+| V1 | 2026-11-04 / PR #49 병합 | 86일 / 32.5일 | 37.79% | 07-1(UPDATE 형식·전이 계약, 독립 D2 2회차 ACCEPT), 07-2(C 형식·전이), 07-3(A/B 제품 경로·복구, 메모리 시험)의 병합. 07은 진행 중(2.5/3일, 07-4 native 남음). 분모·행 배정일·항목·중앙 예측은 그대로(07은 예측보다 하루 먼저 11-04에 시작) |
