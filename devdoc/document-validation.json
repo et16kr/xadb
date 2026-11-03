@@ -1,21 +1,21 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-11-04T02:28:45.114044+09:00",
+  "date": "2026-11-04T03:38:15.885931+09:00",
   "status": "PASS",
   "errors": [],
   "markdown_documents": [
     {
       "file": "devdoc/README.md",
-      "links": 301,
+      "links": 303,
       "duplicate_ids": 0,
-      "sha256": "855bf7d64b0ec3a4c447f941e8b546f501750d9de61a49eeaadee6526a19a32a"
+      "sha256": "8b048ad0482eed773bef0ec291c47cacb907a01de6a431b236b7393327e6c139"
     },
     {
       "file": "devdoc/contracts/README.md",
-      "links": 132,
+      "links": 133,
       "duplicate_ids": 0,
-      "sha256": "5b7b6593804152b09a5289b23ff0196c52a9e3c4c1dbc40b9b1b76418174fd56"
+      "sha256": "37706821bc51ea74f3f00f1be521aae2b9205b94c2b0e597a5cb0a751be07767"
     },
     {
       "file": "devdoc/contracts/ai-performance-engineering.md",
@@ -300,6 +300,12 @@
       "sha256": "e51d854801434c0de6df56594ceb5ff2ae31304514d77a9938d6d45966db8a6f"
     },
     {
+      "file": "devdoc/contracts/dev3-row-update.md",
+      "links": 30,
+      "duplicate_ids": 0,
+      "sha256": "835647b8960530fad6600c79919565720566c34ff62656649b4edab3b1b6727d"
+    },
+    {
       "file": "devdoc/contracts/dev3-selector-port.md",
       "links": 4,
       "duplicate_ids": 0,
@@ -457,9 +463,9 @@
     },
     {
       "file": "devdoc/contracts/dev3-undo-format.md",
-      "links": 19,
+      "links": 21,
       "duplicate_ids": 0,
-      "sha256": "36463e806dc6e80b62696984dfaa3357159899a839381b6773d7b983d522ef17"
+      "sha256": "ee25e79642c5f9f4c901a073ce403c8be72afcc52a986d94e4711a622ddd519a"
     },
     {
       "file": "devdoc/contracts/dev3-undo-model.md",
