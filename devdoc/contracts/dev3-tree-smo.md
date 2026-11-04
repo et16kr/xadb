@@ -738,3 +738,41 @@ D2로 수용했으며 구현·선택 실행의 결과는 [08 증거](../evidence
 각 before stamp를 다시 확인해야 한다. 남은 전체 F02 준비에는 기존 outstanding WAL/steps를
 보존한 이번 그룹의 용량·counter 여유, XOI successor, victim 세대와 selected-DWB/flush의
 quiescence가 포함된다. 이 비교 준비 단위는 그 의무를 대신하지 않으며 실제 effect를 열지 않는다.
+
+<a id="structural-admission"></a>
+### 분할의 기존 부채 보존과 clean victim 선택
+
+후속 D2 구체안은 같은 원 replay loan에서 split 후 allocator와 변경하지 않은 Root3·
+ATT/Allocation/Aging/Job을 `ProjectedInventory`로 읽어 XOI successor를 만드는 것이다.
+기존 `encode_row_current`를 재사용하며 Finished Structural은 잔여 부채0이므로 XOI에
+새 가짜 owner를 넣지 않는다. 결과는 원 BEFORE의 여유 role5에 두어 caller memory를
+늘리지 않고 Prepared의 immutable borrow로 보존한다. 그 공간은 before target이 아니다.
+
+첫 claim 전 `check_progress_room`으로 이번 frame과 기존 future WAL/steps 모두를 합산한다.
+WAL end·LSN, 기존3/4개 target의 modification counter+1+future steps, 변경하지 않은
+RetentionRoot의 revision+future steps를 검사한다. 신규 INIT counter는1이고,
+양수 group LSN+future steps 검사가 그 counter의 남은 여유도 보수적으로 보장한다.
+검사 실패는 원 writer/pool/WAL/control을 바꾸지 않는 오류다. stage 직전의 같은 cut·
+identity·stamp 재검산은 별도 의무이며 이 사전 계산으로 생략할 수 없다.
+
+원 pool의 `StructuralCandidates`는 신규1/2개만 선택하고 exact5 target 전부를 victim에서
+제외한다. 기존 bounded `retention_candidate_at`을 재사용하되 TxPair로 가장하지 않는다.
+선택은 복사 관측이며 pin·claim·generation을 소비하지 않는다. active slot의 content stamp와
+next generation을 한 최종 registry guard 아래 다시 대조한다. Child의 비활성 둘째 slot은
+첫째와 같은 값·next generation0으로 정규화하며 별도 latch·주소·quota 권한이 없다.
+실제 claim은 원 선택 provenance와 모든 active stamp/generation을 다시 확인해야 한다.
+
+필수 선택 시험은 active Row 부채가 있는 원 prepare의 exact WAL fit/1byte 부족과 XOI
+보존, LSN/counter/revision의 독립 경계, Root2/Child1 clean slot, 둘째 victim 부족,
+exact5 제외·이미 등록된 신규 주소·latch busy·generation 소진·선택 중 stamp 변화다.
+고유 시험과 변경된 source census만 실행하고 완료한 무변경 사례를 반복하지 않는다.
+이 단계도 selected-DWB/flush lease·실제 claim·stage/install/finish 및 fault/reopen을
+완료한 것으로 표시하지 않는다. 독립 검토와 실제 실행은 별도 증거에 남긴다.
+
+2026-11-04 `/root/dev3_08_review`가 방향을 D2 ACCEPT했다. `InventoryRows`의 세 None은
+기존 원 행 보존이며, 원 base generation·새 group LSN과 같은 canonical Root3를 쓴다.
+후보의 dirty→Flush 관측은 실제 clean claim 권한이 아니다. 원 flush 뒤 다시 선택하고
+claim 시 재검산한다. published System closed_index 자체는 새 일괄 거절 조건이 아니며
+미완료 claim·pin·load·flush의 기존 독점 규칙을 유지한다. 선택의 content guard는 개별
+선언으로 registry→둘째→첫째 반환 순서를 보장한다. 실제 공급 결과는
+[08 증거](../evidence/dev3-tree-structure-20261104.md#structural-admission)에 기록한다.

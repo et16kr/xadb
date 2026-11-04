@@ -97,6 +97,13 @@ raw 입력을 적재한 별도 pool의 물리 읽기 helper에 한정한다. 실
 완료 권한은 아직 발급하지 않으며 전체 F02/F05와08-1의 남은 효과 연결은 계속 진행한다.
 실패 원본, Clippy와 독립 검토 결과는 같은 기록에 보존한다.
 
+[분할의 부채 보존·후보 선택](../evidence/dev3-tree-structure-20261104.md#structural-admission)은
+같은 replay cut의 XOI successor와 기존 전체 WAL/steps를 준비하고 용량·counter를 검사한다.
+실제 active Row의 원 bank를 raw 합산한 기대값과 exact fit/1byte 부족을 대조했다.
+원 pool의 별도 후보 선택은 신규1/2개에만 stamp/generation을 묶고 exact5 target을 제외한다.
+새7개와 변경된 source1개 및 실제 caller2개가 source별 PASS다. 후보 선택은 등록/claim을
+바꾸지 않으며 dirty 관측은 실제 flush 증거가 아니다. 원 effect 수명과08-1 잔여는 유지한다.
+
 <a id="catalog-remaining"></a>
 2026-10-26 [Catalog CREATE 남은 메모리 사례](../evidence/dev3-catalog-remaining-20261026.md): 남은 9개를 모두 source별로 PASS했다. lookup이 Live CREATE Undo를 초기 Free page로만 검증해 fence하던 결함을 고쳤고 Writer 준비 분리를 포함했다. 같은 epoch 두 번째 CREATE의 pair victim 준비를 [D3-CATALOG-CREATE-002](../contracts/dev3-catalog-create.md#sequential-create)로 보완해 MT02가 r36에서 통과했다. [검토 후 수정](../evidence/dev3-catalog-review-fix-20261026.md)에서 Profile에 맞는 Root/Jobs decoder를 연결하고 신규8개와 변경 source 계산2개를 통과했다. 첫 Row INSERT·runtime F05·DEV3/S5는 미완료다.
 

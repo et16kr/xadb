@@ -1,0 +1,19 @@
+
+running 8 tests
+test storage::dirty_frame::retention_residency::structural::tests::structural_selection_rejects_invalid_count_order_alias_and_missing_init_without_change ... ok
+test storage::dirty_frame::retention_residency::structural::tests::structural_selection_freeze_detects_stamp_change_and_tracks_successor_generation ... ok
+test storage::dirty_frame::retention_residency::structural::tests::structural_selection_resident_stale_generation_exhaustion_and_busy_are_unchanged ... ok
+STRUCTURAL_SELECTION_SOURCE bound=12464 partial_floor=9600
+test storage::dirty_frame::retention_residency::structural::tests::structural_selection_source_covers_return_and_guarded_freeze ... ok
+test storage::dirty_frame::retention_residency::structural::tests::structural_selection_root_two_child_one_preserves_registry_and_excludes_all_targets ... ok
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::structural::admission_tests::structural_admission_lsn_each_existing_counter_and_root_revision_boundaries ... ok
+STRUCTURAL_PREPARE_SOURCE SourceCensus { outer: 1176, scope: 376, allocation: 4866, semantic: 24580, physical: 10650, inventory: 20831, cleanup: 6232, replay: 31556, returning: 9384, peak: 33372 } independent_decoder=3914 physical=6802 inventory_floor=17871 returned=6384
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::structural::tests::structural_prepare_source_inventory_covers_read_decode_and_return ... ok
+CATALOG_MEMORY_CONTEXT	SMO-P03	b4d8ca7205045a757cd3ebfaaf62822110d882a7d73ec0b9d7f3a834e249caba	160a10fb820a727ad8e7ee8fe3973651fe9b9485704ee22cd8222b52540fda9e	9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	SMO-P03
+SMO_P03 active actual Row debts; exact WAL fit/one-byte short; XOI unchanged owners and items; commit/drain still usable
+CATALOG_MEMORY_PASS	SMO-P03
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_prepare::structural_admission_original_active_rows_preserves_debt_and_exact_wal_fit ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 2306 filtered out; finished in 3.62s
+

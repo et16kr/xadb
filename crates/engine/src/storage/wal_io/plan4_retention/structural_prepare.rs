@@ -29,6 +29,9 @@ pub(in crate::storage) struct PreparedStructural<'i, 'c, 's> {
     frame_digest: [u8; 32],
     after: &'i [[u8; PAGE_BYTES]; 5],
     before: &'i [[u8; PAGE_BYTES]; 9],
+    // A successor XOI in unused Row BEFORE role5, never a physical target.
+    inventory_after: &'i [u8; PAGE_BYTES],
+    future: (u64, u64),
     requests: [TargetRequest; 5],
     roles: [u8; 5],
     stamps: [Option<FrameStamp>; 5],
@@ -86,6 +89,21 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     }
 
     #[cfg(test)]
+    pub(in crate::storage) fn test_structural_inventory_before(&self) -> &[u8; PAGE_BYTES] {
+        self.control.bytes[JOB_END..INVENTORY_END]
+            .try_into()
+            .expect("original inventory page")
+    }
+
+    #[cfg(test)]
+    pub(in crate::storage) fn test_structural_dirty_selection(&self) {
+        let source = self.history.source_cut().unwrap();
+        self.pool
+            .test_structural_dirty_selection(source.requirement().unwrap());
+        source.unchanged().unwrap();
+    }
+
+    #[cfg(test)]
     pub(in crate::storage) fn test_split_read4<'x, 'y>(
         &self,
         pool: &SharedPool<'x, 'y, '_, '_>,
@@ -127,7 +145,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             .0
             .try_into()
             .expect("original Row after loans");
-        let (observation, requests, roles, stamps) = {
+        let (observation, requests, roles, stamps, future) = {
             let mut audit = self.history.replay_scope(owner)?;
             let mut replay = audit.checkout()?;
             // File reads finish before the first target latch. Keep the wide
@@ -194,9 +212,34 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                         replay.bytes(),
                     ),
                 }?;
-                // Convert role-indexed stamps to the same physical order as
-                // requests. INIT roles have no invented old frame stamp.
-                Ok((observed, requests, roles, order.map(|at| stamps[at])))
+                let root = history::arena_page(replay.bytes(), 1);
+                let future = prepare_inventory(
+                    self.control,
+                    storage.profile(),
+                    observed.header.lsn,
+                    GroupRows {
+                        transaction: None,
+                        aging: None,
+                        job_ordinal: None,
+                    },
+                    root,
+                    &after[0],
+                    None,
+                    &mut before[5],
+                )?;
+                // Match stamps to the same physical order as requests.
+                // INIT roles have no invented old frame stamp.
+                let stamps = order.map(|at| stamps[at]);
+                check_progress_room(
+                    prefix,
+                    (observed.header.lsn, observed.frame_bytes),
+                    future,
+                    (&roles, &stamps),
+                    &[0, 1, 2, 3, 4],
+                    root,
+                    storage.profile(),
+                )?;
+                Ok((observed, requests, roles, stamps, future))
             })();
             let prepared = merge(prepared, replay.return_checked());
             merge(prepared, audit.finish_checked())?
@@ -219,6 +262,8 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             frame_digest: content_digest(bytes),
             after,
             before,
+            inventory_after: &before[5],
+            future,
             requests,
             roles,
             stamps,
@@ -381,6 +426,7 @@ struct SourceCensus {
     allocation: usize,
     semantic: usize,
     physical: usize,
+    inventory: usize,
     cleanup: usize,
     replay: usize,
     returning: usize,
@@ -394,6 +440,7 @@ fn source_census<W: WriterNamespace>() -> SourceCensus {
         [TargetRequest; 5],
         [u8; 5],
         [Option<FrameStamp>; 5],
+        (u64, u64),
     );
     let outer = size_of::<CatalogPreparation<'_, '_, '_, '_, '_, '_, '_, '_, W>>()
         + 2 * size_of::<WalPrefix>()
@@ -451,10 +498,26 @@ fn source_census<W: WriterNamespace>() -> SourceCensus {
     let cleanup = size_of::<Packet>()
         + 3 * size_of::<Result<Packet>>()
         + history::runtime::lookup_source_census().returning;
+    // The candidate inputs and returned physical observation remain live
+    // while the original XOI encoder and progress checker run sequentially.
+    let inventory = size_of::<Packet>()
+        + size_of::<candidate::Inputs<'_>>()
+        + 2 * size_of::<Option<crate::storage::semantic_row::structure::bank::FinishedSplit>>()
+        + 2 * size_of::<Result<split_frame::Observation>>()
+        + size_of::<ProjectedInventory<'_, '_, '_, '_, '_>>()
+        + size_of::<GroupRows<'_>>()
+        + size_of::<[usize; 5]>()
+        + 2 * size_of::<[Option<FrameStamp>; 5]>()
+        + 3 * size_of::<Result<(u64, u64)>>()
+        + 24 * size_of::<&[u8]>()
+        + 24 * size_of::<u64>()
+        + crate::storage::plan4_recovery_base::catalog::inventory::row_current_source_bytes()
+            .max(queue::source_bytes());
     let processing = outer
         + scope
         + semantic
             .max(physical)
+            .max(inventory)
             .max(control::structural_bank_source_bytes())
             .max(cleanup);
     let replay = outer + scope + history::source_bytes::<W>().peak;
@@ -475,6 +538,7 @@ fn source_census<W: WriterNamespace>() -> SourceCensus {
         allocation,
         semantic,
         physical,
+        inventory,
         cleanup,
         replay,
         returning,
@@ -497,6 +561,9 @@ type TestStructuralParts<'a> = (
 
 #[cfg(test)]
 impl PreparedStructural<'_, '_, '_> {
+    pub(in crate::storage) fn test_inventory(&self) -> (&[u8; PAGE_BYTES], (u64, u64)) {
+        (self.inventory_after, self.future)
+    }
     pub(in crate::storage) fn test_parts(&self) -> TestStructuralParts<'_> {
         (
             self.frame,
@@ -507,6 +574,10 @@ impl PreparedStructural<'_, '_, '_> {
         )
     }
 }
+
+#[cfg(test)]
+#[path = "structural_admission_tests.rs"]
+mod admission_tests;
 
 #[cfg(test)]
 mod tests {
@@ -611,10 +682,20 @@ mod tests {
             + 2 * size_of::<Result<PreparedStructural<'_, '_, '_>>>()
             + 1536;
         assert!(returned <= c.returning);
-        assert!(c.peak >= c.outer + c.scope + c.physical.max(c.cleanup).max(c.semantic));
+        let inventory = size_of::<ProjectedInventory<'_, '_, '_, '_, '_>>()
+            + size_of::<candidate::Inputs<'_>>()
+            + size_of::<split_frame::Observation>()
+            + size_of::<[TargetRequest; 5]>()
+            + size_of::<[Option<FrameStamp>; 5]>()
+            + crate::storage::plan4_recovery_base::catalog::inventory::row_current_source_bytes();
+        assert!(inventory <= c.inventory);
+        assert!(
+            c.peak
+                >= c.outer + c.scope + c.physical.max(c.cleanup).max(c.semantic).max(c.inventory)
+        );
         assert!(c.peak >= c.replay.max(c.returning));
         println!(
-            "STRUCTURAL_PREPARE_SOURCE {c:?} independent_decoder={decoder} physical={physical} returned={returned}"
+            "STRUCTURAL_PREPARE_SOURCE {c:?} independent_decoder={decoder} physical={physical} inventory_floor={inventory} returned={returned}"
         );
     }
 }

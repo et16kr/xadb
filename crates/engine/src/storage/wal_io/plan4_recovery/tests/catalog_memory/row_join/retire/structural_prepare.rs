@@ -5,6 +5,171 @@ use crate::storage::{page::PageKind, semantic_row::structure::Operation as Split
 use foundation::identity::{ObjectHandle, SchemaEpoch};
 
 #[test]
+fn structural_admission_original_active_rows_preserves_debt_and_exact_wal_fit() {
+    case_within("SMO-P03", std::time::Duration::from_secs(180), || {
+        use crate::storage::wal_io::durability_test_support::wal_share;
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 28,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let _ = core;
+                let (row_status, _) =
+                    create_table(live, owner, flusher, status, undo, private, true);
+                system_init(live, owner, flusher, true);
+                let (mut writer, reader, mut flush) = live.split();
+                let tx = writer
+                    .begin_row_transaction(
+                        owner,
+                        IsolationLevel::Serializable,
+                        &row_status,
+                        private,
+                        &mut flush,
+                    )
+                    .unwrap();
+                let view = writer.begin_statement(owner, &tx).unwrap();
+                let table = issue_table!(reader, owner, view, reader_private, flush, flusher);
+                let inserted = a_insert!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    view,
+                    &table,
+                    private,
+                    [7, 8]
+                );
+                assert_eq!(inserted.len(), 2);
+                // Leave the authentic transaction active: its rollback and Aging
+                // credit must survive the structural group's zero-debt successor.
+                let source = writer.catalog_test_with_pool(|pool| {
+                    (0..64)
+                        .filter_map(|number| probe::registered_index(pool, number))
+                        .map(|at| pool.target_request(at).unwrap())
+                        .find(|r| r.kind == PageKind::RowLeaf && r.identity.owner.get() == 6)
+                        .unwrap()
+                });
+                let object = ObjectHandle {
+                    object: ObjectId::new(6).unwrap(),
+                    generation: Generation::new(1).unwrap(),
+                    schema_epoch: SchemaEpoch::new(1).unwrap(),
+                };
+                let before = writer.test_structural_inventory_before().to_vec();
+                let wal = files(state).0;
+                let bank = writer.recovery_test_bank().to_vec();
+                let jobs = writer.catalog_test_jobs().to_vec();
+                // Independent XOD1 wire sum, not InventoryRows or the
+                // encoder's returned future. Live bank: ATT0..31, Aging32,
+                // Allocation33; Finished phase4 and Structural34 owe nothing.
+                let mut expected_future = (0u64, 0u64); // WAL, steps
+                let mut att_wal = 0u64;
+                let mut aging_wal = 0u64;
+                for slot in 0..34 {
+                    let descriptor = &bank[slot * 1664..slot * 1664 + 1536];
+                    if descriptor.iter().all(|b| *b == 0) || slot >= 32 && descriptor[353] == 4 {
+                        continue;
+                    }
+                    assert_eq!(&descriptor[..4], b"XOD1");
+                    for kind in 0..5 {
+                        let start = 640 + 128 * kind;
+                        assert_eq!(descriptor[start], kind as u8 + 1);
+                        let steps = u64::from_le_bytes(
+                            descriptor[start + 8..start + 16].try_into().unwrap(),
+                        );
+                        let wal = u64::from_le_bytes(
+                            descriptor[start + 16..start + 24].try_into().unwrap(),
+                        );
+                        expected_future.0 = expected_future.0.checked_add(wal).unwrap();
+                        expected_future.1 = expected_future.1.checked_add(steps).unwrap();
+                        if slot < 32 {
+                            att_wal = att_wal.checked_add(wal).unwrap();
+                        }
+                        if slot == 32 {
+                            aging_wal = aging_wal.checked_add(wal).unwrap();
+                        }
+                    }
+                }
+                assert!(att_wal > 0 && aging_wal > 0);
+                writer.test_structural_dirty_selection();
+                let observed = {
+                    let share = wal_share(None);
+                    let prepared = writer
+                        .prepare_row_split(owner, object, source.identity.page, private)
+                        .unwrap();
+                    let (inventory, future) = prepared.test_inventory();
+                    assert_eq!(future, expected_future);
+                    assert!(expected_future.0 > 0 && expected_future.1 > 0);
+                    let record = share.record();
+                    assert_eq!((record.admissions, record.stages), (1, 0));
+                    let admission = record.first.unwrap();
+                    assert_eq!(
+                        (admission.frame, admission.future, admission.refused),
+                        (84_744, expected_future.0, false)
+                    );
+                    // Independent byte expectation: no owner/item/debt changes.
+                    // Only capture LSN and the root's trailing digest advance.
+                    let mut expected = before.clone();
+                    let capture = u64::from_le_bytes(inventory[48..56].try_into().unwrap());
+                    let old_capture = u64::from_le_bytes(before[48..56].try_into().unwrap());
+                    assert_eq!(capture, old_capture + 1);
+                    expected[48..56].copy_from_slice(&(old_capture + 1).to_le_bytes());
+                    let end = u32::from_le_bytes(expected[12..16].try_into().unwrap()) as usize;
+                    let digest = foundation::codec::content_digest(&expected[..end - 32]);
+                    expected[end - 32..end].copy_from_slice(&digest);
+                    assert_eq!(inventory.as_slice(), expected);
+                    assert!(u16::from_le_bytes(expected[56..58].try_into().unwrap()) >= 1);
+                    admission
+                };
+                let exact = observed.offset + 84_744 + expected_future.0;
+                for (cap, success) in [(exact - 1, false), (exact, true)] {
+                    let share = wal_share(Some(cap));
+                    let result =
+                        writer.prepare_row_split(owner, object, source.identity.page, private);
+                    match (success, result) {
+                        (true, Ok(_)) => {}
+                        (false, Err(e)) => {
+                            assert_eq!(e.effect, Effect::Unchanged);
+                            assert!(matches!(e.cause, RetentionCause::Capacity));
+                        }
+                        (true, Err(e)) => panic!("exact fit rejected: {e:?}"),
+                        (false, Ok(_)) => panic!("one-byte short admitted"),
+                    }
+                    let record = share.record();
+                    assert_eq!((record.admissions, record.stages), (1, 0));
+                    assert_eq!(record.refused_admissions, u32::from(!success));
+                    assert!(writer.test_structural_replay_returned());
+                    owner.check_idle().unwrap();
+                    writer.catalog_test_with_pool(|pool| {
+                        assert_eq!(
+                            crate::storage::dirty_frame::init_test_support::claim_state(pool),
+                            (false, 0)
+                        );
+                    });
+                    assert_eq!(files(state).0, wal);
+                    assert_eq!(writer.recovery_test_bank(), bank);
+                    assert_eq!(writer.catalog_test_jobs().as_slice(), jobs);
+                    assert_eq!(writer.test_structural_inventory_before().as_slice(), before);
+                    assert!(!fence.is_fenced());
+                }
+                // Resolve the original transaction through A after all preparation
+                // outcomes, establishing that no prepared split consumed its credit.
+                assert_eq!(
+                    a_commit!(&mut writer, owner, flush, flusher, tx, private),
+                    2
+                );
+                assert_eq!(
+                    drained!(&mut writer, owner, flush, flusher, private),
+                    done(11, 0)
+                );
+                println!(
+                    "SMO_P03 active actual Row debts; exact WAL fit/one-byte short; XOI unchanged owners and items; commit/drain still usable"
+                );
+            }
+        );
+    });
+}
+
+#[test]
 fn structural_prepare_child_reads_four_raw_fixture_images_and_parent_stamp() {
     case_within("SMO-P02", std::time::Duration::from_secs(60), || {
         use crate::storage::{

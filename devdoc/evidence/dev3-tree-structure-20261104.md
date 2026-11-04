@@ -602,3 +602,55 @@ whole169,688/169,696B와 retained live64,016/64,024·187,024/187,032·252,560/25
 08-1 전체 완료 목표는 계속된다. 실제 claim·stage·install·durability·fault/reopen,
 multi-level 행 변경, unlink·unary repair·root shrink·retirement와 전체 F05가 남아 있다.
 일정 적립0·누적38.37%를 유지하며 독립 D1/D2와 gate 결과는 같은 증거 디렉터리에 남긴다.
+
+<a id="structural-admission"></a>
+### 기존 부채를 보존한 split admission과 원 pool 후보 선택
+
+`35f21e8e` 뒤 [admission 계약](../contracts/dev3-tree-smo.md#structural-admission)을 연결한다.
+원 prepare의 같은 replay loan에서 canonical RetentionRoot·after allocator와 원 ATT/Job/
+Allocation/Aging으로 XOI successor를 만든다. 기존 `ProjectedInventory`·`encode_row_current`를
+재사용하고 Finished Structural의 부채0을 새 XOI owner로 넣지 않는다. XOI는 기존 BEFORE[5]
+여유 공간에 두며 물리 target이 아니다. Prepared가 그 불변 borrow와 future tuple을 보관한다.
+`check_progress_room`은 frame+기존 future WAL/steps, 변경하는 기존3/4page의 counter+1+steps,
+변경하지 않는 Root3 revision+steps를 확인한다. 마지막 전체 prefix/control cut 재검산은 유지한다.
+
+별도 `StructuralCandidates`는 원 bounded residency scan을 재사용하고 exact5 target과 INIT
+주소를 pool anchor/core/binding/fence·active1/2 slot/stamp/next generation에 결속한다.
+Child 비활성 둘째는 첫째 복사·generation0이며 별도 latch나 주소 권한이 없다. 최종 registry
+guard 아래 selected stamp를 다시 비교하고 모든 반환에서 registry→둘째→첫째 content 순서를
+유지한다. 관측만 하므로 등록·generation·pin을 소비하지 않는다. dirty 후보는 requires_flush로
+남기며 실제 claim은 원 flush 후 선택·stamp/generation을 다시 검산해야 한다.
+
+[선택·source/ELF·입력·원 로그](../../module-gate/evidence/dev3-08-admission/)를 보존한다.
+새7개와 변경된 기존 source inventory1개가 r2에서 모두 PASS(3.62초)했고, 실제 memory/native
+caller2개도 r2 ELF에서 PASS했다. 완료한 무변경 prepare3개나 전체 wrapper는 실행하지 않았다.
+r0는 시험 constant 가시성1·PartialEq 없는 cause 비교4의 compile FAIL(runtime0), r1은 수정 뒤
+build PASS(1분49초)지만 runtime은 실행하지 않았다. D1이 기대값의 독립성 부족을 지적해
+원 bank raw 합산을 넣고, shape 사례와 역순 guard 반환을 보강한 r2 build는45.66초였다.
+
+SMO-P03은 실제 CREATE/Undo INIT 뒤 두 INSERT를 Active로 유지한다. 원 bank의1664B stride에서
+ATT0..31·unfinished Aging32/Allocation33의 XOD1 remaining5행(640+128*i, steps+8/WAL+16)을
+시험이 직접 checked 합산한다. ATT와 Aging 양쪽의 WAL 부채가 양수인 것을 확인하고 원 encoder가
+반환한 `(WAL, steps)` 및 exact cap을 이 기대값과 대조한다. old XOI와 새 XOI의 차이는 capture
+LSN과 root digest뿐이며 owner/item bytes가 같다. frame+future의 exact fit은 성공하고1byte 부족은
+Unchanged Capacity이며 loan/pin0·WAL/bank/Job/XOI 불변을 검산한다. 이후 원 Commit·정리11group이
+성공하여 credit을 소비하지 않았음을 확인한다.
+
+dirty 선택 확인은 이 사례의 authentic history requirement를 같은 fence에 묶어 별도5slot
+metadata pool의 DPT에 넣고 Flush 관측과 무효과만 검사한다. 실제 live flush/claim·DWB 해결
+증거가 아니다. 독립 수치 사례는 LSN+steps, Child parent를 포함한 기존4개 counter+1+steps,
+Root revision+steps의 exact/overflow를 검사한다. 합성 수치·Root codec은 원 authority가 아니다.
+후보5사례는 Root2/Child1·둘째 공간 부족·exact5 제외·Resident/다른 incarnation Stale·Busy·
+generation 소진·최종 stamp 변경·재선택의 successor generation·shape7변형·부분 source floor다.
+
+preparation source의 새 inventory phase20,831B와 cleanup6,232/return9,384B를 포함해 peak는
+33,372B를 유지한다. 새 후보 선택은12,464B이며 부분 독립 floor9,600B다. inventory floor17,871B도
+전체 독립 산출이나 compiler stack/RSS 측정이 아니다. 원 memory/native recovery와 retained live의
+peak/metadata/whole은 직전 원 상한을 유지한다. candidate 선택 상한은 별도 공급 값이며 아직 원
+effect consumer의 동시에 살아 있는 Prepared/claim/write/flush lease와 합친 F05 증거가 아니다.
+
+r2 source manifest SHA-256은 `b4d8ca7205045a757cd3ebfaaf62822110d882a7d73ec0b9d7f3a834e249caba`,
+ELF는 `160a10fb820a727ad8e7ee8fe3973651fe9b9485704ee22cd8222b52540fda9e`다. 독립 D1/D2와
+Clippy/gate는 같은 증거 디렉터리의 review 기록에 결속한다. 실제 claim·stage·설치·durable finish,
+fault/reopen·다단계 행 변경·unlink/root shrink/retirement와 전체 F05는 계속08-1의 필수 잔여다.
+일정08 적립0·누적38.37%를 유지한다.

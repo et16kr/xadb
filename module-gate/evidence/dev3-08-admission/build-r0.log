@@ -1,0 +1,136 @@
+   Compiling version_check v0.9.5
+   Compiling typenum v1.20.1
+   Compiling autocfg v1.5.1
+   Compiling libc v0.2.191
+   Compiling generic-array v0.14.7
+   Compiling cfg-if v1.0.5
+   Compiling memoffset v0.9.1
+   Compiling cfg_aliases v0.2.2
+   Compiling nix v0.30.1
+   Compiling cpufeatures v0.2.17
+   Compiling bitflags v2.13.2
+   Compiling crypto-common v0.1.7
+   Compiling block-buffer v0.10.4
+   Compiling digest v0.10.7
+   Compiling sha2 v0.10.9
+   Compiling xadb-foundation v0.1.0 (/workspace/xadb/crates/foundation)
+   Compiling xadb-platform v0.1.0 (/workspace/xadb/crates/platform)
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+error[E0603]: constant import `ROOT_BYTES` is private
+  --> crates/engine/src/storage/wal_io/plan4_retention/structural_admission_tests.rs:22:35
+   |
+22 |     let mut cell = [0; row_queue::ROOT_BYTES];
+   |                                   ^^^^^^^^^^ private constant import
+   |
+note: the constant import `ROOT_BYTES` is defined here...
+  --> crates/engine/src/storage/retention_page/row.rs:10:5
+   |
+10 |     ROOT_BYTES, RemainingBudget, ResourcePeak, Result, RetentionError, RetentionGenesisPage,
+   |     ^^^^^^^^^^
+note: ...and refers to the constant `ROOT_BYTES` which is defined here
+  --> crates/engine/src/storage/retention_page.rs:27:1
+   |
+27 | pub(crate) const ROOT_BYTES: usize = 512;
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: consider importing this constant instead
+   |
+22 -     let mut cell = [0; row_queue::ROOT_BYTES];
+22 +     let mut cell = [0; crate::storage::retention_page::ROOT_BYTES];
+   |
+
+error[E0369]: binary operation `==` cannot be applied to type `plan4_pages::retention::RetentionCause`
+   --> crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_prepare.rs:99:29
+    |
+ 99 | ...                   assert_eq!(e.cause, RetentionCause::Capacity);
+    |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |                       |
+    |                       plan4_pages::retention::RetentionCause
+    |                       plan4_pages::retention::RetentionCause
+    |
+note: an implementation of `PartialEq` might be missing for `plan4_pages::retention::RetentionCause`
+   --> crates/engine/src/storage/wal_io/plan4_apply.rs:282:1
+    |
+282 | pub(crate) enum RetentionCause {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ must implement `PartialEq`
+help: consider annotating `plan4_pages::retention::RetentionCause` with `#[derive(PartialEq)]`
+   --> crates/engine/src/storage/wal_io/plan4_apply.rs:282:1
+    |
+282 + #[derive(PartialEq)]
+283 | pub(crate) enum RetentionCause {
+    |
+
+error[E0369]: binary operation `==` cannot be applied to type `plan4_pages::retention::RetentionCause`
+   --> crates/engine/src/storage/wal_io/plan4_retention/structural_admission_tests.rs:74:5
+    |
+ 74 | /     assert_eq!(
+ 75 | |         check(u64::MAX - 6, &stamps, &root).unwrap_err().cause,
+ 76 | |         RetentionCause::Capacity
+ 77 | |     );
+    | |     ^
+    | |     |
+    | |_____plan4_pages::retention::RetentionCause
+    |       plan4_pages::retention::RetentionCause
+    |
+note: an implementation of `PartialEq` might be missing for `plan4_pages::retention::RetentionCause`
+   --> crates/engine/src/storage/wal_io/plan4_apply.rs:282:1
+    |
+282 | pub(crate) enum RetentionCause {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ must implement `PartialEq`
+help: consider annotating `plan4_pages::retention::RetentionCause` with `#[derive(PartialEq)]`
+   --> crates/engine/src/storage/wal_io/plan4_apply.rs:282:1
+    |
+282 + #[derive(PartialEq)]
+283 | pub(crate) enum RetentionCause {
+    |
+
+error[E0369]: binary operation `==` cannot be applied to type `plan4_pages::retention::RetentionCause`
+   --> crates/engine/src/storage/wal_io/plan4_retention/structural_admission_tests.rs:83:9
+    |
+ 83 | /         assert_eq!(
+ 84 | |             check(41, &boundary, &root).unwrap_err().cause,
+ 85 | |             RetentionCause::Exhausted
+ 86 | |         );
+    | |         ^
+    | |         |
+    | |_________plan4_pages::retention::RetentionCause
+    |           plan4_pages::retention::RetentionCause
+    |
+note: an implementation of `PartialEq` might be missing for `plan4_pages::retention::RetentionCause`
+   --> crates/engine/src/storage/wal_io/plan4_apply.rs:282:1
+    |
+282 | pub(crate) enum RetentionCause {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ must implement `PartialEq`
+help: consider annotating `plan4_pages::retention::RetentionCause` with `#[derive(PartialEq)]`
+   --> crates/engine/src/storage/wal_io/plan4_apply.rs:282:1
+    |
+282 + #[derive(PartialEq)]
+283 | pub(crate) enum RetentionCause {
+    |
+
+error[E0369]: binary operation `==` cannot be applied to type `plan4_pages::retention::RetentionCause`
+   --> crates/engine/src/storage/wal_io/plan4_retention/structural_admission_tests.rs:93:5
+    |
+ 93 | /     assert_eq!(
+ 94 | |         check(41, &stamps, &root).unwrap_err().cause,
+ 95 | |         RetentionCause::Exhausted
+ 96 | |     );
+    | |     ^
+    | |     |
+    | |_____plan4_pages::retention::RetentionCause
+    |       plan4_pages::retention::RetentionCause
+    |
+note: an implementation of `PartialEq` might be missing for `plan4_pages::retention::RetentionCause`
+   --> crates/engine/src/storage/wal_io/plan4_apply.rs:282:1
+    |
+282 | pub(crate) enum RetentionCause {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ must implement `PartialEq`
+help: consider annotating `plan4_pages::retention::RetentionCause` with `#[derive(PartialEq)]`
+   --> crates/engine/src/storage/wal_io/plan4_apply.rs:282:1
+    |
+282 + #[derive(PartialEq)]
+283 | pub(crate) enum RetentionCause {
+    |
+
+Some errors have detailed explanations: E0369, E0603.
+For more information about an error, try `rustc --explain E0369`.
+error: could not compile `xadb-engine` (lib test) due to 5 previous errors
