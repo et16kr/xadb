@@ -41,6 +41,8 @@ pub(in crate::storage) struct RetentionSourceCensus {
     pub(in crate::storage) history_frame_return: usize,
     /// The scope3 Row arm, exclusive with the Catalog/System arms.
     pub(in crate::storage) history_row: usize,
+    /// The scope4 split arm, exclusive with the other arms of one frame.
+    pub(in crate::storage) history_structural: usize,
     pub(in crate::storage) recovery_frame: usize,
     pub(in crate::storage) producer: usize,
     pub(in crate::storage) installation: usize,
@@ -312,6 +314,7 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
         history_closure: history.closure,
         history_frame_return: history.frame_return,
         history_row: history.row,
+        history_structural: history.structural,
         recovery_frame: history.frame,
         producer,
         installation,

@@ -595,8 +595,9 @@ fn census<W: WriterNamespace>(label: &str) {
         .max(live.history_frame_return)
         .max(live.history_closure);
     println!(
-        "S1B_ROW_CENSUS\t{label}\trow={}\tphase_max={phases}\tframe={}\tclosure={}\tframe_return={}\tpopulation={}\tlive_peak={}\tcatalog_lookup={}\tcatalog_commit={}\trecovered_analysis={}\trecovered_peak={}",
+        "S1B_ROW_CENSUS\t{label}\trow={}\tstructural={}\tphase_max={phases}\tframe={}\tclosure={}\tframe_return={}\tpopulation={}\tlive_peak={}\tcatalog_lookup={}\tcatalog_commit={}\trecovered_analysis={}\trecovered_peak={}",
         live.history_row,
+        live.history_structural,
         live.recovery_frame,
         live.history_closure,
         live.history_frame_return,
@@ -608,13 +609,21 @@ fn census<W: WriterNamespace>(label: &str) {
         recovered.peak,
     );
     // The Row arm is exclusive with the Catalog/System arms of one frame: it
-    // fits under the existing frame-phase maximum, so the history frame and
-    // every consumer of it keep their values.
+    // fits under the existing frame-phase maximum. The scope4 split arm
+    // (dev3-tree-smo.md#current-leaf-consumers) is exclusive with all of
+    // them and is the one arm above it: the history frame is exactly the
+    // larger of the two, 26,420 B in both writers. The other consumers keep
+    // their values: the history peak is still set outside the frame.
     assert!(
         live.history_row <= phases,
         "{label}: Row arm above frame max"
     );
-    assert_eq!(live.recovery_frame, phases, "{label}: frame changed");
+    assert_eq!(
+        live.recovery_frame,
+        phases.max(live.history_structural),
+        "{label}: frame changed"
+    );
+    assert_eq!(live.recovery_frame, 26_420, "{label}: frame value");
     assert!(live.history_closure <= live.recovery_frame);
     assert!(live.peak <= 65_536 && recovered.peak <= 65_536);
 }

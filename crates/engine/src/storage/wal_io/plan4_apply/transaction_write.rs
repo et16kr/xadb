@@ -425,6 +425,25 @@ fn caller_bytes<O>() -> usize {
 
 pub(in super::super) fn source_bytes() -> usize {
     use std::mem::size_of;
+    // The ledger scan's own values (its descriptors, Jobs, scalars, the
+    // aggregate and the encoded references) beside one decoder at a time.
+    let scan = 2 * size_of::<obligation::DescriptorSpec>()
+        + 2 * size_of::<Result<obligation::DescriptorSpec>>()
+        + 3 * size_of::<queue::JobView<'_>>()
+        + 2 * size_of::<Result<queue::JobView<'_>>>()
+        + size_of::<[usize; 6]>()
+        + 640 // original check_ledger aggregate inventory, retained during scans
+        + 2 * size_of::<[u8; 48]>()
+        + obligation::descriptor_source_bytes()
+            .max(crate::storage::semantic_catalog::profile3_transaction_source_bytes())
+            .max(crate::storage::semantic_row::ledger::admission_source_bytes())
+            .max(queue::source_bytes());
+    // The Finished structural bank row is observed in its own frame before
+    // the scan (`control::catalog::structural`): the receiver, Profile and
+    // prefix arguments and its Result beside the bank decoder.
+    let structural = size_of::<(&(), crate::storage::control::Profile, crate::storage::wal_io::WalPrefix)>()
+        + 2 * size_of::<Result<()>>()
+        + control::structural_bank_source_bytes();
     lifecycle_caller_bytes()
         + super::source_bytes()
         // Begin's binding helper (receiver, capsule, actor, begun, kind) and
@@ -434,21 +453,10 @@ pub(in super::super) fn source_bytes() -> usize {
         // The Row statement boundary's phase argument and mark result.
         + size_of::<RetentionPhase>()
         + 2 * size_of::<Result<Option<UndoRef>>>()
-        + 2 * size_of::<obligation::DescriptorSpec>()
-        + 2 * size_of::<Result<obligation::DescriptorSpec>>()
-        + 3 * size_of::<queue::JobView<'_>>()
-        + 2 * size_of::<Result<queue::JobView<'_>>>()
         + 2 * size_of::<crate::storage::wal_io::WalPrefix>()
         + 2 * size_of::<Result<crate::storage::wal_io::WalPrefix>>()
         + 2 * size_of::<Result<(u64, u64)>>()
-        + size_of::<[usize; 6]>()
-        + 640 // original check_ledger aggregate inventory, retained during scans
-        + 2 * size_of::<[u8; 48]>()
-        + obligation::descriptor_source_bytes()
-            .max(crate::storage::semantic_catalog::profile3_transaction_source_bytes())
-            .max(crate::storage::semantic_row::ledger::admission_source_bytes())
-            .max(control::structural_bank_source_bytes())
-            .max(queue::source_bytes())
+        + scan.max(structural)
 }
 
 // S2W-R18: the next `row_statement_head` on this thread sees the actor's

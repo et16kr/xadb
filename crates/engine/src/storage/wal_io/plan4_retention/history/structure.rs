@@ -126,24 +126,33 @@ pub(in super::super) fn apply(
     if arena.len() != ARENA_END || bank.len() != BANK_END - JOB_END {
         return Err(RetentionCause::Invariant);
     }
-    let view =
-        semantic::decode_layout(raw, expected, profile).map_err(RetentionCause::RowSemantic)?;
-    let observed = {
+    // The layout is moved out of its decode Result once; the bank row's and
+    // the candidate's Results are held as returned and borrowed, so no
+    // second copy sits beside the comparison.
+    let view = match semantic::decode_layout(raw, expected, profile) {
+        Ok(view) => view,
+        Err(error) => return Err(RetentionCause::RowSemantic(error)),
+    };
+    let observation = {
         let prior_row = control::row(bank, control::STRUCTURAL_SLOT);
-        let prior = control::observe_structural_bank_row(
+        let observed_prior = control::observe_structural_bank_row(
             profile,
             expected.previous_lsn,
             expected.stream.writer_epoch,
             prior_row,
-        )?;
+        );
+        let prior = match &observed_prior {
+            Ok(prior) => prior,
+            Err(_) => return observed_prior.map(|_| unreachable!("the bank row was refused")),
+        };
         let inputs = candidate::Inputs {
             profile,
             frame: expected,
             table: view.core().object(),
             source: view.core().left(),
             jobs: JobCells::original(cells),
-            previous_high_water: prior.map_or(0, |p| p.owner.id()),
-            previous: prior.map(|p| {
+            previous_high_water: prior.as_ref().map_or(0, |p| p.owner.id()),
+            previous: prior.as_ref().map(|p| {
                 (
                     p.owner,
                     catalog::raw_descriptor(prior_row).expect("checked bank"),
@@ -159,7 +168,10 @@ pub(in super::super) fn apply(
                     .map_err(|_| crate::storage::semantic_row::Error::IdentityMismatch)
             },
         )
-        .map_err(RetentionCause::RowSemantic)?
+    };
+    let observed = match &observation {
+        Ok(observed) => observed,
+        Err(error) => return Err(RetentionCause::RowSemantic(*error)),
     };
     let mut result = recovery::RetentionFrameObservation {
         header: observed.header,
@@ -233,6 +245,8 @@ pub(in super::super) struct SourceCensus {
 
 /// The two phases are sequential in apply: new_claims/result are declared
 /// after the candidate returns. Original arena/after/frame loans are external.
+/// The candidate's Observation is held once, in its returned Result, and
+/// borrowed from there (dev3-tree-smo.md#current-leaf-consumers).
 pub(in super::super) fn source_bytes() -> SourceCensus {
     use std::mem::size_of;
     let args = size_of::<(
@@ -246,14 +260,14 @@ pub(in super::super) fn source_bytes() -> SourceCensus {
         &mut [[u8; 352]; 64],
     )>();
     let compare = args
-        + 2 * size_of::<LayoutView<'_>>()
-        + 2 * size_of::<Observed<LayoutView<'_>>>()
+        + size_of::<LayoutView<'_>>()
+        + size_of::<std::result::Result<LayoutView<'_>, crate::storage::semantic_row::Error>>()
         + size_of::<candidate::Inputs<'_>>()
-        + 2 * size_of::<Option<semantic::bank::FinishedSplit>>()
-        + 2 * size_of::<Observed<Option<semantic::bank::FinishedSplit>>>()
+        + size_of::<Observed<Option<semantic::bank::FinishedSplit>>>()
+        + size_of::<&Option<semantic::bank::FinishedSplit>>()
         + size_of::<Option<(SystemWorkRef, &[u8; 1536])>>()
-        + size_of::<frame::Observation>()
         + size_of::<std::result::Result<frame::Observation, crate::storage::semantic_row::Error>>()
+        + size_of::<&frame::Observation>()
         + size_of::<(&[u8], &mut [[u8; PAGE_BYTES]; 5], PageRef)>()
         + 512;
     let semantic = compare + frame::source_bytes().max(control::structural_bank_source_bytes());
@@ -303,9 +317,9 @@ mod tests {
             + size_of::<Option<semantic::bank::FinishedSplit>>()
             + size_of::<Observed<Option<semantic::bank::FinishedSplit>>>()
             + size_of::<candidate::Inputs<'_>>()
-            + size_of::<frame::Observation>()
             + size_of::<std::result::Result<frame::Observation, crate::storage::semantic_row::Error>>(
             )
+            + size_of::<&frame::Observation>()
             + size_of::<(&[u8], PageRef)>()
             + 256
             + frame::source_bytes().max(control::structural_bank_source_bytes());
@@ -359,5 +373,36 @@ mod tests {
         );
         assert!(compare <= c.semantic);
         assert!(retained + mint <= c.finishing && returning <= c.finishing);
+    }
+}
+
+#[cfg(test)]
+mod tmp_size_probe {
+    #[test]
+    fn tmp_size_probe() {
+        let f = crate::storage::semantic_row::structure::frame::source_census();
+        let c = crate::storage::semantic_row::structure::candidate::source_census();
+        let s = super::source_bytes();
+        println!("TMP frame outer={} layout={} candidate={} body={} peak={}", f.outer, f.layout, f.candidate, f.body, f.peak);
+        println!("TMP cand outer={} build_outer={} before_outer={} after_outer={} returning={} table={} audit={} weights={} parent={} allocator={} side={} previous={} peak={}", c.outer, c.build_outer, c.before_outer, c.after_outer, c.returning, c.table, c.audit, c.weights, c.parent, c.allocator, c.side, c.previous, c.peak);
+        println!("TMP structural semantic={} finishing={} bank={}", s.semantic, s.finishing, super::control::structural_bank_source_bytes());
+        let row = super::super::row::source_bytes();
+        let cat = super::super::catalog::source_bytes();
+        println!("TMP row semantic={} finishing={} closure={} ; catalog semantic={} finishing={} closure={}", row.semantic, row.finishing, row.closure, cat.semantic, cat.finishing, cat.closure);
+        println!("TMP population replay={}", super::super::super::population::phase_source_bytes().replay);
+        use std::mem::size_of as n;
+        println!("TMP sizes layout={} inputs={} finished={} obs={} robs={} header={} oobs={} ofin={} prior_opt={}",
+            n::<super::LayoutView<'_>>(), n::<super::candidate::Inputs<'_>>(),
+            n::<Option<crate::storage::semantic_row::structure::bank::FinishedSplit>>(),
+            n::<super::frame::Observation>(),
+            n::<std::result::Result<super::frame::Observation, crate::storage::semantic_row::Error>>(),
+            n::<crate::storage::page::PageHeader>(),
+            n::<super::Observed<super::LayoutView<'_>>>(),
+            n::<super::Observed<Option<crate::storage::semantic_row::structure::bank::FinishedSplit>>>(),
+            n::<Option<(crate::storage::allocation_page::SystemWorkRef, &[u8; 1536])>>());
+        println!("TMP route sizes tr={} te={} root={} bounds={} pref={}",
+            n::<crate::storage::dirty_frame::TargetRequest>(), n::<crate::storage::tree_page::TreeExpectation>(),
+            n::<crate::storage::anchor::AnchorRoot>(), n::<crate::storage::tree_page::search::RowRouteBounds>(),
+            n::<crate::storage::page::PageRef>());
     }
 }

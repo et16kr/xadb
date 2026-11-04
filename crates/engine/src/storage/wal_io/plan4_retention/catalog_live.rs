@@ -2325,6 +2325,7 @@ pub(in super::super) fn row_write_bodies<W: WriterNamespace>() -> RowWriteBodies
         + size_of::<[Option<FrameStamp>; 9]>()
         + size_of::<Option<usize>>();
     let check = ledger.max(scalar + transaction::catalog::check_source_bytes());
+    eprintln!("TMPCHK scalar={} ledger={} check_src={} queue={} p3={} adm={} hist={}", scalar, ledger, transaction::catalog::check_source_bytes(), queue::source_bytes(), semantic_catalog::profile3_transaction_source_bytes(), crate::storage::semantic_row::ledger::admission_source_bytes(), history_peak);
     let table_census = scalar + super::super::read::catalog_source_bytes::<W>();
     let load = scalar
         + super::super::lookup_load::source_bytes::<W>()
