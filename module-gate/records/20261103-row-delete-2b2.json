@@ -1,1245 +1,1227 @@
 {
-  "schema": "XADB_MODULE_GATE_RECORD_V1",
-  "change": "DEV3 Row DELETE first path, stage 2b-2 (the product path, dev3-row-delete.md#implementation-2b2): A's DeleteForward/DeleteClr producer, C's preflight_delete/reserve_delete and DELETE Forward/CLR selection, A's autocommit_delete_live/transaction_delete_live entries, jobs.rs over DELETE roots, live DeletePrune cleanup (ValuePrune), replay of opcodes 8/9/23, B's tombstone read through C's value_before, C recovery's DeletePrune, A's loser DeleteClr and base4's effect-1 states, in one PR as contract section 13 requires (the entry that writes tombstones and delete U ships with their reader and recovery). Memory tests over the actual C supply (RDL-J/R) and literal stand-ins (RDL-A/B/C); native fault cuts are stage 3. The scope3 Undo/leaf observers (semantic_row/{undo,leaf}.rs, test-only) learn DELETE in the next PR.",
-  "rust_tests": [
+ "schema": "XADB_MODULE_GATE_RECORD_V1",
+ "change": "DEV3 Row DELETE first path, stage 2b-2 (the product path, dev3-row-delete.md#implementation-2b2): A's DeleteForward/DeleteClr producer, C's preflight_delete/reserve_delete and DELETE Forward/CLR selection, A's autocommit_delete_live/transaction_delete_live entries, jobs.rs over DELETE roots, live DeletePrune cleanup (ValuePrune), replay of opcodes 8/9/23, B's tombstone read through C's value_before, C recovery's DeletePrune, A's loser DeleteClr and base4's effect-1 states, in one PR as contract section 13 requires (the entry that writes tombstones and delete U ships with their reader and recovery). Memory tests over the actual C supply (RDL-J/R) and literal stand-ins (RDL-A/B/C); native fault cuts are stage 3. The scope3 Undo/leaf observers (semantic_row/{undo,leaf}.rs, test-only) learn DELETE in the next PR.",
+ "rust_tests": [
+  {
+   "paths": [
+    "crates/engine/src/storage/row/insert/group.rs",
+    "crates/engine/src/storage/row/insert/group/frame.rs",
+    "crates/engine/src/storage/row/insert/group/images.rs",
+    "crates/engine/src/storage/row/insert/leaf.rs",
+    "crates/engine/src/storage/row/insert/group_delete_tests.rs",
+    "crates/engine/src/storage/row/insert/group_tests.rs"
+   ],
+   "reason": "A's group producer for DELETE roots (dev3-row-delete.md#implementation-2b2): it dispatches on the RootJob's effect byte; the delete RowReserve's sealed old row (RowProducerInput::Delete: cell C and record projection) goes to a DELETE root, an INSERT value to an INSERT root, and a CLR compensates either. DeleteForward replaces the committed, pruned row with the actor's tombstone and makes U Live with the old value (432+L, header in the U buffer, value written straight into the after page); DeleteClr restores the row from U's Live before read through the table schema (entry (a)) and leaves U Releasing with no value; the H proof reads a DELETE predecessor's Live U by its outline (entry (b)); the leaf inspect takes, beside Inline rows, a tombstone stamped Transaction with its U (any transaction's) and refuses any other as Unsupported. RDL-A: A's five history D groups (three DeleteForwards, the DeleteClr and the INSERT Forward over an effect-1 H) are byte-equal to the independent literals of tests/fixtures/module-row-format/transition-delete, and A refuses an INSERT value on a delete root, another sealed projection or cell, a sealed old row on an INSERT root and a DeleteClr over an uncommitted RowValue before, all ahead of any output. The MCA00-V06 INSERT literal, refusal and C-observer cases keep the INSERT groups unchanged.",
+   "cases": [
     {
-      "paths": [
-        "crates/engine/src/storage/row/insert/group.rs",
-        "crates/engine/src/storage/row/insert/group/frame.rs",
-        "crates/engine/src/storage/row/insert/group/images.rs",
-        "crates/engine/src/storage/row/insert/leaf.rs",
-        "crates/engine/src/storage/row/insert/group_delete_tests.rs",
-        "crates/engine/src/storage/row/insert/group_tests.rs"
-      ],
-      "reason": "A's group producer for DELETE roots (dev3-row-delete.md#implementation-2b2): it dispatches on the RootJob's effect byte; the delete RowReserve's sealed old row (RowProducerInput::Delete: cell C and record projection) goes to a DELETE root, an INSERT value to an INSERT root, and a CLR compensates either. DeleteForward replaces the committed, pruned row with the actor's tombstone and makes U Live with the old value (432+L, header in the U buffer, value written straight into the after page); DeleteClr restores the row from U's Live before read through the table schema (entry (a)) and leaves U Releasing with no value; the H proof reads a DELETE predecessor's Live U by its outline (entry (b)); the leaf inspect takes, beside Inline rows, a tombstone stamped Transaction with its U (any transaction's) and refuses any other as Unsupported. RDL-A: A's five history D groups (three DeleteForwards, the DeleteClr and the INSERT Forward over an effect-1 H) are byte-equal to the independent literals of tests/fixtures/module-row-format/transition-delete, and A refuses an INSERT value on a delete root, another sealed projection or cell, a sealed old row on an INSERT root and a DeleteClr over an uncommitted RowValue before, all ahead of any output. The MCA00-V06 INSERT literal, refusal and C-observer cases keep the INSERT groups unchanged.",
-      "cases": [
-        {
-          "file": "crates/engine/src/storage/row/insert/group_delete_tests.rs",
-          "case": "storage::row::insert::group_delete_tests::rdl_a_delete_groups_match_literals",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/group_delete_tests.rs",
-          "case": "storage::row::insert::group_delete_tests::rdl_a_delete_producer_refuses_before_output",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/group_tests.rs",
-          "case": "storage::row::insert::group_tests::mca00_v06_forward_with_h_matches_literals",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/group_tests.rs",
-          "case": "storage::row::insert::group_tests::mca00_v06_forward_without_h_matches_literals",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/group_tests.rs",
-          "case": "storage::row::insert::group_tests::mca00_v06_clr_with_h_matches_literals",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/group_tests.rs",
-          "case": "storage::row::insert::group_tests::mca00_v06_clr_without_h_matches_literals",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/group_tests.rs",
-          "case": "storage::row::insert::group_tests::mca00_v06_forward_refusals_precede_output",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/group_tests.rs",
-          "case": "storage::row::insert::group_tests::mca00_v06_clr_refusals_precede_output",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/group_tests.rs",
-          "case": "storage::row::insert::group_tests::mca00_v06_leaf_refusals_precede_output",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/group_tests.rs",
-          "case": "storage::row::insert::group_tests::mca00_v06_descriptor_refusals_precede_output",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/group_tests.rs",
-          "case": "storage::row::insert::group_tests::mca00_v06_aging_after_census_refusals_precede_output",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/group_tests.rs",
-          "case": "storage::row::insert::group_tests::mca00_v06_header_and_zero_lsn_refusals_precede_output",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/group_tests.rs",
-          "case": "storage::row::insert::group_tests::mca00_v06_forward_physical_order_differs_from_roles",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/group_tests.rs",
-          "case": "storage::row::insert::group_tests::mca00_v06_produced_groups_pass_c_observers",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/group_tests.rs",
-          "case": "storage::row::insert::group_tests::mca05_v29_h_net0_with_before_count_zero_is_refused",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/group_tests.rs",
-          "case": "storage::row::insert::group_tests::rdl_f_insert_producer_refuses_delete_root",
-          "sources": [
-            "head"
-          ]
-        }
-      ]
+     "file": "crates/engine/src/storage/row/insert/group_delete_tests.rs",
+     "case": "storage::row::insert::group_delete_tests::rdl_a_delete_groups_match_literals",
+     "sources": [
+      "head"
+     ]
     },
     {
-      "paths": [
-        "crates/engine/src/storage/row/insert.rs",
-        "crates/engine/src/storage/row/insert/driver.rs",
-        "crates/engine/src/storage/row/insert/driver/live.rs",
-        "crates/engine/src/storage/row/insert/driver/tests.rs",
-        "crates/engine/src/storage/row/insert/driver/delete_tests.rs",
-        "crates/engine/src/storage/row/insert/driver/budget_tests.rs"
-      ],
-      "reason": "A's DELETE statement and entries: delete_statement drives C's preflight_delete and reserve_delete through the INSERT row steps (flush retry, finish on a refused Reserve, Cancel after the Reserve) and answers 0 or 1 rows; autocommit_delete_live and transaction_delete_live reuse the executor's statement frames through StatementRows. RDL-A01..A07 run the steps over the literal stand-ins (one row, no row, Busy/Unsupported/SerializationConflict holding nothing, the explicit transaction going on after a failed delete, the INSERT step rules after the preflight). The driver census gains the 13 delete.* sites (26 -> 39 call sites) and RDL-A08 puts the autocommit and explicit DELETE entries under the unchanged F4 ceilings (memory and native); no ceiling, original term or slack changed. The INSERT driver, executor and cleanup-drain cases and the F4 INSERT censuses keep the INSERT entries unchanged.",
-      "cases": [
-        {
-          "file": "crates/engine/src/storage/row/insert/driver/delete_tests.rs",
-          "case": "storage::row::insert::driver::tests::delete::rdl_a01_one_row_is_reserved_produced_applied_and_finished",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/driver/delete_tests.rs",
-          "case": "storage::row::insert::driver::tests::delete::rdl_a02_no_row_finishes_the_statement_with_zero",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/driver/delete_tests.rs",
-          "case": "storage::row::insert::driver::tests::delete::rdl_a03_a05_preflight_refusals_stay_distinct_and_hold_nothing",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/driver/delete_tests.rs",
-          "case": "storage::row::insert::driver::tests::delete::rdl_a06_explicit_transaction_goes_on_after_a_failed_delete",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/driver/delete_tests.rs",
-          "case": "storage::row::insert::driver::tests::delete::rdl_a07_steps_after_the_preflight_follow_the_insert_rules",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
-          "case": "storage::row::insert::driver::budget_tests::rdl_a08_autocommit_delete_budgets_memory",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
-          "case": "storage::row::insert::driver::budget_tests::rdl_a08_autocommit_delete_budgets_native",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
-          "case": "storage::row::insert::driver::budget_tests::rdl_a08_explicit_delete_budgets_memory",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
-          "case": "storage::row::insert::driver::budget_tests::rdl_a08_explicit_delete_budgets_native",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
-          "case": "storage::row::insert::driver::budget_tests::f4_a_autocommit_budgets_memory",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
-          "case": "storage::row::insert::driver::budget_tests::f4_a_autocommit_budgets_native",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
-          "case": "storage::row::insert::driver::budget_tests::f4_a_caller_budgets_memory",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
-          "case": "storage::row::insert::driver::budget_tests::f4_a_caller_budgets_native",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
-          "case": "storage::row::insert::driver::budget_tests::f4_a_explicit_budgets_memory",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
-          "case": "storage::row::insert::driver::budget_tests::f4_a_explicit_budgets_native",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
-          "case": "storage::row::insert::driver::tests::mca00_d01_one_row_statement_reserves_produces_applies_and_finishes",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
-          "case": "storage::row::insert::driver::tests::mca00_d02_rows_take_one_reservation_at_a_time",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
-          "case": "storage::row::insert::driver::tests::mca00_d05_c_refusals_keep_busy_capacity_unsupported_distinct",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
-          "case": "storage::row::insert::driver::tests::mca00_d06_failures_after_reserve_cancel_the_one_reservation",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
-          "case": "storage::row::insert::driver::tests::mca00_d07_failed_row_after_applied_rows_rolls_back_to_the_mark",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
-          "case": "storage::row::insert::driver::tests::mca00_d12_driver_frames_stay_within_the_driver_source_bound",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
-          "case": "storage::row::insert::driver::tests::mca00_d15_memory_call_site_shares_fit_the_caller_bounds",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
-          "case": "storage::row::insert::driver::tests::mca00_d15_native_call_site_shares_fit_the_caller_bounds",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
-          "case": "storage::row::insert::driver::tests::aw1_f01_flush_required_flushes_and_retries_the_same_row_from_preflight",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
-          "case": "storage::row::insert::driver::tests::lac_a01_committed_statement",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
-          "case": "storage::row::insert::driver::tests::lac_a02_failed_row_rolls_back_the_statement_then_the_transaction",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
-          "case": "storage::row::insert::driver::tests::lxt_a01_two_statements_then_commit",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
-          "case": "storage::row::insert::driver::tests::lxt_a02_failed_statement_keeps_the_earlier_one",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
-          "case": "storage::row::insert::driver::tests::lxt_a03_caller_rollback_compensates_every_statement",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
-          "case": "storage::row::insert::driver::tests::lrc_a01_drain_installs_every_selected_group",
-          "sources": [
-            "head"
-          ]
-        }
-      ]
+     "file": "crates/engine/src/storage/row/insert/group_delete_tests.rs",
+     "case": "storage::row::insert::group_delete_tests::rdl_a_delete_producer_refuses_before_output",
+     "sources": [
+      "head"
+     ]
     },
     {
-      "paths": [
-        "crates/engine/src/storage/semantic_row/jobs.rs",
-        "crates/engine/src/storage/semantic_row/jobs_tests.rs",
-        "crates/engine/src/storage/semantic_row/transition.rs",
-        "crates/engine/src/storage/semantic_row/transition_tests.rs",
-        "crates/engine/src/storage/semantic_row/transition_delete_tests.rs"
-      ],
-      "reason": "jobs.rs observes DELETE roots: DeleteForward/DeleteClr/DeletePrune follow the INSERT role's Job rules with the root's effect byte bound to the opcode, a Reserve's after effect must be the plan's, and Clr/Prune keep the effect byte; the N1 cross-check runs jobs.rs over every history D group (RDL-J job observer). transition.rs: the DELETE Change arms (ReserveDelete, DeleteForward, DeleteClr, DeletePrune) lose their 2b-1 dead_code allowances now that product code constructs them, and C exposes row_projection (the XRP1 projection a delete RowReserve draft seals), leaf_reservation (D over a Jobs bank, for INSERT Reserve's Capacity) and the counted source bounds of both and of the typed row record for the C censuses; transition_delete_tests.rs shares history D's actor, befores and leaves with A's RDL-A literal cases. The scope3 Undo/leaf observers (semantic_row/{undo,leaf}.rs, test-only oracles with no product caller) stay skipped for effect-1 actors in the N1 cross-check and status.rs skips the DELETE opcodes; their DELETE comparison is the next PR (dev3-row-delete.md#implementation-2b2). The RDL-C history D cases and the N1/S1A/S1D/S1G cases pin C's DELETE and INSERT groups unchanged.",
-      "cases": [
-        {
-          "file": "crates/engine/src/storage/semantic_row/jobs_tests.rs",
-          "case": "storage::semantic_row::jobs_tests::rdl_j_job_observer_binds_effect_to_opcode",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/semantic_row/jobs_tests.rs",
-          "case": "storage::semantic_row::jobs_tests::jobs_actual_page_bank_native_redo_and_lsn",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/semantic_row/jobs_tests.rs",
-          "case": "storage::semantic_row::jobs_tests::jobs_canonical_wrong_transitions_and_step_times",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/semantic_row/jobs_tests.rs",
-          "case": "storage::semantic_row::jobs_tests::jobs_cell_size_and_predecessor_match_same_frame",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/semantic_row/jobs_tests.rs",
-          "case": "storage::semantic_row::jobs_tests::jobs_preserves_root_material_rowid_sender_and_budget",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/semantic_row/jobs_tests.rs",
-          "case": "storage::semantic_row::jobs_tests::jobs_reserve_plan_is_independent_and_exact",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/semantic_row/jobs_tests.rs",
-          "case": "storage::semantic_row::jobs_tests::jobs_options_core_and_unsupported_boundary",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
-          "case": "storage::semantic_row::transition::tests::delete::rdl_c_delete_history_matches_literals",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
-          "case": "storage::semantic_row::transition::tests::delete::rdl_c_delete_history_rejects_variants",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
-          "case": "storage::semantic_row::transition::tests::delete::rdl_c_delete_history_borrowed_observer",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
-          "case": "storage::semantic_row::transition::tests::delete::rdl_c_delete_history_borrowed_producer",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
-          "case": "storage::semantic_row::transition::tests::delete::rdl_c_leaf_reservation_bounds_every_leaf_step",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
-          "case": "storage::semantic_row::transition::tests::delete::rdl_c_leaf_reservation_forward_and_delete_prune",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
-          "case": "storage::semantic_row::transition::tests::n1_statement_reserve_commit_prune_match_literals",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
-          "case": "storage::semantic_row::transition::tests::n1_empty_transactions_match_literals",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
-          "case": "storage::semantic_row::transition::tests::n1_full_rollback_cleanup_match_literals",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
-          "case": "storage::semantic_row::transition::tests::n1_observer_accepts_a_forward_clr_literals",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
-          "case": "storage::semantic_row::transition::tests::n1_observer_rejects_mutated_literals",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
-          "case": "storage::semantic_row::transition::tests::n1_producer_refusals_precede_output",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
-          "case": "storage::semantic_row::transition::tests::s1a_borrowed_observer_accepts_n1_and_a_literals",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
-          "case": "storage::semantic_row::transition::tests::s1d_borrowed_producer_matches_owned_groups",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
-          "case": "storage::semantic_row::transition::tests::s1g_reserve_adopted_equals_produced",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
-          "case": "storage::semantic_row::transition::tests::n1_transition_source_bounds_cover_measured_frames",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
-          "case": "storage::semantic_row::transition::tests::s1a_borrowed_observer_source_bound_covers_measured_frames",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
-          "case": "storage::semantic_row::transition::tests::s1d_borrowed_producer_source_bound_covers_measured_frames",
-          "sources": [
-            "head"
-          ]
-        }
-      ]
+     "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+     "case": "storage::row::insert::group_tests::mca00_v06_forward_with_h_matches_literals",
+     "sources": [
+      "head"
+     ]
     },
     {
-      "paths": [
-        "crates/engine/src/storage/wal_io/plan4_retention/row_preflight.rs",
-        "crates/engine/src/storage/wal_io/plan4_retention/row_write.rs",
-        "crates/engine/src/storage/wal_io/plan4_retention/row_forward.rs",
-        "crates/engine/src/storage/wal_io/plan4_retention/row_clr.rs",
-        "crates/engine/src/storage/wal_io/plan4_retention/row_delete_tests.rs",
-        "crates/engine/src/storage/wal_io/plan4_retention/row_write_tests.rs",
-        "crates/engine/src/storage/wal_io/plan4_apply/row/write.rs",
-        "crates/engine/src/storage/wal_io/plan4_apply/row/write_operation.rs",
-        "crates/engine/src/storage/wal_io/plan4_apply/row.rs",
-        "crates/engine/src/storage/wal_io/plan4_apply.rs",
-        "crates/engine/src/storage/wal_io/plan4_apply/transaction.rs",
-        "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs",
-        "crates/engine/src/storage/wal_io/disk_api.rs",
-        "crates/engine/src/storage/disk.rs"
-      ],
-      "reason": "C's DELETE write path (dev3-row-delete.md#classification, #api): preflight_delete classifies the target under the statement snapshot (row_delete_snapshot) before any Free Undo selection (target_class: the table schema, then a table with any Index record is Unsupported ahead of the class by the same conservative count INSERT uses, then delete_class) and answers NoRow after the WAL prefix recheck and the Catalog/table read records; the cut keeps the classified RowId (RowPreflightCut.delete); reserve_delete reserves a DeletePlan against the XRP1 projection of the old record, and the Forward/CLR steps select DeleteForward/DeleteClr by the root Job's effect (RowControlObservation names it). INSERT Reserve's Capacity now also keeps the leaf reservation D of the table's Retained DELETE roots. The disk/disk_api/plan4_apply re-exports add RowDeleteStep and RowValueBefore. RDL-C: the classification table (every row of contract section 5 and no contradiction lowered), the indexed table refused before the class, committed and foreign overflow rows Unsupported and an undo-less Transaction row corrupt, the Capacity boundary moving by exactly D (new), the D = 0 boundary, and RDL-J01/J02 over the actual C supply. The RowWrite phase censuses (s2w_c01..c06, memory and native) keep charge 44,304 B, row_lifecycle 40,881 B and the live/recovered peaks unchanged; the preflight body's DELETE term (now printed, 12,734 B with the index census) stays below its largest term (finish, 31,510 B), so the preflight C margin stays 728 B, and the RowReserve C margin moves from 2b-1's 771 B to 595 B with reserve_delete's DeletePlan arm, the delete draft's projection and INSERT Reserve's leaf reservation D, both within the unchanged bounds. The env-identity censuses catalog_source_memory/native, retention_source_memory/native and retention_source_census need the CATALOG/PLAN4_LIVE identity environment that CI does not set; they were run locally and pass, and are not selected here.",
-      "cases": [
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_retention/row_delete_tests.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::row_preflight::delete_tests::rdl_c_delete_class_follows_the_contract_table",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_retention/row_delete_tests.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::row_preflight::delete_tests::rdl_c_delete_class_never_lowers_a_contradiction",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_retention/row_delete_tests.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::row_preflight::delete_tests::rdl_c_indexed_table_is_unsupported_before_the_class",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_retention/row_delete_tests.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::row_preflight::delete_tests::rdl_c_delete_class_overflow_and_undo_less_rows",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_retention/row_write_tests.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::lifecycle::row::write::tests::rdl_c_insert_capacity_keeps_the_leaf_reservation",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_retention/row_write_tests.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::lifecycle::row::write::tests::s2b2_a6_check_candidate_leaf_shortage_is_capacity",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c01_row_write_phase_census_memory",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c02_row_write_phase_census_native",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c03_row_lifecycle_unchanged_beside_the_row_write_layout",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c04_live_and_recovered_peaks_unchanged",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c05_private_lane_ranges_and_cut_sizes",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c06_row_write_c_margins_against_both_bounds",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j01_autocommit_delete_commits_and_its_prune_removes_the_row",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j02_explicit_delete_rolls_back_then_commits",
-          "sources": [
-            "head"
-          ]
-        }
-      ]
+     "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+     "case": "storage::row::insert::group_tests::mca00_v06_forward_without_h_matches_literals",
+     "sources": [
+      "head"
+     ]
     },
     {
-      "paths": [
-        "crates/engine/src/storage/wal_io/plan4_retention/row_start.rs",
-        "crates/engine/src/storage/wal_io/plan4_retention/row_start/retire.rs",
-        "crates/engine/src/storage/wal_io/plan4_retention/visibility/authority.rs",
-        "crates/engine/src/storage/wal_io/plan4_retention/visibility/retirement.rs",
-        "crates/engine/src/storage/wal_io/plan4_retention/visibility/row_retirement.rs",
-        "crates/engine/src/storage/wal_io/plan4_retention/history/row.rs",
-        "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs"
-      ],
-      "reason": "Live cleanup and replay of DELETE roots (dev3-row-delete.md#retirement, #recovery): DeletePrune is a retiring group with the ValuePrune scope (visibility authority 5) under MissingPrune's rules; row_cleanup_next picks it for an effect-1 Job and retire_row routes it as a Row write. Replay's Row arm observes DeleteForward/DeleteClr/DeletePrune (history Change arms, prepared row_write gate) and the 2b-1 refusal of an effect-1 RowReserve is lifted. The new Row-arm case replays the whole history D (D-516..D-545) after history H to the independent redo afters, Jobs and ATT and to C's own live record of each frame; it replaces the 2b-1 D-521 refusal case. RDL-J01..J03 run the live cleanup over the actual C supply; the S1B/S1G Row-arm cases and the live cleanup cases LRR-02..06 and LRC-J01..J02 keep INSERT replay and cleanup unchanged (LRR-01, over 60 s, is run locally and not selected).",
-      "cases": [
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::rdl_j_row_arm_replays_history_d",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1b_row_arm_replays_n1_and_a_literals",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1b_row_arm_refuses_mutations_without_effect",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1g_row_reserve_replays_n1_literals",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1g_row_reserve_refuses_without_effect",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1g_closure_refuses_row_root_without_its_u_allocation",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1g_reserve_commitment_opens_at_forward",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1b_record_is_byte_equal_live_and_replay",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j01_autocommit_delete_commits_and_its_prune_removes_the_row",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j02_explicit_delete_rolls_back_then_commits",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j03_reads_before_cleanup_see_the_old_value_then_no_row",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::lrr02_older_snapshot_keeps_prune_busy_until_it_ends",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::lrr03_running_actor_non_head_and_early_terminal_are_refused",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::lrr04_aborted_actor_is_cleaned_and_its_status_reused",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::lrr05_busy_prune_does_not_hide_another_finished_actor",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::lrr06_recovery_finishes_a_partial_live_cleanup",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/driver.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::lrc_j01_drain_after_commit_and_abort_frees_every_row_job",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/driver.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::lrc_j02_drain_leaves_a_held_prune_for_a_later_drain",
-          "sources": [
-            "head"
-          ]
-        }
-      ]
+     "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+     "case": "storage::row::insert::group_tests::mca00_v06_clr_with_h_matches_literals",
+     "sources": [
+      "head"
+     ]
     },
     {
-      "paths": [
-        "crates/engine/src/storage/row/read.rs",
-        "crates/engine/src/storage/row/read/driver.rs",
-        "crates/engine/src/storage/row/read/driver/live.rs",
-        "crates/engine/src/storage/row/read/driver/tests.rs",
-        "crates/engine/src/storage/row/read/driver/delete_tests.rs",
-        "crates/engine/src/storage/wal_io/plan4_apply/row/read.rs",
-        "crates/engine/src/storage/wal_io/plan4_apply/row/read/census.rs",
-        "crates/engine/src/storage/wal_io/plan4_apply/row/read/tombstone_tests.rs",
-        "crates/engine/src/storage/wal_io/plan4_retention/visibility/pins.rs",
-        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_census.rs",
-        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_read.rs",
-        "tests/fixtures/module-row-read/delete-cells.txt",
-        "tests/fixtures/module-row-read/make_delete_cells.py"
-      ],
-      "reason": "B reads a DELETE tombstone (dev3-row-delete.md#read): C's capture takes a tombstone (always Transaction(T) with its U) beside Inline rows and the candidate says it is deleted; the new C value_before reads the tombstone's U through entry (a) with the operation's Catalog schema in missing_before's LOCATION/LOAD order, judges the U's shape in tombstone_before (the tombstone's own transaction, Status generation and mutation under a Transaction stamp, a RowValue Committed(q_old) Inline before; anything else or a Releasing U is Fatal), puts the old canonical in the copy buffer and returns row, q_old and logical; copy_before copies it once B has judged q_old <= S. B: own T, or T committed at q_T <= S, reads no row; otherwise the old value when q_old <= S. RDL-B01..B05 over C0 literal tombstone cells (tests/fixtures/module-row-read/make_delete_cells.py), the tombstone_before unit cases (the one accepted shape, eleven refused U edits including a chunked value, and three refused tombstone stamps: another transaction, another Status generation, Committed), RDL-J03 over the actual C supply, and RDL-B07..B09 over it: one edit of a resident page under an explicit transaction's DELETE makes the next statement's point read Fatal with the system fenced and no output (a Releasing U: Census/Undo; a Committed tombstone with no U: capture's Source/Invariant; a Missing U under the tombstone: tombstone_before's Census/Invariant; the delete's RowValue U under the tombstone re-encoded as an Inline Transaction row of the same version: read_missing's schema-less decode, Census/Undo), and two controls that re-encode the same cells through each edit path read the old value 100. read_missing's typed Unsupported (MCB04-V14) stays only for a valid RowDeleted or chunked RowValue before, which DELETE never writes. The read census S5R-C01/C02 gains value_before's load/location phases (C and B caller terms), every phase within the unchanged 34,586 B (largest value_before phase 34,460 B); the MCB00 driver cases keep the INSERT-era reads unchanged.",
-      "cases": [
-        {
-          "file": "crates/engine/src/storage/row/read/driver/delete_tests.rs",
-          "case": "storage::row::read::driver::tests::delete::rdl_b01_point_over_another_transactions_tombstone",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/read/driver/delete_tests.rs",
-          "case": "storage::row::read::driver::tests::delete::rdl_b02_own_tombstone_reads_no_row",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/read/driver/delete_tests.rs",
-          "case": "storage::row::read::driver::tests::delete::rdl_b03_cursor_skips_or_returns_the_old_value",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/read/driver/delete_tests.rs",
-          "case": "storage::row::read::driver::tests::delete::rdl_b04_value_before_flush_errors_and_mismatch",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/read/driver/delete_tests.rs",
-          "case": "storage::row::read::driver::tests::delete::rdl_b05_output_and_tombstone_version_checks",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/read/tombstone_tests.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::read::tombstone_tests::rdl_b_tombstone_before_takes_the_committed_inline_row",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/read/tombstone_tests.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::read::tombstone_tests::rdl_b_tombstone_before_refuses_every_other_u",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_census.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_read_census::s5r_c01_memory_source_inventory",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_census.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_read_census::s5r_c02_native_source_inventory",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j03_reads_before_cleanup_see_the_old_value_then_no_row",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_read.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::read::rdl_b07_b09_broken_delete_states_are_fatal",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/read/driver/tests.rs",
-          "case": "storage::row::read::driver::tests::mcb00_d01_point_found_and_absent_key",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/read/driver/tests.rs",
-          "case": "storage::row::read::driver::tests::mcb00_d02_point_status_and_missing_before_select_the_version",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/read/driver/tests.rs",
-          "case": "storage::row::read::driver::tests::mcb00_d03_flush_required_passes_through_after_cleanup",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/read/driver/tests.rs",
-          "case": "storage::row::read::driver::tests::mcb00_d05_cursor_next_returns_rows_in_order_then_end",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/read/driver/tests.rs",
-          "case": "storage::row::read::driver::tests::mcb00_d06_cursor_reseeks_by_full_row_id_after_a_gap",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/read/driver/tests.rs",
-          "case": "storage::row::read::driver::tests::mcb00_d13_memory_call_inventory",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/row/read/driver/tests.rs",
-          "case": "storage::row::read::driver::tests::mcb00_d13_native_call_inventory",
-          "sources": [
-            "head"
-          ]
-        }
-      ]
+     "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+     "case": "storage::row::insert::group_tests::mca00_v06_clr_without_h_matches_literals",
+     "sources": [
+      "head"
+     ]
     },
     {
-      "paths": [
-        "crates/engine/src/storage/wal_io/plan4_retention/row_start/recovery.rs",
-        "crates/engine/src/storage/plan4_recovery_base/row/actor.rs",
-        "crates/engine/src/storage/plan4_recovery_base/row/graph.rs",
-        "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs",
-        "crates/engine/src/storage/plan4_recovery_base/catalog/graph/relations.rs",
-        "crates/engine/src/storage/wal_io/plan4_retention/recovery/catalog.rs",
-        "crates/engine/src/storage/wal_io/plan4_recovery/tests/base_cause.rs",
-        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_native_a.rs",
-        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/autocommit.rs",
-        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
-        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_base.rs",
-        "tests/fixtures/module-row-format/base4-closure/author.py",
-        "tests/fixtures/module-row-format/base4-closure/index.json",
-        "tests/fixtures/module-row-format/base4-closure/manifest.json",
-        "tests/fixtures/module-row-format/base4-closure/variants.bin"
-      ],
-      "reason": "Recovery of DELETE roots (dev3-row-delete.md#recovery): C's recovery selects DeletePrune for a committed effect-1 root (RowWrite class; the closed facade check finds the commit Q for Prune and DeletePrune alike), A's recovered handler produces the DeleteClr through the same produce_clr, and base4 takes the effect-1 Reserved, Retained, ReleasingCompensated and ReleasingCommitted states of the contract's table with the reverse scan pairing each actor tombstone with one Retained effect-1 Job (a Releasing Job keeps no cell length, so a compensated row is checked by U's before logical and stamp). The base4 issuer relation is Objects + RowIds <= undo_high, since a DELETE Reserve issues an UndoSequence and no RowId; the base4-closure fixture revision d1 adds issuer-undo-low (refused) and accepts issuer-undo-high, parent literals unchanged. RDL-J04..J10 restart each crash state (Committed, Active, RolledBack, Reserved) to READY over the actual C supply, plus delete then INSERT in one transaction, the own INSERT row refused Unsupported with the transaction going on, and two deletes rolled back then committed; RDL-R01 decodes the captured bases of every effect-1 state and RDL-R02..R06 refuse one edit each (actor tombstone restamped Committed, a Committed tombstone with no U, an unpaired tombstone, a non-canonical delete U, the leaf reservation over capacity (Corrupt) and at it (Order)). The base4 closure, actor and base cause cases keep the INSERT bases unchanged.",
-      "cases": [
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j04_committed_delete_is_pruned_by_recovery",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j05_active_delete_loser_is_restored_by_recovery",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j06_rolled_back_delete_is_freed_by_recovery",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j07_reserved_delete_is_cancelled_by_recovery",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j08_delete_then_insert_in_one_transaction",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j09_own_insert_row_is_unsupported_and_the_transaction_goes_on",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j10_two_deletes_roll_back_then_commit",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_base.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::base::rdl_r01_base4_takes_each_delete_state",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_base.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::base::rdl_r02_to_r06_base4_refuses_broken_delete_states",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/autocommit.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::lxt_j01_two_statements_commit_and_restart",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/autocommit.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::lxt_j03_caller_rollback_then_a_commit",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs",
-          "case": "storage::plan4_recovery_base::row::graph::tests::base4_closure_relation_variants",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs",
-          "case": "storage::plan4_recovery_base::row::graph::tests::base4_closure_accepts_genesis_and_aging_start",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs",
-          "case": "storage::plan4_recovery_base::row::graph::tests::base4_closure_accepts_live_system_init_done",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs",
-          "case": "storage::plan4_recovery_base::row::graph::tests::base4_closure_accepts_row_undo_slot_reservation",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs",
-          "case": "storage::plan4_recovery_base::row::graph::tests::base4_closure_orders_ready_row_writer_after_creator",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs",
-          "case": "storage::plan4_recovery_base::row::graph::tests::base4_closure_row_xoi_mode_reproduces_inventory",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/plan4_recovery_base/row/actor_tests.rs",
-          "case": "storage::plan4_recovery_base::row::actor::tests::actor_literal_physical_graphs",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/plan4_recovery_base/row/actor_tests.rs",
-          "case": "storage::plan4_recovery_base::row::actor::tests::actor_rejects_wrong_chain_counts_identity_and_before",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/plan4_recovery_base/row/actor_tests.rs",
-          "case": "storage::plan4_recovery_base::row::actor::tests::actor_rejects_row_target_schema_version_and_projection",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/plan4_recovery_base/row/actor_tests.rs",
-          "case": "storage::plan4_recovery_base::row::actor::tests::actor_rejects_uncut_release_and_cursor_mismatch",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/plan4_recovery_base/row/actor_tests.rs",
-          "case": "storage::plan4_recovery_base::row::actor::tests::actor_root_free_rows_remain_globally_unique",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/base_cause.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::base_cause::recovery_selection_binds_profile3_generation_timeline",
-          "sources": [
-            "head"
-          ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/base_cause.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::base_cause::row_base_carrier_and_current_fallback_predicate",
-          "sources": [
-            "head"
-          ]
-        }
-      ]
+     "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+     "case": "storage::row::insert::group_tests::mca00_v06_forward_refusals_precede_output",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+     "case": "storage::row::insert::group_tests::mca00_v06_clr_refusals_precede_output",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+     "case": "storage::row::insert::group_tests::mca00_v06_leaf_refusals_precede_output",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+     "case": "storage::row::insert::group_tests::mca00_v06_descriptor_refusals_precede_output",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+     "case": "storage::row::insert::group_tests::mca00_v06_aging_after_census_refusals_precede_output",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+     "case": "storage::row::insert::group_tests::mca00_v06_header_and_zero_lsn_refusals_precede_output",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+     "case": "storage::row::insert::group_tests::mca00_v06_forward_physical_order_differs_from_roles",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+     "case": "storage::row::insert::group_tests::mca00_v06_produced_groups_pass_c_observers",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+     "case": "storage::row::insert::group_tests::mca05_v29_h_net0_with_before_count_zero_is_refused",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+     "case": "storage::row::insert::group_tests::rdl_f_insert_producer_refuses_delete_root",
+     "sources": [
+      "head"
+     ]
     }
-  ],
-  "na": [],
-  "reviews": [
+   ]
+  },
+  {
+   "paths": [
+    "crates/engine/src/storage/row/insert.rs",
+    "crates/engine/src/storage/row/insert/driver.rs",
+    "crates/engine/src/storage/row/insert/driver/live.rs",
+    "crates/engine/src/storage/row/insert/driver/tests.rs",
+    "crates/engine/src/storage/row/insert/driver/delete_tests.rs",
+    "crates/engine/src/storage/row/insert/driver/budget_tests.rs"
+   ],
+   "reason": "A's DELETE statement and entries: delete_statement drives C's preflight_delete and reserve_delete through the INSERT row steps (flush retry, finish on a refused Reserve, Cancel after the Reserve) and answers 0 or 1 rows; autocommit_delete_live and transaction_delete_live reuse the executor's statement frames through StatementRows. RDL-A01..A07 run the steps over the literal stand-ins (one row, no row, Busy/Unsupported/SerializationConflict holding nothing, the explicit transaction going on after a failed delete, the INSERT step rules after the preflight). The driver census gains the 13 delete.* sites (26 -> 39 call sites) and RDL-A08 puts the autocommit and explicit DELETE entries under the unchanged F4 ceilings (memory and native); no ceiling, original term or slack changed. The INSERT driver, executor and cleanup-drain cases and the F4 INSERT censuses keep the INSERT entries unchanged.",
+   "cases": [
     {
-      "id": "row-delete-2b2-d2",
-      "class": "D2",
-      "scopes": [
-        "common",
-        "joint"
-      ],
-      "author": "claude-thread-session/claude-project-thread-9inq97",
-      "reviewer": "claude-independent-review/row-delete-2b2",
-      "verdict": "ACCEPT",
-      "required_open": 0,
-      "log": "module-gate/evidence/row-delete-2b2/review.md",
-      "log_sha256": "c3fcfa5cda121ef7bf2b6a841ccce6377ac48e45f777f1dc0fa8a485477b5381",
-      "files": {
-        "crates/engine/src/storage/disk.rs": "807fe65c883ddbf8b3eb9384ba396b2686d74dcb",
-        "crates/engine/src/storage/plan4_recovery_base/catalog/graph/relations.rs": "c062d76047e87463f36873c0ff716928812f00cf",
-        "crates/engine/src/storage/plan4_recovery_base/row/actor.rs": "b413d12c81c3ad19b37ec513b2e508b353ae41a9",
-        "crates/engine/src/storage/plan4_recovery_base/row/actor_tests.rs": "876705a0094a57584d641b521d91683c93dc3e9a",
-        "crates/engine/src/storage/plan4_recovery_base/row/graph.rs": "6ff379bd4d286609fea6592d67d92f9bf0083743",
-        "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs": "ffdd1ad59df9697ad4d47a57e5357adb2f8098df",
-        "crates/engine/src/storage/row/insert.rs": "61fad4e960a263134befbbc91276b5775a5da03f",
-        "crates/engine/src/storage/row/insert/driver.rs": "21792200e32c2127c224531c08c9d247bb686763",
-        "crates/engine/src/storage/row/insert/driver/budget_tests.rs": "f1a611a24d8afcdef5fad77e6efc96fd139a1479",
-        "crates/engine/src/storage/row/insert/driver/delete_tests.rs": "e356d3f8a7316e83f29473a0023b5d6dd5ded16c",
-        "crates/engine/src/storage/row/insert/driver/live.rs": "e5fd353a292a2f3cf8cc65f1bab07d2bc4d58ac5",
-        "crates/engine/src/storage/row/insert/driver/tests.rs": "b4bcdbb2f0034a954406769624aabd3ac04d8dc1",
-        "crates/engine/src/storage/row/insert/group.rs": "cf2bde59c5417047106217f21dd1a76839376f33",
-        "crates/engine/src/storage/row/insert/group/frame.rs": "0aeccea6590d5ca0a8c4eebc5059d1d5bccb072a",
-        "crates/engine/src/storage/row/insert/group/images.rs": "94b404c1e3c007f46b6914bf117681c679d55fe9",
-        "crates/engine/src/storage/row/insert/group_delete_tests.rs": "ca61958cd2adb1e3cae46119c6007a33b677e072",
-        "crates/engine/src/storage/row/insert/group_tests.rs": "c9412f917321e2be3f6fe5c5792da45e03391d68",
-        "crates/engine/src/storage/row/insert/leaf.rs": "4634888c59b0310c24cf0e6339aa57fbc0706c24",
-        "crates/engine/src/storage/row/read.rs": "5af03514185b31fb6843d05c049e591008ed529c",
-        "crates/engine/src/storage/row/read/driver.rs": "812bd96435c6fc6904298aa97dba0584830a98d4",
-        "crates/engine/src/storage/row/read/driver/delete_tests.rs": "0cc116c7c33994816240aa28cc4819c4130a0c28",
-        "crates/engine/src/storage/row/read/driver/live.rs": "fdeb8b4929f72370652e2b1bd7e8c04a57230335",
-        "crates/engine/src/storage/row/read/driver/tests.rs": "a042447a06ecfb389cf293b6cac075728f521c50",
-        "crates/engine/src/storage/semantic_row/jobs.rs": "6940259a8ac41401f7c32c5819128637a6d78c61",
-        "crates/engine/src/storage/semantic_row/jobs_tests.rs": "c2dcdba04f1f8d076ee5956a1b12bed2f2bff182",
-        "crates/engine/src/storage/semantic_row/transition.rs": "1211777c0a5a16ac1f825b224803822b9e22b7f3",
-        "crates/engine/src/storage/semantic_row/transition_delete_tests.rs": "872a8907c6aff0604044219935545c944e862755",
-        "crates/engine/src/storage/semantic_row/transition_tests.rs": "3334fdf7a10691eb395cf718d6226fb17598658c",
-        "crates/engine/src/storage/wal_io/disk_api.rs": "47ccec44f0efd44831cae959e9cee7e41e286592",
-        "crates/engine/src/storage/wal_io/plan4_apply.rs": "d571ce585479a1a2283ad8ed265e2d187a28fec8",
-        "crates/engine/src/storage/wal_io/plan4_apply/row.rs": "26252d02b788c2a716fe98ea12e03fe1e22b781c",
-        "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs": "e174719c2ab4d8df3be253950de2a6f4ad18c7fc",
-        "crates/engine/src/storage/wal_io/plan4_apply/row/read.rs": "9a6d7445ff8b88424f1630e9eb1135b7040c7116",
-        "crates/engine/src/storage/wal_io/plan4_apply/row/read/census.rs": "97111653897d6c8be6e7a2cde6240446e8e5828a",
-        "crates/engine/src/storage/wal_io/plan4_apply/row/read/tombstone_tests.rs": "7ebc02ae15bff6bfae06a18a4506236c1a279073",
-        "crates/engine/src/storage/wal_io/plan4_apply/row/write.rs": "6668fbf94c35c58167050b7e070fe22f8e9e46e5",
-        "crates/engine/src/storage/wal_io/plan4_apply/row/write_operation.rs": "633a3b8dbeebb921d836bb58c9a5c6b901183a83",
-        "crates/engine/src/storage/wal_io/plan4_apply/transaction.rs": "fee59c911c73f8af22ce4bb2a9680942138e19f3",
-        "crates/engine/src/storage/wal_io/plan4_recovery/tests/base_cause.rs": "6d67e82ef972fe5aa6bb8e99508752ea87b0005c",
-        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs": "8819dde2c1622ccba05eee5f842a8b06a17759ad",
-        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/autocommit.rs": "2b52411a554b80f6f8fcf862cf3bd5c8003a2e93",
-        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs": "9ab30bc8873c7160a927ab6b867448468caf4c25",
-        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_base.rs": "6af0b92975f15fb038fc4a3c03cd8c6ccc3c79f8",
-        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_read.rs": "ca954abb6e08b378893381dd256c626f4fe0a6c8",
-        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/driver.rs": "72cb004037b710eaf94461270944da2e3d7c6d06",
-        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_native_a.rs": "5466d876efac89537cfbd26b8095462d0c664b76",
-        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_census.rs": "8fe11b1c14275b80fb59ffe9fec82e0fe6349cf7",
-        "crates/engine/src/storage/wal_io/plan4_retention/history/row.rs": "a001a44bf3478a83777c4340bfe191d9f118700d",
-        "crates/engine/src/storage/wal_io/plan4_retention/recovery/catalog.rs": "22372332dfc667da27e4b53216f150a5b235da22",
-        "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs": "dc55c1c04d141b1d5355a5e63e0decf1a916c78f",
-        "crates/engine/src/storage/wal_io/plan4_retention/row_clr.rs": "0a829102411efda19bbf4a7e43a2dd1312716ba4",
-        "crates/engine/src/storage/wal_io/plan4_retention/row_delete_tests.rs": "f481b7c9cec1beb24ef3860743a5c4176e16a484",
-        "crates/engine/src/storage/wal_io/plan4_retention/row_forward.rs": "bd640a07e662da2d52e0c0c64f54812568f6014e",
-        "crates/engine/src/storage/wal_io/plan4_retention/row_preflight.rs": "0f484872fa280071408a08c654dc15e111d3e47f",
-        "crates/engine/src/storage/wal_io/plan4_retention/row_start.rs": "81b2fb71fb0ae9ae71dacaa248fc8e78e0103280",
-        "crates/engine/src/storage/wal_io/plan4_retention/row_start/recovery.rs": "aa9551d1250ed62833ab9b2d401c9f4aec36b3bb",
-        "crates/engine/src/storage/wal_io/plan4_retention/row_start/retire.rs": "cbd583b8343c292aee395f809353d0bace7d3cbf",
-        "crates/engine/src/storage/wal_io/plan4_retention/row_write.rs": "aa31a94ff0acecab3cb768655e2a65c9ca770f89",
-        "crates/engine/src/storage/wal_io/plan4_retention/row_write_tests.rs": "418ff45afde9460de45e8b2f3c188d589b0e59ad",
-        "crates/engine/src/storage/wal_io/plan4_retention/visibility/authority.rs": "93887576c552b6ba13c8a4d27265fb32be7c7b24",
-        "crates/engine/src/storage/wal_io/plan4_retention/visibility/pins.rs": "71060d1d05f65d12789f2f57e01a35d0e049e134",
-        "crates/engine/src/storage/wal_io/plan4_retention/visibility/retirement.rs": "95bb7dd8eb6e6ed34bc5f478e91d196bd0974a92",
-        "crates/engine/src/storage/wal_io/plan4_retention/visibility/row_retirement.rs": "87f35d012bb8983baa1aa3febc31ebe10b870778",
-        "devdoc/README.md": "9074aae9850d8389eac1f143334ff3424c6b1082",
-        "devdoc/contracts/dev3-row-delete.md": "e949938a2853e2d3c3c48aca1aed0214500c8a88",
-        "devdoc/document-validation.json": "13860ca97c0dbed7373d00234b1e3e17b8b687de",
-        "tests/fixtures/module-row-format/base4-closure/author.py": "e51d77ed611c0528b537c396da91cb8848d223f2",
-        "tests/fixtures/module-row-format/base4-closure/index.json": "380b74fa3319be22273deaba840ecc70f935cf38",
-        "tests/fixtures/module-row-format/base4-closure/manifest.json": "e21688700ee2bd6acf61b2b42d7915814634bdce",
-        "tests/fixtures/module-row-format/base4-closure/variants.bin": "d7ac715378f0225934e413cf6497d92084329070",
-        "tests/fixtures/module-row-read/delete-cells.txt": "15f1bb98c8267feec122e485bf781f55eb09a465",
-        "tests/fixtures/module-row-read/make_delete_cells.py": "40e822a33d840522d8d5a907c9a7f1d4fd70eb42"
-      }
+     "file": "crates/engine/src/storage/row/insert/driver/delete_tests.rs",
+     "case": "storage::row::insert::driver::tests::delete::rdl_a01_one_row_is_reserved_produced_applied_and_finished",
+     "sources": [
+      "head"
+     ]
     },
     {
-      "id": "dev3-08-current-tree-followup-20261103-row-delete-2b2",
-      "class": "D2",
-      "scopes": [
-        "common"
-      ],
-      "author": "/root",
-      "reviewer": "/root/dev3_08_review",
-      "verdict": "ACCEPT",
-      "required_open": 0,
-      "files": {
-        "crates/engine/src/storage/plan4_recovery_base/catalog/graph/relations.rs": "93d631ef9a92482342e91044557cfe93f4cc4235",
-        "crates/engine/src/storage/plan4_recovery_base/row/actor.rs": "2fc1bdc42b743e1aab79bc422abe801b75e1cfc4",
-        "crates/engine/src/storage/plan4_recovery_base/row/graph.rs": "c6a75d82589c1c46e67dba1cc5cd243d29565b3c",
-        "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs": "07f851a077bd8f2a8d6b67f38d2931b5fbcc6d5e"
-      },
-      "log": "module-gate/evidence/dev3-08-current-tree/review.md (sha256 37f27a651decb9fcf50c93d055c324f3dc7ca10355ce443914789f9349d920d2)"
+     "file": "crates/engine/src/storage/row/insert/driver/delete_tests.rs",
+     "case": "storage::row::insert::driver::tests::delete::rdl_a02_no_row_finishes_the_statement_with_zero",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/delete_tests.rs",
+     "case": "storage::row::insert::driver::tests::delete::rdl_a03_a05_preflight_refusals_stay_distinct_and_hold_nothing",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/delete_tests.rs",
+     "case": "storage::row::insert::driver::tests::delete::rdl_a06_explicit_transaction_goes_on_after_a_failed_delete",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/delete_tests.rs",
+     "case": "storage::row::insert::driver::tests::delete::rdl_a07_steps_after_the_preflight_follow_the_insert_rules",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+     "case": "storage::row::insert::driver::budget_tests::rdl_a08_autocommit_delete_budgets_memory",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+     "case": "storage::row::insert::driver::budget_tests::rdl_a08_autocommit_delete_budgets_native",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+     "case": "storage::row::insert::driver::budget_tests::rdl_a08_explicit_delete_budgets_memory",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+     "case": "storage::row::insert::driver::budget_tests::rdl_a08_explicit_delete_budgets_native",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+     "case": "storage::row::insert::driver::budget_tests::f4_a_autocommit_budgets_memory",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+     "case": "storage::row::insert::driver::budget_tests::f4_a_autocommit_budgets_native",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+     "case": "storage::row::insert::driver::budget_tests::f4_a_caller_budgets_memory",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+     "case": "storage::row::insert::driver::budget_tests::f4_a_caller_budgets_native",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+     "case": "storage::row::insert::driver::budget_tests::f4_a_explicit_budgets_memory",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+     "case": "storage::row::insert::driver::budget_tests::f4_a_explicit_budgets_native",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+     "case": "storage::row::insert::driver::tests::mca00_d01_one_row_statement_reserves_produces_applies_and_finishes",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+     "case": "storage::row::insert::driver::tests::mca00_d02_rows_take_one_reservation_at_a_time",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+     "case": "storage::row::insert::driver::tests::mca00_d05_c_refusals_keep_busy_capacity_unsupported_distinct",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+     "case": "storage::row::insert::driver::tests::mca00_d06_failures_after_reserve_cancel_the_one_reservation",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+     "case": "storage::row::insert::driver::tests::mca00_d07_failed_row_after_applied_rows_rolls_back_to_the_mark",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+     "case": "storage::row::insert::driver::tests::mca00_d12_driver_frames_stay_within_the_driver_source_bound",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+     "case": "storage::row::insert::driver::tests::mca00_d15_memory_call_site_shares_fit_the_caller_bounds",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+     "case": "storage::row::insert::driver::tests::mca00_d15_native_call_site_shares_fit_the_caller_bounds",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+     "case": "storage::row::insert::driver::tests::aw1_f01_flush_required_flushes_and_retries_the_same_row_from_preflight",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+     "case": "storage::row::insert::driver::tests::lac_a01_committed_statement",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+     "case": "storage::row::insert::driver::tests::lac_a02_failed_row_rolls_back_the_statement_then_the_transaction",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+     "case": "storage::row::insert::driver::tests::lxt_a01_two_statements_then_commit",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+     "case": "storage::row::insert::driver::tests::lxt_a02_failed_statement_keeps_the_earlier_one",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+     "case": "storage::row::insert::driver::tests::lxt_a03_caller_rollback_compensates_every_statement",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+     "case": "storage::row::insert::driver::tests::lrc_a01_drain_installs_every_selected_group",
+     "sources": [
+      "head"
+     ]
     }
-  ]
+   ]
+  },
+  {
+   "paths": [
+    "crates/engine/src/storage/semantic_row/jobs.rs",
+    "crates/engine/src/storage/semantic_row/jobs_tests.rs",
+    "crates/engine/src/storage/semantic_row/transition.rs",
+    "crates/engine/src/storage/semantic_row/transition_tests.rs",
+    "crates/engine/src/storage/semantic_row/transition_delete_tests.rs"
+   ],
+   "reason": "jobs.rs observes DELETE roots: DeleteForward/DeleteClr/DeletePrune follow the INSERT role's Job rules with the root's effect byte bound to the opcode, a Reserve's after effect must be the plan's, and Clr/Prune keep the effect byte; the N1 cross-check runs jobs.rs over every history D group (RDL-J job observer). transition.rs: the DELETE Change arms (ReserveDelete, DeleteForward, DeleteClr, DeletePrune) lose their 2b-1 dead_code allowances now that product code constructs them, and C exposes row_projection (the XRP1 projection a delete RowReserve draft seals), leaf_reservation (D over a Jobs bank, for INSERT Reserve's Capacity) and the counted source bounds of both and of the typed row record for the C censuses; transition_delete_tests.rs shares history D's actor, befores and leaves with A's RDL-A literal cases. The scope3 Undo/leaf observers (semantic_row/{undo,leaf}.rs, test-only oracles with no product caller) stay skipped for effect-1 actors in the N1 cross-check and status.rs skips the DELETE opcodes; their DELETE comparison is the next PR (dev3-row-delete.md#implementation-2b2). The RDL-C history D cases and the N1/S1A/S1D/S1G cases pin C's DELETE and INSERT groups unchanged.",
+   "cases": [
+    {
+     "file": "crates/engine/src/storage/semantic_row/jobs_tests.rs",
+     "case": "storage::semantic_row::jobs_tests::rdl_j_job_observer_binds_effect_to_opcode",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/jobs_tests.rs",
+     "case": "storage::semantic_row::jobs_tests::jobs_actual_page_bank_native_redo_and_lsn",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/jobs_tests.rs",
+     "case": "storage::semantic_row::jobs_tests::jobs_canonical_wrong_transitions_and_step_times",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/jobs_tests.rs",
+     "case": "storage::semantic_row::jobs_tests::jobs_cell_size_and_predecessor_match_same_frame",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/jobs_tests.rs",
+     "case": "storage::semantic_row::jobs_tests::jobs_preserves_root_material_rowid_sender_and_budget",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/jobs_tests.rs",
+     "case": "storage::semantic_row::jobs_tests::jobs_reserve_plan_is_independent_and_exact",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/jobs_tests.rs",
+     "case": "storage::semantic_row::jobs_tests::jobs_options_core_and_unsupported_boundary",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
+     "case": "storage::semantic_row::transition::tests::delete::rdl_c_delete_history_matches_literals",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
+     "case": "storage::semantic_row::transition::tests::delete::rdl_c_delete_history_rejects_variants",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
+     "case": "storage::semantic_row::transition::tests::delete::rdl_c_delete_history_borrowed_observer",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
+     "case": "storage::semantic_row::transition::tests::delete::rdl_c_delete_history_borrowed_producer",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
+     "case": "storage::semantic_row::transition::tests::delete::rdl_c_leaf_reservation_bounds_every_leaf_step",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
+     "case": "storage::semantic_row::transition::tests::delete::rdl_c_leaf_reservation_forward_and_delete_prune",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+     "case": "storage::semantic_row::transition::tests::n1_statement_reserve_commit_prune_match_literals",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+     "case": "storage::semantic_row::transition::tests::n1_empty_transactions_match_literals",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+     "case": "storage::semantic_row::transition::tests::n1_full_rollback_cleanup_match_literals",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+     "case": "storage::semantic_row::transition::tests::n1_observer_accepts_a_forward_clr_literals",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+     "case": "storage::semantic_row::transition::tests::n1_observer_rejects_mutated_literals",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+     "case": "storage::semantic_row::transition::tests::n1_producer_refusals_precede_output",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+     "case": "storage::semantic_row::transition::tests::s1a_borrowed_observer_accepts_n1_and_a_literals",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+     "case": "storage::semantic_row::transition::tests::s1d_borrowed_producer_matches_owned_groups",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+     "case": "storage::semantic_row::transition::tests::s1g_reserve_adopted_equals_produced",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+     "case": "storage::semantic_row::transition::tests::n1_transition_source_bounds_cover_measured_frames",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+     "case": "storage::semantic_row::transition::tests::s1a_borrowed_observer_source_bound_covers_measured_frames",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+     "case": "storage::semantic_row::transition::tests::s1d_borrowed_producer_source_bound_covers_measured_frames",
+     "sources": [
+      "head"
+     ]
+    }
+   ]
+  },
+  {
+   "paths": [
+    "crates/engine/src/storage/wal_io/plan4_retention/row_preflight.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention/row_write.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention/row_forward.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention/row_clr.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention/row_delete_tests.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention/row_write_tests.rs",
+    "crates/engine/src/storage/wal_io/plan4_apply/row/write.rs",
+    "crates/engine/src/storage/wal_io/plan4_apply/row/write_operation.rs",
+    "crates/engine/src/storage/wal_io/plan4_apply/row.rs",
+    "crates/engine/src/storage/wal_io/plan4_apply.rs",
+    "crates/engine/src/storage/wal_io/plan4_apply/transaction.rs",
+    "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs",
+    "crates/engine/src/storage/wal_io/disk_api.rs",
+    "crates/engine/src/storage/disk.rs"
+   ],
+   "reason": "C's DELETE write path (dev3-row-delete.md#classification, #api): preflight_delete classifies the target under the statement snapshot (row_delete_snapshot) before any Free Undo selection (target_class: the table schema, then a table with any Index record is Unsupported ahead of the class by the same conservative count INSERT uses, then delete_class) and answers NoRow after the WAL prefix recheck and the Catalog/table read records; the cut keeps the classified RowId (RowPreflightCut.delete); reserve_delete reserves a DeletePlan against the XRP1 projection of the old record, and the Forward/CLR steps select DeleteForward/DeleteClr by the root Job's effect (RowControlObservation names it). INSERT Reserve's Capacity now also keeps the leaf reservation D of the table's Retained DELETE roots. The disk/disk_api/plan4_apply re-exports add RowDeleteStep and RowValueBefore. RDL-C: the classification table (every row of contract section 5 and no contradiction lowered), the indexed table refused before the class, committed and foreign overflow rows Unsupported and an undo-less Transaction row corrupt, the Capacity boundary moving by exactly D (new), the D = 0 boundary, and RDL-J01/J02 over the actual C supply. The RowWrite phase censuses (s2w_c01..c06, memory and native) keep charge 44,304 B, row_lifecycle 40,881 B and the live/recovered peaks unchanged; the preflight body's DELETE term (now printed, 12,734 B with the index census) stays below its largest term (finish, 31,510 B), so the preflight C margin stays 728 B, and the RowReserve C margin moves from 2b-1's 771 B to 595 B with reserve_delete's DeletePlan arm, the delete draft's projection and INSERT Reserve's leaf reservation D, both within the unchanged bounds. The env-identity censuses catalog_source_memory/native, retention_source_memory/native and retention_source_census need the CATALOG/PLAN4_LIVE identity environment that CI does not set; they were run locally and pass, and are not selected here.",
+   "cases": [
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_retention/row_delete_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::row_preflight::delete_tests::rdl_c_delete_class_follows_the_contract_table",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_retention/row_delete_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::row_preflight::delete_tests::rdl_c_delete_class_never_lowers_a_contradiction",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_retention/row_delete_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::row_preflight::delete_tests::rdl_c_indexed_table_is_unsupported_before_the_class",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_retention/row_delete_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::row_preflight::delete_tests::rdl_c_delete_class_overflow_and_undo_less_rows",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_retention/row_write_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::lifecycle::row::write::tests::rdl_c_insert_capacity_keeps_the_leaf_reservation",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_retention/row_write_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::lifecycle::row::write::tests::s2b2_a6_check_candidate_leaf_shortage_is_capacity",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c01_row_write_phase_census_memory",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c02_row_write_phase_census_native",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c03_row_lifecycle_unchanged_beside_the_row_write_layout",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c04_live_and_recovered_peaks_unchanged",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c05_private_lane_ranges_and_cut_sizes",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c06_row_write_c_margins_against_both_bounds",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j01_autocommit_delete_commits_and_its_prune_removes_the_row",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j02_explicit_delete_rolls_back_then_commits",
+     "sources": [
+      "head"
+     ]
+    }
+   ]
+  },
+  {
+   "paths": [
+    "crates/engine/src/storage/wal_io/plan4_retention/row_start.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention/row_start/retire.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention/visibility/authority.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention/visibility/retirement.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention/visibility/row_retirement.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention/history/row.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs"
+   ],
+   "reason": "Live cleanup and replay of DELETE roots (dev3-row-delete.md#retirement, #recovery): DeletePrune is a retiring group with the ValuePrune scope (visibility authority 5) under MissingPrune's rules; row_cleanup_next picks it for an effect-1 Job and retire_row routes it as a Row write. Replay's Row arm observes DeleteForward/DeleteClr/DeletePrune (history Change arms, prepared row_write gate) and the 2b-1 refusal of an effect-1 RowReserve is lifted. The new Row-arm case replays the whole history D (D-516..D-545) after history H to the independent redo afters, Jobs and ATT and to C's own live record of each frame; it replaces the 2b-1 D-521 refusal case. RDL-J01..J03 run the live cleanup over the actual C supply; the S1B/S1G Row-arm cases and the live cleanup cases LRR-02..06 and LRC-J01..J02 keep INSERT replay and cleanup unchanged (LRR-01, over 60 s, is run locally and not selected).",
+   "cases": [
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::rdl_j_row_arm_replays_history_d",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1b_row_arm_replays_n1_and_a_literals",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1b_row_arm_refuses_mutations_without_effect",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1g_row_reserve_replays_n1_literals",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1g_row_reserve_refuses_without_effect",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1g_closure_refuses_row_root_without_its_u_allocation",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1g_reserve_commitment_opens_at_forward",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1b_record_is_byte_equal_live_and_replay",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j01_autocommit_delete_commits_and_its_prune_removes_the_row",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j02_explicit_delete_rolls_back_then_commits",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j03_reads_before_cleanup_see_the_old_value_then_no_row",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::lrr02_older_snapshot_keeps_prune_busy_until_it_ends",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::lrr03_running_actor_non_head_and_early_terminal_are_refused",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::lrr04_aborted_actor_is_cleaned_and_its_status_reused",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::lrr05_busy_prune_does_not_hide_another_finished_actor",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::lrr06_recovery_finishes_a_partial_live_cleanup",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/driver.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::lrc_j01_drain_after_commit_and_abort_frees_every_row_job",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/driver.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::lrc_j02_drain_leaves_a_held_prune_for_a_later_drain",
+     "sources": [
+      "head"
+     ]
+    }
+   ]
+  },
+  {
+   "paths": [
+    "crates/engine/src/storage/row/read.rs",
+    "crates/engine/src/storage/row/read/driver.rs",
+    "crates/engine/src/storage/row/read/driver/live.rs",
+    "crates/engine/src/storage/row/read/driver/tests.rs",
+    "crates/engine/src/storage/row/read/driver/delete_tests.rs",
+    "crates/engine/src/storage/wal_io/plan4_apply/row/read.rs",
+    "crates/engine/src/storage/wal_io/plan4_apply/row/read/census.rs",
+    "crates/engine/src/storage/wal_io/plan4_apply/row/read/tombstone_tests.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention/visibility/pins.rs",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_census.rs",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_read.rs",
+    "tests/fixtures/module-row-read/delete-cells.txt",
+    "tests/fixtures/module-row-read/make_delete_cells.py"
+   ],
+   "reason": "B reads a DELETE tombstone (dev3-row-delete.md#read): C's capture takes a tombstone (always Transaction(T) with its U) beside Inline rows and the candidate says it is deleted; the new C value_before reads the tombstone's U through entry (a) with the operation's Catalog schema in missing_before's LOCATION/LOAD order, judges the U's shape in tombstone_before (the tombstone's own transaction, Status generation and mutation under a Transaction stamp, a RowValue Committed(q_old) Inline before; anything else or a Releasing U is Fatal), puts the old canonical in the copy buffer and returns row, q_old and logical; copy_before copies it once B has judged q_old <= S. B: own T, or T committed at q_T <= S, reads no row; otherwise the old value when q_old <= S. RDL-B01..B05 over C0 literal tombstone cells (tests/fixtures/module-row-read/make_delete_cells.py), the tombstone_before unit cases (the one accepted shape, eleven refused U edits including a chunked value, and three refused tombstone stamps: another transaction, another Status generation, Committed), RDL-J03 over the actual C supply, and RDL-B07..B09 over it: one edit of a resident page under an explicit transaction's DELETE makes the next statement's point read Fatal with the system fenced and no output (a Releasing U: Census/Undo; a Committed tombstone with no U: capture's Source/Invariant; a Missing U under the tombstone: tombstone_before's Census/Invariant; the delete's RowValue U under the tombstone re-encoded as an Inline Transaction row of the same version: read_missing's schema-less decode, Census/Undo), and two controls that re-encode the same cells through each edit path read the old value 100. read_missing's typed Unsupported (MCB04-V14) stays only for a valid RowDeleted or chunked RowValue before, which DELETE never writes. The read census S5R-C01/C02 gains value_before's load/location phases (C and B caller terms), every phase within the unchanged 34,586 B (largest value_before phase 34,460 B); the MCB00 driver cases keep the INSERT-era reads unchanged.",
+   "cases": [
+    {
+     "file": "crates/engine/src/storage/row/read/driver/delete_tests.rs",
+     "case": "storage::row::read::driver::tests::delete::rdl_b01_point_over_another_transactions_tombstone",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/read/driver/delete_tests.rs",
+     "case": "storage::row::read::driver::tests::delete::rdl_b02_own_tombstone_reads_no_row",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/read/driver/delete_tests.rs",
+     "case": "storage::row::read::driver::tests::delete::rdl_b03_cursor_skips_or_returns_the_old_value",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/read/driver/delete_tests.rs",
+     "case": "storage::row::read::driver::tests::delete::rdl_b04_value_before_flush_errors_and_mismatch",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/read/driver/delete_tests.rs",
+     "case": "storage::row::read::driver::tests::delete::rdl_b05_output_and_tombstone_version_checks",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_apply/row/read/tombstone_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::read::tombstone_tests::rdl_b_tombstone_before_takes_the_committed_inline_row",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_apply/row/read/tombstone_tests.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::read::tombstone_tests::rdl_b_tombstone_before_refuses_every_other_u",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_census.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_read_census::s5r_c01_memory_source_inventory",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_census.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_read_census::s5r_c02_native_source_inventory",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j03_reads_before_cleanup_see_the_old_value_then_no_row",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_read.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::read::rdl_b07_b09_broken_delete_states_are_fatal",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/read/driver/tests.rs",
+     "case": "storage::row::read::driver::tests::mcb00_d01_point_found_and_absent_key",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/read/driver/tests.rs",
+     "case": "storage::row::read::driver::tests::mcb00_d02_point_status_and_missing_before_select_the_version",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/read/driver/tests.rs",
+     "case": "storage::row::read::driver::tests::mcb00_d03_flush_required_passes_through_after_cleanup",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/read/driver/tests.rs",
+     "case": "storage::row::read::driver::tests::mcb00_d05_cursor_next_returns_rows_in_order_then_end",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/read/driver/tests.rs",
+     "case": "storage::row::read::driver::tests::mcb00_d06_cursor_reseeks_by_full_row_id_after_a_gap",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/read/driver/tests.rs",
+     "case": "storage::row::read::driver::tests::mcb00_d13_memory_call_inventory",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/row/read/driver/tests.rs",
+     "case": "storage::row::read::driver::tests::mcb00_d13_native_call_inventory",
+     "sources": [
+      "head"
+     ]
+    }
+   ]
+  },
+  {
+   "paths": [
+    "crates/engine/src/storage/wal_io/plan4_retention/row_start/recovery.rs",
+    "crates/engine/src/storage/plan4_recovery_base/row/actor.rs",
+    "crates/engine/src/storage/plan4_recovery_base/row/graph.rs",
+    "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs",
+    "crates/engine/src/storage/plan4_recovery_base/catalog/graph/relations.rs",
+    "crates/engine/src/storage/wal_io/plan4_retention/recovery/catalog.rs",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/base_cause.rs",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_native_a.rs",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/autocommit.rs",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_base.rs",
+    "tests/fixtures/module-row-format/base4-closure/author.py",
+    "tests/fixtures/module-row-format/base4-closure/index.json",
+    "tests/fixtures/module-row-format/base4-closure/manifest.json",
+    "tests/fixtures/module-row-format/base4-closure/variants.bin"
+   ],
+   "reason": "Recovery of DELETE roots (dev3-row-delete.md#recovery): C's recovery selects DeletePrune for a committed effect-1 root (RowWrite class; the closed facade check finds the commit Q for Prune and DeletePrune alike), A's recovered handler produces the DeleteClr through the same produce_clr, and base4 takes the effect-1 Reserved, Retained, ReleasingCompensated and ReleasingCommitted states of the contract's table with the reverse scan pairing each actor tombstone with one Retained effect-1 Job (a Releasing Job keeps no cell length, so a compensated row is checked by U's before logical and stamp). The base4 issuer relation is Objects + RowIds <= undo_high, since a DELETE Reserve issues an UndoSequence and no RowId; the base4-closure fixture revision d1 adds issuer-undo-low (refused) and accepts issuer-undo-high, parent literals unchanged. RDL-J04..J10 restart each crash state (Committed, Active, RolledBack, Reserved) to READY over the actual C supply, plus delete then INSERT in one transaction, the own INSERT row refused Unsupported with the transaction going on, and two deletes rolled back then committed; RDL-R01 decodes the captured bases of every effect-1 state and RDL-R02..R06 refuse one edit each (actor tombstone restamped Committed, a Committed tombstone with no U, an unpaired tombstone, a non-canonical delete U, the leaf reservation over capacity (Corrupt) and at it (Order)). The base4 closure, actor and base cause cases keep the INSERT bases unchanged.",
+   "cases": [
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j04_committed_delete_is_pruned_by_recovery",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j05_active_delete_loser_is_restored_by_recovery",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j06_rolled_back_delete_is_freed_by_recovery",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j07_reserved_delete_is_cancelled_by_recovery",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j08_delete_then_insert_in_one_transaction",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j09_own_insert_row_is_unsupported_and_the_transaction_goes_on",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j10_two_deletes_roll_back_then_commit",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_base.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::base::rdl_r01_base4_takes_each_delete_state",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_base.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::base::rdl_r02_to_r06_base4_refuses_broken_delete_states",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/autocommit.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::lxt_j01_two_statements_commit_and_restart",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/autocommit.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::lxt_j03_caller_rollback_then_a_commit",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs",
+     "case": "storage::plan4_recovery_base::row::graph::tests::base4_closure_relation_variants",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs",
+     "case": "storage::plan4_recovery_base::row::graph::tests::base4_closure_accepts_genesis_and_aging_start",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs",
+     "case": "storage::plan4_recovery_base::row::graph::tests::base4_closure_accepts_live_system_init_done",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs",
+     "case": "storage::plan4_recovery_base::row::graph::tests::base4_closure_accepts_row_undo_slot_reservation",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs",
+     "case": "storage::plan4_recovery_base::row::graph::tests::base4_closure_orders_ready_row_writer_after_creator",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs",
+     "case": "storage::plan4_recovery_base::row::graph::tests::base4_closure_row_xoi_mode_reproduces_inventory",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/plan4_recovery_base/row/actor_tests.rs",
+     "case": "storage::plan4_recovery_base::row::actor::tests::actor_literal_physical_graphs",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/plan4_recovery_base/row/actor_tests.rs",
+     "case": "storage::plan4_recovery_base::row::actor::tests::actor_rejects_wrong_chain_counts_identity_and_before",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/plan4_recovery_base/row/actor_tests.rs",
+     "case": "storage::plan4_recovery_base::row::actor::tests::actor_rejects_row_target_schema_version_and_projection",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/plan4_recovery_base/row/actor_tests.rs",
+     "case": "storage::plan4_recovery_base::row::actor::tests::actor_rejects_uncut_release_and_cursor_mismatch",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/plan4_recovery_base/row/actor_tests.rs",
+     "case": "storage::plan4_recovery_base::row::actor::tests::actor_root_free_rows_remain_globally_unique",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/base_cause.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::base_cause::recovery_selection_binds_profile3_generation_timeline",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/base_cause.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::base_cause::row_base_carrier_and_current_fallback_predicate",
+     "sources": [
+      "head"
+     ]
+    }
+   ]
+  }
+ ],
+ "na": [],
+ "reviews": [
+  {
+   "id": "row-delete-2b2-d2",
+   "class": "D2",
+   "scopes": [
+    "common",
+    "joint"
+   ],
+   "author": "claude-thread-session/claude-project-thread-9inq97",
+   "reviewer": "claude-independent-review/row-delete-2b2",
+   "verdict": "ACCEPT",
+   "required_open": 0,
+   "log": "module-gate/evidence/row-delete-2b2/review.md",
+   "log_sha256": "c3fcfa5cda121ef7bf2b6a841ccce6377ac48e45f777f1dc0fa8a485477b5381",
+   "files": {
+    "crates/engine/src/storage/disk.rs": "807fe65c883ddbf8b3eb9384ba396b2686d74dcb",
+    "crates/engine/src/storage/plan4_recovery_base/catalog/graph/relations.rs": "c062d76047e87463f36873c0ff716928812f00cf",
+    "crates/engine/src/storage/plan4_recovery_base/row/actor.rs": "b413d12c81c3ad19b37ec513b2e508b353ae41a9",
+    "crates/engine/src/storage/plan4_recovery_base/row/actor_tests.rs": "876705a0094a57584d641b521d91683c93dc3e9a",
+    "crates/engine/src/storage/plan4_recovery_base/row/graph.rs": "6ff379bd4d286609fea6592d67d92f9bf0083743",
+    "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs": "ffdd1ad59df9697ad4d47a57e5357adb2f8098df",
+    "crates/engine/src/storage/row/insert.rs": "61fad4e960a263134befbbc91276b5775a5da03f",
+    "crates/engine/src/storage/row/insert/driver.rs": "21792200e32c2127c224531c08c9d247bb686763",
+    "crates/engine/src/storage/row/insert/driver/budget_tests.rs": "f1a611a24d8afcdef5fad77e6efc96fd139a1479",
+    "crates/engine/src/storage/row/insert/driver/delete_tests.rs": "e356d3f8a7316e83f29473a0023b5d6dd5ded16c",
+    "crates/engine/src/storage/row/insert/driver/live.rs": "e5fd353a292a2f3cf8cc65f1bab07d2bc4d58ac5",
+    "crates/engine/src/storage/row/insert/driver/tests.rs": "b4bcdbb2f0034a954406769624aabd3ac04d8dc1",
+    "crates/engine/src/storage/row/insert/group.rs": "cf2bde59c5417047106217f21dd1a76839376f33",
+    "crates/engine/src/storage/row/insert/group/frame.rs": "0aeccea6590d5ca0a8c4eebc5059d1d5bccb072a",
+    "crates/engine/src/storage/row/insert/group/images.rs": "94b404c1e3c007f46b6914bf117681c679d55fe9",
+    "crates/engine/src/storage/row/insert/group_delete_tests.rs": "ca61958cd2adb1e3cae46119c6007a33b677e072",
+    "crates/engine/src/storage/row/insert/group_tests.rs": "c9412f917321e2be3f6fe5c5792da45e03391d68",
+    "crates/engine/src/storage/row/insert/leaf.rs": "4634888c59b0310c24cf0e6339aa57fbc0706c24",
+    "crates/engine/src/storage/row/read.rs": "5af03514185b31fb6843d05c049e591008ed529c",
+    "crates/engine/src/storage/row/read/driver.rs": "812bd96435c6fc6904298aa97dba0584830a98d4",
+    "crates/engine/src/storage/row/read/driver/delete_tests.rs": "0cc116c7c33994816240aa28cc4819c4130a0c28",
+    "crates/engine/src/storage/row/read/driver/live.rs": "fdeb8b4929f72370652e2b1bd7e8c04a57230335",
+    "crates/engine/src/storage/row/read/driver/tests.rs": "a042447a06ecfb389cf293b6cac075728f521c50",
+    "crates/engine/src/storage/semantic_row/jobs.rs": "6940259a8ac41401f7c32c5819128637a6d78c61",
+    "crates/engine/src/storage/semantic_row/jobs_tests.rs": "c2dcdba04f1f8d076ee5956a1b12bed2f2bff182",
+    "crates/engine/src/storage/semantic_row/transition.rs": "1211777c0a5a16ac1f825b224803822b9e22b7f3",
+    "crates/engine/src/storage/semantic_row/transition_delete_tests.rs": "872a8907c6aff0604044219935545c944e862755",
+    "crates/engine/src/storage/semantic_row/transition_tests.rs": "3334fdf7a10691eb395cf718d6226fb17598658c",
+    "crates/engine/src/storage/wal_io/disk_api.rs": "47ccec44f0efd44831cae959e9cee7e41e286592",
+    "crates/engine/src/storage/wal_io/plan4_apply.rs": "d571ce585479a1a2283ad8ed265e2d187a28fec8",
+    "crates/engine/src/storage/wal_io/plan4_apply/row.rs": "26252d02b788c2a716fe98ea12e03fe1e22b781c",
+    "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs": "e174719c2ab4d8df3be253950de2a6f4ad18c7fc",
+    "crates/engine/src/storage/wal_io/plan4_apply/row/read.rs": "9a6d7445ff8b88424f1630e9eb1135b7040c7116",
+    "crates/engine/src/storage/wal_io/plan4_apply/row/read/census.rs": "97111653897d6c8be6e7a2cde6240446e8e5828a",
+    "crates/engine/src/storage/wal_io/plan4_apply/row/read/tombstone_tests.rs": "7ebc02ae15bff6bfae06a18a4506236c1a279073",
+    "crates/engine/src/storage/wal_io/plan4_apply/row/write.rs": "6668fbf94c35c58167050b7e070fe22f8e9e46e5",
+    "crates/engine/src/storage/wal_io/plan4_apply/row/write_operation.rs": "633a3b8dbeebb921d836bb58c9a5c6b901183a83",
+    "crates/engine/src/storage/wal_io/plan4_apply/transaction.rs": "fee59c911c73f8af22ce4bb2a9680942138e19f3",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/base_cause.rs": "6d67e82ef972fe5aa6bb8e99508752ea87b0005c",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs": "8819dde2c1622ccba05eee5f842a8b06a17759ad",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/autocommit.rs": "2b52411a554b80f6f8fcf862cf3bd5c8003a2e93",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs": "9ab30bc8873c7160a927ab6b867448468caf4c25",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_base.rs": "6af0b92975f15fb038fc4a3c03cd8c6ccc3c79f8",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_read.rs": "ca954abb6e08b378893381dd256c626f4fe0a6c8",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/driver.rs": "72cb004037b710eaf94461270944da2e3d7c6d06",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_native_a.rs": "5466d876efac89537cfbd26b8095462d0c664b76",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_census.rs": "8fe11b1c14275b80fb59ffe9fec82e0fe6349cf7",
+    "crates/engine/src/storage/wal_io/plan4_retention/history/row.rs": "a001a44bf3478a83777c4340bfe191d9f118700d",
+    "crates/engine/src/storage/wal_io/plan4_retention/recovery/catalog.rs": "22372332dfc667da27e4b53216f150a5b235da22",
+    "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs": "dc55c1c04d141b1d5355a5e63e0decf1a916c78f",
+    "crates/engine/src/storage/wal_io/plan4_retention/row_clr.rs": "0a829102411efda19bbf4a7e43a2dd1312716ba4",
+    "crates/engine/src/storage/wal_io/plan4_retention/row_delete_tests.rs": "f481b7c9cec1beb24ef3860743a5c4176e16a484",
+    "crates/engine/src/storage/wal_io/plan4_retention/row_forward.rs": "bd640a07e662da2d52e0c0c64f54812568f6014e",
+    "crates/engine/src/storage/wal_io/plan4_retention/row_preflight.rs": "0f484872fa280071408a08c654dc15e111d3e47f",
+    "crates/engine/src/storage/wal_io/plan4_retention/row_start.rs": "81b2fb71fb0ae9ae71dacaa248fc8e78e0103280",
+    "crates/engine/src/storage/wal_io/plan4_retention/row_start/recovery.rs": "aa9551d1250ed62833ab9b2d401c9f4aec36b3bb",
+    "crates/engine/src/storage/wal_io/plan4_retention/row_start/retire.rs": "cbd583b8343c292aee395f809353d0bace7d3cbf",
+    "crates/engine/src/storage/wal_io/plan4_retention/row_write.rs": "aa31a94ff0acecab3cb768655e2a65c9ca770f89",
+    "crates/engine/src/storage/wal_io/plan4_retention/row_write_tests.rs": "418ff45afde9460de45e8b2f3c188d589b0e59ad",
+    "crates/engine/src/storage/wal_io/plan4_retention/visibility/authority.rs": "93887576c552b6ba13c8a4d27265fb32be7c7b24",
+    "crates/engine/src/storage/wal_io/plan4_retention/visibility/pins.rs": "71060d1d05f65d12789f2f57e01a35d0e049e134",
+    "crates/engine/src/storage/wal_io/plan4_retention/visibility/retirement.rs": "95bb7dd8eb6e6ed34bc5f478e91d196bd0974a92",
+    "crates/engine/src/storage/wal_io/plan4_retention/visibility/row_retirement.rs": "87f35d012bb8983baa1aa3febc31ebe10b870778",
+    "devdoc/README.md": "9074aae9850d8389eac1f143334ff3424c6b1082",
+    "devdoc/contracts/dev3-row-delete.md": "e949938a2853e2d3c3c48aca1aed0214500c8a88",
+    "devdoc/document-validation.json": "13860ca97c0dbed7373d00234b1e3e17b8b687de",
+    "tests/fixtures/module-row-format/base4-closure/author.py": "e51d77ed611c0528b537c396da91cb8848d223f2",
+    "tests/fixtures/module-row-format/base4-closure/index.json": "380b74fa3319be22273deaba840ecc70f935cf38",
+    "tests/fixtures/module-row-format/base4-closure/manifest.json": "e21688700ee2bd6acf61b2b42d7915814634bdce",
+    "tests/fixtures/module-row-format/base4-closure/variants.bin": "d7ac715378f0225934e413cf6497d92084329070",
+    "tests/fixtures/module-row-read/delete-cells.txt": "15f1bb98c8267feec122e485bf781f55eb09a465",
+    "tests/fixtures/module-row-read/make_delete_cells.py": "40e822a33d840522d8d5a907c9a7f1d4fd70eb42"
+   }
+  }
+ ]
 }
