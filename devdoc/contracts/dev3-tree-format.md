@@ -124,3 +124,67 @@ F05: 원 page 최대1011 entry에 Insert 하나를 더한 후보는 metadata 포
 실행 전 동결한 generator는 D3-TREE-EDIT-G1이다. seed1..64(최종1..256), state=seed, 매 draw `state=state*6364136223846793005+1 mod2^64`, 값=high32다. operation별 action=draw%3, ordinal=draw%31+1, value 길이=draw%97 순서로 소비한다. value byte는 step%251이며 각 history는 빈 leaf에서 시작한다. 세 family마다 같은 stream을 실행한다. 동결 시험 source SHA-256 `bf3d0421238eea56afd670921638f79d039b9cda9549da715824b0d209076e60`, 원 source·binary·입력은 [실행 증거](../evidence/dev3-leaf-edit-20261025.md)에 보존한다.
 
 실제 x86_64 typed 크기는 TreePageView128, LeafEdit24, LeafEditPlan104, Result104 bytes다. 신규5개/생성24576 operation, compiler7, 도구3개가 source별 PASS다. 전체 transaction/CLR F05·실제 I/O/행 거래는 이 결과에 포함되지 않는다.
+
+<a id="structural-candidates"></a>
+## D3-TREE-STRUCTURE-001 — 부모 편집·분할 이미지 후보
+
+2026-11-04 · **D2/D1 독립 검토 ACCEPT·필수 지적0 / 신규 고유9개 선택 PASS / 실제 SMO 미연결**.
+기준 `23976330`, 작업·계약·통합 `/root`, 독립 검토 `/root/dev3_08_review`.
+일정 08-1의 선행 표현 공급이다. 08-1의 실제 system WAL·INIT·anchor 공개·retirement·복구를
+대신하지 않으며 08-2–08-4 및 일정 적립은 미완료로 유지한다.
+
+`tree_page::structure`는 기존 XBT1·비교·byte-balanced split을 재사용한다.
+별도 tree/writer/pool, 새 wire 형식, heap allocation, page-size stack image를 만들지 않는다.
+기존 leaf 편집에서 같은 split 후보를 소비하며 row/index/catalog 세 family를 지원한다.
+
+- `prepare_internal_edit`: Insert는 canonical separator/right-child cell과 분할 전 exact left child를 받는다.
+  separator 중복은 `SeparatorExists`, 해당 구간의 child 또는 incarnation 변화는 `ChildChanged`다.
+  RemoveChild는 exact child만 제거하며 첫 child 제거는 leftmost를 다음 child로 옮긴다.
+  남은 child가 하나면 `Collapse { survivor }`를 반환한다. zero-separator internal을 encode하지 않는다.
+  빈 child 증명·root 축소·retirement는 실제 owner의 원자적 그룹 의무다. root는 anchor의
+  level을 낮출 수 있지만 non-root에서 survivor를 바로 parent로 연결하면 level−1 규칙을
+  깨뜨린다. non-root Collapse는 별도로 검증된 level 보존 ancestor 재구성을 요구한다.
+- 오류와 Collapse는 caller metadata32B와 reference scratch를 보존한다. Page 성공은 필요한
+  scratch prefix만 갱신하고 immutable source·cell·metadata를 대여한다. 단일 페이지 capacity를
+  넘는 후보도 기존 `C+H`까지 받아 다음 부모 split에 전달한다.
+- `SplitCandidate`는 기존 split boundary와 입력 참조만 소유한다. sibling은 source나 기존 어느
+  child와도 물리 주소가 같을 수 없다(incarnation을 바꿔도 거절). leaf separator는 오른쪽에 남고,
+  internal pivot은 두 자식에서 빠지며 그 right-child가 새 right leftmost가 된다.
+- `encode_side`는 caller metadata·reference scratch를 작업 공간으로 쓰며, 오류 시 output은
+  전부 보존한다. scratch는 오류 시 변경될 수 있다. 두 이미지 중 하나만 설치할 권한이 아니다.
+  `encode_new_root`는 같은 family·arity의 한 separator parent를 만든다. level15에서의 증가,
+  기존 source/sibling/child 주소의 root 재사용은 거절한다. stable anchor의 identity·revision
+  증가와 root 설치는 실제 owner가 별도로 같은 그룹에서 검산한다.
+- leaf 편집의 `split_images`에는 아직 사용자 변경이 들어 있을 수 있다. 이를 redo-only system
+  그룹으로 그대로 설치하면 안 된다. 실제 SMO는 원 행들의 논리 identity를 보존하고 사용자
+  변경·Undo는 별도 행 그룹에서 수행해야 한다.
+
+자원: reference scratch는 호출자가 count에 맞춰 공급한다. 기존 최대 leaf 후보1013참조
+(64-bit에서16,208B)이 충분하며 internal candidate는 그보다 작다. metadata는 호출자32B,
+internal 준비의 국소 metadata는32B다. output은 호출자가 예약한16KiB page이며 새 root cell은
+최대1060B(4+최대 physical key1032+PageRef24)다. 이 표현 비용은 live F05 admission 증명이 아니다.
+실제 SMO의 동시 target·WAL·rollback·중첩 호출 상한은 live 연결 전에 별도 동결한다.
+
+최초 선택 시험은 새 `tree_page::structure::tests`의 다음7개다. 기존 무변경 tree/leaf 시험을 재실행하지 않는다.
+원 source와 기대 page는 테스트의 독립 XDP1/XBT1 literal 조립으로 만들며 product encoder를 쓰지 않는다.
+
+| 사례 | 고정 입력·판정 |
+| --- | --- |
+| internal_insert_and_unlink_match_independent_pages | 3 family, 4 insert 위치·4 unlink 위치, 완성 page bytes와 child 순서 대조 |
+| internal_collapse_preserves_scratch_and_selects_survivor | 3 family×level1/15×양쪽 child 제거, unary 표현 금지·survivor·scratch 보존 |
+| internal_rejections_preserve_both_scratch_buffers | 중복 separator·오래된 child/incarnation·중복/self 주소·부재 child·scratch 부족, 오류 시 무변경 |
+| split_images_preserve_entries_and_promote_internal_pivot | 3 family leaf 편향 비용과 internal level1/14/15, 양쪽 page·pivot·새 root의 전체 bytes |
+| split_rejects_aliases_and_preserves_failed_output | source·leftmost·pivot·다른 child 주소 alias, incarnation 변경, root alias, scratch/output 부족 |
+| overflowing_parent_insert_splits_with_all_children_preserved | capacity 직전 internal에 추가, 단일 encode 거절·부모 split·모든 child 보존 |
+| leaf_edit_split_images_include_exact_pending_value | 꽉 찬 leaf 사이 Insert, byte 균형 boundary와 오른쪽 page의 독립 bytes |
+
+시험 실행 한도는 이7개 libtest의1회 선택 실행·총180초, 디버그 build 최대4 jobs다.
+실패 시 원 로그를 보존하고 수정 영향 사례만 재실행한다. native는 실제 effect가 없는 이 공급에
+적용하지 않으며 후속 실제 SMO의 필수 fault/reopen 의무를 면제하지 않는다.
+
+독립 검토 후 `internal_success_preserves_tail_and_truncated_cell_preserves_workspace`와
+`new_root_short_cell_and_output_preserve_output`을 추가하고 기존
+`overflowing_parent_insert_splits_with_all_children_preserved`가 실제 InternalCandidate의
+양쪽 이미지를 검산하도록 보강했다. 최초7개 PASS 뒤 이 변경·신규3개만 실행해 PASS했다.
+고유9개이며 완료된 무변경6개는 반복하지 않았다. 원 compile 실패와 source별 결과는
+[실행 기록](../evidence/dev3-tree-structure-20261104.md)에 보존한다.

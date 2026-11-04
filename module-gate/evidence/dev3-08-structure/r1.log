@@ -1,0 +1,15 @@
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 28s
+     Running unittests src/lib.rs (artifacts/dev3-08/target/debug/deps/engine-e4e141083d864921)
+
+running 7 tests
+test storage::tree_page::structure::tests::internal_rejections_preserve_both_scratch_buffers ... ok
+test storage::tree_page::structure::tests::leaf_edit_split_images_include_exact_pending_value ... ok
+test storage::tree_page::structure::tests::internal_collapse_preserves_scratch_and_selects_survivor ... ok
+test storage::tree_page::structure::tests::split_rejects_aliases_and_preserves_failed_output ... ok
+test storage::tree_page::structure::tests::internal_insert_and_unlink_match_independent_pages ... ok
+test storage::tree_page::structure::tests::split_images_preserve_entries_and_promote_internal_pivot ... ok
+test storage::tree_page::structure::tests::overflowing_parent_insert_splits_with_all_children_preserved ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 2188 filtered out; finished in 0.21s
+

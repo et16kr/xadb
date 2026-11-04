@@ -1,0 +1,110 @@
+{
+  "schema": "XADB_MODULE_GATE_RECORD_V1",
+  "change": "DEV3 08-1 partial: shared internal edit and split image candidates; no live SMO or schedule credit",
+  "rust_tests": [
+    {
+      "paths": [
+        "crates/engine/src/storage/tree_page.rs",
+        "crates/engine/src/storage/tree_page/edit.rs",
+        "crates/engine/src/storage/tree_page/structure.rs",
+        "crates/engine/src/storage/tree_page/structure/tests.rs"
+      ],
+      "reason": "New pure structural candidate entry points, error preservation, leaf edit integration and independently assembled expected page bytes",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/tree_page/structure/tests.rs",
+          "case": "storage::tree_page::structure::tests::internal_insert_and_unlink_match_independent_pages",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/tree_page/structure/tests.rs",
+          "case": "storage::tree_page::structure::tests::internal_collapse_preserves_scratch_and_selects_survivor",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/tree_page/structure/tests.rs",
+          "case": "storage::tree_page::structure::tests::internal_rejections_preserve_both_scratch_buffers",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/tree_page/structure/tests.rs",
+          "case": "storage::tree_page::structure::tests::split_images_preserve_entries_and_promote_internal_pivot",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/tree_page/structure/tests.rs",
+          "case": "storage::tree_page::structure::tests::split_rejects_aliases_and_preserves_failed_output",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/tree_page/structure/tests.rs",
+          "case": "storage::tree_page::structure::tests::overflowing_parent_insert_splits_with_all_children_preserved",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/tree_page/structure/tests.rs",
+          "case": "storage::tree_page::structure::tests::leaf_edit_split_images_include_exact_pending_value",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/tree_page/structure/tests.rs",
+          "case": "storage::tree_page::structure::tests::internal_success_preserves_tail_and_truncated_cell_preserves_workspace",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/tree_page/structure/tests.rs",
+          "case": "storage::tree_page::structure::tests::new_root_short_cell_and_output_preserve_output",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        }
+      ]
+    }
+  ],
+  "reviews": [
+    {
+      "id": "dev3-08-structure-d2",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/tree_page.rs": "53d10e0b562921d8a3a7dc2146d8b00b563b8255",
+        "crates/engine/src/storage/tree_page/edit.rs": "91fbe2a8bb293a274b6f9a8a44f0f4a75eb13ac9",
+        "crates/engine/src/storage/tree_page/structure.rs": "d921353d19ecebd6db8e9475b8eb33a902a26d0a",
+        "crates/engine/src/storage/tree_page/structure/tests.rs": "3c43649402060f34a6379aa8d3bf1f83daadb6ab",
+        "devdoc/contracts/dev3-tree-format.md": "5bfbeb6221aeae38b36b93ebabffddb39dc9606f"
+      },
+      "log": "module-gate/evidence/dev3-08-structure/review.md (sha256 54fdb24d67cc903250e7cf711eec8d9dbd840850848c969cdd13c259bae8516b)"
+    }
+  ]
+}

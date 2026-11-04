@@ -126,6 +126,16 @@ impl<'bytes> LeafEditPlan<'_, 'bytes> {
     pub(crate) fn split(&self) -> Result<SplitPlan<'bytes>, TreeError> {
         choose_split(self.header, self.arity, self.cells)
     }
+
+    /// Prepare both uninstalled split images using the shared structural
+    /// candidate. This may include a user edit and is not a redo-only SMO
+    /// authority; the live owner must distinguish structural and row effects.
+    pub(crate) fn split_images(
+        &self,
+        right: PageRef,
+    ) -> Result<super::structure::SplitCandidate<'_, 'bytes>, TreeError> {
+        super::structure::SplitCandidate::prepare(self.header, self.arity, self.cells, right)
+    }
 }
 
 #[cfg(test)]
