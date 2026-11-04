@@ -130,9 +130,14 @@
         "crates/engine/src/storage/semantic_row/structure/weights/tests.rs": "f1777b91a7e8c68ceab3b223d157c503febdc4cd",
         "crates/engine/src/storage/semantic_row/transition.rs": "01c8662a5f9c2ff3e9c3b92fdfb526f4645cbb58",
         "crates/engine/src/storage/semantic_row/transition/cells.rs": "28a5e732da226b964d762ffea7af4629e568cf32",
-        "devdoc/contracts/dev3-tree-smo.md": "81163366a309cd53a51d3352aef8c364a6cd7fa6"
+        "devdoc/contracts/dev3-tree-smo.md": "81163366a309cd53a51d3352aef8c364a6cd7fa6",
+        "tests/fixtures/module-row-format/scope3/profile3.bin": "c713f45e89c706c3b4bc742e57e9ea8acd8b8537",
+        "tests/fixtures/module-row-format/transition-delete/blobs.bin": "8f47189af0de5c6d8523ebdcc34c06a8279cfd8a",
+        "tests/fixtures/module-row-format/transition-delete/index.tsv": "e3964f427f7bce03744c23930a01b02d50a2005f",
+        "tests/fixtures/module-row-format/transition-update/blobs.bin": "ba303c13e8016eeb7ca75d572fb3dbc1ab77ea5f",
+        "tests/fixtures/module-row-format/transition-update/index.tsv": "848b500aca95c7483ec3fba42c8cc7055b08fa5a"
       },
-      "log": "module-gate/evidence/dev3-08-weights/review.md (sha256 fae520ff4b991de6584b9523520815eb976c854d904cf952ed36723b550ac433)"
+      "log": "module-gate/evidence/dev3-08-weights/review.md (sha256 8d4ca7cb8485d114c2172ddbca6784720687977af438bd4b517c342caaae9951)"
     }
   ]
 }

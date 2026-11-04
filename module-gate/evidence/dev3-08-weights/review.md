@@ -34,3 +34,19 @@ engine all-targets/all-features in1m18s. Product/test source equals r2.
 Final implementation D1/D2: limited ACCEPT, required_open=0. Full census,
 Catalog/schema binding, stable canonical source, live effects and F05 remain
 open. The reviewer ran no tests and modified no files.
+
+## Record and module declaration follow-up
+
+The reviewer confirmed the five inputs.sha256 entries against current bytes;
+none of those literal inputs changed in a4712ae8. Profile supplies the profile;
+D/U blobs and their hash-checked indexes supply native Row/Job/U cells. Expected
+costs come from literal Row before/after lengths, not the product Undo decoder.
+The structure.rs diff is only the new weights module declaration and a blank
+line. Existing scope4 wire observer bodies, constants and tests are unchanged.
+The reviewer accepts adding fixture blobs to the weights record and this
+follow-up review to the old wire record, without repeating wire runtime cases.
+
+The first module-gate run failed on omitted same-record fixture hashes and the
+new structure.rs blob. Its original result is preserved at
+artifacts/dev3-08/weights/module-gate.json; this is a record error, not a product
+test result. Follow-up static review: ACCEPT, required_open=0.

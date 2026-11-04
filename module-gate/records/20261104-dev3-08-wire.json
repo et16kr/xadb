@@ -99,6 +99,21 @@
         "devdoc/contracts/dev3-tree-smo.md": "f3df700a07618ee91e3f1efd624f855cc31d1afb"
       },
       "log": "module-gate/evidence/dev3-08-wire/review.md (sha256 b828fb1fcc538ff659afe0fde0985046c728021412ceac1729f611608ccb8668)"
+    },
+    {
+      "id": "dev3-08-wire-weights-module-followup",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/semantic_row/structure.rs": "2c6d389f1c168da4c7a5d4c65d2fc4298a476595"
+      },
+      "log": "module-gate/evidence/dev3-08-weights/review.md (sha256 8d4ca7cb8485d114c2172ddbca6784720687977af438bd4b517c342caaae9951)"
     }
   ]
 }
