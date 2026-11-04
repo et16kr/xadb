@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+2026-11-04 [DEV3 개선 계획 리뷰: 구조 목표·단일 노드 가용성·HA 연결](dev3-improved-plan-structural-review-20261104.md): PR #51 병합 main `8a4f8e4a`의 A0–A7을 Claude가 검토했다. 이전 지적과 PR #51 리뷰 의견의 반영을 확인했고, A2–A4의 구조 목표, buffer manager 확장, 단일 노드의 DB 전체 쓰기 정지 경로, A2와 DEV8 HA의 연결, 제품 목표의 사용자 결정을 권고한다. 같은 PR의 Codex 검토와 겹치지 않는 부분을 중심으로 적었다. D0 정적 리뷰 기록이며 계약·일정·제품 코드 변경과 제품 시험 새 실행은 없다.
+
 2026-11-04 [DEV3 개선 계획의 대용량 고성능 고가용성 검토](dev3-scalability-ha-plan-review-20261104.md): PR #51 병합 main `8a4f8e4a`의 A0–A7과 DEV8 HA 계획을 대조했다. 개선 방향을 지지하며, 기본 Serializable의 table 충돌·A2–A4 성능 판단 기준·전체 서비스 중단 시간·제품 목표 용량·checkpoint/audit 비용의 후속 결정을 권고한다. D0 정적 리뷰 기록이며 계약·일정·제품 코드 변경과 제품 시험 새 실행은 없다.
 
 2026-11-04 [DEV3 구현과 잔여 설계의 Oracle Altibase PostgreSQL 비교 리뷰](dev3-cross-dbms-design-review-20261104.md): PR #49 병합 main `23976330` 기준으로 구현된 첫 Row profile와 남은 설계를 정적 대조했다. 저장·Undo·복구의 뼈대는 유지하고, live WAL 재검증·redo 형식·공유 메타데이터·거래 의미·표현 크기·checkpoint 반복 I/O를 일반화 전에 검토할 것을 권고한다. PR #48 리뷰의 Int64 공간 계산과 과도한 일반화를 보정한다. [PR #50 최초판과 재검토 대조](dev3-cross-dbms-design-review-20261104.md#second-pass)는 유일 MutationPort·읽기 gate·그룹별 영속 대기, DEV4의 기존 대상 고정 설계, full audit/restore 비용과 큰 profile 준비, DBMS별 영속성·UNIQUE·보존 조건을 보강한다. 개선 제안의 기록이며 제품 코드·계약·일정 변경이나 제품 시험 새 실행은 없다.
