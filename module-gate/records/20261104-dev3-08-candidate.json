@@ -196,6 +196,22 @@
         "crates/engine/src/storage/semantic_row/structure/weights/candidate_tests.rs": "95cefae4fd55f3c505f965ca6a7a8415cd9c77c6"
       },
       "log": "module-gate/evidence/dev3-08-frame/review.md (sha256 82cbef1f0666cc3001181a90d99c556d89f21ccfab9c5a116323f8d1f11d0a5d)"
+    },
+    {
+      "id": "dev3-08-bank-overlap-candidate",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/semantic_row/structure.rs": "889935ca4daf4d5efbd4b101dffa00707f648bb5",
+        "crates/engine/src/storage/semantic_row/structure/candidate.rs": "5f9023eb57a80cdce666048bdfe6b1adc3951232"
+      },
+      "log": "module-gate/evidence/dev3-08-bank/review.md (sha256 f0f76ca9ea646d2f9c41aade4ef6c019587d94d4e46ecc3c1b621131c287ad7a)"
     }
   ]
 }

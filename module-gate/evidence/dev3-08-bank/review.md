@@ -49,3 +49,9 @@ locally with actual identity values; they are not selected for CI's plain
 libtest environment. Original failures and source/ELF hashes are preserved.
 Scope4 dispatch, current Structural tree closure, historical mint, actual pool
 installation, retirement and full F05/fault acceptance remain the next 08-1 work.
+
+The first aggregate gate at ee7f0ab9 rejected stale same-record review hashes
+in five earlier units, not product checks. Add the current bank review as a
+new review entry to those records for the overlapping modified files. Preserve
+the old reviews, execution results and their original source identities. No
+product source or test selection changes are needed for this metadata repair.

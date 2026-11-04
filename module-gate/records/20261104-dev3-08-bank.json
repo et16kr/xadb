@@ -405,7 +405,7 @@
         "tests/fixtures/module-row-format/structural-bank/root.xod": "05d1e6139a9dd201d5062ed1afbd281b54a88b5c",
         "tests/fixtures/module-row-format/structural-bank/root.xrb": "5be3685267239bf34edafc24b74f0f2476ba1ec6"
       },
-      "log": "module-gate/evidence/dev3-08-bank/review.md (sha256 e077f5ba5bb97d182520540151a2fcbed57477a827af25d17ebbd168b6a5725a)"
+      "log": "module-gate/evidence/dev3-08-bank/review.md (sha256 f0f76ca9ea646d2f9c41aade4ef6c019587d94d4e46ecc3c1b621131c287ad7a)"
     }
   ]
 }

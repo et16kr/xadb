@@ -160,6 +160,23 @@
         "devdoc/contracts/dev3-tree-smo.md": "9007460823b0ca316a997d0dea88d93deae0a2c8"
       },
       "log": "module-gate/evidence/dev3-08-base-claims/review.md (sha256 58f14d9bbe7b812499dc1c8375477a306a2dbc73ec133169d993f826a75076da)"
+    },
+    {
+      "id": "dev3-08-bank-overlap-base-claims",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/plan4_recovery_base.rs": "290f035ec4bad2c8b7c1170f4a28637a30f33998",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph/source.rs": "28bb594755220885c426e976b9a4158e86aa71f4",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph/source_tests.rs": "9f35007f1d0109a404dbb62d9c7d042201d0e1b8"
+      },
+      "log": "module-gate/evidence/dev3-08-bank/review.md (sha256 f0f76ca9ea646d2f9c41aade4ef6c019587d94d4e46ecc3c1b621131c287ad7a)"
     }
   ]
 }
