@@ -321,3 +321,22 @@ sealed transaction capsule이 원 origin·isolation slot/generation·actual acto
 
 
 원 공통 동시성 owner의 [C2 조회 수명 부분공급](../evidence/module-independence-survey-20261026.md#c2-read-operation-lifetime)은 `OwnerSlot`의 read-operation 표시와 기존 Commit Drain을 연결한다. 기존 Content 구간 사이의 조회도 원 슬롯에 남으며 같은 owner의 Apply를 거절한다. 원 reference cleanup 후 표시를 반환하고 Condvar를 깨우며, fence/poison·forgotten ownership을 성공 재사용으로 바꾸지 않는다. Pending 중 LOAD는 유지한다. 이는 byte credit·writer progress 몫·격리 read/write-set 구현을 대신하지 않는다.
+
+<a id="review-adoption-20261104"></a>
+## REVIEW-012 후속 — 현재 의미와 일반 writer·reader 설계 입력
+
+[A0/A4](../plans/dev3-implementation-plan.md#review-adoption-20261104)는 현재 기본 Serializable·table/catalog 검증, RC observation mismatch의 전체 거래 abort, 최대 TxnId deadlock victim의 전체 rollback, own mutation 뒤 cursor 무효화, snapshot 강제 만료 금지를 유지한다. 이들은 현재 작업 기준이며 Oracle 대응 항목의 영구 거절이나 사용자 제품 방향 결정이 아니다. A0는 일정11 구현 전(앞선 leaf에 영향이 있으면 해당 동결 전) RC 기본·statement restart·세밀한 Serializable 검증·Oracle식 deadlock 처리의 대안·보장·비용을 제출한다. 반환한 결과·재실행 가능한 효과·lock ledger·rollback reserve·새 snapshot·write skew/phantom을 비교하며, 제품 방향/호환 약속/필수 보장 변경은 D3 사용자 결정, 위임 안의 내부 상세화는 D2로 구분한다. 이미 공급한 제한 UPDATE의 동작을 소급 변경하지 않는다.
+
+일반 writer 설계는 다음 경계를 각각 기록한다. transaction capsule 수를 실제 병렬 writer 수로 보고하지 않는다.
+
+| 현재 경계 | 설계·관측 의무 |
+| --- | --- |
+| `MutationPort`의 유일 ledger/workspace 대여 | validation→durable→설치→Q 공개의 실제 직렬 구간과 준비 병렬화 가능 구간을 표시. 여러 작업이 공존할 때 workspace·metadata·page/pin·rollback/WAL 합계 재계산 |
+| Row preflight/Reserve/Forward의 `TerminalReadGate` | LOAD·전체 replay·durable 대기를 포함한 gate 수명과 전체 read-operation drain을 구분. Commit Pending 전에 gate를 여는 현재 예외도 보존. gate 축소 전 source loan·reader pin·old/new page 가시성·fence 수명 증명 |
+| Root/Job/Status 공통 page | 모든 연산이 같은 page를 바꾼다고 가정하지 않고 opcode별 page 집합과 충돌을 기록. 분산 시 inventory·회수·복구·page 순서와 자원 상한을 함께 동결 |
+| row/key 잠금 위치 | 현재 bounded 메모리 row/key lock 계약, row의 TxnRef/ITL 소유, 혼합형을 비교. 결정은 영향받는 row 형식 동결 및 일정11 구현 전. 아래 잠금 수명 반례·DEV7 비용을 제출 |
+| WAL slot·의미 설치 장벽 | [3.04의 A3](dev3-task-04-wal.md#review-adoption-20261104)와3.11을 수신. Root 분산·group commit을 same-page 설치/flush 순서의 증명으로 대신하지 않음 |
+
+row 안의 `TxnRef`는 우선 version creator/status 참조이므로 그 존재만으로 transaction X lock이 되지 않는다. 첫 변경 전 잠금, statement rollback으로 stamp를 복원해도 거래 종료까지 남겨야 하는 잠금, split/이동·DELETE·재사용, 미존재 UNIQUE key의 충돌을 각각 설명해야 한다. row 소유를 disk에 두더라도 key lock·waiter·wait-for graph·취소와 full rollback의 예약/메모리 상한은 남는다. [DEV7 D7-STORAGE](dev7-sql-extensions-design.md#storage-extension)의 최초 확장 목표(4,096 mutation·64MiB)는 무제한 거래 약속이 아니다. 각 대안에서 현재256/1MiB와 후속 확장 목표의 lock/write-set/Undo/WAL 비용, 재사용 가능한 경계와 바꿔야 할 형식/API를 제출한다. 이번에 상한을 해제하거나 VersionStamp를 잠금으로 재해석하지 않는다.
+
+실제 동시 실행을 공급할 때 [D3-ADOPT-04](../plans/dev3-test-plan.md#review-adoption-20261104)에서 독립 table/행, 같은 page의 다른 slot, 실제 row/key 충돌, reader·ager·flush·취소를 구분한다. 직렬·미지원 범위도 명시한다. 현재 single-writer 경로의 안전성을 유지하는 일반 row 공급은 병렬 writer 전체 완료를 기다리지 않는다.

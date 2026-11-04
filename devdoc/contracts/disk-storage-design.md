@@ -514,3 +514,18 @@ F01은 profile identity·필수 항목·무결성/지원 여부의 검사 위치
 | 공간·운영 비용 | [표현 비용](dev3-resource-bounds.md#representation-cost), [보존 압력](dev3-task-14-reclamation.md#retention-pressure-model), [측정](dev3-task-16-qualification.md#comparison-measurement). 산술과 실측 구분,64GiB profile은 기존 준비 방향이며 현재 지원 아님 |
 
 계획은 [실행 순서와 완료분 보완](../plans/dev3-implementation-plan.md#comparison-adoption), 인수는 [D3-COMP-01–10](../plans/dev3-test-plan.md#comparison-adoption)을 따른다. 후속 의무가 기존 완료 codec/pool/plan4의 원 source·PASS를 소급 취소하거나 무변경 시험 반복을 요구하지 않는다. 현재 범위 밖 row semantics에 plan4 newer-home 예외를 그대로 확대하지 않는다. checkpoint/restore의 이번 선택은 이전 상세 문서의 미선택 대안을 구체화하며, byte 형식·실행 지원은 소비 구현 전에 별도 동결한다.
+
+<a id="task-review-012"></a>
+## DEV3-REVIEW-012 — 일반화 전 비용·소유 경계의 설계 작업 채택
+
+2026-11-04 · **D2 ACCEPTED / 독립 검토 필수 지적0 / 제품 의미·형식 변경 없음**. 권한·기준 source·대안 판정·검토 상태는 [실행계획의 결정 기록](../plans/dev3-implementation-plan.md#review-adoption-20261104)이 소유한다. PR #48과 #50의 개선 과제를 해당 owner에 배정한다. 이 절은 상세 byte 형식이나 새 병렬 실행 알고리즘을 승인한 기록이 아니다.
+
+| 보강 의무 | 정본·설계 완료 경계 |
+| --- | --- |
+| live 상태와 WAL 검증 | [3.04](dev3-task-04-wal.md#review-adoption-20261104). 검증 완료 상태의 authority·무효화·복구 재구성, 기존 prefix 신뢰와 손상 검출 책임을 명시. stale cache로 stage/install 권한 발급 금지 |
+| redo와 durable 경계 | 같은3.04와3.11/12. 형식 크기·sync·설치 순서는 각각 평가. native 의미 입력 대체, WAL-before-data, durable ACK/UNKNOWN, same-page 적용 순서·checkpoint 증명 없이 형식/장벽 완화 금지 |
+| 일반 동시성 | [3.10](dev3-task-10-concurrency.md#review-adoption-20261104). 유일 writer·read admission·공유 page·WAL slot·설치 장벽을 구분하고 실제 중첩되는 자원을 합산. 현재 격리·오류·cursor·retention 의미 유지 |
+| 표현·예약·회수 | [자원 정본](dev3-resource-bounds.md#review-adoption-20261104),3.09/14. 작은 표현과 구성 요소 회계는 대안이며 실제 incoming edge·rollback·horizon·transient pin·세대·retained credit 검증을 생략하지 않음 |
+| 남은 기능·운영 비용 | 기존3.06/07/08/12/13/15/16. 일반 row/index/Catalog를 기존 계약으로 공급하고 bounded checkpoint/audit의 반복 I/O까지 동결. typed restore·64GiB 준비·DWB 보장은 유지 |
+
+mutable page·단일 WAL·영속 Undo·stable RowId·논리 Undo/redo-only CLR·기본 quota·예약 종료·fence/UNKNOWN의 공통 계약과 REVIEW-011 인수는 유지한다. 전체 Undo 회수를 commit 순서나 stale generation 검출만으로 대체하지 않는다. 기본 Serializable을 snapshot isolation으로 약화하거나 거래 상한을 없애는 변경도 채택하지 않는다. 대안이 현재 계약을 바꾸면 해당 owner에서 효과·실패·자원·복구 반례와 compatibility를 먼저 동결하고 별도 D2로 확정한다.

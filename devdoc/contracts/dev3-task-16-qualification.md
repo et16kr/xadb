@@ -147,3 +147,14 @@ F02/F05에는 monotonic clock·구간 시작/끝·중첩 구간의 중복 합산
 T=E=1,000,000에서 audit B=4096/32768이면245,000,000/31,000,000 edge visits라는 예시다. B=32768을 승인된 capacity로 쓰지 않는다. 실제 entry bytes·hash/cursor·local 합계로 B를 먼저 동결한다. measured 개선이 필요할 때만 다른 bounded 알고리즘을 검토하며 무제한 map/spill을 숨기지 않는다.
 
 PF09 반복은 일반 DP07의 최소10쌍을 따른다. COMM 전용5+5 규칙을 적용하지 않는다. 평균뿐 아니라 분포·실패/재시도·누락 이력과 계측 비용을 보존하며 원래 요청의 최종 결과까지 latency를 집계한다. 미실행은 NOT_RUN이며 docs 채택·산술·모델·memory/native 실행을 각각 구분한다.
+
+<a id="review-adoption-20261104"></a>
+## REVIEW-012 후속 — 변경 기능의 계수와 비교 조건
+
+[A7](../plans/dev3-implementation-plan.md#review-adoption-20261104)은 각 변경과 함께 작은 유한 입력의 계수를 공급하고, 시간 측정·대형 부하는 실행 전 동결한 별도 범위에서 수행한다. 이번 계획으로 M1을 실행하지 않는다. M0 원 source/계수는 보존하며 새 source 결과와 같은 분모로 섞지 않는다. [D3-ADOPT-01–07](../plans/dev3-test-plan.md#review-adoption-20261104)은 추가 인수 의무의 연결표이며 기존 PF09/FT inventory의 대체물이 아니다.
+
+WAL read/hash/frame·redo/native bytes, 그룹별 write/sync, 준비·read gate·설치·publication 대기, 실제 동시 writer, 충돌/abort/UNKNOWN/재시도, row/index/Undo와 정리 비용을 따로 센다. API read bytes를 장치 read bytes로, slot 수를 동시 writer 수로 해석하지 않는다. cleanup·checkpoint·audit를 제외한 짧은 성공 경로만으로 전체 개선을 주장하지 않는다. 기준선/후보의 같은 입력·캐시/base/checkpoint·지원 profile·계측 overhead를 기록한다.
+
+DBMS 비교는 버전·durability/isolation·schema/UNIQUE/NULL·retry·buffer·장치 조건을 함께 고정한다. Oracle의 COMMIT WAIT/NOWAIT·BATCH 설정, PostgreSQL의 `fsync`·`synchronous_commit`·`full_page_writes`·`wal_level`, Altibase의 `COMMIT_WRITE_WAIT_MODE`·`LOG_BUFFER_TYPE`과 실제 ACK 보장을 기록한다. 설정 이름만으로 동등한 전원 장애 보장이라고 단정하지 않는다. 기본값 그대로의 처리량을 XADB durable ACK와 동등한 조건으로 보고하지 않는다. 외부 DBMS 실측은 아직 계획된 실행 결과가 아니다.
+
+64GiB qualification은 [지원 profile 준비](dev3-resource-bounds.md#qualification-profile-preparation)를 먼저 공급한다. allocator encoded inventory≥4×buffer를 논리 row bytes≥4×buffer로 바꾸지 않으며,64MiB buffer에서43,241 extent 이상과 WAL/control/clone/retained 의무까지 실제 공존 총량을 계산한다. 새 tuple·산술·fixture·복구 상한이 없으면 현재8GiB profile의 지원을64GiB로 표시하지 않는다.

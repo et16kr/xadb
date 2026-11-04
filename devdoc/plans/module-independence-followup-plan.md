@@ -187,6 +187,8 @@ EX08은 [`semantic_row/transition_tests.rs`](../../crates/engine/src/storage/sem
 <a id="wal-cost"></a>
 ## 10. F6 — WAL 재검증 비용 측정과 조건부 개선
 
+**2026-11-04 현재 후속:** [DEV3-REVIEW-012 A1](dev3-implementation-plan.md#review-adoption-20261104)이 M0의 구조 비용을 근거로 F6-b 상세 설계를 일반화 전에 배정한다. 아래의 “병목 확인 뒤에만 설계” 순서는 이 범위에서 대체한다. 전체 검증 유지·base 전환·증분 owner의 대안 비교와 안전성 검토를 먼저 하며 후보의 구현·M1 실행을 완료/승인한 기록은 아니다. 아래 M0/M1의 원 권한·source·실행 사실과 손상 검출·복구·자원 의무는 보존한다. 현재 완료 판정은 [A1 비용 목표·미달 처리](../contracts/dev3-task-04-wal.md#a1-cost-target)를 따른다. 아래 후보 폐기/현 설계 유지 규칙은 안전한 구현을 남기는 원칙이며 A1 목표 미달을 개선 완료로 닫는 면제가 아니다. 일정18-3의 기존 적립과 신규 범위는 [일정 배정 경계](dev3-schedule-baseline.md#review-adoption-20261104)에서 구분한다.
+
 **정적 근거:** [`row_preflight::observe_sources`](../../crates/engine/src/storage/wal_io/plan4_retention/row_preflight.rs)가 gate 보유 중 [`history::validate_live`](../../crates/engine/src/storage/wal_io/plan4_retention/history.rs)를 호출한다. `replay_durable`은 prefix hash→재생→prefix hash를 수행한다. WAL 구간이 길어질수록 비용이 증가할 수 있다는 가설이며, 측정된 처리량 회귀로 기록하지 않는다.
 
 **F6-a 조사·측정:** 같은 데이터/작업 의미에서 WAL 길이만 달리한 유한 입력을 구성한다. INSERT 지연, 읽은 WAL byte·재생 frame 수·hash byte, gate 대기/보유 시간, 읽기 지연을 관측한다. baseline/candidate source, I/O adapter와 장치, 캐시·checkpoint/base 조건, 반복 수, 시간·disk 예산, 결과 무효·중단 기준은 실행 전에 [DP07](../policies/development-policy.md#section-8)에 맞춰 동결한다. [D03](#user-decisions)으로 측정 권한·변경 시험 범위를 확인하고, 기존 PF04/COMM 조건을 임의 전용하지 않는다. 현재 계획에서는 임의 성능 합격 수치를 정하지 않는다.

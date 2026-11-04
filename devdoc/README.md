@@ -1,5 +1,11 @@
 # XADB 개발 문서
 
+2026-11-04 [개선 계획의 대용량·고성능·고가용성 검토](evidence/dev3-scalability-ha-plan-review-20261104.md)는 PR #51의 A0–A7과 DEV8 HA 계획을 대조한 후속 리뷰다. [PR #52 댓글 재검토](evidence/dev3-scalability-ha-plan-review-20261104.md#comment-followup)를 반영해 고정 profile, checkpoint·audit의 쓰기 중단 영향, 사건 발생부터 strict 쓰기 복구까지의 기준과 D2/D3 경계를 보강했다. 현재 계약·작업 순서·완료 상태는 변경하지 않는다.
+
+2026-11-04 [개선 계획 구조 검토(Claude)](evidence/dev3-improved-plan-structural-review-20261104.md)는 같은 A0–A7에 대해 A2–A4의 구조 목표, buffer manager 확장, 단일 노드의 DB 전체 쓰기 정지 경로, A2와 DEV8 HA의 연결, 제품 목표의 사용자 결정을 권고한다. 현재 계약·작업 순서·완료 상태는 변경하지 않는다.
+
+현재 작업은 [DEV3 리뷰 채택·실행계획 보강](plans/dev3-implementation-plan.md#review-adoption-20261104)이다. PR #48의 Claude 리뷰와 PR #50의 재검토를 대조해 채택·비교·유지·보정 항목, owner 계약, 구현 동반 인수와 일정 재견적 경계를 정한다. 첫 후속은 live WAL 재검증의 A1 상세 설계다. 제품 코드·시험·진척률을 바꾸는 작업은 아니며, 제한 UPDATE는 PR #49로 완료됐다. A1 상세 설계는 V1 일정 적립 항목 밖이라 적립 없이 진행/검토/완료 산출물을 별도 보고하고, 설계 소요·대기는 ETA에 포함한다([보고 기준](plans/dev3-schedule-baseline.md#review-adoption-20261104)).
+
 DEV3 일정 보고는 [전체 예상 일정·누적 진척률 V1](plans/dev3-schedule-baseline.md)을 따른다. 최신 기준일·적립 대장·누적률·잔여 예측은 그 문서에서 확인한다. 완료 증거가 있는 일정 항목의 고정 예상 기간을 누적하며 날짜 예측과 제품 인수 판정은 구분한다.
 
 현재 작업은 최신 사용자 요청에 따라 **진행 중이던08-1의 실제 split 효과 단위를 마무리하여 commit·push**하는 것이다.

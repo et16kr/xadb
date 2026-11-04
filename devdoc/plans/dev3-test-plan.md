@@ -1,5 +1,7 @@
 # DEV3 — 단계별 필수 테스트와 구현 동반 테스트 추가 계획
 
+2026-11-04 두 리뷰의 채택에 따른 보강은 [D3-ADOPT-01–07](#review-adoption-20261104)이다. 이번 변경은 구현 동반 검증의 계획이며 제품·모델·성능 시험은 실행하지 않는다. 이전 시점의 실행/미실행 기록은 그대로 보존한다.
+
 2026-10-22 · **D3-TEST-PLAN-001 D2 ACCEPTED / 독립 검토 완료 / 신규 테스트 코드·제품 실행 없음**
 
 같은 날 [항목별 재점검](../evidence/dev3-test-plan-review-20261022.md)으로 중간 필수 경계·중복 제거·실행 분모를 보완했다. 최초 결정과 그 검토 identity는 보존하며, 후속 **D3-TEST-PLAN-002의 상태·검토 범위**는 [새 결정 기록](#review-decision)을 따른다.
@@ -899,6 +901,23 @@ static15초(worker10/감사5), memory210초(worker180/감사30, 함수·사례30
 | D3-COMP-10 · 3.15/16 | 독립 edge multiset audit의 T/E/B 방문 count·bounded workspace, 누락/중복 edge와 잘린 scan 거절. 정상 open vs full audit 분리 | 대형 T/E에서 `E×ceil(T/B)` 재순회와 실제 read bytes/time, 고정 budget·시간 초과를 INCONCLUSIVE/FAIL로 보존 | DS03/04/05, PF09 |
 
 원 plan4 고유50개와 codec/pool의 source별 PASS·FAIL/HOLD는 새 family 분모에 합쳐 새 실행인 것처럼 표시하지 않는다. 중간에는 실제 diff가 있는 소비 경로·새 oracle/harness의 필요한 사례만 실행하고 무변경 완료 시험은 반복하지 않는다. S5에서 확정 DEV3 inventory를 전수 실행하되 DEV0/1/2나 전체 workspace로 확대하지 않는다. 최종 뒤 수정도 관련 diff/실패 사례만 재검증한다. 문서만 바뀐 이번 작업은 제품·모델·성능·compiler/Clippy·문서 verifier 미실행이다.
+
+<a id="review-adoption-20261104"></a>
+## REVIEW-012 구현 동반 인수 — D3-ADOPT-01–07
+
+[실행계획 A0–A7](dev3-implementation-plan.md#review-adoption-20261104)에 연결하는 **예정 case family / 전 행 NOT_RUN**이다. 기존 D3-COMP·DS/RC/M/PF09에 필요한 variant를 추가하며, 같은 실행을 새 ID 수만큼 중복 집계하지 않는다. 상세 설계에서 exact selector·fixture/oracle·fault schedule·지원 범위·수치/시간/disk 예산·실패/중단 판정과 S5 확대 변형을 동결한다. 대안 미채택 시 그 대안 전용 사례는 이유와 함께 적용 제외로 기록하고 현재 방식의 의무는 유지한다.
+
+| ID·작업 | 새/변경 구현과 함께 준비할 중간 필수 사례 | S5 확대·기존 연결 |
+| --- | --- | --- |
+| D3-ADOPT-01 · A1 | 같은 live 상태/연산·변경량·동시부하에서 과거 WAL 길이 E만 달리해 [A1 비용 목표](../contracts/dev3-task-04-wal.md#a1-cost-target) 대조: 정상 매 연산의 전체 prefix hash/replay 제거와 touched-page·ledger 결과 일치. base/checkpoint 전환의 빈도·상각/누적 비용도 포함하고 목표 미달을 완료로 세지 않음. 잘못된 epoch/base/offset/generation·stale owner·변경 prefix·검증 누락을 거절. reject/cancel·부분 I/O/UNKNOWN/fence·REBASE/truncation·reopen 뒤 상태 재구성과 독립 전체 replay의 결과 일치. 보존해야 할 손상 검출 책임별 known-bad | 최대 지원 live state·긴 WAL·cleanup·반복 crash/재진입·quota pressure. D3-COMP-01/02/03, DS02/03/05, RC-T14. 계수 감소는 시간/TPS PASS가 아님 |
+| D3-ADOPT-02 · A2 | 선택한 형식의 독립 literal/decoder와 redo/native 의미 일치. 다중 patch이면 겹침·역순·중복·잘림·부분 page 적용, 연산형이면 전제 불일치·재적용. INSERT/DELETE/UPDATE·own/repeated write·CLR·정리·reuse의 값/edge/ledger. ITL/CTS·column delta 채택 시 slot 재사용/고갈·가변 길이/NULL·반복 변경·overflow/index 복원·CLR 재장애. Int64 등 표현별 bytes와 F05 한도−1/동일/+1 | 큰 row/index/Undo chain·split·overflow·batch/census 상한·mixed-page recovery. D3-COMP-02/03/07, DS01/02/04/05. codec 변경 후 기존 source PASS를 새 형식 실행으로 세지 않음 |
+| D3-ADOPT-03 · A3 | complete/synced/installed/published 경계별 crash. Commit@c 미설치와 같은 Status page@c+1 flush의 추월 mutant, WAL 이전 data flush, write/sync partial·실패·UNKNOWN·취소·queue saturation. batch 채택 시 내부 prefix validation·독립 거래 ACK 판정·예약 continuation 진행 | 다중 page/status·동시 flush/checkpoint·연속 crash·최대 queue와 quota 압력. D3-COMP-04/05/09, DS02/03/05/06, M03/04, RC-T14. sync 계수와 redo bytes를 분리 |
+| D3-ADOPT-04 · A0/A4 | 실제 독립 writer가 겹치는 구간과 직렬 구간 계측. 독립 table/같은 table 독립 행/같은 page 다른 slot/실제 row-key 충돌, 기존·신규 reader·ager·flush·취소. gate 축소 뒤 snapshot/pin/loan·page 순서와 동시 자원 peak. row 잠금 위치 변경 시 첫 변경 전 소유·statement rollback 뒤 retained lock·split/DELETE/reuse와 미존재 UNIQUE key 잠금의 독립 반례. 유지한 RC/Serializable·deadlock·cursor·retention 의미에 맞는 독립 이력 |1/2/8/32 요청과 retry/abort/UNKNOWN 분모, 공정 진행·장기 reader. D3-COMP-02/04, DS03/04/06, PF09. table 검증의 예상 충돌을 구현 오류로 바꾸지 않음 |
+| D3-ADOPT-05 · A5 | 변경 leaf의 own/repeated write·before chain·split 이동 뒤 RowId undo·index 원자성·UNIQUE 검사 시점과 부분 NULL·DROP/stale generation. DEV4에 줄 snapshot/observation·반복 변경 경계를 검증; bounded 대상 물질화/SQL predicate 실행 시험 자체는 DEV4 owner | 일반 CRUD·다중 row/object·오류/rollback/recovery 조합, cursor 후보/byte bound. D3-COMP-01/03/07, DS01/04/06. 제한 UPDATE 완료와 일반화 인수 분리 |
+| D3-ADOPT-06 · A6 | checkpoint T/B/I/W, audit T/E/B의 독립 방문수·read bytes 검산과 작은 다중 partition. 같은-cut·pin·선택 불명/회수, target 중복/누락·edge multiset known-bad. restore typed field/사용자 bytes·retained credit·새 LSN→unflushed ACK→두 번째 reopen | 대형 capture/audit/restore의 실제 read/time·workspace·공존 disk와 중단 기준. D3-COMP-05/06/10, DS03/04/05. 예산 초과를 PASS나 임의 표본 audit로 대체하지 않음 |
+| D3-ADOPT-07 · A7 | 각 변경의 자원 벡터·동시 합성·거절 뒤 admitted rollback 진행, 계측 누락/중복·단위 혼동 검산. 새 profile tuple의 지원/거절·checked 산술과 실제 allocator fixture 분모 |64GiB·buffer4배·전체 공존량·PF09 최소10쌍/원래 요청 지연과 실패 포함. D3-COMP-02/08/09, DS03/05, PF09. 비교 DB 설정·durability/isolation 차이 명시 |
+
+중간 실행은 실제 diff가 있는 기능·새 검증 도구의 필요한 사례만 선택한다. 설계/문서 변경만으로 기존 제품 시험·M1·전체 wrapper를 실행하지 않는다. 최종 S5는 확정 DEV3 inventory 전수이며 이 연결표로 분모를 축소하지 않는다. 현재 자동 문서 검사는 commit 뒤 pre-push에서 수행하고 결과는 PR에 기록한다.
 
 <a id="leaf-edit-inventory"></a>
 ## 첫 행의 leaf 후보 편집 — 추가 inventory
