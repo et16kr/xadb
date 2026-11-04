@@ -138,6 +138,22 @@
         "tests/fixtures/module-row-format/transition-update/index.tsv": "848b500aca95c7483ec3fba42c8cc7055b08fa5a"
       },
       "log": "module-gate/evidence/dev3-08-weights/review.md (sha256 8d4ca7cb8485d114c2172ddbca6784720687977af438bd4b517c342caaae9951)"
+    },
+    {
+      "id": "dev3-08-weights-candidate-additions",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/semantic_row/structure.rs": "246d55e06431f3f4cc4a9221b0ec99a36869c103",
+        "crates/engine/src/storage/semantic_row/structure/weights/tests.rs": "e113f184c4f7c43b17a8e39bc79e2598ed89ab7e"
+      },
+      "log": "module-gate/evidence/dev3-08-candidate/review.md (sha256 5f7b2d00f471e2da180782e581e24e6c9063c89d2e3abea9fcc490d98d735f8a)"
     }
   ]
 }

@@ -20,6 +20,11 @@ use foundation::{
 };
 use std::collections::BTreeMap;
 
+// The split integration tests reuse these literal inputs without rerunning
+// the completed local weight cases or copying the literal extraction oracle.
+#[path = "candidate_tests.rs"]
+mod candidate;
+
 const PROFILE: &[u8] = include_bytes!(concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/../../tests/fixtures/module-row-format/scope3/profile3.bin"

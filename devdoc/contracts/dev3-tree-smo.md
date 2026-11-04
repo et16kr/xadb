@@ -390,3 +390,49 @@ same-cut LSN/allocator, historical hint, 오류 출력과 권한 범위를 지�
 기대 비용은 literal before/after Row cell 길이에서 별도로 계산하며 Job C나 제품 U
 decoder로 만들지 않는다. 기존 transition suite는 실행하지 않는다. 실행·D1 결과와 전체
 SMO의 실제 source census/F05는 각각 원 증거와 후속 효과 인수에 귀속한다.
+
+<a id="five-image-candidate"></a>
+## 같은 cut의 다섯 이미지 후보
+
+`semantic_row::structure::candidate`는 원 owner가 안정화한 profile/frame cut·table handle·
+source PageRef·JobCells·이전 Structural high-water/descriptor와 immutable page callback을
+받는다. C의 replay arena나 bank 배치를 복제하지 않는다. complete LSN은 원 cut+1, 새 epoch는
+원 frame 입력이다. 이전 Structural owner는 같은 namespace의 완료·잔여0여야 하며 이전 epoch도
+허용한다. 이전 bank와 callback이 실제 정본이라는 source 증명은 원 owner에 남는다.
+
+현재 fixed CatalogLeaf에서 exact table/schema/anchor를 얻고, 그 anchor의 전체 tree와
+allocator의 객체 소유 집합을 양방향 비교한다. object로 먼저 분류한 뒤 generation·kind를
+검산하므로 잘못된 generation이나 kind의 orphan도 누락하지 않는다. allocator Reserved와
+RootReserved를 배제하고 재사용 가능한 최저 Free부터 선택하며 incarnation 최댓값은 건너뛴다.
+leaf마다 실제 Undo 가중치를 검산하고 해당 객체의 Retained Row Job마다 현재 RowId가 있는지도
+역방향으로 확인한다. 이전 leaf hint나 CREATE pair를 현재 위치의 근거로 사용하지 않는다.
+
+RootSplit/ChildSplit은 현재 source의 도달성과 실제 parent를 검산한 뒤 다섯 after와 core를
+만든다. unchanged internal은 `prepare_internal_split`이 기존 pivot 선택을 재사용하며 pending
+separator를 가짜로 삽입하지 않는다. internal pivot은 승격되므로 양쪽 실제 비용 합은 원 비용보다
+pivot 비용만큼 작다. leaf 후보에는 pending 변경을 넣지 않는다.
+
+다섯 after를 원 before 위에 겹쳐 본 전체 tree와 allocator 소유·실제 가중치를 다시 검산한다.
+전후 ordered RowId·길이·XRW1 bytes digest도 비교해 행 bytes/version 보존을 확인한다.
+output은 caller workspace이며 오류 때 부분 변경될 수 있다. 성공 Candidate 없이 어떤 after도
+소비하면 안 된다. 원 before는 불변이며 이 API는 heap·I/O·pin·WAL·설치 효과나 권한이 없다.
+
+전체 Root/terminal/Status/ATT·commit frontier·incoming·역사 증명은 기존 canonical owner의
+의무다. 기존 전체 closure의 level0·pair 동일성 가정을 실제로 확장하기 전에는 이 결과를
+scope4 replay acceptance나 sealed INIT 권한으로 승격하지 않는다. Catalog가 committed-but-
+unpruned이면 기존 Status/terminal 증명으로 처리하며 stamp를 무조건 Committed로 제한하지 않는다.
+이 순수 후보 공급과 후속 source census/F05·native 효과 인수는 구분한다.
+
+사전 D2는 위 입력·scope·출력 수명 및 wrong-generation orphan·이전 epoch 반례를 요구했다.
+새 시험은 literal Row/U의 leaf Root/Child 분할, internal Root/Child pivot·child 보존, separator
+1/2개·child incarnation alias 거절, Reserved·Free capacity·generation 소진, stale handle·orphan,
+후반 callback 오류의 부분 output을 다룬다. 원64-page extent에서 유일 child를 요구하는 Row
+internal은40B entry이므로 정상 parent가16,188B를 채울 수 없다. parent 용량 경계는 분리된
+순수 편집 함수에서 검산하고 이 profile의 정상 whole-tree 분기 도달을 주장하지 않는다.
+
+이 구현의 page::MAX_PAGE_SLOTS는3,244다. 현재 refs/side_refs와 parent refs는 각각51,904B,
+weights/audit scratch는 각각25,952B다. 앞의 제안 소계16,208B/8,088B를 실제 구현의 측정·
+F05로 재사용하지 않는다. 후속 source census에서 실제 수명과 더 좁은 tree 한도 적용을
+검산한다. 현재 Candidate는 after를 borrow하지 않으므로 후속 frame emit/compare는 immutable
+output borrow 또는 저장한 결과와의 재검산을 결합해야 한다. 성공 후 caller가 바꾼 after에
+이전 성공 결과를 재사용하는 API로 연결하지 않는다.

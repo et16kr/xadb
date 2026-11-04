@@ -58,6 +58,34 @@ pub(crate) struct LeafSpaceRequest<'a> {
 }
 
 impl<'bytes> TreePageView<'bytes> {
+    /// Split an existing internal page without inserting a pending separator.
+    /// The system owner still proves source reachability and the new address.
+    /// Scratch is workspace; a failed preparation yields no candidate.
+    pub(crate) fn prepare_internal_split<'cells>(
+        &self,
+        right: PageRef,
+        scratch: &'cells mut [&'bytes [u8]],
+    ) -> Result<SplitCandidate<'cells, 'bytes>, StructureError> {
+        if is_leaf(self.header().kind)? {
+            return Err(TreeError::InvalidInput.into());
+        }
+        if scratch.len() < self.page.len() {
+            return Err(StructureError::ScratchTooSmall);
+        }
+        for (slot, target) in scratch[..self.page.len()].iter_mut().enumerate() {
+            *target = self
+                .page
+                .cell(slot)
+                .expect("decoded immutable internal slot");
+        }
+        Ok(SplitCandidate::prepare(
+            self.header(),
+            self.arity,
+            &scratch[..self.page.len()],
+            right,
+        )?)
+    }
+
     /// Split an observed leaf while retaining its rollback space. `weights`
     /// is the owner's maximum restorable cell+slot cost for each current row,
     /// including its current cost. This layer validates numeric bounds but
@@ -317,6 +345,12 @@ impl<'cells, 'bytes> SplitCandidate<'cells, 'bytes> {
 
     pub(crate) fn separator(&self) -> &'bytes [u8] {
         self.split.separator
+    }
+
+    /// Existing entry index: first right entry for a leaf, promoted pivot
+    /// for an internal page. No pending logical edit is included.
+    pub(crate) fn boundary(&self) -> usize {
+        self.split.index
     }
 
     pub(crate) fn left(&self) -> PageRef {

@@ -37,6 +37,12 @@ allocator-owned 집합 대조와 실제 SMO/base 연결은 후속 의무이며, 
 census·source 안정성·live 설치 권한·F05는 후속 의무다. 과거 leaf hint를 허용하는 이 순수
 관찰자 공급으로 일정08을 적립하지 않는다([원 증거](../evidence/dev3-tree-structure-20261104.md#actual-undo-weights)).
 
+이어 [다섯 이미지 후보](../contracts/dev3-tree-smo.md#five-image-candidate)를 공급했다.
+현재 Catalog/anchor와 전체 객체 소유 tree·실제 Undo 가중치에서 RootSplit/ChildSplit을
+재계산하고 전후 행 bytes를 비교한다. leaf/internal·소유 orphan·공간/epoch/오류 경계의 신규
+고유10개를 source별로 선택 검증했다. 실제 WAL 생산·관측/원 pool 설치·복구·F05는 아직
+연결하지 않았으며 이전 전체 closure의 단일 leaf 가정도 남는다.
+
 <a id="catalog-remaining"></a>
 2026-10-26 [Catalog CREATE 남은 메모리 사례](../evidence/dev3-catalog-remaining-20261026.md): 남은 9개를 모두 source별로 PASS했다. lookup이 Live CREATE Undo를 초기 Free page로만 검증해 fence하던 결함을 고쳤고 Writer 준비 분리를 포함했다. 같은 epoch 두 번째 CREATE의 pair victim 준비를 [D3-CATALOG-CREATE-002](../contracts/dev3-catalog-create.md#sequential-create)로 보완해 MT02가 r36에서 통과했다. [검토 후 수정](../evidence/dev3-catalog-review-fix-20261026.md)에서 Profile에 맞는 Root/Jobs decoder를 연결하고 신규8개와 변경 source 계산2개를 통과했다. 첫 Row INSERT·runtime F05·DEV3/S5는 미완료다.
 

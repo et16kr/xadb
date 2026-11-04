@@ -1,0 +1,183 @@
+   Compiling version_check v0.9.5
+   Compiling typenum v1.20.1
+   Compiling autocfg v1.5.1
+   Compiling libc v0.2.191
+   Compiling generic-array v0.14.7
+   Compiling cfg_aliases v0.2.2
+   Compiling cfg-if v1.0.5
+   Compiling nix v0.30.1
+   Compiling memoffset v0.9.1
+   Compiling cpufeatures v0.2.17
+   Compiling bitflags v2.13.2
+   Compiling block-buffer v0.10.4
+   Compiling crypto-common v0.1.7
+   Compiling digest v0.10.7
+   Compiling sha2 v0.10.9
+   Compiling xadb-foundation v0.1.0 (/workspace/xadb/crates/foundation)
+   Compiling xadb-platform v0.1.0 (/workspace/xadb/crates/platform)
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+error[E0425]: cannot find value `MAX_PAGE_SLOTS` in this scope
+   --> crates/engine/src/storage/semantic_row/structure/weights/candidate_tests.rs:426:34
+    |
+426 |         let mut refs = [&[][..]; MAX_PAGE_SLOTS];
+    |                                  ^^^^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this constant through its public re-export
+    |
+  3 + use crate::storage::semantic_row::structure::MAX_PAGE_SLOTS;
+    |
+
+warning: unused import: `tree_page::structure::StructureError`
+  --> crates/engine/src/storage/semantic_row/structure/weights/candidate_tests.rs:16:9
+   |
+16 |         tree_page::structure::StructureError,
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+error[E0624]: method `child` is private
+   --> crates/engine/src/storage/semantic_row/structure/candidate.rs:420:25
+    |
+420 |                 if view.child(child)? == input.source {
+    |                         ^^^^^ private method
+    |
+   ::: crates/engine/src/storage/tree_page.rs:135:5
+    |
+135 |     fn child(&self, index: usize) -> Result<PageRef, TreeError> {
+    |     ----------------------------------------------------------- private method defined here
+
+error[E0624]: method `child` is private
+   --> crates/engine/src/storage/semantic_row/structure/weights/candidate_tests.rs:326:30
+    |
+326 |         assert_eq!(root_view.child(0).unwrap(), reference(13));
+    |                              ^^^^^ private method
+    |
+   ::: crates/engine/src/storage/tree_page.rs:135:5
+    |
+135 |     fn child(&self, index: usize) -> Result<PageRef, TreeError> {
+    |     ----------------------------------------------------------- private method defined here
+
+error[E0624]: method `child` is private
+   --> crates/engine/src/storage/semantic_row/structure/weights/candidate_tests.rs:327:30
+    |
+327 |         assert_eq!(root_view.child(1).unwrap(), targets[3].identity.page);
+    |                              ^^^^^ private method
+    |
+   ::: crates/engine/src/storage/tree_page.rs:135:5
+    |
+135 |     fn child(&self, index: usize) -> Result<PageRef, TreeError> {
+    |     ----------------------------------------------------------- private method defined here
+
+error[E0624]: method `child` is private
+   --> crates/engine/src/storage/semantic_row/structure/weights/candidate_tests.rs:372:23
+    |
+372 |     assert_eq!(parent.child(0).unwrap(), reference(13));
+    |                       ^^^^^ private method
+    |
+   ::: crates/engine/src/storage/tree_page.rs:135:5
+    |
+135 |     fn child(&self, index: usize) -> Result<PageRef, TreeError> {
+    |     ----------------------------------------------------------- private method defined here
+
+error[E0624]: method `child` is private
+   --> crates/engine/src/storage/semantic_row/structure/weights/candidate_tests.rs:373:23
+    |
+373 |     assert_eq!(parent.child(1).unwrap(), result.targets()[3].identity.page);
+    |                       ^^^^^ private method
+    |
+   ::: crates/engine/src/storage/tree_page.rs:135:5
+    |
+135 |     fn child(&self, index: usize) -> Result<PageRef, TreeError> {
+    |     ----------------------------------------------------------- private method defined here
+
+error[E0624]: method `child` is private
+   --> crates/engine/src/storage/semantic_row/structure/weights/candidate_tests.rs:374:23
+    |
+374 |     assert_eq!(parent.child(2).unwrap(), reference(20));
+    |                       ^^^^^ private method
+    |
+   ::: crates/engine/src/storage/tree_page.rs:135:5
+    |
+135 |     fn child(&self, index: usize) -> Result<PageRef, TreeError> {
+    |     ----------------------------------------------------------- private method defined here
+
+error[E0624]: method `child` is private
+   --> crates/engine/src/storage/semantic_row/structure/weights/candidate_tests.rs:397:22
+    |
+397 |                 left.child(0).unwrap(),
+    |                      ^^^^^ private method
+    |
+   ::: crates/engine/src/storage/tree_page.rs:135:5
+    |
+135 |     fn child(&self, index: usize) -> Result<PageRef, TreeError> {
+    |     ----------------------------------------------------------- private method defined here
+
+error[E0624]: method `child` is private
+   --> crates/engine/src/storage/semantic_row/structure/weights/candidate_tests.rs:398:22
+    |
+398 |                 left.child(1).unwrap(),
+    |                      ^^^^^ private method
+    |
+   ::: crates/engine/src/storage/tree_page.rs:135:5
+    |
+135 |     fn child(&self, index: usize) -> Result<PageRef, TreeError> {
+    |     ----------------------------------------------------------- private method defined here
+
+error[E0624]: method `child` is private
+   --> crates/engine/src/storage/semantic_row/structure/weights/candidate_tests.rs:399:23
+    |
+399 |                 right.child(0).unwrap(),
+    |                       ^^^^^ private method
+    |
+   ::: crates/engine/src/storage/tree_page.rs:135:5
+    |
+135 |     fn child(&self, index: usize) -> Result<PageRef, TreeError> {
+    |     ----------------------------------------------------------- private method defined here
+
+error[E0624]: method `child` is private
+   --> crates/engine/src/storage/semantic_row/structure/weights/candidate_tests.rs:400:23
+    |
+400 |                 right.child(1).unwrap()
+    |                       ^^^^^ private method
+    |
+   ::: crates/engine/src/storage/tree_page.rs:135:5
+    |
+135 |     fn child(&self, index: usize) -> Result<PageRef, TreeError> {
+    |     ----------------------------------------------------------- private method defined here
+
+error[E0599]: no variant or associated item named `Allocation` found for enum `storage::allocation_page::SystemWorkKind` in the current scope
+   --> crates/engine/src/storage/semantic_row/structure/weights/candidate_tests.rs:510:45
+    |
+510 | ...                   SystemWorkKind::Allocation,
+    |                                       ^^^^^^^^^^ variant or associated item not found in `storage::allocation_page::SystemWorkKind`
+    |
+   ::: crates/engine/src/storage/allocation_page.rs:106:1
+    |
+106 | pub(crate) enum SystemWorkKind {
+    | ------------------------------ variant or associated item `Allocation` not found for this enum
+
+error[E0308]: mismatched types
+   --> crates/engine/src/storage/semantic_row/structure/weights/candidate_tests.rs:600:35
+    |
+600 |     obligation::encode_descriptor(spec, &mut descriptor).unwrap();
+    |     ----------------------------- ^^^^ expected `&DescriptorSpec`, found `DescriptorSpec`
+    |     |
+    |     arguments to this function are incorrect
+    |
+note: function defined here
+   --> crates/engine/src/storage/obligation.rs:378:33
+    |
+300 |             spec: &DescriptorSpec,
+    |             ---------------------
+...
+378 | descriptor_encoder!(pub(crate), encode_descriptor, ());
+    |                                 ^^^^^^^^^^^^^^^^^
+help: consider borrowing here
+    |
+600 |     obligation::encode_descriptor(&spec, &mut descriptor).unwrap();
+    |                                   +
+
+Some errors have detailed explanations: E0308, E0425, E0599, E0624.
+For more information about an error, try `rustc --explain E0308`.
+warning: `xadb-engine` (lib test) generated 1 warning
+error: could not compile `xadb-engine` (lib test) due to 13 previous errors; 1 warning emitted

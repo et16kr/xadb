@@ -216,6 +216,37 @@ source와 ELF hash를 구분한다. engine all-targets/all-features Clippy-r1은
 전체 Root/terminal/ATT·Status·incoming census, off-leaf retained 행, allocator-owned tree
 집합 비교, live/replay 및 실제 source census/F05는 후속 canonical owner에 남는다.
 
+<a id="five-image-candidate"></a>
+### 현재 tree에서 다섯 이미지 재계산
+
+`6cc2004f` 뒤 [후보 계약](../contracts/dev3-tree-smo.md#five-image-candidate)에 따라
+RootSplit/ChildSplit의 before 선택·실제 전체 tree/객체 소유 집합·Undo 가중치와 역방향
+Retained Row 대응을 검산하고 다섯 after·core를 재계산한다. 원 page callback과 명시적
+Structural bank 입력을 빌리며 C arena 배치를 복제하지 않는다. 전후 전체 tree와 ordered
+Row bytes digest를 비교한다. 아직 WAL encoder/observer나 설치 권한은 아니다.
+
+[원 로그·hash](../../module-gate/evidence/dev3-08-candidate/)의 r0는 compile FAIL13·runtime0이다.
+시험 import, private child 호출, enum 이름과 descriptor 인자 borrow를 고쳤다. 실제 공개
+child_expectation API를 사용했고 side encoder의 workspace 수명을 나누었다. r1은 신규9개만
+실행해9 PASS(build1분48초·runtime0.04초·기존2,235개 filtered)다.
+
+독립 검토에서 제안한 revision 최댓값의 Exhausted 분류와 previous Structural의 미래 epoch·
+미래 cut·Finished 잔여 debt, 부정 WAL 비용·누락 descriptor를 반영했다. r2는 변경1·신규1만
+실행해2 PASS(build36.68초·runtime0.02초·2,243개 filtered)다. 새 internal API의 leaf 입력과
+refs 부족/정확 경계를 보강한 r3는 변경1개만 실행해1 PASS(build28.80초·runtime0.01초·
+2,244개 filtered)다. 고유10개이며 기존 후보·wire·weights 시험은 반복하지 않았다.
+
+Clippy-r0는 nonminimal_bool 한 건을 지적했다. `!is_some_and(eq)`를 `is_none_or(ne)`로
+바꿨고 독립 reviewer가 동등성을 확인했다. 이전 실행을 최종 source의 전수 실행으로
+바꾸지 않으며 r0 실패와 r1/r2/r3 source/ELF hash를 보존한다. Clippy-r1은1분19초에 PASS다.
+독립 D1/D2는 한정 ACCEPT·필수0이다([검토 기록](../../module-gate/evidence/dev3-08-candidate/review.md)).
+
+parent 공간 부족 시험은 unique child405개의 locally-valid page를 사용한다. 이는64-page
+extent에 들어가는 정상 전체 tree가 아니며 그 정상 분기 도달을 주장하지 않는다. 현재
+MAX_PAGE_SLOTS3,244를 사용한 실제 refs/weights 크기를 계약에 기록했다. 제안 F05 소계를
+실제 계산으로 재사용하지 않으며 after의 불변 수명 결합·실제 source census·global closure의
+일반화·live/replay/fault 인수는 후속 의무다. 일정08 적립은0이다.
+
 08 전체의 승인 범위는 유지한다. 다음 작업은 08-1의 실제 system owner·WAL·복구다.
 독립 사전 검토에서 새 사용자 판단이 필요한 제품 방향 충돌은 발견하지 않았다.
 

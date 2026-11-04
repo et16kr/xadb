@@ -1,0 +1,10 @@
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 36.68s
+     Running unittests src/lib.rs (artifacts/dev3-08/target/debug/deps/engine-e4e141083d864921)
+
+running 2 tests
+test storage::semantic_row::structure::weights::tests::candidate::structural_candidate_rejects_previous_epoch_cut_and_finished_debt ... ok
+test storage::semantic_row::structure::weights::tests::candidate::structural_candidate_rejects_owned_orphans_and_wrong_canonical_selection ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 2243 filtered out; finished in 0.02s
+
