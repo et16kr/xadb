@@ -24,6 +24,8 @@ const CORE_AT: usize = 160 + 192 + 1536;
 const NATIVE_AT: usize = CORE_AT + 256;
 const REDO_AT: usize = NATIVE_AT + 5 * 128;
 
+pub(crate) mod weights;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[repr(u16)]
 pub(crate) enum Operation {

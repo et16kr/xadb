@@ -343,3 +343,50 @@ PageRef 인코딩 임시값과 실제 중첩 carrier를 포함한다. 이는 전
 
 신규8개 선택 시험과 보존한 변경 전 측정·compile 실패·source/ELF hash는
 [공급 증거](../evidence/dev3-tree-structure-20261104.md#pool-claim-metadata)에 귀속한다.
+
+<a id="actual-undo-weights"></a>
+## 현재 Row profile의 실제 Undo 가중치
+
+분할 입력의 숫자 가중치를 원 cut의 Row/Job/Undo로 유도한다. 순수 local observer
+`semantic_row::structure::weights::derive`의 입력은 frame cut, table handle/anchor/schema,
+선택 leaf expectation/image, 원64 Job cells, decoded allocator와 immutable Undo image
+callback이다. schema의 실제 Catalog 귀속·원 source 안정성·전체 Status/ATT/commit frontier는
+상위 canonical owner 의무다. 이 결과 자체로 설치 권한을 만들지 않는다.
+
+현재 profile은 inline≤2048, RowId당 root1개와 Missing 또는 committed RowValue before다.
+Committed 행은 Inline·undo=None, Transaction 행은 정확한 Retained Row Job과
+actor/logical mutation/UndoRef/현재 XRW1 projection을 결합한다. INSERT·UPDATE는 Inline,
+DELETE는 Deleted이며 실제 C/C'와 Job 수치를 비교한다. pair[0]은 anchor와 같아야 하고
+pair[1]은 이동 전 hint일 수 있어 현재 leaf와 같을 필요가 없다.
+
+전역 RootReserved를 거절한다. predecessor 선택에 필요한 root의 Undo sequence·물리 U
+주소(incarnation이 달라도 같은 주소)·RowId 중복과 같은 actor의 scope/mutation 충돌을
+먼저 거절한다. 기존 nearest predecessor와 h bit, 실제 transaction edge를 대조한다.
+이 제한 검사는 전체 Root3/terminal/ATT census를 대체하지 않는다. 기존 전체 Job census의
+same-object pair 전체 동일성은 이동한 hint를 허용하도록 실제 SMO 연결 때 따로 바꿔야 한다.
+
+선택 U는 allocator의 owner3/generation1/Undo·정확 incarnation에 속해야 한다. leaf와
+allocator·U의 pageLSN은 cut 이하, leaf·U는 해당 Job.last_step 이상이다. 기존
+`cells::check_live`는 DELETE/UPDATE의 outline까지만 검산하므로 반드시 같은 schema의
+typed Undo decode와 live_before도 수행한다. 실제 Live·RowValue·Committed stamp·old
+logical·Inline payload와 previous-version Never를 확인한다. own/repeated/version-chain과
+overflow의 일반화는08-3/08-4에서 연결한다.
+
+행별 weight는 다음 실제 비용의 최대다.
+
+- 현재 행: XRW1 bytes 길이+16(tree prefix/key12와 slot4).
+- Missing 복원:0.
+- Inline RowValue 복원: 실제 Undo payload 길이+184. payload 길이+180을 Job C와 대조한다.
+
+각 weight≤8094, 합≤16188을 검산하고 caller output의 성공 prefix만 반환한다. 출력 workspace
+capacity 부족은 callback 전에 거절한다. 다른 오류는 부분 prefix를 남길 수 있으며 성공 결과 없이
+소비하면 안 된다. 선택 leaf 밖 Retained 행의 존재, 전체 tree/allocator-owned 차이와
+전체 incoming/소유 관계는 후속 canonical observer가 검산한다. 현재 입력 범위의 최대
+inline 행 비용은2232이므로 이 observer 시험만으로 개별8094 최대 행을 인수하지 않는다.
+
+독립 reviewer의 사전 D2에서 typed Undo와 current projection, predecessor의 유일성,
+same-cut LSN/allocator, historical hint, 오류 출력과 권한 범위를 지적받아 반영했다.
+새 fixture는 기존 독립 D/U literal의 native after Row/Job/U만 입력으로 추출한다.
+기대 비용은 literal before/after Row cell 길이에서 별도로 계산하며 Job C나 제품 U
+decoder로 만들지 않는다. 기존 transition suite는 실행하지 않는다. 실행·D1 결과와 전체
+SMO의 실제 source census/F05는 각각 원 증거와 후속 효과 인수에 귀속한다.

@@ -183,6 +183,39 @@ engine all-targets/all-features Clippy-r0도1분22초에 PASS했다. r1 이후 �
 변경하지 않았다. 독립 reviewer가 실제 source와 원 로그·hash 및 계약 경계를 확인해
 D2/D1 ACCEPT·필수0으로 판정했다([검토 기록](../../module-gate/evidence/dev3-08-claim/review.md)).
 
+<a id="actual-undo-weights"></a>
+### 현재 profile의 실제 Undo 가중치
+
+`b29505e6` 뒤 [가중치 계약](../contracts/dev3-tree-smo.md#actual-undo-weights)에 따라
+선택 leaf의 Row/Job과 실제 allocator-owned U를 결합하는 순수 관찰자를 추가했다.
+기존 cells helper8개의 body는 그대로 두고 같은 semantic_row 안에서만 재사용한다.
+current projection·nearest predecessor·typed before를 검산하고 현재 비용과 실제 복원
+비용의 최대를 계산한다. canonical source 안정성·전체 census·설치 권한은 제공하지 않는다.
+
+[원 로그·source/ELF hash](../../module-gate/evidence/dev3-08-weights/)를 보존한다.
+기존 독립 D/U literal의 native Row/Job/U after만 입력으로 추출하고, 기대 비용은 literal
+before/after Row cell 길이에서 별도로 계산했다. 기존 transition 시험은 실행하지 않았다.
+r0 신규6개 중5 PASS·1 FAIL(build1분41초·runtime0.01초·기존2,228개 filtered)이다.
+실패는 용량 경계 fixture의 canonical 값 overhead를1B 크게 계산해 제품 함수 호출 전에
+발생했다. 이를 고치고 typed Undo 전용 반례·새 missing-H/LSN 사례를 보강한 r1은 변경3개만
+실행해3 PASS(build35.83초·runtime0.01초·2,232개 filtered)다.
+
+독립 검토에서 missing-H 반례가 앞선 unmatched Transaction 행에서 먼저 거절되는 점과
+wrong-H로 적은 mutation이 실제 previous-version edge를 바꾼 점을 발견했다. missing-H는
+앞선 row9를 제거하고 callback `[11]`을 확인하도록 고쳤으며 실제 H 주소 offset128의
+mutant를 추가했다. r2는 이 변경2개만 실행해2 PASS(build25.30초·runtime0.01초·2,233개
+filtered)다. 고유 시험7개이며 원 source별 FAIL/PASS를 최종 source의 전수 실행으로 바꾸지 않는다.
+
+Clippy-r0의 nonminimal_bool 지적은 `!is_some_and(a == b)`를 `is_none_or(a != b)`로
+바꿨다. reviewer가 동등성을 확인했고 무변경 완료 사례를 반복하지 않았다. 원 r0/r1/r2
+source와 ELF hash를 구분한다. engine all-targets/all-features Clippy-r1은1분18초에 PASS다. 독립 reviewer `/root/dev3_08_review`는 실제 source·계약·
+원 로그 및 보강 반례를 확인해 한정 D2/D1 ACCEPT·필수0으로 판정했다.
+
+실제 current-profile 최대 행 비용은2,232B이고 leaf weighted 경계16,188/16,189를 시험했다.
+이는 generic8,094B 행·overflow·own/repeated 변경의 인수가 아니다. schema의 Catalog 귀속,
+전체 Root/terminal/ATT·Status·incoming census, off-leaf retained 행, allocator-owned tree
+집합 비교, live/replay 및 실제 source census/F05는 후속 canonical owner에 남는다.
+
 08 전체의 승인 범위는 유지한다. 다음 작업은 08-1의 실제 system owner·WAL·복구다.
 독립 사전 검토에서 새 사용자 판단이 필요한 제품 방향 충돌은 발견하지 않았다.
 

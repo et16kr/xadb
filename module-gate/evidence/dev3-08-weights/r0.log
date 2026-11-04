@@ -1,0 +1,49 @@
+   Compiling version_check v0.9.5
+   Compiling typenum v1.20.1
+   Compiling autocfg v1.5.1
+   Compiling cfg_aliases v0.2.2
+   Compiling libc v0.2.191
+   Compiling generic-array v0.14.7
+   Compiling memoffset v0.9.1
+   Compiling cfg-if v1.0.5
+   Compiling nix v0.30.1
+   Compiling cpufeatures v0.2.17
+   Compiling bitflags v2.13.2
+   Compiling block-buffer v0.10.4
+   Compiling crypto-common v0.1.7
+   Compiling digest v0.10.7
+   Compiling sha2 v0.10.9
+   Compiling xadb-foundation v0.1.0 (/workspace/xadb/crates/foundation)
+   Compiling xadb-platform v0.1.0 (/workspace/xadb/crates/platform)
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 41s
+     Running unittests src/lib.rs (artifacts/dev3-08/target/debug/deps/engine-e4e141083d864921)
+
+running 6 tests
+
+thread 'storage::semantic_row::structure::weights::tests::structural_weights_enforce_actual_plus_undo_capacity_at_exact_boundary' (15193) panicked at crates/engine/src/storage/semantic_row/structure/weights/tests.rs:552:13:
+assertion `left == right` failed
+  left: 2047
+ right: 2048
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test storage::semantic_row::structure::weights::tests::structural_weights_enforce_actual_plus_undo_capacity_at_exact_boundary ... FAILED
+test storage::semantic_row::structure::weights::tests::structural_weights_check_capacity_cut_allocation_and_callback_error ... ok
+STRUCTURAL_WEIGHTS ["D-524"] weights=[203] actual=184 restorable=203
+STRUCTURAL_WEIGHTS ["D-524", "D-526"] weights=[203, 198] actual=368 restorable=401
+test storage::semantic_row::structure::weights::tests::structural_weights_reject_current_version_projection_and_committed_tombstone ... ok
+STRUCTURAL_WEIGHTS ["U-558"] weights=[228] actual=228 restorable=228
+test storage::semantic_row::structure::weights::tests::structural_weights_allow_historical_leaf_hint_but_reject_reserved_and_aliases ... ok
+STRUCTURAL_WEIGHTS ["U-558", "U-560"] weights=[228, 208] actual=426 restorable=436
+STRUCTURAL_WEIGHTS ["U-558", "U-565"] weights=[228, 210] actual=438 restorable=438
+STRUCTURAL_WEIGHTS ["U-562"] weights=[208] actual=208 restorable=208
+test storage::semantic_row::structure::weights::tests::structural_weights_use_real_delete_update_and_missing_before_cells ... ok
+test storage::semantic_row::structure::weights::tests::structural_weights_reject_real_undo_identity_edge_and_typed_before_mutations ... ok
+
+failures:
+
+failures:
+    storage::semantic_row::structure::weights::tests::structural_weights_enforce_actual_plus_undo_capacity_at_exact_boundary
+
+test result: FAILED. 5 passed; 1 failed; 0 ignored; 0 measured; 2228 filtered out; finished in 0.01s
+
+error: test failed, to rerun pass `-p xadb-engine --lib`

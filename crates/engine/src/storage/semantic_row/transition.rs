@@ -35,7 +35,7 @@ use crate::storage::{
 };
 use foundation::identity::{ObjectHandle, RowId};
 
-mod cells;
+pub(super) mod cells;
 mod frame;
 mod graph;
 mod prepare;

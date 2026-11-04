@@ -155,7 +155,7 @@ pub(super) fn undo_before(
 /// One-slot Undo page before image whose one cell is the last `len` bytes of
 /// the cell area: 432 is `INITIAL_UNDO_CELL`, a Live delete U is `432+L`
 /// (dev3-row-delete.md#delete-undo).
-pub(super) fn undo_cell(
+pub(in crate::storage::semantic_row) fn undo_cell(
     bytes: &[u8; PAGE_BYTES],
     namespace: Namespace,
     page: PageRef,
@@ -179,7 +179,7 @@ pub(super) fn undo_cell(
 /// The U cell of a Retained root: 432 for INSERT, `432+(C-180)` for DELETE
 /// and UPDATE, whose U holds the old row's value (dev3-row-update.md
 /// #update-undo).
-pub(super) fn live_undo_bytes(job: JobView<'_>) -> Result<usize> {
+pub(in crate::storage::semantic_row) fn live_undo_bytes(job: JobView<'_>) -> Result<usize> {
     Ok(match job.effect() {
         RowEffect::Insert => UNDO_RECORD_BYTES,
         RowEffect::Delete | RowEffect::Update => {
@@ -190,7 +190,7 @@ pub(super) fn live_undo_bytes(job: JobView<'_>) -> Result<usize> {
         }
     })
 }
-pub(super) fn page_lsn(bytes: &[u8; PAGE_BYTES]) -> u64 {
+pub(in crate::storage::semantic_row) fn page_lsn(bytes: &[u8; PAGE_BYTES]) -> u64 {
     u64::from_le_bytes(bytes[64..72].try_into().expect("page LSN"))
 }
 
@@ -272,7 +272,7 @@ pub(super) fn first_free(
 }
 
 /// Nearest older Retained root of the same actor (the census H).
-pub(super) fn predecessor<'a>(
+pub(in crate::storage::semantic_row) fn predecessor<'a>(
     jobs: JobCells<'a>,
     namespace: Namespace,
     actor: TxnRef,
@@ -291,7 +291,7 @@ pub(super) fn predecessor<'a>(
     }
     Ok(previous)
 }
-pub(super) fn link(job: JobView<'_>) -> Result<UndoLink> {
+pub(in crate::storage::semantic_row) fn link(job: JobView<'_>) -> Result<UndoLink> {
     Ok(UndoLink {
         reference: job.undo().ok_or(Error::IdentityMismatch)?,
         sequence: job.undo_sequence(),
@@ -310,7 +310,7 @@ pub(super) fn row_target(table: ObjectHandle, row: RowId) -> UndoTargetView<'sta
 }
 
 /// XRP1 projection of one Row presence (consumers.md row logical projection).
-pub(super) fn projection(
+pub(in crate::storage::semantic_row) fn projection(
     table: ObjectHandle,
     row: RowId,
     value: Option<&[u8]>,
@@ -378,7 +378,7 @@ pub(super) fn encode_material(
     Ok(())
 }
 /// The Undo expectation of a Row root's U: its reference and Row target.
-pub(super) fn expectation(
+pub(in crate::storage::semantic_row) fn expectation(
     namespace: Namespace,
     job: JobView<'_>,
 ) -> Result<UndoRecordExpectation<'static>> {
@@ -407,7 +407,7 @@ pub(super) fn check_material(
 /// its two incoming: INSERT's exact Missing material, or a delete or update
 /// U's outline through entry (b) (dev3-row-delete.md#previous-proof,
 /// dev3-row-update.md#previous-proof).
-pub(super) fn check_live(
+pub(in crate::storage::semantic_row) fn check_live(
     namespace: Namespace,
     job: JobView<'_>,
     edge: UndoEdge,
