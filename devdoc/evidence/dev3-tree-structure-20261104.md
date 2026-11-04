@@ -431,3 +431,39 @@ peak64,016/64,024, metadata187,024/187,032, whole252,560/252,568B도 원 한도 
 claim/stage/install/durability 수명, empty-leaf unlink·unary repair·root shrink·retirement와
 fault/F05는 후속 필수다. 08-2 cursor·08-3 overflow·08-4 반복/own write는 별도 일정이며,
 이번 관측 단위에는 일정 적립을 하지 않는다.
+
+<a id="split-source-bound"></a>
+### 분할 후보와 frame의 임시 공간
+
+`4d96672f` 뒤 [분할 source 계약](../contracts/dev3-tree-smo.md#split-source-bound)을 구현했다.
+범용 MAX_PAGE_SLOTS 대신 현재 Row 최소 record168B+tree prefix/key12B+slot4B에서
+leaf weight87을 계산하고, internal separator40B의404개에 metadata/삽입 여유를 더한
+reference406을 사용한다. 전역 page 형식·지원 payload·원 recovery/F05 cap은 바꾸지 않았다.
+
+독립 입력의 nullable85행은 분할 전후 bytes가 모두 같고, tombstone87개는 page에 들어가며
+88개는 넘친다. generic tree에 들어가는 untyped88cell은 후보에서 거절되고 output은 보존된다.
+부모403→404separator 삽입은 성공하고 기존404→405 거절도 유지된다. 이 밀도 입력은 local
+candidate/형식 검증이며 정상 전체 actor history의 수락으로 확대하지 않는다.
+
+원 [source·입력·ELF hash와 로그](../../module-gate/evidence/dev3-08-split-source/)를 보존한다.
+r0는 fresh build117초 뒤 신규 density4/source1과 직접 영향받는 기존 후보/frame5, 총10개
+PASS(0.11초)다. 첫 독립 검토에서 source 시험의 Undo wrapper/SHA와 parser/emitter 계산이
+부족함을 지적했다. canonical432·material/outline wrapper, codec과 동시 생존하는 SHA1536을
+명시한 뒤 r1은 변경/new source시험2개만 PASS(build31.47초)했다. 완료된 기능9개나
+wire/weights/bank/Base4 suite는 반복하지 않았다. Clippy r0의 동치 const 표현과 test-only
+import 지적2개도 원 FAIL을 보존했다. 최종 lint·독립 검토는 같은 디렉터리 review에 결속한다.
+
+| source 단계 | 독립 inventory / 제품 상한(B) |
+| --- | --- |
+| candidate prepare retained values | 26,312 / 31,776 |
+| after-audit와 nested traversal/weights | 15,749 / 19,436 |
+| typed weights와 Undo wrappers | 13,629 / 15,820 |
+| parent 편집 | 10,877 / 16,793 |
+| Catalog/anchor 읽기 | 6,604 / 9,148 |
+| frame parser | 11,999 / 17,495 |
+
+candidate peak는51,212B, frame은 retained LayoutView 등을 포함해57,420B다. codec helper의
+검증된 typed bound와 private traversal carrier는 재사용하며, 하위 코드 전체를 이번에
+독립 측정했다고 주장하지 않는다. 이 수치는 source value inventory로 compiler stack/RSS가
+아니며 before/after·WAL loan 및 실제 caller capture는 다음 canonical/live 연결에서 더한다.
+scope4 replay·INIT mint·원 pool SMO와 retirement/fault/F05는 계속08-1의 필수 잔여다.

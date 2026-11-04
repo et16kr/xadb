@@ -212,6 +212,22 @@
         "crates/engine/src/storage/semantic_row/structure/candidate.rs": "5f9023eb57a80cdce666048bdfe6b1adc3951232"
       },
       "log": "module-gate/evidence/dev3-08-bank/review.md (sha256 f0f76ca9ea646d2f9c41aade4ef6c019587d94d4e46ecc3c1b621131c287ad7a)"
+    },
+    {
+      "id": "dev3-08-split-source-current-20261104-dev3-08-candidate",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/semantic_row/structure/candidate.rs": "30518f6dae30d20f024ef42e8b29a60d7dd34fb3",
+        "crates/engine/src/storage/semantic_row/structure/weights/candidate_tests.rs": "fc0f7c637d6212d45f48387482b49bac89bf7323"
+      },
+      "log": "module-gate/evidence/dev3-08-split-source/review.md (sha256 00fa0006f3ebfa649e91e6bbe0990b97610e021b19ec4cfd345c71f578a54b4a)"
     }
   ]
 }

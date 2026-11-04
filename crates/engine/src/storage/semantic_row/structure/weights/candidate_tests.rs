@@ -1,6 +1,8 @@
 //! New five-image candidate tests using the parent's independent literal cells.
 //! These inputs prove local table structure/weights, not a complete actor bank.
 use super::*;
+#[path = "candidate_density_tests.rs"]
+mod density;
 #[path = "frame_tests.rs"]
 mod frame;
 use crate::{

@@ -319,3 +319,85 @@ pub(crate) fn observe<'a>(
     )?;
     Ok(Observation::from(&candidate))
 }
+
+/// Source-value bound of exact scope4 parsing. The five borrowed native/redo
+/// records are scanned one at a time; INIT page/hash codecs own no page copy.
+fn layout_source_bytes() -> usize {
+    use std::mem::size_of;
+    let own = 3 * size_of::<super::LayoutView<'_>>()
+        + 3 * size_of::<Result<super::LayoutView<'_>>>()
+        + 2 * size_of::<super::CoreView<'_>>()
+        + 3 * size_of::<super::NativeView<'_>>()
+        + 3 * size_of::<wal_frame::RedoRecordView<'_>>()
+        + 3 * size_of::<wal_frame::FrameEnvelope<'_>>()
+        + 3 * size_of::<WalFrameHeader>()
+        + 3 * size_of::<RedoTarget>()
+        + 2 * size_of::<DescriptorSpec>()
+        + 2 * size_of::<std::result::Result<DescriptorSpec, obligation::ObligationError>>()
+        + 2 * size_of::<[RemainingBudget; 5]>()
+        + 3 * size_of::<(SystemWorkRef, SystemProgress, OwnerChain, InventoryClaim)>()
+        + 2048;
+    own + obligation::descriptor_source_bytes()
+        .max(crate::storage::semantic_catalog::page_read_codec_bytes() + 1536)
+        .max(1536 + std::mem::size_of::<foundation::codec::ContentHasher>())
+}
+
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct SourceCensus {
+    pub(crate) outer: usize,
+    pub(crate) layout: usize,
+    pub(crate) candidate: usize,
+    pub(crate) body: usize,
+    pub(crate) peak: usize,
+}
+/// The caller separately charges its before arena, after5, WAL frame and
+/// callback captures. In observe the decoded LayoutView survives prepare.
+pub(crate) fn source_census() -> SourceCensus {
+    use std::mem::size_of;
+    let outer = size_of::<(&Inputs<'_>, &[u8], &mut [[u8; PAGE_BYTES]; 5])>()
+        + 2 * size_of::<Candidate<'_>>()
+        + 2 * size_of::<Result<Candidate<'_>>>()
+        + 2 * size_of::<super::LayoutView<'_>>()
+        + 2 * size_of::<Result<super::LayoutView<'_>>>()
+        + 2 * size_of::<Observation>()
+        + 2 * size_of::<Result<Observation>>()
+        + 2 * size_of::<Cursor<'_>>()
+        + 512;
+    let descriptor = 2 * size_of::<DescriptorSpec>()
+        + 2 * size_of::<std::result::Result<DescriptorSpec, obligation::ObligationError>>()
+        + 2 * size_of::<SystemProgress>()
+        + 2 * size_of::<SystemWorkRef>()
+        + 512
+        + obligation::descriptor_source_bytes();
+    let redo = 2 * size_of::<wal_frame::RedoRecordView<'_>>()
+        + 3 * size_of::<RedoTarget>()
+        + 2 * size_of::<WalFrameHeader>()
+        + 1024
+        + crate::storage::semantic_catalog::page_read_codec_bytes()
+        + 1536;
+    let body = size_of::<[u8; 1536]>()
+        + size_of::<[u8; 192]>()
+        + size_of::<[u8; 128]>()
+        + size_of::<[(u64, u64, usize); 5]>()
+        + 2 * size_of::<[usize; 5]>()
+        + 3 * size_of::<PageHeader>()
+        + 2 * size_of::<Cursor<'_>>()
+        + 2 * size_of::<Observation>()
+        + 1024
+        + descriptor.max(redo);
+    let (layout, candidate) = (layout_source_bytes(), candidate::source_bytes());
+    SourceCensus {
+        outer,
+        layout,
+        candidate,
+        body,
+        peak: outer + layout.max(candidate).max(body),
+    }
+}
+pub(crate) fn source_bytes() -> usize {
+    source_census().peak
+}
+
+#[cfg(test)]
+#[path = "frame/source_tests.rs"]
+mod source_tests;

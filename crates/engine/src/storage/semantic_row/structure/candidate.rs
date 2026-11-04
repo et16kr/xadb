@@ -11,16 +11,13 @@ use crate::{
         catalog_record::{self, CatalogDefinitionView, CatalogExpectation},
         control::Profile,
         obligation,
-        page::{
-            self, FileId, MAX_PAGE_SLOTS, PAGE_BYTES, PageHeader, PageIdentity, PageKind, PageLsn,
-            PageRef,
-        },
+        page::{self, FileId, PAGE_BYTES, PageHeader, PageIdentity, PageKind, PageLsn, PageRef},
         retention_obligation::profile_reference,
         retention_page::{
             JOB_COUNT,
             row::{self, JobCells, JobScope, JobState},
         },
-        row_record::RowSchemaInput,
+        row_record::{ROW_HEADER_BYTES, RowSchemaInput},
         tree_page::{
             self, EntryPayload, TreeExpectation,
             structure::{InternalEdit, InternalEditPlan, StructureError},
@@ -32,6 +29,23 @@ use foundation::{
     codec::{ContentHasher, content_digest},
     identity::{Generation, ObjectHandle, ObjectId},
 };
+
+// Typed Row cells need the record header, tree prefix/key12 and slot4.
+// Internal entries need prefix4/key8/PageRef24 and slot4. Include metadata
+// and one inserted parent entry; no global page/wire limit is changed.
+pub(super) const MAX_LEAF_ROWS: usize = tree_page::TREE_ENTRY_CAPACITY / (ROW_HEADER_BYTES + 16);
+pub(super) const ROW_REFS: usize = tree_page::TREE_ENTRY_CAPACITY / 40 + 2;
+const _: () = assert!(MAX_LEAF_ROWS < ROW_REFS);
+
+#[path = "candidate/source.rs"]
+mod source;
+pub(crate) use source::source_bytes;
+#[cfg(test)]
+use source::source_census;
+
+#[cfg(test)]
+#[path = "candidate/source_tests.rs"]
+mod source_tests;
 
 pub(crate) struct Inputs<'a> {
     pub(crate) profile: Profile,
@@ -268,7 +282,7 @@ fn audit<'a>(
         }
     }
     let mut hash = ContentHasher::new();
-    let mut scratch = [0usize; MAX_PAGE_SLOTS];
+    let mut scratch = [0usize; MAX_LEAF_ROWS];
     for expected in visited[..count].iter().flatten().copied() {
         if expected.level != 0 {
             continue;
@@ -437,8 +451,8 @@ pub(crate) fn prepare<'a>(
     };
     let left_before = image(source.identity.page)?;
     let left = tree_page::decode_tree_page(left_before, source)?;
-    let mut refs = [&[][..]; MAX_PAGE_SLOTS];
-    let mut weights = [0usize; MAX_PAGE_SLOTS];
+    let mut refs = [&[][..]; ROW_REFS];
+    let mut weights = [0usize; MAX_LEAF_ROWS];
     let split = if source.level == 0 {
         weights::derive(
             &weights::Inputs {
@@ -461,7 +475,7 @@ pub(crate) fn prepare<'a>(
     let boundary = split.boundary();
     for right in [false, true] {
         let mut metadata = [0; tree_page::TREE_METADATA_BYTES];
-        let mut side_refs = [&[][..]; MAX_PAGE_SLOTS];
+        let mut side_refs = [&[][..]; ROW_REFS];
         split.encode_side(
             right,
             PageLsn(lsn),
@@ -681,7 +695,7 @@ pub(crate) fn encode_parent(
     let cell =
         tree_page::encode_internal_cell(PageKind::RowInternal, 0, separator, right, &mut cell)?;
     let mut metadata = [0; tree_page::TREE_METADATA_BYTES];
-    let mut refs = [&[][..]; MAX_PAGE_SLOTS];
+    let mut refs = [&[][..]; ROW_REFS];
     let plan = structure(view.prepare_internal_edit(
         InternalEdit::Insert { left, cell },
         &mut metadata,

@@ -1,0 +1,197 @@
+{
+  "schema": "XADB_MODULE_GATE_RECORD_V1",
+  "change": "DEV3 08-1: bound Row split scratch by typed cell capacity and account nested candidate/frame source values",
+  "rust_tests": [
+    {
+      "paths": [
+        "crates/engine/src/storage/semantic_row/structure/candidate.rs",
+        "crates/engine/src/storage/semantic_row/structure/candidate/source.rs",
+        "crates/engine/src/storage/semantic_row/structure/candidate/source_tests.rs",
+        "crates/engine/src/storage/semantic_row/structure/frame.rs",
+        "crates/engine/src/storage/semantic_row/structure/frame/source_tests.rs",
+        "crates/engine/src/storage/semantic_row/structure/weights/candidate_density_tests.rs",
+        "crates/engine/src/storage/semantic_row/structure/weights/candidate_tests.rs",
+        "crates/engine/src/storage/semantic_row/transition.rs"
+      ],
+      "reason": "New density4 and independently measured source2; directly affected root/child leaf/internal candidate, full parent rejection and canonical four-shape frame. Runtime9 passed r0; source2 passed r1 after review. No unchanged wire/weights/bank/Base4 suite repeated. Only test cfg changed for existing typed Undo bound; no encoder semantics changed.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/candidate/source_tests.rs",
+          "case": "storage::semantic_row::structure::candidate::source_tests::structural_split_source_inventory_includes_retained_after_audit_and_frame_view",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/candidate_density_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::density::structural_candidate_dense_nullable_rows_fit_reduced_scratch_and_preserve_all_bytes",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/scope3/profile3.bin",
+            "tests/fixtures/module-row-format/transition-delete/blobs.bin",
+            "tests/fixtures/module-row-format/transition-delete/index.tsv",
+            "tests/fixtures/module-row-format/transition-update/blobs.bin",
+            "tests/fixtures/module-row-format/transition-update/index.tsv"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/candidate_density_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::density::structural_candidate_tombstone_ceiling_includes_shortest_supported_record",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/scope3/profile3.bin",
+            "tests/fixtures/module-row-format/transition-delete/blobs.bin",
+            "tests/fixtures/module-row-format/transition-delete/index.tsv",
+            "tests/fixtures/module-row-format/transition-update/blobs.bin",
+            "tests/fixtures/module-row-format/transition-update/index.tsv"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/candidate_density_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::density::structural_candidate_overdense_untyped_leaf_rejects_without_output",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/scope3/profile3.bin",
+            "tests/fixtures/module-row-format/transition-delete/blobs.bin",
+            "tests/fixtures/module-row-format/transition-delete/index.tsv",
+            "tests/fixtures/module-row-format/transition-update/blobs.bin",
+            "tests/fixtures/module-row-format/transition-update/index.tsv"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/candidate_density_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::density::structural_candidate_local_parent_last_separator_fits_reduced_scratch",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/scope3/profile3.bin",
+            "tests/fixtures/module-row-format/transition-delete/blobs.bin",
+            "tests/fixtures/module-row-format/transition-delete/index.tsv",
+            "tests/fixtures/module-row-format/transition-update/blobs.bin",
+            "tests/fixtures/module-row-format/transition-update/index.tsv"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/candidate_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::structural_candidate_leaf_root_preserves_literal_rows_and_actual_undo_costs",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/scope3/profile3.bin",
+            "tests/fixtures/module-row-format/transition-delete/blobs.bin",
+            "tests/fixtures/module-row-format/transition-delete/index.tsv",
+            "tests/fixtures/module-row-format/transition-update/blobs.bin",
+            "tests/fixtures/module-row-format/transition-update/index.tsv"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/candidate_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::structural_candidate_child_leaf_revises_anchor_and_preserves_current_root",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/scope3/profile3.bin",
+            "tests/fixtures/module-row-format/transition-delete/blobs.bin",
+            "tests/fixtures/module-row-format/transition-delete/index.tsv",
+            "tests/fixtures/module-row-format/transition-update/blobs.bin",
+            "tests/fixtures/module-row-format/transition-update/index.tsv"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/candidate_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::structural_candidate_internal_root_and_child_promote_pivot_once",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/scope3/profile3.bin",
+            "tests/fixtures/module-row-format/transition-delete/blobs.bin",
+            "tests/fixtures/module-row-format/transition-delete/index.tsv",
+            "tests/fixtures/module-row-format/transition-update/blobs.bin",
+            "tests/fixtures/module-row-format/transition-update/index.tsv"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/candidate_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::structural_candidate_local_parent_capacity_rejects_before_output",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/scope3/profile3.bin",
+            "tests/fixtures/module-row-format/transition-delete/blobs.bin",
+            "tests/fixtures/module-row-format/transition-delete/index.tsv",
+            "tests/fixtures/module-row-format/transition-update/blobs.bin",
+            "tests/fixtures/module-row-format/transition-update/index.tsv"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/frame_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::frame::structural_frame_matches_independent_sections_for_all_four_splits",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/scope3/profile3.bin",
+            "tests/fixtures/module-row-format/transition-delete/blobs.bin",
+            "tests/fixtures/module-row-format/transition-delete/index.tsv",
+            "tests/fixtures/module-row-format/transition-update/blobs.bin",
+            "tests/fixtures/module-row-format/transition-update/index.tsv"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/frame/source_tests.rs",
+          "case": "storage::semantic_row::structure::frame::source_tests::structural_frame_source_inventory_covers_parser_and_emit_nesting",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        }
+      ]
+    }
+  ],
+  "reviews": [
+    {
+      "id": "dev3-08-split-source-d2-d1",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/semantic_row/structure/candidate.rs": "30518f6dae30d20f024ef42e8b29a60d7dd34fb3",
+        "crates/engine/src/storage/semantic_row/structure/candidate/source.rs": "f519e7968188a1a155671fe814cc0d779e590890",
+        "crates/engine/src/storage/semantic_row/structure/candidate/source_tests.rs": "a2fdcf6bc1b5203bd3393845d802a1dc9d401dc7",
+        "crates/engine/src/storage/semantic_row/structure/frame.rs": "850461bcfd63f1d57b67e1a9548cc5306a60909a",
+        "crates/engine/src/storage/semantic_row/structure/frame/source_tests.rs": "7ede690722629fd47419d7bf007f1a8fdcf56c07",
+        "crates/engine/src/storage/semantic_row/structure/weights/candidate_density_tests.rs": "8539c8b8ffd6fa8e948439198d84b696918b7e22",
+        "crates/engine/src/storage/semantic_row/structure/weights/candidate_tests.rs": "fc0f7c637d6212d45f48387482b49bac89bf7323",
+        "crates/engine/src/storage/semantic_row/structure/weights/frame_tests.rs": "414b869d23b76b173fbc5f3bae2c575b186bdf7d",
+        "crates/engine/src/storage/semantic_row/structure/weights/tests.rs": "e113f184c4f7c43b17a8e39bc79e2598ed89ab7e",
+        "crates/engine/src/storage/semantic_row/transition.rs": "aaabfa747ce61117d432acef5a19ef448d59efc6",
+        "devdoc/contracts/dev3-tree-smo.md": "57df51985e238539ec13d7e5b6ec1e2924d5b5bc",
+        "devdoc/evidence/dev3-tree-structure-20261104.md": "c91c6995bc5d268d5b46db9a21751b631e7205ba",
+        "devdoc/implementation/dev3-implementation.md": "bb1b6ec3e30d19cf5905ad6a0adf31fc1066dd3f",
+        "tests/fixtures/module-row-format/scope3/profile3.bin": "c713f45e89c706c3b4bc742e57e9ea8acd8b8537",
+        "tests/fixtures/module-row-format/transition-delete/blobs.bin": "8f47189af0de5c6d8523ebdcc34c06a8279cfd8a",
+        "tests/fixtures/module-row-format/transition-delete/index.tsv": "e3964f427f7bce03744c23930a01b02d50a2005f",
+        "tests/fixtures/module-row-format/transition-update/blobs.bin": "ba303c13e8016eeb7ca75d572fb3dbc1ab77ea5f",
+        "tests/fixtures/module-row-format/transition-update/index.tsv": "848b500aca95c7483ec3fba42c8cc7055b08fa5a"
+      },
+      "log": "module-gate/evidence/dev3-08-split-source/review.md (sha256 00fa0006f3ebfa649e91e6bbe0990b97610e021b19ec4cfd345c71f578a54b4a)"
+    }
+  ]
+}

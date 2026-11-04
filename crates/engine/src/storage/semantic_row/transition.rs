@@ -805,8 +805,7 @@ pub(crate) fn row_read_codec_bytes() -> usize {
     source::row_codec()
 }
 
-/// Row Missing-before's typed Undo decoder, without replay-owned workspace.
-#[cfg(test)]
+/// Typed Row Undo decoder, including RowValue before, without caller workspace.
 pub(crate) fn row_undo_read_codec_bytes() -> usize {
     source::undo_row_codec()
 }

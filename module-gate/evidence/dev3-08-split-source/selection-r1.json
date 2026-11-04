@@ -1,0 +1,7 @@
+{
+  "reason": "D1: explicit canonical432/material+outline wrappers, nested SHA, independent frame parser/emitter inventory. Only changed source census/new source test; prior functional9 are not repeated. Clippy equivalent const assertion and cfg(test) import fix.",
+  "tests": [
+    "structural_split_source_inventory_includes_retained_after_audit_and_frame_view",
+    "structural_frame_source_inventory_covers_parser_and_emit_nesting"
+  ]
+}

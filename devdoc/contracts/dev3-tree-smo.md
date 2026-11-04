@@ -430,12 +430,13 @@ unpruned이면 기존 Status/terminal 증명으로 처리하며 stamp를 무조�
 internal은40B entry이므로 정상 parent가16,188B를 채울 수 없다. parent 용량 경계는 분리된
 순수 편집 함수에서 검산하고 이 profile의 정상 whole-tree 분기 도달을 주장하지 않는다.
 
-이 구현의 page::MAX_PAGE_SLOTS는3,244다. 현재 refs/side_refs와 parent refs는 각각51,904B,
-weights/audit scratch는 각각25,952B다. 앞의 제안 소계16,208B/8,088B를 실제 구현의 측정·
-F05로 재사용하지 않는다. 후속 source census에서 실제 수명과 더 좁은 tree 한도 적용을
-검산한다. 현재 Candidate는 after를 borrow하지 않으므로 후속 frame emit/compare는 immutable
-output borrow 또는 저장한 결과와의 재검산을 결합해야 한다. 성공 후 caller가 바꾼 after에
-이전 성공 결과를 재사용하는 API로 연결하지 않는다.
+최초 후보 공급은 page::MAX_PAGE_SLOTS3,244를 사용해 refs/side_refs와 parent refs가
+각각51,904B, weights/audit scratch가 각각25,952B였다. 앞의 제안 소계16,208B/8,088B는
+당시 실제 구현의 측정·F05가 아니었다. 후속 [분할 source 검산](#split-source-bound)은
+현재 Row 형식에 맞춰 reference406·weight87로 한정하고 실제 중첩 수명을 합산했다.
+Candidate 자체는 after를 borrow하지 않지만 [scope4 생산·정본 비교](#scope4-producer)가
+같은 호출의 재계산과 immutable output borrow로 emitter 수명을 닫는다. 성공 후 caller가
+바꾼 after에 이전 성공 결과를 재사용하는 API는 공급하지 않는다.
 
 <a id="scope4-producer"></a>
 ## scope4 생산·정본 비교
@@ -594,3 +595,37 @@ Root/Status/Undo 변조를 구별한다. 다중 leaf에서도 Reserved/Releasing
 단일-leaf 합산식을 일반화한 같은 불변식이다. raw digest를 재계산한 것만으로 selected CURRENT/WAL
 역사 검증을 통과했다고 주장하지 않는다. 모든 새 nested audit/lookup와 실제 caller census를
 독립 계산하고 원 cap을 유지한다. scope4 replay·INIT mint·원 pool 설치는 그다음 연결이다.
+
+<a id="split-source-bound"></a>
+## Canonical split 호출의 임시 공간
+
+scope4 replay 연결 전에 후보·frame 재계산의 source 상한을 검산한다. 현재 범용
+MAX_PAGE_SLOTS는 임의 page cell의 상한이어서 Row SMO의 reference/weight 배열에 그대로
+쓰면 원 recovery 호출 한도를 넘는다. 전역 page 형식이나 cap은 바꾸지 않는다.
+
+현재 Row payload는 최소168B header이고 tree cell의 prefix/key12B와 slot4B를 더하면
+최소184B다(Deleted도 포함). 따라서 leaf당 최대 floor(16188/184)=87행이다.
+Internal cell은 prefix4B+RowId8B+PageRef24B+slot4B=40B로 최대404개 separator다.
+후보의 reference scratch는 두 형식 중 큰404에 metadata와 parent 삽입1개를 더한406개,
+leaf weight scratch는87개로 한정한다. 이 상한은 실제 decode 후 허용되는 현재 Row 형식의
+모든 입력을 포함한다. 지원하지 않는 payload나 과다한 raw cell 입력은 후보를 얻지 못하며
+scratch 부족을 수락으로 바꾸지 않는다. 부모가 가득 찬 정상 입력의 Capacity 거절과 출력
+보존도 그대로 검증한다. Row overflow/일반 schema 지원 범위를 넓히는 계약이 아니다.
+
+같은 호출에서 살아 있는 원 refs·side refs/parent refs, weights, allocator64·allocation cell,
+visited64, DFS16, 전후 table/view와 typed Undo·Row·Catalog codec 결과 및 frame 비교의 descriptor,
+core/native/redo 결과를 source census에 합산한다. 완료한 단계의 max와 중첩 caller의 sum을
+구분하고 callback capture도 호출자가 별도 가산한다. 반환 candidate와 after5는 권한이 아니며,
+after5는 기존 caller loan으로 세고 새 배열을 숨겨 할당하지 않는다. 이 계산은 실제 compiler
+stack/RSS 측정이 아니다. 원 recovery/F05 한도는 유지하며 실제 caller 연결은 다음 단계에서
+그 callable owner의 census로 다시 검산한다.
+
+선택 시험은 새 최대 밀도 leaf·parent404/삽입405 거절·source inventory와 이 배열 크기에
+직접 영향받는 기존 Root/Child leaf/internal 후보 및 canonical frame 비교로 한정한다.
+완료된 무변경 wire/weights/bank/Base4 suite는 반복하지 않는다.
+
+typed Undo의 INSERT 검산은 canonical432를 둔 check_material→encode_material과 실제
+encode/decode를 합한다. DELETE/UPDATE는 material·outline·metadata 반환을 유지하는
+check_outline chain을 별도로 센다. SHA1536은 해시를 호출하는 codec과 같은 branch에 더하며,
+완료된 별도 digest 단계와의 max만으로 중첩 공간을 대체하지 않는다. frame의 parser와
+emitter도 descriptor/redo/order/header 및 반환 carrier를 독립 inventory와 대조한다.
