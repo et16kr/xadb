@@ -343,7 +343,7 @@ fn own_undo() -> Option<crate::storage::undo_ref::UndoRef> {
     let leaf = leaf_d();
     let log = RefCell::new(Vec::new());
     let mut source = LiteralSource::new(&leaf, &log);
-    let Step::Ready(page) = source.page().unwrap() else {
+    let Step::Ready(page) = source.page(RowId::new(1).unwrap()).unwrap() else {
         unreachable!()
     };
     let candidate = page.capture(2).unwrap();

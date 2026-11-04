@@ -425,7 +425,26 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
             | Selected::RowRollback { .. }
             | Selected::RowAbort { .. }
             | Selected::RowRetire { .. } => {
-                self.recovery_row_pages(selected, &mut pages, &mut count)?;
+                // A Prune's RowLeaf: the recovered arena's route of its row,
+                // which a split since its Reserve may have moved out of the
+                // pair[1] leaf hint (dev3-tree-smo.md#current-leaf-consumers).
+                let leaf = match selected {
+                    Selected::RowRetire {
+                        ordinal,
+                        operation:
+                            RowOperation::Prune | RowOperation::DeletePrune | RowOperation::UpdatePrune,
+                    } => Some(
+                        super::super::create_pair::catalog_live::lifecycle::row::recovery_leaf(
+                            self.history.exclusive()?,
+                            self.inner.storage.profile(),
+                            self.control.ledger.jobs(),
+                            ordinal,
+                        )
+                        .map_err(|_| self.recovery_catalog_bad())?,
+                    ),
+                    _ => None,
+                };
+                self.recovery_row_pages(selected, leaf, &mut pages, &mut count)?;
                 return self.recovery_resident(&pages, count);
             }
         };
@@ -512,10 +531,12 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
     /// The recovered Row group's whole target set, by the same page rules
     /// as `prepare_row_recovery` and `row_rollback_control` (boundaries
     /// `#row-recovery-s6`): Allocation and Root, then the Job page, Status,
-    /// U, the table pair, the CatalogLeaf and H, as the operation takes them.
+    /// U, the table's current RowLeaf `leaf` (a Prune's) and anchor, the
+    /// CatalogLeaf and H, as the operation takes them.
     fn recovery_row_pages(
         &self,
         selected: Selected,
+        leaf: Option<crate::storage::page::PageRef>,
         pages: &mut [Option<usize>; 9],
         count: &mut usize,
     ) -> Result<()> {
@@ -559,7 +580,7 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
                 }
                 if prune {
                     let pair = job.pair().ok_or_else(bad)?;
-                    push(pair[1].page_no as usize)?;
+                    push(leaf.ok_or_else(bad)?.page_no as usize)?;
                     push(pair[0].page_no as usize)?;
                     push(8)?;
                     if let Some(h) = super::super::create_pair::catalog_live::lifecycle::row::recovery_predecessor(

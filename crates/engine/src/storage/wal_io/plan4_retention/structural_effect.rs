@@ -235,8 +235,8 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     pub(in crate::storage) fn test_structural_fault(&self, kind: u8) -> fault_support::Fault {
         fault_support::arm(kind)
     }
-    /// Private structural system operation. Initial integration refuses every
-    /// outstanding Job of this table until all current-leaf consumers land.
+    /// Private structural system operation. It refuses the table's
+    /// RootReserved Row root and Catalog debt (`split_row_admitted`).
     pub(in crate::storage) fn split_row(
         &mut self,
         owner: &mut Owner<'c, 's>,
@@ -309,17 +309,24 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         let storage = self.storage;
         let prepared = self.prepare_row_split(owner, table, target, private)?;
         // Same-cut canonical preparation proved the full tree and original
-        // Jobs. No Active/Retained/releasing target-table debt is admitted yet.
+        // Jobs, and its weights count each Retained root's restore bytes. The
+        // table's Row debt past its Forward (Retained, releasing, terminal)
+        // is admitted: every current-leaf consumer routes its row
+        // (dev3-tree-smo.md#current-leaf-consumers). A RootReserved Row root
+        // is refused, since its Forward writes the pair[1] leaf its Reserve
+        // found current, and so is any non-Free Catalog Job of the table,
+        // whose split-tree semantics are schedule 09/10's.
         for bytes in self.control.jobs() {
+            use crate::storage::retention_page::row::{JobScope, JobState};
             let job = crate::storage::retention_page::row::decode_job(
                 bytes,
                 storage.profile().spec().namespace,
             )
             .map_err(queue_error)?;
-            if job.state() != crate::storage::retention_page::row::JobState::Free
-                && job.object().is_some_and(|object| {
-                    object.object == table.object && object.generation == table.generation
-                })
+            if job.object().is_some_and(|object| {
+                object.object == table.object && object.generation == table.generation
+            }) && (job.state() == JobState::RootReserved
+                || job.scope() == Some(JobScope::Catalog) && job.state() != JobState::Free)
             {
                 return Err(unchanged(
                     RetentionPhase::Prepare,

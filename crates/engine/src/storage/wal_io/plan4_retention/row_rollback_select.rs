@@ -135,19 +135,29 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             self.catalog_preparation().catalog_status_request(status),
             RowSourceRole::Status,
         )?;
-        sources.queue(
-            storage,
-            request(
-                PageIdentity {
-                    database: allocator.identity.database,
-                    page: pair[1],
-                    owner: handle.object,
-                    owner_generation: handle.generation,
-                },
-                PageKind::RowLeaf,
-            ),
-            RowSourceRole::RowLeaf,
-        )?;
+        let mut cursor = Plan4ResidencyCursor::new();
+        let mut lanes = PreflightLanes::split(private);
+        if let Some(target) = self.make_resident(owner, &mut sources, &mut cursor, lanes.scratch)? {
+            return Ok(RollbackSelection::Flush(target));
+        }
+        // The head's row in the table's current RowLeaf, routed from the
+        // resident anchor (dev3-tree-smo.md#current-leaf-consumers): a split
+        // since its Reserve may have moved it from the pair[1] leaf hint.
+        let row = job.row_id().ok_or_else(bad)?;
+        let root = self.table_root(owner, table.tree())?;
+        let leaf = match self.route_row_leaf(
+            owner,
+            table.tree(),
+            root,
+            row,
+            &mut cursor,
+            sources.protected(),
+            lanes.scratch,
+        )? {
+            RowRoute::Leaf(leaf) => leaf,
+            RowRoute::Flush(target) => return Ok(RollbackSelection::Flush(target)),
+        };
+        sources.queue(storage, leaf, RowSourceRole::RowLeaf)?;
         sources.queue(
             storage,
             undo_request(allocator.identity, head.page()),
@@ -161,8 +171,6 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 RowSourceRole::PreviousUndo,
             )?;
         }
-        let mut cursor = Plan4ResidencyCursor::new();
-        let mut lanes = PreflightLanes::split(private);
         if let Some(target) = self.make_resident(owner, &mut sources, &mut cursor, lanes.scratch)? {
             return Ok(RollbackSelection::Flush(target));
         }
@@ -176,7 +184,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         let issued = RowIssued {
             actor,
             root_job,
-            row: job.row_id().ok_or_else(bad)?,
+            row,
             undo: head,
             reserve_lsn: self.row_rollback_chain_lsn(actor)?,
         };
@@ -312,6 +320,13 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 &requests,
             )?;
             self.check_table_record(lanes.schema, catalog.identity, table)?;
+            // The routed RowLeaf is the arena's route of the head's row.
+            let leaf = targets.at(RowSourceRole::RowLeaf).ok_or_else(bad)?;
+            if self.arena_leaf(arena, table.tree(), issued.row)?
+                != targets.before()[leaf].identity.page
+            {
+                return Err(bad());
+            }
             let slot = self.control.slot(issued.actor).ok_or_else(bad)?;
             let aging = self.control.row(control::AGING_SLOT);
             DraftSource {
@@ -427,6 +442,11 @@ pub(in super::super::super::super) fn source_bytes<W: WriterNamespace>() -> usiz
         + size_of::<JobSlotRef>()
         + size_of::<RowIssued>()
         + size_of::<DraftIssued>()
+        // The head's row, the anchor root and the routed leaf.
+        + size_of::<RowId>()
+        + size_of::<anchor::AnchorRoot>()
+        + size_of::<TargetRequest>()
+        + 2 * size_of::<Result<RowRoute>>()
         + 2 * size_of::<Result<RollbackSelection>>()
         + 2 * size_of::<Result<[u8; 32]>>();
     let scope = size_of::<history::runtime::ReplayScope<'_, '_, '_, '_>>()
@@ -448,6 +468,12 @@ pub(in super::super::super::super) fn source_bytes<W: WriterNamespace>() -> usiz
     .max(
         size_of::<allocation_page::AllocationPage<'_>>()
             + 2 * size_of::<Result<allocation_page::AllocationPage<'_>>>(),
+    )
+    .max(
+        history::row::current_leaf_bytes()
+            + size_of::<(&[u8], RowTree, RowId)>()
+            + 2 * size_of::<Result<PageRef>>()
+            + size_of::<usize>(),
     );
     let read = read_frame + targets::call_bytes::<10>().max(size_of::<Read<'_>>() + callees);
     let replay =
@@ -457,8 +483,11 @@ pub(in super::super::super::super) fn source_bytes<W: WriterNamespace>() -> usiz
         + 2 * size_of::<Result<RetentionResidencyStep>>()
         + 2 * size_of::<Result<Option<Plan4Target>>>()
         + super::super::super::super::lookup_load::source_bytes::<W>();
+    // The current RowLeaf of the head's row (dev3-tree-smo.md#current-leaf-consumers),
+    // and its arena check beside the read's other callees.
+    let route = super::job_route_source_bytes::<W>();
     frame
-        + replay.max(load).max(
+        + replay.max(load).max(route).max(
             crate::storage::obligation::descriptor_source_bytes()
                 + 2 * size_of::<crate::storage::obligation::DescriptorSpec>()
                 + job3::source_bytes(),

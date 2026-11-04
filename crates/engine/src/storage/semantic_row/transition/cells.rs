@@ -500,10 +500,16 @@ pub(super) fn delete_material<'a>(
 /// by dev3-row-update.md#leaf-reservation): the bytes that the Retained roots
 /// of `table`, of every actor, must be able to restore without a split, each
 /// its `JobView::restore_bytes` (DELETE `C-180`, UPDATE `max(0, C-C')`).
+/// D of one RowLeaf: the restore bytes of `table`'s Retained roots whose RowId
+/// is in `leaf` (dev3-tree-smo.md#current-leaf-consumers). A Retained INSERT
+/// root restores nothing, and a Retained DELETE or UPDATE root's row (its
+/// tombstone or new row) stays in its current leaf, so a single-leaf tree
+/// keeps the whole-table sum.
 pub(super) fn leaf_reservation(
     jobs: &[[u8; JOB_BYTES]; JOB_COUNT],
     namespace: Namespace,
     table: ObjectHandle,
+    leaf: &crate::storage::tree_page::TreePageView<'_>,
 ) -> Result<usize> {
     let mut total = 0usize;
     for cell in jobs {
@@ -512,6 +518,14 @@ pub(super) fn leaf_reservation(
             && job.object().is_some_and(|object| {
                 object.object == table.object && object.generation == table.generation
             })
+            && leaf
+                .lower_bound(
+                    &job.row_id()
+                        .ok_or(Error::IdentityMismatch)?
+                        .get()
+                        .to_be_bytes(),
+                )?
+                .equal
         {
             total = total
                 .checked_add(job.restore_bytes())

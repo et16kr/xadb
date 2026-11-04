@@ -88,5 +88,71 @@ pub(crate) fn find_leaf_in_images<'images>(
     Err(TreeError::Corrupt)
 }
 
+/// The inherited key range of one Row path step: the separators of the
+/// parents above it, copied out of their pages (Row keys are 8 bytes).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub(crate) struct RowRouteBounds {
+    pub(crate) lower: Option<[u8; 8]>,
+    pub(crate) upper: Option<[u8; 8]>,
+}
+
+/// One step of a Row route read page by page from a live pool
+/// (dev3-tree-smo.md#current-leaf-consumers): decode `bytes` as `expected`,
+/// check that its keys lie in `bounds`, and for a RowInternal page return the
+/// child that routes `key` with `bounds` narrowed to that child. A RowLeaf
+/// returns None. This is `find_leaf_in_images`' loop body for a caller that
+/// holds each page only under its own brief read; the caller bounds the
+/// depth and keeps its anchor revision stable across the steps.
+pub(crate) fn route_row_step(
+    bytes: &[u8],
+    expected: TreeExpectation,
+    key: &[u8; 8],
+    bounds: &mut RowRouteBounds,
+) -> Result<Option<TreeExpectation>, TreeError> {
+    if !matches!(expected.kind, PageKind::RowLeaf | PageKind::RowInternal) || expected.arity != 0
+    {
+        return Err(TreeError::InvalidInput);
+    }
+    let view = decode_tree_page(bytes, expected)?;
+    if view.len() != 0 {
+        let first = view.entry(0)?.key;
+        let last = view.entry(view.len() - 1)?.key;
+        if bounds.lower.is_some_and(|bound| first < bound.as_slice())
+            || bounds.upper.is_some_and(|bound| last >= bound.as_slice())
+        {
+            return Err(TreeError::Corrupt);
+        }
+    }
+    if expected.level == 0 {
+        return Ok(None);
+    }
+    let at = view.lower_bound(key)?;
+    let child = at.index + usize::from(at.equal);
+    let copy = |key: &[u8]| -> Result<[u8; 8], TreeError> {
+        key.try_into().map_err(|_| TreeError::Corrupt)
+    };
+    if child > 0 {
+        bounds.lower = Some(copy(view.entry(child - 1)?.key)?);
+    }
+    if child < view.len() {
+        bounds.upper = Some(copy(view.entry(child)?.key)?);
+    }
+    view.child_expectation(child).map(Some)
+}
+
+/// `route_row_step`'s own values beside one tree decode.
+pub(crate) fn route_step_source_bytes() -> usize {
+    use std::mem::size_of;
+    size_of::<(&[u8], TreeExpectation, &[u8; 8], &mut RowRouteBounds)>()
+        + size_of::<TreePageView<'_>>()
+        + 2 * size_of::<Result<TreePageView<'_>, TreeError>>()
+        + 3 * size_of::<&[u8]>()
+        + 3 * size_of::<Result<TreeEntry<'_>, TreeError>>()
+        + size_of::<Result<SearchPosition, TreeError>>()
+        + 2 * size_of::<usize>()
+        + 2 * size_of::<Result<[u8; 8], TreeError>>()
+        + size_of::<Result<Option<TreeExpectation>, TreeError>>()
+}
+
 #[cfg(test)]
 mod tests;

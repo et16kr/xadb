@@ -2192,9 +2192,12 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
             .max(scalar + wide.outer + wide.inventory)
             .max(scalar + wide.outer + wide.assembled)
             .max(ledger);
+    // The residency LOAD steps, or a Prune's route of its current RowLeaf
+    // (dev3-tree-smo.md#current-leaf-consumers) before them.
     let row_cleanup_residency = scalar
         + lifecycle::row::retire::residency_source_bytes()
-        + super::super::lookup_load::source_bytes::<W>();
+        + super::super::lookup_load::source_bytes::<W>()
+            .max(lifecycle::row::retire::route_source_bytes::<W>());
     let row_cleanup_install = lifecycle::application_carrier_bytes::<W>()
         + scalar
         + lifecycle::row::retire::install_source_bytes(wide.control, physical);

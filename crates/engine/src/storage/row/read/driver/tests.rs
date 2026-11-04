@@ -245,6 +245,9 @@ impl Observed for LiteralCopy {
 /// the unchanged codecs and answers Status/Missing-before from a script.
 struct LiteralSource<'x> {
     bytes: &'x [u8],
+    /// A split tree's right leaf and its first key (the separator): a key at
+    /// or above it routes there, and the left leaf's upper bound is it.
+    right: Option<(RowId, &'x [u8])>,
     log: &'x RefCell<Vec<Call>>,
     page_answer: Answer<()>,
     status: Vec<(u64, Answer<TransactionState>)>,
@@ -260,6 +263,7 @@ impl<'x> LiteralSource<'x> {
     fn new(bytes: &'x [u8], log: &'x RefCell<Vec<Call>>) -> Self {
         Self {
             bytes,
+            right: None,
             log,
             page_answer: Answer::Ready(()),
             status: Vec::new(),
@@ -270,6 +274,10 @@ impl<'x> LiteralSource<'x> {
             cancel_at: None,
             sequence: 0,
         }
+    }
+    fn with_right(mut self, separator: u64, bytes: &'x [u8]) -> Self {
+        self.right = Some((RowId::new(separator).unwrap(), bytes));
+        self
     }
     fn with_page(mut self, answer: Answer<()>) -> Self {
         self.page_answer = answer;
@@ -333,10 +341,19 @@ impl<'x> ReadSource for LiteralSource<'x> {
         = LiteralPage<'g, 'x>
     where
         Self: 'g;
-    fn page(&mut self) -> Result<Step<LiteralPage<'_, 'x>, FlushTarget>, RetentionError> {
+    fn page(&mut self, key: RowId) -> Result<Step<LiteralPage<'_, 'x>, FlushTarget>, RetentionError> {
         self.note(Page);
+        let (bytes, upper) = match self.right {
+            Some((separator, right)) if key >= separator => (right, None),
+            Some((separator, _)) => (self.bytes, Some(separator)),
+            None => (self.bytes, None),
+        };
         Ok(match answer(self.page_answer)? {
-            Step::Ready(()) => Step::Ready(LiteralPage { source: self }),
+            Step::Ready(()) => Step::Ready(LiteralPage {
+                source: self,
+                bytes,
+                upper,
+            }),
             Step::FlushRequired { target } => Step::FlushRequired { target },
         })
     }
@@ -440,17 +457,22 @@ impl<'x> ReadSource for LiteralSource<'x> {
 
 struct LiteralPage<'g, 'x> {
     source: &'g mut LiteralSource<'x>,
+    bytes: &'x [u8],
+    upper: Option<RowId>,
 }
 
 impl<'x> SearchPage for LiteralPage<'_, 'x> {
     type Candidate = LiteralCandidate<'x>;
     fn leaf(&self) -> Result<TreePageView<'_>, RetentionError> {
         self.source.note(Leaf);
-        decode_leaf(self.source.bytes)
+        decode_leaf(self.bytes)
+    }
+    fn upper(&self) -> Option<RowId> {
+        self.upper
     }
     fn capture(self, at: usize) -> Result<LiteralCandidate<'x>, RetentionError> {
         let source = self.source;
-        let bytes: &'x [u8] = source.bytes;
+        let bytes: &'x [u8] = self.bytes;
         let entry = decode_leaf(bytes)?.entry(at).map_err(|_| invariant())?;
         let key: [u8; 8] = entry.key.try_into().map_err(|_| invariant())?;
         let row = RowId::new(u64::from_be_bytes(key)).map_err(|_| invariant())?;

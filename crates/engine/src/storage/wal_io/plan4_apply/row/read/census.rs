@@ -66,9 +66,14 @@ pub(super) fn nonload<W: WriterNamespace>() -> [usize; 7] {
         + 2 * n::<Result<Option<CatalogRecordView<'_>>>>()
         + 2 * n::<Result<Option<&[u8]>>>()
         + 4 * n::<Result<()>>()
+        // The routed leaf's bound check (dev3-tree-smo.md#current-leaf-consumers).
+        + n::<LeafRoute>()
+        + n::<crate::storage::tree_page::search::RowRouteBounds>()
+        + 2 * n::<Result<Option<RowId>>>()
         + physical::catalog_source_bytes::<W>()
             .max(semantic_catalog::catalog_read_codec_bytes())
-            .max(dirty_frame::target_set_call_bytes::<3>());
+            .max(dirty_frame::target_set_call_bytes::<3>())
+            .max(crate::storage::tree_page::search::route_step_source_bytes());
     // The schema and actual record views survive the pin registration. Count
     // both the capture_row tuple and its caller extraction conservatively.
     let capture = n::<RowSearchPage<'_, '_, '_, '_, '_, '_, '_>>()

@@ -19,6 +19,7 @@
 //! through the one existing-group body (`ExistingGroup::RowRelease`). No
 //! group publishes an epoch or a Q.
 use super::super::super::super::super::lookup_load::RetentionLoadPort as _;
+use super::super::super::row_preflight::{RowRoute, RowTree};
 use super::*;
 
 /// What one live Row cleanup call did.
@@ -375,15 +376,25 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         operation: row_semantic::Operation,
         private: &mut [u8; PRIVATE_BYTES],
     ) -> Result<Option<Plan4Target>> {
-        let (requests, count) = self
+        let (mut requests, count) = self
             .catalog_preparation()
             .row_cleanup_requests(ordinal, operation)?;
-        let requests = &requests[..count];
         let allocator = self
             .pool
             .target_request(0)
             .map_err(|e| frame(RetentionPhase::Load, e))?;
         let mut cursor = Plan4ResidencyCursor::new();
+        if matches!(
+            operation,
+            row_semantic::Operation::Prune
+                | row_semantic::Operation::DeletePrune
+                | row_semantic::Operation::UpdatePrune
+        ) && let Some(target) =
+            self.route_cleanup_leaf(owner, ordinal, &mut requests[..count], &mut cursor, private)?
+        {
+            return Ok(Some(target));
+        }
+        let requests = &requests[..count];
         for request in requests.iter().filter(|request| **request != allocator) {
             match self.load_lookup_target(
                 owner,
@@ -397,6 +408,58 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             }
         }
         Ok(None)
+    }
+
+    /// A Prune's RowLeaf in its residency set: the selection names the
+    /// Job's pair[1] leaf hint, which a split since its Reserve may have
+    /// left; with the anchor resident, the leaf routed from its current root
+    /// to the Job's row replaces it (dev3-tree-smo.md#current-leaf-consumers).
+    /// The preparation takes the arena's route under its `validate_live`
+    /// and reads only resident targets, so a stale route refuses there.
+    #[inline(never)]
+    fn route_cleanup_leaf(
+        &self,
+        owner: &mut Owner<'c, 's>,
+        ordinal: usize,
+        requests: &mut [TargetRequest],
+        cursor: &mut Plan4ResidencyCursor,
+        private: &mut [u8; PRIVATE_BYTES],
+    ) -> Result<Option<Plan4Target>> {
+        let storage = self.storage;
+        let invalid = || unchanged(RetentionPhase::Prepare, RetentionCause::Invariant);
+        let job = job3::decode_job(
+            self.control.jobs().get(ordinal).ok_or_else(invalid)?,
+            storage.profile().spec().namespace,
+        )
+        .map_err(queue_error)?;
+        let handle = job.object().ok_or_else(invalid)?;
+        let pair = job.pair().ok_or_else(invalid)?;
+        let row = job.row_id().ok_or_else(invalid)?;
+        let leaf_at = requests
+            .iter()
+            .position(|request| request.kind == PageKind::RowLeaf)
+            .ok_or_else(invalid)?;
+        let tree = RowTree {
+            handle,
+            anchor: PageIdentity {
+                page: pair[0],
+                ..requests[leaf_at].identity
+            },
+        };
+        let anchor = request(tree.anchor, PageKind::TreeAnchor);
+        if let RetentionResidencyStep::FlushRequired { target, .. } =
+            self.load_lookup_target(owner, anchor, cursor, requests, &mut private[..])?
+        {
+            return Ok(Some(target));
+        }
+        let root = self.table_root(owner, tree)?;
+        match self.route_row_leaf(owner, tree, root, row, cursor, requests, &mut private[..])? {
+            RowRoute::Leaf(leaf) => {
+                requests[leaf_at] = leaf;
+                Ok(None)
+            }
+            RowRoute::Flush(target) => Ok(Some(target)),
+        }
     }
 
     fn apply_row_retirement(
@@ -645,6 +708,29 @@ pub(in super::super::super) fn residency_source_bytes() -> usize {
         + 2 * size_of::<Result<RetentionResidencyStep>>()
         + 4 * size_of::<usize>()
         + 4 * size_of::<&()>()
+}
+
+/// `route_cleanup_leaf` (dev3-tree-smo.md#current-leaf-consumers): the Job's
+/// view, table, pair, row and leaf position, the anchor request and the
+/// LOAD, root and route results, beside the Job decode, the anchor's LOAD
+/// body (`lookup_load::source_bytes`) or the route
+/// (`row_preflight::job_route_source_bytes`).
+pub(in super::super::super) fn route_source_bytes<W: WriterNamespace>() -> usize {
+    use std::mem::size_of;
+    size_of::<job3::JobView<'_>>()
+        + 2 * size_of::<Result<job3::JobView<'_>>>()
+        + size_of::<ObjectHandle>()
+        + size_of::<[PageRef; 2]>()
+        + size_of::<RowId>()
+        + size_of::<usize>()
+        + size_of::<RowTree>()
+        + size_of::<TargetRequest>()
+        + 2 * size_of::<Result<RetentionResidencyStep>>()
+        + 2 * size_of::<Result<Option<Plan4Target>>>()
+        + 8 * size_of::<&()>()
+        + job3::source_bytes()
+            .max(super::super::super::super::super::lookup_load::source_bytes::<W>())
+            .max(super::super::super::row_preflight::job_route_source_bytes::<W>())
 }
 
 /// The retirement install at nine targets beside the caller's shared

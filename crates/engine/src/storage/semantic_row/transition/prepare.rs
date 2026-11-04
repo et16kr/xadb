@@ -235,17 +235,18 @@ struct LeafSource<'a> {
     /// D of the leaf reservation (dev3-row-delete.md#leaf-reservation).
     reserved: usize,
 }
-fn leaf_source<'a>(
-    inputs: &Inputs<'a>,
-    job: JobView<'_>,
-    reserved: usize,
-) -> Result<LeafSource<'a>> {
+/// The Job's current RowLeaf (dev3-tree-smo.md#current-leaf-consumers). Its
+/// Reserve wrote the then current leaf as the pair[1] hint. No structural
+/// group separates a Reserve from its Forward (scope4 refuses RootReserved),
+/// so a Forward still names it; a later split may move a Retained root's row,
+/// so CLR and Prune instead find the row in the caller's routed leaf.
+fn leaf_source<'a>(inputs: &Inputs<'a>, job: JobView<'_>, forward: bool) -> Result<LeafSource<'a>> {
     let table = inputs.table.ok_or(Error::InvalidInput)?;
     let pair = job.pair().ok_or(Error::IdentityMismatch)?;
     same(job.object() == Some(table.handle) && pair[0] == table.anchor)?;
     let leaf = table_leaf(inputs, table)?;
-    same(leaf == pair[1])?;
-    typed_leaf(inputs, table, leaf, reserved)
+    same(!forward || leaf == pair[1])?;
+    typed_leaf(inputs, table, leaf)
 }
 /// The anchor's RowLeaf before image with every row typed by the schema: an
 /// inline row, or a delete's tombstone (`Transaction` stamp with its U,
@@ -253,12 +254,13 @@ fn leaf_source<'a>(
 /// edit: its entries leave at least `reserved` (D, `cells::leaf_reservation`
 /// over the original bank, which each leaf step computes first) of the
 /// capacity, which also keeps `ROW_EDIT_CELLS` the edit scratch bound
-/// (#leaf-reservation).
+/// (#leaf-reservation). D counts only the Retained roots whose RowId is in
+/// this leaf (dev3-tree-smo.md#current-leaf-consumers); one leaf holds them
+/// all in a single-leaf tree, so its value there is unchanged.
 fn typed_leaf<'a>(
     inputs: &Inputs<'a>,
     table: super::TableSource<'a>,
     leaf: PageRef,
-    reserved: usize,
 ) -> Result<LeafSource<'a>> {
     let namespace = inputs.profile.spec().namespace;
     let expected = TreeExpectation {
@@ -300,6 +302,7 @@ fn typed_leaf<'a>(
         // Entry cost: the 12-byte cell head, the record and its 4-byte slot.
         used += value.len() + 16;
     }
+    let reserved = cells::leaf_reservation(inputs.jobs, namespace, table.handle, &view)?;
     if used + reserved > tree_page::TREE_ENTRY_CAPACITY {
         return Err(Error::Corrupt);
     }
@@ -321,9 +324,7 @@ fn reserve_leaf(
     record: &[u8],
     scratch: &mut [u8; MAX_CELL],
 ) -> Result<()> {
-    let reserved =
-        cells::leaf_reservation(inputs.jobs, inputs.profile.spec().namespace, table.handle)?;
-    let source = typed_leaf(inputs, table, leaf, reserved)?;
+    let source = typed_leaf(inputs, table, leaf)?;
     let key = row.get().to_be_bytes();
     let view = tree_page::decode_tree_page(source.before, source.expected)?;
     let cell = tree_page::encode_leaf_cell(PageKind::RowLeaf, 0, &key, record, scratch)?;
@@ -334,7 +335,12 @@ fn reserve_leaf(
     // No split, and the leaf reservation still holds after the new row.
     require(plan.entry_bytes() + source.reserved <= tree_page::TREE_ENTRY_CAPACITY)
 }
-/// The stable anchor's single level0 RowLeaf (the Job leaf is only a hint).
+/// The table's current RowLeaf (dev3-tree-smo.md#current-leaf-consumers): the
+/// stable anchor's level0 root, or in a split tree the leaf the caller routed
+/// from the anchor's current tree at the same cut and supplied as the leaf
+/// image (the Job leaf is only a hint). The route is the caller's obligation,
+/// as the Catalog selection is; here the image names a table-owned dynamic
+/// page apart from the anchor and the root, and `typed_leaf` decodes it.
 fn table_leaf(
     inputs: &Inputs<'_>,
     table: super::TableSource<'_>,
@@ -350,14 +356,22 @@ fn table_leaf(
         false,
     )?;
     let anchor = anchor::decode_anchor(table.anchor_image, identity)?;
-    if anchor.root().tree != TreeKind::Row || anchor.root().level != 0 {
+    let root = anchor.root();
+    if root.tree != TreeKind::Row {
         return Err(Error::Unsupported);
     }
+    same(cells::dynamic(root.page) && !cells::same_address(root.page, table.anchor))?;
+    if root.level == 0 {
+        return Ok(root.page);
+    }
+    let image = table.leaf_image.ok_or(Error::InvalidInput)?;
+    let leaf = PageRef::decode(&image[24..48]).map_err(|_| Error::Corrupt)?;
     same(
-        cells::dynamic(anchor.root().page)
-            && !cells::same_address(anchor.root().page, table.anchor),
+        cells::dynamic(leaf)
+            && !cells::same_address(leaf, table.anchor)
+            && !cells::same_address(leaf, root.page),
     )?;
-    Ok(anchor.root().page)
+    Ok(leaf)
 }
 fn current_version(job: JobView<'_>, actor: TxnRef) -> Result<RecordVersion> {
     Ok(RecordVersion {
@@ -414,8 +428,7 @@ fn prepare_leaf<'a>(
 ) -> Result<(Option<u16>, Option<u16>, [u8; 32], [u8; 32])> {
     let op = out.op;
     let table = job.object().ok_or(Error::IdentityMismatch)?;
-    let reserved = cells::leaf_reservation(inputs.jobs, inputs.profile.spec().namespace, table)?;
-    let source = leaf_source(inputs, job, reserved)?;
+    let source = leaf_source(inputs, job, op == Operation::Forward)?;
     require(op == Operation::Forward || cells::page_lsn(source.before) >= job.last_step())?;
     let row = job.row_id().ok_or(Error::IdentityMismatch)?;
     let key = row.get().to_be_bytes();
@@ -585,8 +598,7 @@ fn reserve_target(
     };
     let namespace = inputs.profile.spec().namespace;
     let row = version.row;
-    let reserved = cells::leaf_reservation(inputs.jobs, namespace, table.handle)?;
-    let source = typed_leaf(inputs, table, leaf, reserved)?;
+    let source = typed_leaf(inputs, table, leaf)?;
     let view = tree_page::decode_tree_page(source.before, source.expected)?;
     let key = row.get().to_be_bytes();
     let position = view.lower_bound(&key)?;
@@ -693,17 +705,16 @@ fn prepare_value<'a>(
     let op = out.op;
     let forward = op.role() == Operation::Forward;
     let namespace = inputs.profile.spec().namespace;
-    let table = job.object().ok_or(Error::IdentityMismatch)?;
-    let reserved = cells::leaf_reservation(inputs.jobs, namespace, table)?;
     // D after this step (#leaf-reservation): a Forward's root joins D with its
-    // restore bytes, a CLR's or Prune's root leaves it.
+    // restore bytes, a CLR's or Prune's root leaves it. D is this leaf's.
+    let source = value_source(inputs, job, actor, forward)?;
+    let reserved = source.leaf.reserved;
     let room = if forward {
         reserved.checked_add(job.restore_bytes())
     } else {
         reserved.checked_sub(job.restore_bytes())
     }
     .ok_or(Error::Corrupt)?;
-    let source = value_source(inputs, job, actor, forward, reserved)?;
     let schema = &source.leaf.schema;
     let (stamp, logical, old) = if forward {
         let old = source.row.ok_or(Error::IdentityMismatch)?;
@@ -785,9 +796,8 @@ fn value_source<'a>(
     job: JobView<'_>,
     actor: TxnRef,
     forward: bool,
-    reserved: usize,
 ) -> Result<ValueSource<'a>> {
-    let leaf = leaf_source(inputs, job, reserved)?;
+    let leaf = leaf_source(inputs, job, forward)?;
     require(forward || cells::page_lsn(leaf.before) >= job.last_step())?;
     let table = job.object().ok_or(Error::IdentityMismatch)?;
     let row = job.row_id().ok_or(Error::IdentityMismatch)?;

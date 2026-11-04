@@ -788,7 +788,11 @@ fn observe<'a>(
             && job.mutation() == input.mutation
             && input.statement.is_none_or(|value| value == job.statement())
             && job.has_previous_transaction() == Some(h)
-            && pair[1] == input.leaf.identity.page,
+            // pair[1] is the leaf the Reserve found current; no split
+            // separates a Reserve from its Forward, but one may move a
+            // Retained root's row before its CLR, which names the leaf C
+            // routed (dev3-tree-smo.md#current-leaf-consumers).
+            && (!forward || pair[1] == input.leaf.identity.page),
         InsertError::IdentityMismatch,
     )?;
     let terminal = row::decode_job(&input.jobs[input.terminal_job], namespace)?;
@@ -1129,7 +1133,9 @@ fn observe<'a>(
         )?;
     }
 
-    // Stable anchor proof selects the single level0 RowLeaf.
+    // Stable anchor proof: its level0 root is the RowLeaf; in a split tree
+    // the RowLeaf is the one C routed from this root at the same cut and
+    // proved against the canonical arena (dev3-tree-smo.md#current-leaf-consumers).
     let anchor_identity = PageIdentity {
         database: namespace.database,
         page: pair[0],
@@ -1146,10 +1152,11 @@ fn observe<'a>(
     )?;
     checked_page(anchor_bytes, anchor_identity, PageKind::TreeAnchor, header)?;
     let anchor = anchor::decode_anchor(anchor_bytes, anchor_identity)?;
+    let root = anchor.root();
     require(
-        anchor.root().tree == TreeKind::Row
-            && anchor.root().level == 0
-            && anchor.root().page == input.leaf.identity.page,
+        root.tree == TreeKind::Row
+            && (root.level == 0) == (root.page == input.leaf.identity.page)
+            && input.leaf.identity.page != pair[0],
         InsertError::IdentityMismatch,
     )?;
 

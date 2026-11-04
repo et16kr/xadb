@@ -231,19 +231,43 @@ pub(in super::super) fn table_source<'a>(
     if header.identity != handle || header.anchor != pair[0] {
         return Err(invalid());
     }
+    let row = job.row_id().ok_or_else(invalid)?;
+    let leaf = current_leaf(arena, profile, handle, pair[0], row)?;
     let anchor_image = image(arena, pair[0])?;
+    Ok(TableSource {
+        handle,
+        anchor: pair[0],
+        anchor_image,
+        leaf_image: Some(image(arena, leaf)?),
+        schema: RowSchemaInput::Catalog(schema),
+    })
+}
+
+/// The current RowLeaf of `row` in the canonical arena
+/// (dev3-tree-smo.md#current-leaf-consumers): the table anchor's level0 root,
+/// or the leaf its RowInternal path routes `row` to. Every live Row selection
+/// that read its path from the pool compares its leaf with this one at the
+/// same `validate_live` cut. A non-Row anchor is Unsupported.
+pub(in super::super) fn current_leaf(
+    arena: &[u8],
+    profile: Profile,
+    handle: ObjectHandle,
+    anchor: PageRef,
+    row: RowId,
+) -> ObservationResult<PageRef> {
+    let namespace = profile.spec().namespace;
     let identity = PageIdentity {
         database: namespace.database,
-        page: pair[0],
+        page: anchor,
         owner: handle.object,
         owner_generation: handle.generation,
     };
-    let anchor = anchor::decode_anchor(anchor_image, identity).map_err(RetentionCause::Page)?;
-    let root = anchor.root();
+    let root = anchor::decode_anchor(image(arena, anchor)?, identity)
+        .map_err(RetentionCause::Page)?
+        .root();
     if root.tree != TreeKind::Row {
         return Err(RetentionCause::Unsupported);
     }
-    let row = job.row_id().ok_or_else(invalid)?;
     let key = row.get().to_be_bytes();
     let leaf = tree_page::search::find_leaf_in_images(
         TreeExpectation {
@@ -269,13 +293,7 @@ pub(in super::super) fn table_source<'a>(
         },
     )
     .map_err(RetentionCause::Tree)?;
-    Ok(TableSource {
-        handle,
-        anchor: pair[0],
-        anchor_image,
-        leaf_image: Some(image(arena, leaf.header().identity.page)?),
-        schema: RowSchemaInput::Catalog(schema),
-    })
+    Ok(leaf.header().identity.page)
 }
 
 /// A CLR's statement boundary from its actor's Status home: a statement
@@ -1047,9 +1065,8 @@ fn semantic_catalog_status() -> usize {
 /// Catalog/anchor observations stay live across the bounded immutable search.
 /// The visited path is one fixed array, not sixteen nested search frames.
 pub(in super::super) fn table_source_bytes() -> usize {
-    use crate::storage::tree_page::{SearchPosition, TreeEntry, TreeError, TreePageView};
+    use crate::storage::tree_page::{TreeEntry, TreePageView};
     use std::mem::size_of;
-    let (checked_key, checked_result, _, _) = tree_page::catalog_source_carrier_bytes();
     let selected = size_of::<TreePageView<'_>>()
         + size_of::<TreeEntry<'_>>()
         + size_of::<catalog_record::CatalogRecordView<'_>>()
@@ -1062,6 +1079,25 @@ pub(in super::super) fn table_source_bytes() -> usize {
         + size_of::<[u8; 8]>()
         + 16 * size_of::<&[u8]>()
         + 16 * size_of::<u64>();
+    selected
+        + (current_leaf_bytes() - transition::tree_source_bytes()
+            + transition::tree_source_bytes()
+                .max(crate::storage::semantic_catalog::catalog_read_codec_bytes()))
+}
+
+/// `current_leaf` (dev3-tree-smo.md#current-leaf-consumers): its arguments,
+/// the anchor's identity, root and the key beside the bounded immutable
+/// search, whose visited path is one fixed array.
+pub(in super::super) fn current_leaf_bytes() -> usize {
+    use crate::storage::tree_page::{SearchPosition, TreeEntry, TreeError, TreePageView};
+    use std::mem::size_of;
+    let (checked_key, checked_result, _, _) = tree_page::catalog_source_carrier_bytes();
+    let own = size_of::<(&[u8], Profile, ObjectHandle, PageRef, RowId)>()
+        + 2 * size_of::<ObservationResult<PageRef>>()
+        + size_of::<PageIdentity>()
+        + size_of::<anchor::AnchorRoot>()
+        + 2 * size_of::<std::result::Result<anchor::TreeAnchor, crate::storage::page::PageError>>()
+        + size_of::<[u8; 8]>();
     let path = size_of::<[Option<PageRef>; 16]>()
         + 3 * size_of::<TreeExpectation>()
         + 4 * size_of::<Option<&[u8]>>()
@@ -1072,8 +1108,5 @@ pub(in super::super) fn table_source_bytes() -> usize {
         + 3 * size_of::<SearchPosition>()
         + 4 * size_of::<TreeEntry<'_>>()
         + 16 * size_of::<usize>();
-    selected
-        + path
-        + transition::tree_source_bytes()
-            .max(crate::storage::semantic_catalog::catalog_read_codec_bytes())
+    own + path + transition::tree_source_bytes()
 }

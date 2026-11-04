@@ -38,6 +38,12 @@ fn row_read_census<W: WriterNamespace>(kind: &str) {
             format!("{name}.row_load"),
             operation + load + c[0] + c[2] + b[offset] + load_temporaries,
         ));
+        // One RowInternal route step of a split tree beside the leaf frame
+        // (dev3-tree-smo.md#current-leaf-consumers).
+        phases.push((
+            format!("{name}.row_route"),
+            operation + c[12] + c[0] + c[2] + b[offset] + load_temporaries,
+        ));
         phases.push((
             format!("{name}.status_load"),
             operation + load + c[9] + b[offset + 1] + load_temporaries,

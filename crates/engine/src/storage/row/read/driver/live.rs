@@ -89,6 +89,9 @@ impl<'b, 'a, 's, 'c, 'p, 'd> SearchPage for RowSearchPage<'_, 'b, 'a, 's, 'c, 'p
     fn leaf(&self) -> Result<TreePageView<'_>, RetentionError> {
         RowSearchPage::leaf(self)
     }
+    fn upper(&self) -> Option<RowId> {
+        RowSearchPage::upper(self)
+    }
     fn capture(self, at: usize) -> Result<RowCandidate<'b>, RetentionError> {
         RowSearchPage::capture(self, at)
     }
@@ -119,8 +122,9 @@ impl<'b, 'a, 's, 'c, 'p, 'd, W: WriterNamespace> ReadSource
         Self: 'g;
     fn page(
         &mut self,
+        key: RowId,
     ) -> Result<Step<RowSearchPage<'_, 'b, 'a, 's, 'c, 'p, 'd>, Plan4Target>, RetentionError> {
-        self.operation.page(self.table, self.residency)
+        self.operation.page(self.table, self.residency, key)
     }
     fn status(
         &mut self,

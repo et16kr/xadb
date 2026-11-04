@@ -461,14 +461,26 @@ pub(crate) fn row_projection(
 /// D of the leaf reservation (dev3-row-delete.md#leaf-reservation, widened by
 /// dev3-row-update.md#leaf-reservation) over a Jobs bank: the bytes every
 /// Retained delete (`C-180`) and update (`max(0, C-C')`) root of `table` must
-/// be able to restore. The live INSERT RowReserve refuses a candidate that
-/// would leave less (Capacity), before the producer's own check.
+/// be able to restore, counting only the roots whose row is in `leaf`, the
+/// table's current RowLeaf image (dev3-tree-smo.md#current-leaf-consumers).
+/// The live INSERT RowReserve refuses a candidate that would leave less
+/// (Capacity), before the producer's own check.
 pub(crate) fn leaf_reservation(
     jobs: &[[u8; JOB_BYTES]; JOB_COUNT],
     namespace: crate::api::Namespace,
     table: ObjectHandle,
+    leaf: (&[u8; PAGE_BYTES], PageIdentity),
 ) -> Result<usize> {
-    cells::leaf_reservation(jobs, namespace, table)
+    let view = crate::storage::tree_page::decode_tree_page(
+        leaf.0,
+        crate::storage::tree_page::TreeExpectation {
+            identity: leaf.1,
+            kind: PageKind::RowLeaf,
+            level: 0,
+            arity: 0,
+        },
+    )?;
+    cells::leaf_reservation(jobs, namespace, table, &view)
 }
 
 /// The RootJob a live RowReserve leases: the first Free Job from the stable
@@ -782,6 +794,7 @@ pub(crate) fn leaf_reservation_source_bytes() -> usize {
         &[[u8; JOB_BYTES]; JOB_COUNT],
         crate::api::Namespace,
         ObjectHandle,
+        (&[u8; PAGE_BYTES], PageIdentity),
     )>() + 2 * size_of::<Result<usize>>()
         + 2 * size_of::<usize>()
         + size_of::<std::slice::Iter<'_, [u8; JOB_BYTES]>>()
@@ -789,7 +802,13 @@ pub(crate) fn leaf_reservation_source_bytes() -> usize {
         + 2 * size_of::<
             std::result::Result<job3::JobView<'_>, crate::storage::retention_page::RetentionError>,
         >()
-        + job3::source_bytes()
+        // The decoded leaf beside the per-root RowId presence search
+        // (dev3-tree-smo.md#current-leaf-consumers); the decode and the
+        // search are sequential calls of the tree codec.
+        + size_of::<crate::storage::tree_page::TreePageView<'_>>()
+        + size_of::<crate::storage::tree_page::TreeExpectation>()
+        + size_of::<[u8; 8]>()
+        + (job3::source_bytes()).max(source::tree_codec())
 }
 
 /// Counted bound of a typed Row record decode or encode
