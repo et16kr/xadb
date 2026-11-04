@@ -183,6 +183,16 @@
       "role": "evidence",
       "title": "XADB 전체 방향성 점검 — README 취지 대비"
     },
+    "dev3-scalability-ha-plan-review-20261104.md": {
+      "path": "evidence/dev3-scalability-ha-plan-review-20261104.md",
+      "role": "evidence",
+      "title": "DEV3 개선 계획의 대용량 고성능 고가용성 검토"
+    },
+    "dev3-improved-plan-structural-review-20261104.md": {
+      "path": "evidence/dev3-improved-plan-structural-review-20261104.md",
+      "role": "evidence",
+      "title": "DEV3 개선 계획 리뷰: 구조 목표·단일 노드 가용성·HA 연결"
+    },
     "dev3-cross-dbms-design-review-20261104.md": {
       "path": "evidence/dev3-cross-dbms-design-review-20261104.md",
       "role": "evidence",

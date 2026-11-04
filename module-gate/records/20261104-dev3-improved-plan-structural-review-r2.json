@@ -1,0 +1,5 @@
+{
+  "schema": "XADB_MODULE_GATE_RECORD_V1",
+  "change": "D0 documentation-only r2 of the Claude review of PR51 A0-A7: apply the five review comments on commit 8dad291 (checkpoint WAL write-stop path, relation to the other PR52 reviews and one consolidated user-decision list U1-U6, A3 count attribution, DEV8 quota caveat, PR51 wording) and the five points of the 17:14 PR52 comment (A3 target limited to no-pressure workloads with eviction syncs counted separately, A4 reader target limited to global-gate waits with same-page latch waits separated, offline backup and dirty-backlog write-stop paths, comparison conditions incl. disk space, retention guarantee and DEV8 optional-subscriber invalidation, A2 case by changed bytes and ranges at fixed row size, 426-transaction value as an upper bound); fold in B1/B2 (profile tuple ceilings, A6 target narrowed to not proportional to DB size, aligned with eef55fa). No product, contract, policy, schedule or test changes; no independent D1/D2 approval claimed.",
+  "reviews": []
+}
