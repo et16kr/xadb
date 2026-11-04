@@ -98,8 +98,34 @@ Row transition의 level0 제한은 유지하므로 multi-level 행 변경·복�
 전체 wrapper·무변경 하위 codec 시험과 native I/O 시험은 실행하지 않았다.
 
 후속 [SMO 제안](../contracts/dev3-tree-smo.md)은 nonempty INIT의 원 WAL→state seal→
-selected base 증거 승계를 정리한다. scope4·원 pool 설치·F05·fault inventory는 아직 제안/미완료이며
+selected base 증거 승계를 정리한다. scope4의 실제 효과·원 pool 설치·F05·fault inventory는 아직 미완료이며
 이 문서나 위 selector 시험을 그 실행 증거로 세지 않는다.
+
+<a id="wire-observer"></a>
+### 순수 scope4 형식 관찰자
+
+`978b7901` 이후 `semantic_row::structure`에 Row-tree RootSplit/ChildSplit의 불변 Core/Layout
+관측을 구현했다. 기존 scope3 decoder는 그대로다. 정확84,744/84,640B와 native/redo 각5개,
+새 Structural owner의 Finished·잔여0 descriptor, group LSN/epoch/profile, core의 root/parent
+관계·물리 alias·scalar 비용, native/redo 일대일 대응을 검산한다.
+
+[원 로그·source/ELF hash](../../module-gate/evidence/dev3-08-wire/)의 r0는 신규6개만 실행했다.
+build1분55초·실행0.05초,6 PASS·기존2,208개 filtered다. source별 원 실행이며 무변경 시험은
+반복하지 않았다. 독립 reviewer `/root/dev3_08_review`는 사전 D2와 구현·원 r0 결과 D1을
+각각 ACCEPT·필수0으로 판정했다. raw XSG/XSM/XOD/native를 제품 관찰자와 별도로 조립했고,
+일반 descriptor decoder가 수락하는 Finished+nonzero debt를5개 remaining행 각각에서 거절했다.
+
+engine all-targets/all-features Clippy-r0는 `collapsible_match`와 `needless_range_loop`를
+지적했다. 동일 조건의 match guard와 고정5개 offset의 enumerate로 고친 뒤 r1은1분33초에
+PASS다. reviewer가 두 표현의 동등성을 별도로 ACCEPT했고 runtime6개는 반복하지 않았다.
+원 r0 source/ELF와 최종 lint-only source hash를 구분한다. 문서 자동 검사는 push 전용이므로
+이 편집·commit 단계에서는 실행하지 않았다.
+
+fixture는 page1 allocator·opaque tree cells를 포함하는 WIRE_ONLY다. 실제 profile의 allocator
+주소/세대·extent 소유, XBT1/Row grammar, canonical before와 두 PATCH digest, 실제 split
+재계산·INIT 권한·live/replay adoption·F05는 검증하지 않는다. INIT만 page envelope와 실제
+full image digest를 비교한다. PATCH commitment를 바꿔도 형식 관측이 수락하는 사례를 두어
+후속 canonical 검증 의무를 숨기지 않았다. 전체08과 08-1 적립은 여전히0이다.
 
 08 전체의 승인 범위는 유지한다. 다음 작업은 08-1의 실제 system owner·WAL·복구다.
 독립 사전 검토에서 새 사용자 판단이 필요한 제품 방향 충돌은 발견하지 않았다.

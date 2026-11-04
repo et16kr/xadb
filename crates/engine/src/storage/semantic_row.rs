@@ -1,4 +1,4 @@
-//! Scope3 Row observations. These pure inputs do not grant admission, statement
+//! Scope3 Row and scope4 Row-tree observations. These pure inputs do not grant admission, statement
 //! ownership, WAL staging, installation, history or selected recovery authority.
 
 mod core;
@@ -19,6 +19,11 @@ mod operation;
     reason = "local scope3 observers; the N1 transition cross-check is their caller until live Row owners land"
 )]
 pub(crate) mod status;
+#[allow(
+    dead_code,
+    reason = "scope4 observer awaits the original structural owner and canonical replay"
+)]
+pub(crate) mod structure;
 pub(crate) mod transition;
 #[allow(
     dead_code,

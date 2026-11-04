@@ -204,3 +204,27 @@ base claim 내부 checksum 재계산 뒤 selected-digest 거절, BaseOnly와 다
 재검토 조건은 frame/target/loan 한도 변경, 다중 extent, 새 family의 live 활성화,
 반복 Undo/overflow로 weight 증명 확장, unlink/retirement debt 추가다. 이 문서는 위 잔여를 숨긴
 효과 구현 허가가 아니며 해당 단위의 독립 검토와 실제 검증을 계속 요구한다.
+
+<a id="wire-observer"></a>
+## 순수 scope4 관찰자 공급과 사전 시험 범위
+
+`semantic_row::structure`는 첫 Row 소비자의 scope4 형식만 검산한다. 기존 scope3
+관찰자를 넓히지 않고 RowLeaf/RowInternal 이외 family는 Unsupported다. group/core,
+완료·잔여0 descriptor, native5개와 redo5개의 identity·LSN·INIT 대응을 확인한다.
+성공은 불변 bytes 관측이며 canonical before·분할 재계산·allocation·install·replay adoption
+증거가 아니다. before/after digest는 canonical page와 후속 대조해야 하며, INIT의 after
+digest만 현재 완전한 image와 즉시 대조할 수 있다. INIT도 page envelope·full digest까지만
+검산하며 XBT1 cell·typed Row grammar는 후속 canonical 관찰자의 의무다. allocator role0은
+kind/level·native/redo 동일성만 확인하며 실제 allocator 주소·object/generation·현재 extent의
+membership은 원 owner가 결합해야 한다. scalar 비용은 실제 source/Undo와
+대조하기 전 untrusted다. 신규 encoder·원 pool 효과는 이 순수 단위 밖이다.
+
+사전 고정 시험은 새6개로 나눈다: (1) root/child × leaf/internal의 독립 raw 형식4개와
+접근자·정확 frame 길이, (2) core의 scalar·alias·root 관계 경계, (3) group/owner 및
+Finished이지만 잔여가 있는 descriptor, (4) native/redo의 순서·역할·identity·INIT digest
+변조, (5) 잘린 입력·section 길이·unsupported scope/tag, (6) core 높이·비용 경계와
+첫/후속 structural high-water. XSG/XSM/XOD/native는 시험에서 raw로 조립하고 제품의
+scope4 parser를 기대값 생성에 쓰지 않는다. profile은 기존 독립 literal, 하위 page/redo
+encoder는 입력 준비에만 쓴다. 실제 split 정답 시험으로 확대하지 않는다. 새 시험만
+선택하며 실행별 build 포함180초·4 jobs, source/ELF hash와 최초 실패를 보존한다.
+실제 source별 실행·독립 D1 결과는 [08 증거](../evidence/dev3-tree-structure-20261104.md#wire-observer)에 기록한다.

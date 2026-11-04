@@ -1,0 +1,104 @@
+{
+  "schema": "XADB_MODULE_GATE_RECORD_V1",
+  "change": "DEV3 08 partial: pure Row-tree scope4 Core/Layout observer; no canonical split or live/recovery authority",
+  "rust_tests": [
+    {
+      "paths": [
+        "crates/engine/src/storage/semantic_row.rs",
+        "crates/engine/src/storage/semantic_row/structure.rs",
+        "crates/engine/src/storage/semantic_row/structure/tests.rs"
+      ],
+      "reason": "New isolated scope4 framing, owner/debt and native-redo grammar; six new tests only, existing scope3 decoding unchanged.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/tests.rs",
+          "case": "storage::semantic_row::structure::tests::structural_wire_independent_root_child_leaf_internal_frames",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/scope3/profile3.bin",
+            "tests/fixtures/module-row-format/envelopes/profiles.bin"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/tests.rs",
+          "case": "storage::semantic_row::structure::tests::structural_wire_rejects_core_identity_alias_and_scalar_mutations",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/scope3/profile3.bin",
+            "tests/fixtures/module-row-format/envelopes/profiles.bin"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/tests.rs",
+          "case": "storage::semantic_row::structure::tests::structural_wire_rejects_owner_chain_and_self_consistent_finished_debt",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/scope3/profile3.bin",
+            "tests/fixtures/module-row-format/envelopes/profiles.bin"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/tests.rs",
+          "case": "storage::semantic_row::structure::tests::structural_wire_rejects_native_redo_bijection_and_init_corruption",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/scope3/profile3.bin",
+            "tests/fixtures/module-row-format/envelopes/profiles.bin"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/tests.rs",
+          "case": "storage::semantic_row::structure::tests::structural_wire_rejects_truncation_lengths_reserved_and_unsupported",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/scope3/profile3.bin",
+            "tests/fixtures/module-row-format/envelopes/profiles.bin"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/tests.rs",
+          "case": "storage::semantic_row::structure::tests::structural_wire_accepts_exact_scalar_limits_and_predecessor_commitment",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/scope3/profile3.bin",
+            "tests/fixtures/module-row-format/envelopes/profiles.bin"
+          ]
+        }
+      ]
+    }
+  ],
+  "reviews": [
+    {
+      "id": "dev3-08-wire-d2",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/semantic_row.rs": "da4b39defec544e825618d14767e4c6c7261cc59",
+        "crates/engine/src/storage/semantic_row/structure.rs": "546ae76ac5108de0753b906de9a88290e95f09b5",
+        "crates/engine/src/storage/semantic_row/structure/tests.rs": "c75fbd0655f6df8312fbb857ab6f71285a33d87b",
+        "tests/fixtures/module-row-format/scope3/profile3.bin": "c713f45e89c706c3b4bc742e57e9ea8acd8b8537",
+        "tests/fixtures/module-row-format/envelopes/profiles.bin": "721736fc0e2edafa27e9eb43278ab33d2edb4b34",
+        "devdoc/contracts/dev3-tree-smo.md": "f3df700a07618ee91e3f1efd624f855cc31d1afb"
+      },
+      "log": "module-gate/evidence/dev3-08-wire/review.md (sha256 b828fb1fcc538ff659afe0fde0985046c728021412ceac1729f611608ccb8668)"
+    }
+  ]
+}
