@@ -24,17 +24,15 @@ fn controls() -> usize {
     size_of::<([usize; 24], [&[u8]; 12], [PageRef; 4], [u8; 32])>()
 }
 
-fn prepare_values() -> usize {
-    // The after-audit runs before any of these lexical values are dropped.
-    let arrays = size_of::<[Option<TreeExpectation>; 64]>()
-        + size_of::<[AllocationEntry; 64]>()
-        + size_of::<[&[u8]; 406]>()
+fn build_values() -> usize {
+    // Private build returns before verify_after starts.
+    let arrays = size_of::<[u8; 64]>()
+        + size_of::<[&[u8]; 88]>()
         + size_of::<[usize; 87]>()
-        + size_of::<[u8; allocation_page::ALLOCATION_CELL_BYTES]>()
         + size_of::<([PageHeader; 5], [u8; 256], [u8; 32], [u8; 40])>();
     let retained = size_of::<(&Inputs<'_>, &mut [[u8; PAGE_BYTES]; 5], Namespace)>()
-        + 2 * size_of::<AllocationPage<'_>>()
-        + 2 * size_of::<Table<'_>>()
+        + size_of::<AllocationPage<'_>>()
+        + size_of::<Table<'_>>()
         + 2 * size_of::<TreePageView<'_>>()
         + 2 * size_of::<TreeExpectation>()
         + size_of::<Option<TreeExpectation>>()
@@ -43,8 +41,6 @@ fn prepare_values() -> usize {
         + size_of::<([u8; 32], [u8; 32], [u8; 32], [u64; 2], [u64; 2])>()
         + size_of::<SplitCandidate<'_, '_>>()
         + size_of::<std::result::Result<SplitCandidate<'_, '_>, StructureError>>()
-        + size_of::<Candidate<'_>>()
-        + size_of::<Result<Candidate<'_>>>()
         + size_of::<Result<(usize, [u8; 32])>>();
     arrays + retained + controls()
 }
@@ -139,7 +135,7 @@ fn audited_tree() -> usize {
 
 fn parent_edit() -> usize {
     let (key, key_result, layout, layout_result) = tree_page::catalog_source_carrier_bytes();
-    size_of::<([&[u8]; 406], [u8; 36], [u8; 32])>()
+    size_of::<([&[u8]; 88], [u8; 36], [u8; 32])>()
         + size_of::<InternalEditPlan<'_, '_>>()
         + size_of::<std::result::Result<InternalEditPlan<'_, '_>, StructureError>>()
         + size_of::<InternalEdit<'_>>()
@@ -167,22 +163,75 @@ fn table_read() -> usize {
         + 1536
 }
 
+fn allocator_emission() -> usize {
+    let own = size_of::<(
+        &AllocationPage<'_>,
+        &[u8; PAGE_BYTES],
+        Namespace,
+        &[PageHeader; 5],
+        usize,
+        &mut [u8; PAGE_BYTES],
+    )>() + size_of::<[u8; 6208]>()
+        + size_of::<(usize, AllocationEntry, PageHeader, PageView<'_>)>()
+        + size_of::<std::result::Result<AllocationEntry, allocation_page::AllocationError>>()
+        + controls();
+    let cell = size_of::<(PageHeader, Namespace, &[AllocationEntry], &mut [u8])>()
+        + size_of::<([u8; 24], [u8; 96], [u8; 48])>()
+        + 3 * size_of::<AllocationEntry>()
+        + 256;
+    let page = size_of::<(PageHeader, Namespace, &[u8], &mut [u8])>()
+        + size_of::<AllocationPage<'_>>()
+        + size_of::<PageView<'_>>()
+        + size_of::<std::result::Result<PageView<'_>, page::PageError>>()
+        + controls()
+        + semantic_catalog::page_read_codec_bytes()
+        + 1536;
+    own + cell.max(page)
+}
+
 #[test]
 fn structural_split_source_inventory_includes_retained_after_audit_and_frame_view() {
     let c = source_census();
-    let own = prepare_values();
+    let own = build_values();
     let (audit, weights, parent, table) =
         (audited_tree(), typed_weights(), parent_edit(), table_read());
+    let allocator = allocator_emission();
     println!(
-        "candidate outer {own}/{} audit {audit}/{} weights {weights}/{} parent {parent}/{} table {table}/{} side {} previous {} peak {}",
-        c.outer, c.audit, c.weights, c.parent, c.table, c.side, c.previous, c.peak
+        "candidate build {own}/{} audit {audit}/{} weights {weights}/{} parent {parent}/{} table {table}/{} side {} previous {} peak {}",
+        c.build_outer, c.audit, c.weights, c.parent, c.table, c.side, c.previous, c.peak
     );
-    assert!(own <= c.outer);
+    assert!(own <= c.build_outer);
     assert!(audit <= c.audit);
     assert!(weights <= c.weights);
     assert!(parent <= c.parent);
     assert!(table <= c.table);
-    assert!(own + audit.max(parent).max(table) <= source_bytes());
+    println!("allocator emission {allocator}/{}", c.allocator);
+    assert!(allocator <= c.allocator);
+    let args = size_of::<(&Inputs<'_>, &mut [[u8; PAGE_BYTES]; 5], &mut ())>();
+    let prefix = args
+        + size_of::<(Namespace, AllocationPage<'_>, Table<'_>, [u8; 64], [u8; 32])>()
+        + size_of::<Result<Table<'_>>>()
+        + size_of::<Result<(usize, [u8; 32])>>()
+        + 256;
+    let wrapper = args + size_of::<(Candidate<'_>, [u8; 32])>() + size_of::<Result<()>>() + 128;
+    let after = size_of::<(
+        &Inputs<'_>,
+        &Candidate<'_>,
+        [u8; 32],
+        &[[u8; PAGE_BYTES]; 5],
+        &mut (),
+    )>() + size_of::<(Table<'_>, AllocationPage<'_>, [u8; 64])>()
+        + size_of::<Result<(usize, [u8; 32])>>()
+        + 256;
+    println!(
+        "candidate prefix {prefix}/{} wrapper {wrapper}/{} after {after}/{} returning {}",
+        c.before_outer, c.outer, c.after_outer, c.returning
+    );
+    assert!(prefix <= c.before_outer && wrapper <= c.outer && after <= c.after_outer);
+    let actual = (args + prefix + audit.max(table))
+        .max(args + own + weights.max(parent).max(allocator))
+        .max(wrapper + after + audit.max(table));
+    assert!(actual <= source_bytes());
     assert_eq!(c.peak, source_bytes());
 
     let f = super::super::frame::source_census();
@@ -197,7 +246,7 @@ fn structural_split_source_inventory_includes_retained_after_audit_and_frame_vie
         f.outer, f.layout, f.body, f.candidate, f.peak
     );
     assert!(caller <= f.outer);
-    assert!(caller + own + audit.max(parent).max(table) <= f.peak);
+    assert!(caller + actual <= f.peak);
     assert_eq!(f.candidate, c.peak);
     assert_eq!(f.peak, super::super::frame::source_bytes());
     // Caller loan buffers and callback implementations are not represented

@@ -1,0 +1,7 @@
+
+running 2 tests
+test storage::semantic_row::structure::weights::tests::candidate::structural_candidate_local_parent_capacity_rejects_before_output ... ok
+test storage::semantic_row::structure::weights::tests::candidate::density::structural_candidate_local_parent_last_separator_fits_reduced_scratch ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 2301 filtered out; finished in 0.08s
+

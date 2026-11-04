@@ -1,0 +1,18 @@
+{
+  "filters": [
+    "compact_tree_audit_",
+    "immutable_tree_audit_",
+    "structural_replay_",
+    "structural_split_source_inventory_includes_retained_after_audit_and_frame_view",
+    "structural_candidate_dense_nullable_rows_fit_reduced_scratch_and_preserve_all_bytes",
+    "structural_candidate_leaf_root_preserves_literal_rows_and_actual_undo_costs",
+    "structural_candidate_child_leaf_revises_anchor_and_preserves_current_root",
+    "structural_candidate_internal_root_and_child_promote_pivot_once",
+    "structural_candidate_skips_exhausted_incarnations_and_rejects_capacity",
+    "structural_frame_matches_independent_sections_for_all_four_splits",
+    "structural_frame_source_inventory_covers_parser_and_emit_nesting"
+  ],
+  "expected_tests": 19,
+  "reason": "compact first-extent traversal and shared walk; candidate private build/after-audit and sparse allocator; corresponding replay and source bounds. Unchanged tombstone and level tests excluded.",
+  "timeout_seconds": 240
+}

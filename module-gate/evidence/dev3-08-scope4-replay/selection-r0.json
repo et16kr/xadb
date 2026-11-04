@@ -1,0 +1,11 @@
+{
+  "head": "ea8b87b6acd5165b975fd62a3c689985b3bee6ff",
+  "filters": [
+    "structural_replay_",
+    "structural_analysis_",
+    "structural_pending_"
+  ],
+  "relation": "new scope4 canonical replay/INIT and internal level propagation; six new tests; no completed tests repeated",
+  "timeout_seconds": 240,
+  "build_jobs": 4
+}

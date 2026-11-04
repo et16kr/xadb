@@ -354,15 +354,24 @@ pub(crate) struct SourceCensus {
 /// callback captures. In observe the decoded LayoutView survives prepare.
 pub(crate) fn source_census() -> SourceCensus {
     use std::mem::size_of;
-    let outer = size_of::<(&Inputs<'_>, &[u8], &mut [[u8; PAGE_BYTES]; 5])>()
-        + 2 * size_of::<Candidate<'_>>()
-        + 2 * size_of::<Result<Candidate<'_>>>()
-        + 2 * size_of::<super::LayoutView<'_>>()
-        + 2 * size_of::<Result<super::LayoutView<'_>>>()
-        + 2 * size_of::<Observation>()
-        + 2 * size_of::<Result<Observation>>()
-        + 2 * size_of::<Cursor<'_>>()
-        + 512;
+    // The Observation/result is constructed only after prepare/body/parser
+    // returns. Charge that return separately from the nested helper phases.
+    let args = size_of::<(&Inputs<'_>, &[u8], &mut [[u8; PAGE_BYTES]; 5])>();
+    let calls = args
+        + size_of::<Candidate<'_>>()
+        + size_of::<Result<Candidate<'_>>>()
+        + size_of::<super::LayoutView<'_>>()
+        + size_of::<Result<super::LayoutView<'_>>>()
+        + size_of::<Cursor<'_>>()
+        + 2 * size_of::<Result<()>>()
+        + 256;
+    let returning = args
+        + size_of::<Candidate<'_>>()
+        + size_of::<super::LayoutView<'_>>()
+        + size_of::<Observation>()
+        + size_of::<Result<Observation>>()
+        + 256;
+    let outer = calls.max(returning);
     let descriptor = 2 * size_of::<DescriptorSpec>()
         + 2 * size_of::<std::result::Result<DescriptorSpec, obligation::ObligationError>>()
         + 2 * size_of::<SystemProgress>()

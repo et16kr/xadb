@@ -80,6 +80,15 @@ frame 상한57,420B는 typed Undo wrapper·중첩 SHA·after-audit와 parser/emi
 추가 수명과 F05는 다음 연결에서 검산한다. 원 로그·검토는
 [분할 source 기록](../evidence/dev3-tree-structure-20261104.md#split-source-bound)에 둔다.
 
+후속 [canonical scope4 replay](../evidence/dev3-tree-structure-20261104.md#scope4-replay)는 원
+arena·Job·Structural bank의 같은 cut에서 분할을 재계산하고 실제352B INIT를 발급한다.
+Root 두 INIT를 포함한 전체 준비가 끝난 뒤에만 원 상태를 갱신하며 analysis/home/Pending의
+RowInternal level을 보존한다. compact preorder·private build/after-audit 분리·allocator cell 복사로
+candidate20,940/frame23,116B로 줄여 실제 memory/native caller의 기존 cap3종을 유지했다.
+관련 고유30개와 실제 caller2개를 source별 검증했다. 잘못 재실행한 무변경1개와 실패 원본·
+raw Base/cursor 한계도 기록했다. 실제 원 pool SMO·selected WAL 효과 복구·native fault와
+unlink/root shrink/retirement는 계속08-1의 잔여이며 이번 단위에는 일정 적립을 하지 않는다.
+
 <a id="catalog-remaining"></a>
 2026-10-26 [Catalog CREATE 남은 메모리 사례](../evidence/dev3-catalog-remaining-20261026.md): 남은 9개를 모두 source별로 PASS했다. lookup이 Live CREATE Undo를 초기 Free page로만 검증해 fence하던 결함을 고쳤고 Writer 준비 분리를 포함했다. 같은 epoch 두 번째 CREATE의 pair victim 준비를 [D3-CATALOG-CREATE-002](../contracts/dev3-catalog-create.md#sequential-create)로 보완해 MT02가 r36에서 통과했다. [검토 후 수정](../evidence/dev3-catalog-review-fix-20261026.md)에서 Profile에 맞는 Root/Jobs decoder를 연결하고 신규8개와 변경 source 계산2개를 통과했다. 첫 Row INSERT·runtime F05·DEV3/S5는 미완료다.
 

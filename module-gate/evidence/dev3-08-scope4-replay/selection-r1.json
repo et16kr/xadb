@@ -1,0 +1,18 @@
+{
+  "filters": [
+    "structural_replay_",
+    "structural_analysis_",
+    "structural_pending_",
+    "structural_split_source_inventory_includes_retained_after_audit_and_frame_view",
+    "structural_candidate_dense_nullable_rows_fit_reduced_scratch_and_preserve_all_bytes",
+    "structural_candidate_tombstone_ceiling_includes_shortest_supported_record",
+    "structural_candidate_leaf_root_preserves_literal_rows_and_actual_undo_costs",
+    "structural_candidate_child_leaf_revises_anchor_and_preserves_current_root",
+    "structural_candidate_internal_root_and_child_promote_pivot_once",
+    "structural_candidate_skips_exhausted_incarnations_and_rejects_capacity",
+    "structural_frame_matches_independent_sections_for_all_four_splits"
+  ],
+  "expected_tests": 14,
+  "reason": "six unexecuted replay/level cases; changed candidate refs88 and separated allocator helper: source, dense leaf2, shapes3, Free generation selection1, canonical frame1",
+  "timeout_seconds": 240
+}

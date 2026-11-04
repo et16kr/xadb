@@ -17,6 +17,21 @@
         "devdoc/contracts/dev3-tree-smo.md": "95663cdd8bbf6573c7d76d3478437e53d3d99841"
       },
       "log": "module-gate/evidence/dev3-08-smo-lifetime/review.md (sha256 03135b59fb27234f977ed6ccfab3a5d619a207bc32ac402833d7a663241e5f70)"
+    },
+    {
+      "id": "dev3-08-scope4-replay-overlap-d2-d1",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "devdoc/contracts/dev3-tree-smo.md": "919a718f8af4a8539dedb609809039901a92604d"
+      },
+      "log": "module-gate/evidence/dev3-08-scope4-replay/review.md (sha256 2a39d85aadb8513bea28d051226c800aad689f902668809681b711c29df1c15f)"
     }
   ]
 }

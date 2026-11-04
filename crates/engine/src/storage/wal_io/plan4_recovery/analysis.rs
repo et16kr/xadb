@@ -78,6 +78,7 @@ fn request_for_kind(
     index: usize,
     incarnation: Generation,
     kind: PageKind,
+    level: u8,
     owner: ObjectId,
     owner_generation: Generation,
 ) -> Result<TargetRequest> {
@@ -92,6 +93,7 @@ fn request_for_kind(
             PageKind::TransactionStatus => owner.get() == 2,
             PageKind::Undo => owner.get() == 3,
             PageKind::TreeAnchor | PageKind::RowLeaf => owner.get() >= 6,
+            PageKind::RowInternal => profile.format() == 3 && owner.get() >= 6,
             _ => false,
         };
         if !valid {
@@ -100,9 +102,18 @@ fn request_for_kind(
         req.kind = kind;
         req.identity.owner = owner;
     }
-    if req.kind != kind || req.identity.owner != owner || owner_generation.get() != 1 {
+    if req.kind != kind
+        || req.identity.owner != owner
+        || owner_generation.get() != 1
+        || if kind == PageKind::RowInternal {
+            !(1..=15).contains(&level)
+        } else {
+            level != 0
+        }
+    {
         return Err(error(p, Plan4RecoveryCause::IdentityMismatch));
     }
+    req.level = level;
     Ok(req)
 }
 fn canonical_request(
@@ -118,10 +129,18 @@ fn canonical_request(
         .map_err(|_| error(p, Plan4RecoveryCause::IdentityMismatch))?;
     let owner_generation = Generation::new(u64_at(image, 56))
         .map_err(|_| error(p, Plan4RecoveryCause::IdentityMismatch))?;
-    let req = request_for_kind(profile, index, incarnation, kind, owner, owner_generation)?;
+    let req = request_for_kind(
+        profile,
+        index,
+        incarnation,
+        kind,
+        image[7],
+        owner,
+        owner_generation,
+    )?;
     let view = page::decode_page(image, req.identity, req.kind)
         .map_err(|e| error(p, Plan4RecoveryCause::Page(e)))?;
-    if view.header().level != 0 {
+    if view.header().level != req.level {
         return Err(error(p, Plan4RecoveryCause::IdentityMismatch));
     }
     Ok(req)
@@ -145,8 +164,15 @@ pub(super) fn target_record(
         ));
     }
     let at = index * TARGET_BYTES;
-    let role = u8::try_from(u64_at(bytes, at + 48))
-        .map_err(|_| error(Plan4RecoveryPhase::Verify, Plan4RecoveryCause::Invariant))?;
+    let word = u64_at(bytes, at + 48);
+    if word >> 16 != 0 {
+        return Err(error(
+            Plan4RecoveryPhase::Verify,
+            Plan4RecoveryCause::Invariant,
+        ));
+    }
+    let role = word as u8;
+    let level = (word >> 8) as u8;
     let kind = PageKind::from_byte(role)
         .map_err(|e| error(Plan4RecoveryPhase::Verify, Plan4RecoveryCause::Page(e)))?;
     let incarnation = Generation::new(u64_at(bytes, at + 8))
@@ -157,6 +183,7 @@ pub(super) fn target_record(
             index,
             incarnation,
             kind,
+            level,
             ObjectId::new(u64_at(bytes, at + 56)).map_err(|_| {
                 error(
                     Plan4RecoveryPhase::Verify,
@@ -177,11 +204,21 @@ pub(super) fn target_record(
 fn note_target(table: &mut [u8], request: TargetRequest, image: &[u8; PAGE_BYTES]) -> Result<()> {
     let view = page::decode_page(image, request.identity, request.kind)
         .map_err(|e| error(Plan4RecoveryPhase::Analysis, Plan4RecoveryCause::Page(e)))?;
+    if view.header().level != request.level || request.identity.page.page_no >= 64 {
+        return Err(error(
+            Plan4RecoveryPhase::Analysis,
+            Plan4RecoveryCause::IdentityMismatch,
+        ));
+    }
     let at = request.identity.page.page_no as usize * TARGET_BYTES;
     put64(table, at, view.header().lsn.0);
     put64(table, at + 8, request.identity.page.incarnation.get());
     table[at + 16..at + 48].copy_from_slice(&content_digest(image));
-    put64(table, at + 48, request.kind as u64);
+    put64(
+        table,
+        at + 48,
+        request.kind as u64 | (u64::from(request.level) << 8),
+    );
     put64(table, at + 56, request.identity.owner.get());
     put64(table, at + 64, request.identity.owner_generation.get());
     Ok(())
@@ -241,7 +278,7 @@ fn observe_home(
     }
     match page::decode_page(home, req.identity, req.kind) {
         Ok(view) => {
-            if view.header().level != 0 {
+            if view.header().level != req.level {
                 return Err(error(p, Plan4RecoveryCause::IdentityMismatch));
             }
             if at_base {
@@ -537,6 +574,7 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
                                 index,
                                 req.identity.page.incarnation,
                                 req.kind,
+                                req.level,
                                 req.identity.owner,
                                 req.identity.owner_generation,
                             )?
@@ -1213,3 +1251,6 @@ pub(super) fn packing_source_bytes() -> usize {
 #[cfg(test)]
 #[path = "analysis/structural_bank_tests.rs"]
 mod structural_bank_tests;
+#[cfg(test)]
+#[path = "analysis/structural_level_tests.rs"]
+mod structural_level_tests;

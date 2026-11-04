@@ -24,6 +24,12 @@ pub(crate) fn frame_source_bytes() -> usize {
         + 4 * size_of::<TreeEntry<'_>>()
         + 4 * size_of::<Result<TreeEntry<'_>, TreeError>>()
         + 32 * size_of::<usize>()
+        // Public wrapper survives private walk: copied root, visit/image
+        // borrows and bounded registry counters/seen mask. Its output loan
+        // remains caller-owned (generic expectations or compact ordinals).
+        + size_of::<TreeExpectation>()
+        + 4 * size_of::<&()>()
+        + 3 * size_of::<usize>()
 }
 
 fn frame<'images>(
@@ -72,15 +78,74 @@ fn frame<'images>(
 pub(crate) fn audit_tree_in_images<'images>(
     root: TreeExpectation,
     visited: &mut [Option<TreeExpectation>],
-    mut image: impl FnMut(TreeExpectation) -> Result<&'images [u8], TreeError>,
+    image: impl FnMut(TreeExpectation) -> Result<&'images [u8], TreeError>,
 ) -> Result<usize, TreeError> {
     validate_shape(root.kind, root.level, root.arity)?;
     if visited.is_empty() {
         return Err(TreeError::NoSpace);
     }
     visited.fill(None);
+    let mut count = 0;
+    walk(
+        root,
+        |expected| {
+            if visited[..count]
+                .iter()
+                .flatten()
+                .any(|prior| same_address(prior.identity.page, expected.identity.page))
+            {
+                return Err(TreeError::Corrupt);
+            }
+            if count == visited.len() {
+                return Err(TreeError::NoSpace);
+            }
+            visited[count] = Some(expected);
+            count += 1;
+            Ok(())
+        },
+        image,
+    )
+}
+
+/// Same immutable traversal restricted to physical pages0..63 in the root's
+/// file. The populated prefix records preorder page ordinals, not authority.
+/// Only the returned count defines this prefix; the unused tail is zero.
+/// Aliases across incarnations are rejected before a repeated address loads.
+pub(crate) fn audit_tree_in_first_extent<'images>(
+    root: TreeExpectation,
+    visited: &mut [u8; 64],
+    image: impl FnMut(TreeExpectation) -> Result<&'images [u8], TreeError>,
+) -> Result<usize, TreeError> {
+    validate_shape(root.kind, root.level, root.arity)?;
+    visited.fill(0);
+    let (mut seen, mut count) = (0u64, 0usize);
+    walk(
+        root,
+        |expected| {
+            let page = expected.identity.page;
+            if page.file != root.identity.page.file || page.page_no >= 64 {
+                return Err(TreeError::Corrupt);
+            }
+            let bit = 1u64 << page.page_no;
+            if seen & bit != 0 {
+                return Err(TreeError::Corrupt);
+            }
+            seen |= bit;
+            visited[count] = page.page_no as u8;
+            count += 1;
+            Ok(())
+        },
+        image,
+    )
+}
+
+fn walk<'images>(
+    root: TreeExpectation,
+    mut visit: impl FnMut(TreeExpectation) -> Result<(), TreeError>,
+    mut image: impl FnMut(TreeExpectation) -> Result<&'images [u8], TreeError>,
+) -> Result<usize, TreeError> {
     let mut stack: [Option<Frame<'images>>; 16] = [const { None }; 16];
-    visited[0] = Some(root);
+    visit(root)?;
     stack[0] = Some(frame(root, None, None, &mut image)?);
     let mut count = 1;
     let mut depth = 0;
@@ -115,20 +180,10 @@ pub(crate) fn audit_tree_in_images<'images>(
             depth -= 1;
             continue;
         };
-        if visited[..count]
-            .iter()
-            .flatten()
-            .any(|prior| same_address(prior.identity.page, expected.identity.page))
-        {
-            return Err(TreeError::Corrupt);
-        }
-        if count == visited.len() {
-            return Err(TreeError::NoSpace);
-        }
+        visit(expected)?;
         if depth + 1 >= stack.len() {
             return Err(TreeError::Corrupt);
         }
-        visited[count] = Some(expected);
         count += 1;
         depth += 1;
         stack[depth] = Some(frame(expected, lower, upper, &mut image)?);

@@ -194,6 +194,21 @@
         "crates/engine/src/storage/plan4_recovery_base/row/graph/source_tests.rs": "8e35a0d8e8e2708eddf59391167b7cd6f3e03445"
       },
       "log": "module-gate/evidence/dev3-08-current-tree/review.md (sha256 37f27a651decb9fcf50c93d055c324f3dc7ca10355ce443914789f9349d920d2)"
+    },
+    {
+      "id": "dev3-08-scope4-replay-overlap-d2-d1",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "devdoc/contracts/dev3-tree-smo.md": "919a718f8af4a8539dedb609809039901a92604d"
+      },
+      "log": "module-gate/evidence/dev3-08-scope4-replay/review.md (sha256 2a39d85aadb8513bea28d051226c800aad689f902668809681b711c29df1c15f)"
     }
   ]
 }

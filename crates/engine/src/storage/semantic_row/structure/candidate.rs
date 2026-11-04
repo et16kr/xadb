@@ -35,7 +35,13 @@ use foundation::{
 // and one inserted parent entry; no global page/wire limit is changed.
 pub(super) const MAX_LEAF_ROWS: usize = tree_page::TREE_ENTRY_CAPACITY / (ROW_HEADER_BYTES + 16);
 pub(super) const ROW_REFS: usize = tree_page::TREE_ENTRY_CAPACITY / 40 + 2;
+// Only for a source selected from the successful full 64-page before audit:
+// internal metadata+separators equals its distinct child count, at most64.
+// A typed leaf instead needs its87 rows plus metadata. Local parent editing
+// retains the general page-format bound above.
+pub(super) const SPLIT_REFS: usize = MAX_LEAF_ROWS + 1;
 const _: () = assert!(MAX_LEAF_ROWS < ROW_REFS);
+const _: () = assert!(64 <= SPLIT_REFS);
 
 #[path = "candidate/source.rs"]
 mod source;
@@ -220,6 +226,45 @@ fn table<'a>(
     })
 }
 
+/// Recover the full expectation from the same immutable cut only after its
+/// successful first-extent audit. A preorder ordinal alone is not an identity.
+fn reached<'a>(
+    table: &Table<'_>,
+    alloc: &AllocationPage<'_>,
+    ordinal: u8,
+    image: &mut impl FnMut(PageRef) -> Result<&'a [u8; PAGE_BYTES]>,
+) -> Result<TreeExpectation> {
+    let AllocationEntry::Allocated {
+        generation,
+        object,
+        object_generation,
+        kind,
+    } = allocation(alloc.entry(usize::from(ordinal)))?
+    else {
+        return Err(Error::IdentityMismatch);
+    };
+    same(
+        object == table.handle.object
+            && object_generation == table.handle.generation
+            && matches!(kind, PageKind::RowLeaf | PageKind::RowInternal),
+    )?;
+    let identity = PageIdentity {
+        page: PageRef {
+            file: alloc.header().identity.page.file,
+            page_no: u64::from(ordinal),
+            incarnation: generation,
+        },
+        ..table.anchor_header.identity
+    };
+    let header = page::decode_page(image(identity.page)?, identity, kind)?.header();
+    Ok(TreeExpectation {
+        identity,
+        kind,
+        level: header.level,
+        arity: 0,
+    })
+}
+
 /// Audit both directions of this object's allocator ownership, then all its
 /// current inline rows and actual Undo weights. Unchanged global actor/queue
 /// relationships still come from the original canonical owner's proof.
@@ -228,7 +273,7 @@ fn audit<'a>(
     table: &Table<'_>,
     alloc: &AllocationPage<'_>,
     cut: u64,
-    visited: &mut [Option<TreeExpectation>; 64],
+    visited: &mut [u8; 64],
     image: &mut impl FnMut(PageRef) -> Result<&'a [u8; PAGE_BYTES]>,
 ) -> Result<(usize, [u8; 32])> {
     allocation(alloc.lookup_allocated(table.anchor_header.identity, PageKind::TreeAnchor))?;
@@ -239,7 +284,7 @@ fn audit<'a>(
         },
         table.root.level,
     );
-    let count = tree_page::audit::audit_tree_in_images(root, visited, |expected| {
+    let count = tree_page::audit::audit_tree_in_first_extent(root, visited, |expected| {
         alloc
             .lookup_allocated(expected.identity, expected.kind)
             .map_err(|_| tree_page::TreeError::Corrupt)?;
@@ -272,18 +317,14 @@ fn audit<'a>(
             if page == table.anchor {
                 same(kind == PageKind::TreeAnchor)?;
             } else {
-                same(
-                    visited[..count]
-                        .iter()
-                        .flatten()
-                        .any(|e| e.identity.page == page && e.kind == kind),
-                )?;
+                same(visited[..count].contains(&(ordinal as u8)))?;
             }
         }
     }
     let mut hash = ContentHasher::new();
     let mut scratch = [0usize; MAX_LEAF_ROWS];
-    for expected in visited[..count].iter().flatten().copied() {
+    for ordinal in visited[..count].iter().copied() {
+        let expected = reached(table, alloc, ordinal, image)?;
         if expected.level != 0 {
             continue;
         }
@@ -354,6 +395,17 @@ pub(crate) fn prepare<'a>(
     after: &mut [[u8; PAGE_BYTES]; 5],
     mut image: impl FnMut(PageRef) -> Result<&'a [u8; PAGE_BYTES]>,
 ) -> Result<Candidate<'a>> {
+    let (candidate, before_rows) = build(input, after, &mut image)?;
+    verify_after(input, &candidate, before_rows, after, &mut image)?;
+    Ok(candidate)
+}
+
+#[inline(never)]
+fn build<'a>(
+    input: &Inputs<'_>,
+    after: &mut [[u8; PAGE_BYTES]; 5],
+    mut image: impl FnMut(PageRef) -> Result<&'a [u8; PAGE_BYTES]>,
+) -> Result<(Candidate<'a>, [u8; 32])> {
     let namespace = input.profile.spec().namespace;
     same(
         input.profile.format() == 3
@@ -377,7 +429,7 @@ pub(crate) fn prepare<'a>(
     ))?;
     bounded(alloc.header(), input.frame.previous_lsn)?;
     let table = table(input, &mut image)?;
-    let mut visited = [None; 64];
+    let mut visited = [0; 64];
     let (count, before_rows) = audit(
         input,
         &table,
@@ -386,12 +438,13 @@ pub(crate) fn prepare<'a>(
         &mut visited,
         &mut image,
     )?;
-    let source = visited[..count]
+    let ordinal = visited[..count]
         .iter()
-        .flatten()
         .copied()
-        .find(|e| e.identity.page == input.source)
+        .find(|n| u64::from(*n) == input.source.page_no)
         .ok_or(Error::IdentityMismatch)?;
+    let source = reached(&table, &alloc, ordinal, &mut image)?;
+    same(source.identity.page == input.source)?;
     if source.level >= 15 {
         return Err(Error::Exhausted);
     }
@@ -402,12 +455,11 @@ pub(crate) fn prepare<'a>(
     };
     let mut parent = None;
     if operation == Operation::ChildSplit {
-        for expected in visited[..count]
-            .iter()
-            .flatten()
-            .copied()
-            .filter(|e| e.level == source.level + 1)
-        {
+        for ordinal in visited[..count].iter().copied() {
+            let expected = reached(&table, &alloc, ordinal, &mut image)?;
+            if expected.level != source.level + 1 {
+                continue;
+            }
             let view = tree_page::decode_tree_page(image(expected.identity.page)?, expected)?;
             for child in 0..=view.len() {
                 if view.child_expectation(child)?.identity.page == input.source {
@@ -417,7 +469,6 @@ pub(crate) fn prepare<'a>(
         }
         same(parent.is_some())?;
     }
-    let mut entries = [AllocationEntry::Free(Generation::new(1).expect("one")); 64];
     let mut free = [None; 2];
     let needed = if operation == Operation::RootSplit {
         2
@@ -425,11 +476,11 @@ pub(crate) fn prepare<'a>(
         1
     };
     let mut selected = 0;
-    for (ordinal, entry) in entries.iter_mut().enumerate() {
-        *entry = allocation(alloc.entry(ordinal))?;
+    for ordinal in 0..64 {
+        let entry = allocation(alloc.entry(ordinal))?;
         if ordinal >= 9
             && selected < needed
-            && matches!(*entry, AllocationEntry::Free(_))
+            && matches!(entry, AllocationEntry::Free(_))
             && let Ok(incarnation) = entry.next_reservation_generation()
         {
             free[selected] = Some(PageRef {
@@ -451,7 +502,7 @@ pub(crate) fn prepare<'a>(
     };
     let left_before = image(source.identity.page)?;
     let left = tree_page::decode_tree_page(left_before, source)?;
-    let mut refs = [&[][..]; ROW_REFS];
+    let mut refs = [&[][..]; SPLIT_REFS];
     let mut weights = [0usize; MAX_LEAF_ROWS];
     let split = if source.level == 0 {
         weights::derive(
@@ -475,7 +526,7 @@ pub(crate) fn prepare<'a>(
     let boundary = split.boundary();
     for right in [false, true] {
         let mut metadata = [0; tree_page::TREE_METADATA_BYTES];
-        let mut side_refs = [&[][..]; ROW_REFS];
+        let mut side_refs = [&[][..]; SPLIT_REFS];
         split.encode_side(
             right,
             PageLsn(lsn),
@@ -489,7 +540,7 @@ pub(crate) fn prepare<'a>(
     let parent_before = if let Some(expected) = parent {
         let bytes = image(expected.identity.page)?;
         let view = tree_page::decode_tree_page(bytes, expected)?;
-        encode_parent(
+        encode_parent_sized::<SPLIT_REFS>(
             &view,
             input.source,
             split.separator(),
@@ -540,28 +591,14 @@ pub(crate) fn prepare<'a>(
             lsn: PageLsn(lsn),
         },
     ];
-    for role in [3usize, 4].into_iter().take(needed) {
-        let header = pages[role];
-        entries[header.identity.page.page_no as usize] = AllocationEntry::Allocated {
-            generation: header.identity.page.incarnation,
-            object: header.identity.owner,
-            object_generation: header.identity.owner_generation,
-            kind: header.kind,
-        };
-    }
-    let mut alloc_cell = [0; allocation_page::ALLOCATION_CELL_BYTES];
-    allocation(allocation_page::encode_allocation_cell(
-        pages[0],
+    encode_allocator(
+        &alloc,
+        allocator_before,
         namespace,
-        &entries,
-        &mut alloc_cell,
-    ))?;
-    allocation(allocation_page::encode_allocation_page(
-        pages[0],
-        namespace,
-        &alloc_cell,
+        &pages,
+        needed,
         &mut after[0],
-    ))?;
+    )?;
     let next_root = AnchorRoot {
         revision: table.root.revision + 1,
         page: if operation == Operation::RootSplit {
@@ -601,32 +638,6 @@ pub(crate) fn prepare<'a>(
     } else {
         actual
     };
-    let after_alloc = allocation(allocation_page::decode_allocation_page(
-        &after[0],
-        pages[0].identity,
-        namespace,
-    ))?;
-    let after_table = Table {
-        root: next_root,
-        anchor_image: &after[1],
-        anchor_header: pages[1],
-        ..table
-    };
-    let (_, after_rows) = audit(
-        input,
-        &after_table,
-        &after_alloc,
-        lsn,
-        &mut visited,
-        &mut |page| {
-            if let Some(role) = pages.iter().position(|h| h.identity.page == page) {
-                Ok(&after[role])
-            } else {
-                image(page)
-            }
-        },
-    )?;
-    same(before_rows == after_rows)?;
     let mut core = [0; 256];
     core[..4].copy_from_slice(b"XSM1");
     core[4..6].copy_from_slice(&1u16.to_le_bytes());
@@ -659,26 +670,103 @@ pub(crate) fn prepare<'a>(
     core[163] = table.root.level;
     core[224..].copy_from_slice(&previous_digest);
     super::decode_core(&core, operation)?;
-    Ok(Candidate {
-        operation,
-        header: WalFrameHeader {
-            stream: input.frame.stream,
-            kind: FrameKind::System,
-            lsn,
-            previous_lsn: input.frame.previous_lsn,
-            txn: None,
-            previous_txn_lsn: 0,
+    Ok((
+        Candidate {
+            operation,
+            header: WalFrameHeader {
+                stream: input.frame.stream,
+                kind: FrameKind::System,
+                lsn,
+                previous_lsn: input.frame.previous_lsn,
+                txn: None,
+                previous_txn_lsn: 0,
+            },
+            core,
+            pages,
+            before: [
+                Some(allocator_before),
+                Some(table.anchor_image),
+                Some(left_before),
+                None,
+                parent_before,
+            ],
         },
-        core,
-        pages,
-        before: [
-            Some(allocator_before),
-            Some(table.anchor_image),
-            Some(left_before),
-            None,
-            parent_before,
-        ],
-    })
+        before_rows,
+    ))
+}
+
+#[inline(never)]
+fn verify_after<'a>(
+    input: &Inputs<'_>,
+    candidate: &Candidate<'_>,
+    before_rows: [u8; 32],
+    after: &[[u8; PAGE_BYTES]; 5],
+    image: &mut impl FnMut(PageRef) -> Result<&'a [u8; PAGE_BYTES]>,
+) -> Result<()> {
+    let pages = &candidate.pages;
+    let alloc = allocation(allocation_page::decode_allocation_page(
+        &after[0],
+        pages[0].identity,
+        input.profile.spec().namespace,
+    ))?;
+    let mut table = table(input, image)?;
+    table.root = anchor::decode_anchor(&after[1], pages[1].identity)?.root();
+    table.anchor_image = &after[1];
+    table.anchor_header = pages[1];
+    let mut visited = [0; 64];
+    let (_, after_rows) = audit(
+        input,
+        &table,
+        &alloc,
+        candidate.header.lsn,
+        &mut visited,
+        &mut |page| {
+            if let Some(role) = pages.iter().position(|h| h.identity.page == page) {
+                Ok(&after[role])
+            } else {
+                image(page)
+            }
+        },
+    )?;
+    same(before_rows == after_rows)
+}
+
+/// End allocator array lifetimes before the after-tree audit. The caller has
+/// selected lowest eligible Free entries from this same immutable allocator.
+#[inline(never)]
+fn encode_allocator(
+    alloc: &AllocationPage<'_>,
+    before: &[u8; PAGE_BYTES],
+    namespace: Namespace,
+    pages: &[PageHeader; 5],
+    needed: usize,
+    output: &mut [u8; PAGE_BYTES],
+) -> Result<()> {
+    let view = page::decode_page(before, alloc.header().identity, PageKind::Allocation)?;
+    let mut cell = [0; allocation_page::ALLOCATION_CELL_BYTES];
+    let old = view.cell(0).ok_or(Error::Corrupt)?;
+    same(old.len() == cell.len())?;
+    cell.copy_from_slice(old);
+    for header in pages[3..3 + needed].iter().copied() {
+        let ordinal = header.identity.page.page_no as usize;
+        let entry = allocation(alloc.entry(ordinal))?;
+        same(allocation(entry.next_reservation_generation())? == header.identity.page.incarnation)?;
+        let next = AllocationEntry::Allocated {
+            generation: header.identity.page.incarnation,
+            object: header.identity.owner,
+            object_generation: header.identity.owner_generation,
+            kind: header.kind,
+        };
+        let at = allocation_page::ALLOCATION_HEADER_BYTES
+            + ordinal * allocation_page::ALLOCATION_ENTRY_BYTES;
+        allocation(next.encode(
+            namespace,
+            &mut cell[at..at + allocation_page::ALLOCATION_ENTRY_BYTES],
+        ))?;
+    }
+    allocation(allocation_page::encode_allocation_page(
+        pages[0], namespace, &cell, output,
+    ))
 }
 
 /// Local parent edit; its caller establishes complete-tree reachability and
@@ -691,11 +779,21 @@ pub(crate) fn encode_parent(
     lsn: PageLsn,
     output: &mut [u8; PAGE_BYTES],
 ) -> Result<()> {
+    encode_parent_sized::<ROW_REFS>(view, left, separator, right, lsn, output)
+}
+fn encode_parent_sized<const N: usize>(
+    view: &tree_page::TreePageView<'_>,
+    left: PageRef,
+    separator: &[u8],
+    right: PageRef,
+    lsn: PageLsn,
+    output: &mut [u8; PAGE_BYTES],
+) -> Result<()> {
     let mut cell = [0; 36];
     let cell =
         tree_page::encode_internal_cell(PageKind::RowInternal, 0, separator, right, &mut cell)?;
     let mut metadata = [0; tree_page::TREE_METADATA_BYTES];
-    let mut refs = [&[][..]; ROW_REFS];
+    let mut refs = [&[][..]; N];
     let plan = structure(view.prepare_internal_edit(
         InternalEdit::Insert { left, cell },
         &mut metadata,

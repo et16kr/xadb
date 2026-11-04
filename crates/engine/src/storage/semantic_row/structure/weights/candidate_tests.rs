@@ -653,19 +653,22 @@ fn structural_candidate_old_epoch_descriptor_and_partial_error_output() {
     let mut out = World::outputs();
     let mut reads = 0;
     let result = product::prepare(&world.inputs(13), &mut out, |p| {
-        if p.page_no == 23 {
+        // verify_after reopens the original Catalog after private build has
+        // produced every image. More before-tree reads must not move this cut.
+        if p.page_no == 8 {
             reads += 1;
-            if reads == 5 {
+            if reads == 2 {
                 return Err(Error::Corrupt);
             }
         }
         world.page(p)
     });
     assert_eq!(result.err(), Some(Error::Corrupt));
-    assert_eq!(reads, 5);
-    assert_ne!(out[2], [0xa5; PAGE_BYTES]);
-    assert_ne!(out[3], [0xa5; PAGE_BYTES]);
-    assert_eq!(out[0], [0xa5; PAGE_BYTES]);
+    assert_eq!(reads, 2);
+    for image in &*out {
+        assert!(image.iter().any(|b| *b != 0xa5));
+    }
+    // Even a complete workspace is unusable: no public Candidate returned.
     assert_eq!(world.pages, before);
 }
 

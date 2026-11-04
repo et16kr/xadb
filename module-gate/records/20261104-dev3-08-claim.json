@@ -101,6 +101,21 @@
         "devdoc/contracts/dev3-tree-smo.md": "30b3425d42682ed5c278b3381f84d0f9311b5c53"
       },
       "log": "module-gate/evidence/dev3-08-claim/review.md (sha256 acc9e9452b699a81564195292c68613add16f95221fdbe69252be29e6e51017a)"
+    },
+    {
+      "id": "dev3-08-scope4-replay-overlap-d2-d1",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "devdoc/contracts/dev3-tree-smo.md": "919a718f8af4a8539dedb609809039901a92604d"
+      },
+      "log": "module-gate/evidence/dev3-08-scope4-replay/review.md (sha256 2a39d85aadb8513bea28d051226c800aad689f902668809681b711c29df1c15f)"
     }
   ]
 }

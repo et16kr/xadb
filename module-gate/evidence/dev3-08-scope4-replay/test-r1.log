@@ -1,0 +1,25 @@
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 51s
+     Running unittests src/lib.rs (artifacts/dev3-08/target/debug/deps/engine-e4e141083d864921)
+
+running 14 tests
+candidate outer 10920/16384 audit 15749/19436 weights 13629/15820 parent 10877/16793 table 6604/9148 side 10941 previous 10831 peak 35820
+allocator emission 14474/16418
+frame outer 2112/6208 layout 17495 body 16799 candidate 35820 peak 42028
+test storage::semantic_row::structure::candidate::source_tests::structural_split_source_inventory_includes_retained_after_audit_and_frame_view ... ok
+test storage::semantic_row::structure::weights::tests::candidate::density::structural_candidate_tombstone_ceiling_includes_shortest_supported_record ... ok
+test storage::semantic_row::structure::weights::tests::candidate::structural_candidate_child_leaf_revises_anchor_and_preserves_current_root ... ok
+test storage::semantic_row::structure::weights::tests::candidate::density::structural_candidate_dense_nullable_rows_fit_reduced_scratch_and_preserve_all_bytes ... ok
+test storage::semantic_row::structure::weights::tests::candidate::structural_candidate_skips_exhausted_incarnations_and_rejects_capacity ... ok
+test storage::semantic_row::structure::weights::tests::candidate::structural_candidate_leaf_root_preserves_literal_rows_and_actual_undo_costs ... ok
+test storage::semantic_row::structure::weights::tests::candidate::structural_candidate_internal_root_and_child_promote_pivot_once ... ok
+test storage::semantic_row::structure::weights::tests::candidate::frame::structural_frame_matches_independent_sections_for_all_four_splits ... ok
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::analysis::structural_level_tests::structural_analysis_home_level_checks_do_not_confuse_future_incarnation ... ok
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::analysis::structural_level_tests::structural_analysis_target_table_preserves_level_and_rejects_noncanonical_kind_word ... ok
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::analysis::structural_level_tests::structural_pending_requires_exact_level_for_same_incarnation ... ok
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::structural_replay_tests::structural_replay_rejects_rehashed_canonical_mutations_before_publication ... ok
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::structural_replay_tests::structural_replay_four_split_shapes_mint_exact_claims_and_preserve_rows ... ok
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::structural_replay_tests::structural_replay_second_init_conflict_and_prior_bank_corruption_are_atomic ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 2283 filtered out; finished in 0.29s
+

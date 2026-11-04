@@ -1,0 +1,32 @@
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 47.67s
+     Running unittests src/lib.rs (artifacts/dev3-08/target/debug/deps/engine-e4e141083d864921)
+
+running 19 tests
+frame parser 11999/17495 emitter 13017/16799
+candidate build 4912/4968 audit 15749/18892 weights 13629/15820 parent 5789/11705 table 6604/9148 side 10941 previous 10831 peak 20940
+allocator emission 10538/12426
+candidate prefix 1152/1216 wrapper 962/964 after 856/936 returning 8292
+frame outer 2112/2176 layout 17495 body 16799 candidate 20940 peak 23116
+test storage::semantic_row::structure::frame::source_tests::structural_frame_source_inventory_covers_parser_and_emit_nesting ... ok
+test storage::semantic_row::structure::candidate::source_tests::structural_split_source_inventory_includes_retained_after_audit_and_frame_view ... ok
+test storage::semantic_row::structure::weights::tests::candidate::density::structural_candidate_dense_nullable_rows_fit_reduced_scratch_and_preserve_all_bytes ... ok
+test storage::semantic_row::structure::weights::tests::candidate::structural_candidate_child_leaf_revises_anchor_and_preserves_current_root ... ok
+test storage::semantic_row::structure::weights::tests::candidate::structural_candidate_leaf_root_preserves_literal_rows_and_actual_undo_costs ... ok
+test storage::semantic_row::structure::weights::tests::candidate::structural_candidate_skips_exhausted_incarnations_and_rejects_capacity ... ok
+test storage::tree_page::audit::tests::compact_tree_audit_matches_preorder_at_page_zero_and_sixty_three ... ok
+test storage::semantic_row::structure::weights::tests::candidate::structural_candidate_internal_root_and_child_promote_pivot_once ... ok
+test storage::tree_page::audit::tests::compact_tree_audit_rejects_extent_alias_and_range_before_untrusted_load ... ok
+test storage::tree_page::audit::tests::immutable_tree_audit_bounds_maximum_depth_and_accepts_empty_leaf ... ok
+test storage::tree_page::audit::tests::immutable_tree_audit_distinguishes_file_identity_and_unreachable_owned_pages ... ok
+test storage::tree_page::audit::tests::immutable_tree_audit_checks_capacity_before_load_and_preserves_callback_error ... ok
+test storage::tree_page::audit::tests::immutable_tree_audit_rejects_shared_children_and_incarnation_aliases_before_load ... ok
+test storage::tree_page::audit::tests::immutable_tree_audit_visits_all_families_in_exact_preorder ... ok
+test storage::tree_page::audit::tests::immutable_tree_audit_rejects_off_path_bounds_and_identity ... ok
+test storage::semantic_row::structure::weights::tests::candidate::frame::structural_frame_matches_independent_sections_for_all_four_splits ... ok
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::structural_replay_tests::structural_replay_rejects_rehashed_canonical_mutations_before_publication ... ok
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::structural_replay_tests::structural_replay_four_split_shapes_mint_exact_claims_and_preserve_rows ... ok
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::structural_replay_tests::structural_replay_second_init_conflict_and_prior_bank_corruption_are_atomic ... ok
+
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 2280 filtered out; finished in 0.32s
+

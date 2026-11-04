@@ -183,6 +183,108 @@ fn immutable_tree_audit_visits_all_families_in_exact_preorder() {
     }
 }
 
+fn first_extent_tree(internal: PageKind, leaf_kind: PageKind, arity: u8) -> BTreeMap<u64, Vec<u8>> {
+    let mut images = BTreeMap::new();
+    images.insert(0, branch(expected(internal, arity, 2, 0), 1, &[(40, 2)]));
+    images.insert(1, branch(expected(internal, arity, 1, 1), 3, &[(20, 4)]));
+    images.insert(2, branch(expected(internal, arity, 1, 2), 5, &[(60, 63)]));
+    for (n, keys) in [(3, [10, 15]), (4, [20, 30]), (5, [40, 50]), (63, [60, 70])] {
+        images.insert(n, leaf(expected(leaf_kind, arity, 0, n), &keys));
+    }
+    images
+}
+
+#[test]
+fn compact_tree_audit_matches_preorder_at_page_zero_and_sixty_three() {
+    for (internal, leaf_kind, arity) in FAMILIES {
+        let images = first_extent_tree(internal, leaf_kind, arity);
+        let root = expected(internal, arity, 2, 0);
+        let mut full = [None; 64];
+        let mut calls = vec![];
+        let count = audit(root, &images, &mut full, &mut calls).unwrap();
+        assert_eq!(calls, [0, 1, 3, 4, 2, 5, 63]);
+        let mut compact = [255; 64];
+        let mut actual = vec![];
+        assert_eq!(
+            audit_tree_in_first_extent(root, &mut compact, |e| {
+                actual.push(e.identity.page.page_no);
+                Ok(images.get(&e.identity.page.page_no).unwrap().as_slice())
+            }),
+            Ok(count)
+        );
+        assert_eq!(actual, calls);
+        for i in 0..count {
+            assert_eq!(
+                u64::from(compact[i]),
+                full[i].unwrap().identity.page.page_no
+            );
+        }
+        assert!(compact[count..].iter().all(|n| *n == 0));
+    }
+}
+
+#[test]
+fn compact_tree_audit_rejects_extent_alias_and_range_before_untrusted_load() {
+    let (internal, leaf_kind, arity) = FAMILIES[0];
+    for mutation in 0..5 {
+        let mut images = first_extent_tree(internal, leaf_kind, arity);
+        let root = expected(internal, arity, 2, 0);
+        let mut child = reference(63);
+        match mutation {
+            0 => child.page_no = 64,
+            1 => child.file = FileId::new(0x1_0000_0003).unwrap(),
+            2 => child.page_no = 3,
+            3 => {
+                child.page_no = 3;
+                child.incarnation = Generation::new(2).unwrap();
+            }
+            _ => {
+                images.insert(3, leaf(expected(leaf_kind, arity, 0, 3), &[21]));
+            }
+        }
+        images.insert(
+            2,
+            page(
+                expected(internal, arity, 1, 2),
+                Some(reference(5)),
+                &[(60, child)],
+            ),
+        );
+        if mutation == 1 {
+            let mut e = expected(leaf_kind, arity, 0, 63);
+            e.identity.page = child;
+            images.insert(63, leaf(e, &[60, 70]));
+            // Generic audit still allows a different file with exact identity.
+            assert_eq!(audit(root, &images, &mut [None; 64], &mut vec![]), Ok(7));
+        }
+        let mut calls = vec![];
+        assert_eq!(
+            audit_tree_in_first_extent(root, &mut [0; 64], |e| {
+                calls.push(e.identity.page.page_no);
+                images
+                    .get(&e.identity.page.page_no)
+                    .map(Vec::as_slice)
+                    .ok_or(TreeError::NoSpace)
+            }),
+            Err(TreeError::Corrupt),
+            "mutation {mutation}"
+        );
+        assert_eq!(
+            calls,
+            if mutation == 4 {
+                vec![0, 1, 3]
+            } else {
+                vec![0, 1, 3, 4, 2, 5]
+            }
+        );
+    }
+    let root = expected(leaf_kind, arity, 0, 64);
+    assert_eq!(
+        audit_tree_in_first_extent(root, &mut [0; 64], |_| panic!("out-of-range root loaded")),
+        Err(TreeError::Corrupt)
+    );
+}
+
 #[test]
 fn immutable_tree_audit_rejects_off_path_bounds_and_identity() {
     for (internal, leaf_kind, arity) in FAMILIES {

@@ -606,19 +606,45 @@ MAX_PAGE_SLOTS는 임의 page cell의 상한이어서 Row SMO의 reference/weigh
 현재 Row payload는 최소168B header이고 tree cell의 prefix/key12B와 slot4B를 더하면
 최소184B다(Deleted도 포함). 따라서 leaf당 최대 floor(16188/184)=87행이다.
 Internal cell은 prefix4B+RowId8B+PageRef24B+slot4B=40B로 최대404개 separator다.
-후보의 reference scratch는 두 형식 중 큰404에 metadata와 parent 삽입1개를 더한406개,
-leaf weight scratch는87개로 한정한다. 이 상한은 실제 decode 후 허용되는 현재 Row 형식의
+일반 parent 편집의 reference scratch는404에 metadata와 parent 삽입1개를 더한406개,
+leaf weight scratch는87개로 한정한다. 실제 분할의 refs/side refs는88개다. 이는 동일 원본에
+대한 전체 before audit가 성공하고 source가 그 visited 집합에서 선택된 뒤에만 적용한다.
+첫 extent의 서로 다른 최대64page를 전부 방문하는 audit는 internal의 모든 child와 alias를
+검사하므로 해당 internal의 metadata+separator 수(=child 수)는64 이하다. leaf87+metadata1이
+이를 지배한다. audit 없이 쓰는 일반 parent 편집의406개는 줄이지 않는다.
+이 상한은 실제 decode 후 허용되는 현재 Row 형식의
 모든 입력을 포함한다. 지원하지 않는 payload나 과다한 raw cell 입력은 후보를 얻지 못하며
 scratch 부족을 수락으로 바꾸지 않는다. 부모가 가득 찬 정상 입력의 Capacity 거절과 출력
 보존도 그대로 검증한다. Row overflow/일반 schema 지원 범위를 넓히는 계약이 아니다.
 
-같은 호출에서 살아 있는 원 refs·side refs/parent refs, weights, allocator64·allocation cell,
-visited64, DFS16, 전후 table/view와 typed Undo·Row·Catalog codec 결과 및 frame 비교의 descriptor,
+같은 호출에서 살아 있는 원 refs·side refs/parent refs, weights, allocation cell,
+preorder64·DFS16, 전후 table/view와 typed Undo·Row·Catalog codec 결과 및 frame 비교의 descriptor,
 core/native/redo 결과를 source census에 합산한다. 완료한 단계의 max와 중첩 caller의 sum을
 구분하고 callback capture도 호출자가 별도 가산한다. 반환 candidate와 after5는 권한이 아니며,
 after5는 기존 caller loan으로 세고 새 배열을 숨겨 할당하지 않는다. 이 계산은 실제 compiler
 stack/RSS 측정이 아니다. 원 recovery/F05 한도는 유지하며 실제 caller 연결은 다음 단계에서
 그 callable owner의 census로 다시 검산한다.
+
+scope4 실제 호출자 연결의 D2 보완은 별도 allocator64 배열을 없앤다. 검증된 원 cell6208을
+private `encode_allocator`의 배열로 복사하고 선택한1/2개의96B entry만 기존 encoder로 바꾼다.
+동일 immutable allocator에서 lowest eligible Free를 선택하며 각 entry의 다음 generation을
+다시 확인한다. 나머지 entry bytes는 보존하고 `encode_allocation_page`로 전체 inventory를
+검산한 뒤 after0를 쓴다. caller 잔존 값에는 helper의 배열·codec 최대 중첩을 더한다.
+
+first-extent audit는 기존 iterative walk를 공유한다. root와 같은 file·page_no<64를 bit 연산
+전에 검사하고 u64 seen으로 incarnation이 다른 physical alias도 callback 전에 거절한다.
+root도 seen에 넣으며64B ordinal 목록에 preorder를 보존한다. 반환 count만 유효 prefix이고
+나머지는0이다. 성공한 동일 immutable cut의 allocator·원 page에서 incarnation·owner/gen/kind·
+level을 다시 얻으며 ordinal 자체를 정체성으로 쓰지 않는다. 범용 audit의 cross-file 허용·
+capacity와 tail None·depth16/range 검산은 유지한다. 공통 source에는 public wrapper와 visitor의
+root·loan/counter·네 borrow capture120B를 추가한다.
+
+private build가 반환한 뒤 verify_after를 시작하고 public prepare는 전후 ordered row hash까지
+같을 때만 Candidate를 반환한다. 생성 전의 Candidate/Result를 모든 중첩 단계에 중복 가산하지
+않으며 실제 반환 단계와 public wrapper가 쥔 draft는 각각 센다. `inline(never)`는 함수 경계를
+유지하는 장치이며 공간 검증을 대신하지 않는다. 기존 source/F05 cap과 wire bytes는 유지한다.
+담당 `/root`, 독립 `/root/dev3_08_review` D2 ACCEPT·필수0이며 실제 선택 결과는
+[scope4 기록](../evidence/dev3-tree-structure-20261104.md#scope4-replay)에 둔다.
 
 선택 시험은 새 최대 밀도 leaf·parent404/삽입405 거절·source inventory와 이 배열 크기에
 직접 영향받는 기존 Root/Child leaf/internal 후보 및 canonical frame 비교로 한정한다.
@@ -629,3 +655,56 @@ encode/decode를 합한다. DELETE/UPDATE는 material·outline·metadata 반환�
 check_outline chain을 별도로 센다. SHA1536은 해시를 호출하는 codec과 같은 branch에 더하며,
 완료된 별도 digest 단계와의 max만으로 중첩 공간을 대체하지 않는다. frame의 parser와
 emitter도 descriptor/redo/order/header 및 반환 carrier를 독립 inventory와 대조한다.
+
+<a id="scope4-replay"></a>
+## Canonical scope4 replay와 최초 기록 발급
+
+다음 연결은 원 recovery/history arena의 scope4 분기다. arbitrary raw frame은 table/source를
+선택할 입력일 뿐이며, `frame::observe`가 같은 accepted before arena·Job cells·기존 Structural
+bank에서 다섯 after를 새로 계산하고 frame 전체를 비교해야 다음 단계로 간다. 원
+ReplayAllocation의 Reserved 상태와 모든 RootReserved는 split 앞에서 거절한다. cut·epoch·
+namespace와 이전 high-water/descriptor digest도 기존 cursor와 원 bank에서 검산한다.
+이전 RAM34 전체1664B를 `control::observe_structural_bank_row(profile, 실제cut, epoch, row)`로
+먼저 관측한다. candidate의 descriptor/HW 검사만으로 PHASE=STABLE·unused metadata0·
+HW0⇔빈 row 검산을 대신하지 않는다. zero-HW garbage와 non-STABLE row를 덮어 정상화하지 않는다.
+
+새 history 함수는 원 arena/cells/bank/after8/claims64를 분리해 빌린다. after의 앞5page만
+사용하고 별도 replay buffer나 pool을 만들지 않는다. RootSplit의 right/new-root 두 INIT,
+ChildSplit의 right 한 INIT는 allocator가 고른 Free page이며 기존 canonical arena image와
+claim이 비어 있어야 한다. 삭제된 다른 incarnation의 physical home은 여기의 before가 아니다.
+기존 allocator generation 증분·고아/중복/범위·전후 Row bytes·실제 Undo 가중치는 candidate가
+검산한다. 이 원자 system group은 Job·Status·ATT·사용자 Undo를 변경하지 않는다.
+
+새 role5/6의352B 기록은 fresh comparison 성공 뒤 private 함수에서만 작성한다. 실제 frame
+digest, 정확한 최초 after digest, 비교된 core digest, 원 header의LSN/epoch와 완료 SystemWorkRef,
+object/anchor/left/peer·전후 revision을 기록한다. Root 두 기록과 다섯 target의 정체성·범위·
+기존 claim 충돌을 모두 확인한 뒤에만 arena·claims·Structural RAM34 row를 함께 갱신한다.
+실패한 compare/claim 준비는 canonical arena/cells/bank/claims/cursor를 바꾸지 않으며 after는
+실패 workspace다. 이 기록을 원 dirty INIT 권한으로 직접 전환하지 않는다.
+Root 두 번째 destination image/claim만 충돌하는 반례도 첫 INIT를 publish하지 않는지 확인한다.
+
+구조 완료 descriptor는 같은 frame의 비교된 bytes이며 high-water=LSN, STABLE, 나머지 metadata0
+형식으로 RAM34에 둔다. 기존 state digest는 claims까지 포함한다. selected WAL prefix→
+analysis seal→base pack/readback→CURRENT full digest→old-WAL retirement의 기존 신뢰 사슬을
+우회하지 않는다. raw Base4 관측 fixture만으로 selected history를 증명했다고 하지 않는다.
+
+analysis의 transient target table은 기존72B/target을 유지한다. kind를 담던 u64의 하위8bit에
+kind, 다음8bit에 level을 넣고 나머지는0으로 검사한다. 기존 level0 bytes는 같다. Profile3
+동적 object의 RowInternal은 level1..15만 허용하고, 나머지 page kind는 level0을 유지한다.
+canonical image·physical home의 level과 decoded target을 비교하며 다른 level은 거절한다.
+이는 사내 transient scratch의 표현이며 Base/WAL의 wire layout 변경은 아니다.
+`note_target`도 image의 decoded level과 request.level을 쓰기 전에 대조한다. DWB의
+`observe_pending`은 같은 incarnation에서 pending.level==request.level을 요구하고,
+`flush_final`은 request.level을 PendingImage에 보존한다. 미래/과거 incarnation의 기존
+‘나중 exact accepted INIT가 증명’ 경로에서는 다른 incarnation의 level을 현재 target과
+섞어 비교하지 않는다. RowInternal은 Profile3·ordinal9..63·owner≥6·owner generation1·
+level1..15의 결합으로만 허용한다. kind-word 상위48bit는 거절하고 legacy level0 bytes를
+보존한다. target encode/decode·home·selected Pending·최종 flush가 같은 level 규칙을 쓴다.
+
+선택 검증은 원 full-state before에서 Root/Child leaf/internal replay, 실제 INIT digest/role·
+bank/high-water 인계, 유효 checksum을 가진 canonical 변조와 occupied destination/claim의
+무효과 거절, 잘못된 scope/cut/epoch/Reserved, level을 보존하는 target/physical 관측을 포함한다.
+전체 source census에는 줄인 frame23,116B 위의 dispatch·selection·mint/return·callback 수명을 더해
+기존 recovery/metadata/live cap으로 검산한다. 실제 owner의 선택된 WAL과 CURRENT publication,
+원 pool 설치·native fault/재진입 및 retirement는 이후 효과 인수로 연결하며 이 순수 replay
+단위만으로08-1 완료를 선언하지 않는다.

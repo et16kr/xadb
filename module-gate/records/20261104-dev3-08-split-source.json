@@ -192,6 +192,28 @@
         "tests/fixtures/module-row-format/transition-update/index.tsv": "848b500aca95c7483ec3fba42c8cc7055b08fa5a"
       },
       "log": "module-gate/evidence/dev3-08-split-source/review.md (sha256 00fa0006f3ebfa649e91e6bbe0990b97610e021b19ec4cfd345c71f578a54b4a)"
+    },
+    {
+      "id": "dev3-08-scope4-replay-overlap-d2-d1",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/semantic_row/structure/candidate.rs": "9a33a457e68d106d92e9f4725d94228c2828ca1d",
+        "crates/engine/src/storage/semantic_row/structure/candidate/source.rs": "b2738b503ebd13d6b9af1d38144b386e3bce4042",
+        "crates/engine/src/storage/semantic_row/structure/candidate/source_tests.rs": "dde87d420ee0f66893a397c7a3dab8027034ac80",
+        "crates/engine/src/storage/semantic_row/structure/frame.rs": "94fbe26b5a0edc5552f9a360d661e7dca5ef63fa",
+        "crates/engine/src/storage/semantic_row/structure/weights/candidate_tests.rs": "e96356cefc3304f28fe0d9635895257d0b852093",
+        "devdoc/contracts/dev3-tree-smo.md": "919a718f8af4a8539dedb609809039901a92604d",
+        "devdoc/evidence/dev3-tree-structure-20261104.md": "407150a873e6edec70881c2677ccd5b074970671",
+        "devdoc/implementation/dev3-implementation.md": "dba512153d196d4938753649856d743d844ee0bc"
+      },
+      "log": "module-gate/evidence/dev3-08-scope4-replay/review.md (sha256 2a39d85aadb8513bea28d051226c800aad689f902668809681b711c29df1c15f)"
     }
   ]
 }

@@ -45,7 +45,7 @@ pub(super) fn observe_pending(
             || pending.owner != req.identity.owner
             || pending.owner_generation != req.identity.owner_generation
             || pending.kind != req.kind
-            || pending.level != 0
+            || pending.level != req.level
         {
             return Err(error(p, Plan4RecoveryCause::IdentityMismatch));
         }
@@ -493,7 +493,7 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
             owner: request.identity.owner,
             owner_generation: request.identity.owner_generation,
             kind: request.kind,
-            level: 0,
+            level: request.level,
             lsn: PageLsn(lsn),
             image_digest: digest,
         };

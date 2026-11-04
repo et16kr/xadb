@@ -467,3 +467,77 @@ candidate peak는51,212B, frame은 retained LayoutView 등을 포함해57,420B�
 독립 측정했다고 주장하지 않는다. 이 수치는 source value inventory로 compiler stack/RSS가
 아니며 before/after·WAL loan 및 실제 caller capture는 다음 canonical/live 연결에서 더한다.
 scope4 replay·INIT mint·원 pool SMO와 retirement/fault/F05는 계속08-1의 필수 잔여다.
+
+<a id="scope4-replay"></a>
+### 원 arena의 canonical scope4 replay와 INIT 기록 발급
+
+`ea8b87b6` 뒤 [scope4 replay 계약](../contracts/dev3-tree-smo.md#scope4-replay)을 구현했다.
+원 RAM34 전체를 먼저 관측하고 같은 arena·Job cells에서 다섯 after를 재계산한다. canonical
+frame 비교 뒤 실제 frame/최초 image/core digest와 owner·LSN/epoch·역사 관계를 담은352B INIT를
+만든다. RootSplit의 두 기록·다섯 target을 모두 검산한 뒤 arena·claims·Finished bank를 갱신한다.
+실패 시 원 상태와 cursor는 유지하며 after는 사용 불가 workspace다. analysis의72B target은
+kind/level을 함께 보존하고 같은 incarnation의 home/Pending과 비교한다. 최종 flush도 그 level을 쓴다.
+
+원 [source·ELF·입력 hash와 실행 로그](../../module-gate/evidence/dev3-08-scope4-replay/)를
+보존한다. 관련 고유30개(신규12, 직접 영향 기존18)와 실제 memory/native caller2개가 각
+수정 source에서 통과했다. r1에서 완료된 무변경 tombstone 상한 시험1개를 잘못 재실행했다.
+그 함수는 바뀐 split/allocator를 호출하지 않으므로 필요 검증30개에 넣지 않으며, 이 실행은
+AGENTS의 무변경 재실행 제한을 지키지 못한 사실로 남긴다. 이후 선택에서 제외했다.
+
+| 실행 | 범위·결과 | 실패와 후속 |
+| --- | --- | --- |
+| r0 | compile FAIL, 실행0 | 새 source inventory의 PageRef import 누락 |
+| r1 | 14 PASS | 신규 replay/level6, 영향 기존7, 위 무변경1. refs88·allocator helper 적용 |
+| callers-r1 | 실제 타입2 FAIL | recovery peak84,109/84,117, retained metadata205,741/205,749·whole271,277/271,285로 원 cap 초과 |
+| r2 | 19 PASS | compact audit2·공통 walk6, phase 분리와 sparse allocator에 직접 영향받는 후보/replay/source11 |
+| callers-r2 | 실제 타입2 PASS | 아래 원 cap3종을 유지; I/O 수행 시험은 아님 |
+| r3 | 7개 중5 PASS/2 FAIL | 새 reached 조회가 기존 ‘parent 다섯 번째 read’ 오류 cut을 앞당김; raw Base가 역사 digest 변조를 거절한다는 시험 가정 오류 |
+| r4 | 3개 중2 PASS/1 FAIL | Catalog8 두 번째 조회로 build 뒤 검산 실패 확인, 실제 scope1 Reserve guard PASS; zero digest도 raw 관측에서는 허용됨 |
+| r5 | 실패한 full Base1 PASS | 실제 문법인 System source tag1을2로 바꾸는 반례로 정정; 제품 의미는 바꾸지 않음 |
+| r6 | 일반 parent 경계2 PASS | const-generic emitter로 옮긴 뒤 미실행이던406 refs의403→404 삽입/404→405 거절; r5 source·ELF 그대로 사용 |
+
+분할 전 상태는 독립 byte author의 full Base4 관측이다. 새 internal Root/Child before도
+제품 encoder를 쓰지 않았고 raw 부모의 SHA를 보존했다. 정상 Root/Child leaf/internal에서
+행 bytes·Job cells·기존 claims를 보존하며 새 INIT352B 전부를 독립 구성값과 비교한다.
+실제 replay 출력으로 만든 raw after Base4도 네 경우 모두 전체 decode를 통과하고, 새 claim의
+source tag·미래 LSN·revision·level 변조는 재봉인 뒤 거절한다. raw initial digest는 zero도
+포함한 역사 관측 값이며 진위는 selected-source seal이 소유한다. r3/r4의 잘못된 거절 기대를
+원 실패와 함께 보존하고 검증 범위를 확대하지 않는다.
+독립 검토자도 처음 zero digest를 문법 반례로 잘못 수용했으나, 실제 codec에 nonzero 조건이
+없음을 재확인하고 그 판단을 정정했다. 담당과 검토자의 오류 모두 제품 규칙 완화로 처리하지 않았다.
+
+boundary·weight·before digest 변조는 wire decode 수락을 먼저 확인한 뒤 fresh canonical 비교의
+거절을 검사한다. 두 번째 INIT image/claim 충돌, 빈 bank garbage·잘못된 HW·non-STABLE,
+scope/cut/epoch·RootReserved도 원 상태 보존으로 확인했다. Allocation Reserved는 high-water0의
+genesis에서 실제 scope1 Reserve를 관측해 만들었다. 다른 cut의 유효 split을 semantic 비교 전에
+정확한 Invariant로 막는 guard 시험이며 Reserved 해소·재시도나 selected history 증거는 아니다.
+그 외 raw before 시험의 allocation cursor는 non-Reserved stub이다(원 before의 high-water5와
+다름). scope4가 그 cursor의 Reserved 여부만 읽는 범위이며 실제 Base seed/후속 scope1 인계는
+효과 인수에서 별도로 확인한다. VerifiedBase나 dirty INIT 권한 factory를 추가하지 않았다.
+
+원 cap을 지키기 위해 성공한 first-extent audit의64B preorder를 사용한다. 일반 audit와 같은
+walk의 range/identity/level 검산을 공유하고 page0/63 수락,64·다른 file·incarnation alias·범위
+거절과 callback 경계를 검증했다. ordinal의 full identity는 동일 allocator와 원 image에서
+재관측한다. generic parent406은 유지하고 검증된 tree의 split/parent는88 refs를 쓴다.
+private build→verify_after→public Candidate 순서를 지키며 allocator는 cell6208 복사와 선택
+entry1/2개 변경으로 전체 entries 배열을 없앴다. 서로 끝난 phase의 값을 중첩해 세지 않는다.
+
+| source 단계 | 독립 inventory / 제품 상한(B) |
+| --- | --- |
+| private build 잔존 값 | 4,912 / 4,968 |
+| before prefix·public wrapper·after prefix | 1,152/1,216 · 962/964 · 856/936 |
+| tree audit·typed weights | 15,749/18,892 · 13,629/15,820 |
+| bounded parent·allocator emission | 5,789/11,705 · 10,538/12,426 |
+| frame outer·candidate peak·frame peak | 2,112/2,176 · 20,940 · 23,116 |
+| replay compare·claim finishing | 25,228/25,924 · 6,442/10,170 |
+
+compact wrapper의 추가 borrow를120B로 명시한 r3에서도 지배 branch와 위 candidate/frame
+값은 같다. actual caller 원 실행은 r2에 귀속하며 후기 source 전체 재실행으로 바꾸지 않는다.
+recovery memory/native peak65,392/65,400, metadata104,152/104,160, whole169,688/169,696B와
+retained live64,016/64,024·187,024/187,032·252,560/252,568B는 원65,536/196,608/262,144B
+한도를 만족한다. 이는 source-value 검산이며 compiler stack/RSS나 실제 SMO F05 인수가 아니다.
+Clippy와 최종 독립 D1/D2는 같은 증거 디렉터리의 review 기록에 결속한다.
+
+08-1 전체 완료 목표는 계속된다. 원 writer/pool의 claim·stage·install·durability, 선택된 WAL의
+실제 복구·CURRENT publication·native fault/reopen, empty-leaf unlink·unary repair·root shrink·
+retirement와 전체 F05는 필수 잔여다. 일정08 적립0·누적38.37%는 유지한다.

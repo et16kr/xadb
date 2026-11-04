@@ -29,6 +29,9 @@ mod row_tests;
 #[cfg(test)]
 #[path = "recovery/structural_bank_tests.rs"]
 mod structural_bank_tests;
+#[cfg(test)]
+#[path = "recovery/structural_replay_tests.rs"]
+mod structural_replay_tests;
 
 type ObservationResult<T> = std::result::Result<T, RetentionCause>;
 
@@ -573,6 +576,12 @@ pub(super) fn apply_frame(
                     .expect("Row loan"),
                 &mut cursor.adopted_local,
             )?
+        }
+        4 => {
+            if cursor.allocation.reserved() {
+                return Err(RetentionCause::Invariant);
+            }
+            history::structure::apply(profile, expected, input, arena, cells, bank, after, claims)?
         }
         1 => {
             // Any Reserved Job3 root (either scope) excludes a System frame.

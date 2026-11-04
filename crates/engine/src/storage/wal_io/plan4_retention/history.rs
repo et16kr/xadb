@@ -34,6 +34,8 @@ pub(super) mod inventory;
 pub(super) mod row;
 #[path = "history/runtime.rs"]
 pub(super) mod runtime;
+#[path = "history/structure.rs"]
+pub(super) mod structure;
 
 /// F6 M0 (evidence `f6-wal-revalidation-survey-20261102.md` §7.4): what the
 /// full revalidations on this thread did, a test-only count beside the
@@ -206,6 +208,8 @@ pub(super) struct HistorySourceCensus {
     pub(super) frame_return: usize,
     /// The scope3 Row arm (exclusive with the Catalog/System arms).
     pub(super) row: usize,
+    /// The scope4 split arm over the same original replay loans.
+    pub(super) structural: usize,
     pub(super) frame: usize,
     pub(super) returning: usize,
     pub(super) peak: usize,
@@ -261,17 +265,23 @@ pub(super) fn source_bytes<W: WriterNamespace>() -> HistorySourceCensus {
         + 4 * size_of::<Result<()>>();
     let current = catalog::source_bytes();
     let row_census = row::source_bytes();
+    let split_census = structure::source_bytes();
     let retention = frame_outer + current.semantic;
     // The Row arm is exclusive with the Catalog/System arms of one frame: it
     // adds only a max term, over the same caller packet.
     let row = frame_outer + row_census.semantic;
+    let structural = frame_outer + split_census.semantic;
     let population = frame_outer + super::population::phase_source_bytes().replay;
     // Rollback is now one exact scope2 observer branch, with the same caller
     // packet. No legacy N=0 Rollback parser participates in current history.
     let rollback = retention;
     let observation_return = 2 * size_of::<recovery::RetentionFrameObservation>()
         + 2 * size_of::<std::result::Result<recovery::RetentionFrameObservation, RetentionCause>>();
-    let frame_return = frame_outer + current.finishing.max(row_census.finishing);
+    let frame_return = frame_outer
+        + current
+            .finishing
+            .max(row_census.finishing)
+            .max(split_census.finishing);
     // One combined closure: the Catalog part, then the Row part, then the ATT
     // union, each completed before the next; only the mask and the result
     // stay live across them.
@@ -285,7 +295,8 @@ pub(super) fn source_bytes<W: WriterNamespace>() -> HistorySourceCensus {
         .max(rollback)
         .max(frame_return)
         .max(closure)
-        .max(row);
+        .max(row)
+        .max(structural);
     let file_scope = size_of::<MutexGuard<'_, W::File>>()
         + hashing.max(recovered.header).max(initialize).max(frame);
     // SourceSeal is constructed only after reconstruct/hash and both File and
@@ -313,6 +324,7 @@ pub(super) fn source_bytes<W: WriterNamespace>() -> HistorySourceCensus {
         closure,
         frame_return,
         row,
+        structural,
         frame,
         returning,
         peak,

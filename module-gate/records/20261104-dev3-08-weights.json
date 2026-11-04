@@ -199,6 +199,21 @@
         "crates/engine/src/storage/semantic_row/transition.rs": "aaabfa747ce61117d432acef5a19ef448d59efc6"
       },
       "log": "module-gate/evidence/dev3-08-split-source/review.md (sha256 00fa0006f3ebfa649e91e6bbe0990b97610e021b19ec4cfd345c71f578a54b4a)"
+    },
+    {
+      "id": "dev3-08-scope4-replay-overlap-d2-d1",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "devdoc/contracts/dev3-tree-smo.md": "919a718f8af4a8539dedb609809039901a92604d"
+      },
+      "log": "module-gate/evidence/dev3-08-scope4-replay/review.md (sha256 2a39d85aadb8513bea28d051226c800aad689f902668809681b711c29df1c15f)"
     }
   ]
 }

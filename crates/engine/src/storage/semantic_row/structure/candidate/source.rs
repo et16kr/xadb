@@ -1,6 +1,7 @@
 //! Source values of the pure candidate, excluding caller images/output and
-//! callback captures. A max joins returned phases; outer lexical values stay
-//! charged during after-audit. This is not an ABI stack measurement.
+//! callback captures. Private build and after-audit frames do not coexist;
+//! the public wrapper retains the completed draft during after-audit only.
+//! This is not an ABI stack measurement.
 use super::*;
 use crate::storage::{
     catalog_record::{CatalogHeader, CatalogRecordView, TableDefinitionView},
@@ -112,7 +113,7 @@ fn audit_chain() -> usize {
         &Table<'_>,
         &AllocationPage<'_>,
         u64,
-        &mut [Option<TreeExpectation>; 64],
+        &mut [u8; 64],
     )>() + size_of::<[usize; MAX_LEAF_ROWS]>()
         + size_of::<ContentHasher>()
         + 4 * size_of::<TreeExpectation>()
@@ -122,7 +123,7 @@ fn audit_chain() -> usize {
         + size_of::<weights::Inputs<'_>>()
         + size_of::<weights::Weights>()
         + 2 * size_of::<Result<(usize, [u8; 32])>>()
-        + 5 * slack();
+        + 3 * slack();
     let callback = size_of::<(&AllocationPage<'_>, &mut (), u64, TreeExpectation)>()
         + size_of::<(PageView<'_>, PageHeader)>()
         + 2 * slack()
@@ -133,7 +134,7 @@ fn audit_chain() -> usize {
     frame + traversal.max(weights_chain()).max(digest())
 }
 fn parent_chain() -> usize {
-    size_of::<[&[u8]; ROW_REFS]>()
+    size_of::<[&[u8]; SPLIT_REFS]>()
         + size_of::<[u8; 36]>()
         + size_of::<[u8; 32]>()
         + 2 * size_of::<InternalEditPlan<'_, '_>>()
@@ -142,41 +143,95 @@ fn parent_chain() -> usize {
         + 3 * slack()
         + tree_structure()
 }
+fn allocator_chain() -> usize {
+    size_of::<[u8; allocation_page::ALLOCATION_CELL_BYTES]>()
+        + size_of::<(
+            &AllocationPage<'_>,
+            &[u8; PAGE_BYTES],
+            Namespace,
+            &[PageHeader; 5],
+            usize,
+            &mut [u8; PAGE_BYTES],
+        )>()
+        + 3 * size_of::<(PageHeader, AllocationEntry)>()
+        + size_of::<PageView<'_>>()
+        + 2 * slack()
+        + allocation_codec()
+}
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct SourceCensus {
+    /// Public wrapper's retained draft during verify_after, not build.
     pub(crate) outer: usize,
+    pub(crate) build_outer: usize,
+    pub(crate) before_outer: usize,
+    pub(crate) after_outer: usize,
+    pub(crate) returning: usize,
     pub(crate) table: usize,
     pub(crate) audit: usize,
     pub(crate) weights: usize,
     pub(crate) parent: usize,
+    pub(crate) allocator: usize,
     pub(crate) side: usize,
     pub(crate) previous: usize,
     pub(crate) peak: usize,
 }
 pub(crate) fn source_census() -> SourceCensus {
-    // All prepare locals together: deliberately retain earlier views and
-    // returned Candidate carriers even in the deepest after-audit phase.
-    let outer = size_of::<[AllocationEntry; 64]>()
-        + size_of::<[Option<TreeExpectation>; 64]>()
-        + size_of::<[&[u8]; ROW_REFS]>()
+    let args = size_of::<(&Inputs<'_>, &mut [[u8; PAGE_BYTES]; 5], &mut ())>();
+    let outer = args
+        + size_of::<Candidate<'_>>()
+        + size_of::<[u8; 32]>()
+        + 2 * size_of::<Result<()>>()
+        + 128;
+    // Prefix values before refs/weights/split/pages/core are constructed.
+    // The compact preorder belongs to build; callback captures stay charged.
+    let before_outer = args
+        + size_of::<Namespace>()
+        + size_of::<[u8; 64]>()
+        + size_of::<[u8; 32]>()
+        + size_of::<AllocationPage<'_>>()
+        + size_of::<Table<'_>>()
+        + size_of::<Result<Table<'_>>>()
+        + 2 * size_of::<Result<(usize, [u8; 32])>>()
+        + slack();
+    let build_outer = size_of::<[u8; 64]>()
+        + size_of::<[&[u8]; SPLIT_REFS]>()
         + size_of::<[usize; MAX_LEAF_ROWS]>()
-        + size_of::<[u8; allocation_page::ALLOCATION_CELL_BYTES]>()
         + size_of::<[PageHeader; 5]>()
         + size_of::<[u8; 256]>()
-        + 3 * size_of::<Candidate<'_>>()
-        + 2 * size_of::<Result<Candidate<'_>>>()
-        + 3 * size_of::<Table<'_>>()
-        + 3 * size_of::<AllocationPage<'_>>()
-        + 4 * size_of::<TreePageView<'_>>()
-        + 3 * size_of::<SplitCandidate<'_, '_>>()
-        + 2 * size_of::<std::result::Result<SplitCandidate<'_, '_>, StructureError>>()
-        + 6 * size_of::<TreeExpectation>()
-        + 4 * size_of::<AnchorRoot>()
+        + args
+        + size_of::<Namespace>()
+        + size_of::<Table<'_>>()
+        + size_of::<AllocationPage<'_>>()
+        + 2 * size_of::<TreePageView<'_>>()
+        + size_of::<SplitCandidate<'_, '_>>()
+        + size_of::<std::result::Result<SplitCandidate<'_, '_>, StructureError>>()
+        + 3 * size_of::<TreeExpectation>()
+        + size_of::<AnchorRoot>()
+        + size_of::<[Option<PageRef>; 2]>()
         + size_of::<([u8; 32], [u8; 40], [u8; 32], [u8; 32], [u64; 2], [u64; 2])>()
         + 2 * size_of::<Result<(usize, [u8; 32])>>()
-        + 8 * slack();
+        + 2 * slack();
+    let after_outer = size_of::<(
+        &Inputs<'_>,
+        &Candidate<'_>,
+        [u8; 32],
+        &[[u8; PAGE_BYTES]; 5],
+        &mut (),
+    )>() + size_of::<AllocationPage<'_>>()
+        + size_of::<Table<'_>>()
+        + size_of::<[u8; 64]>()
+        + size_of::<Result<(usize, [u8; 32])>>()
+        + size_of::<(&[PageHeader; 5], &[[u8; PAGE_BYTES]; 5], &mut ())>()
+        + size_of::<(PageRef, Option<usize>)>()
+        + slack();
+    // Constructing either result is separate from every nested helper.
+    let returning = build_outer
+        + size_of::<Candidate<'_>>()
+        + size_of::<Result<(Candidate<'_>, [u8; 32])>>()
+        + size_of::<Result<Candidate<'_>>>()
+        + outer;
     let side =
-        size_of::<[&[u8]; ROW_REFS]>() + size_of::<[u8; 32]>() + 2 * slack() + tree_structure();
+        size_of::<[&[u8]; SPLIT_REFS]>() + size_of::<[u8; 32]>() + 2 * slack() + tree_structure();
     let previous = size_of::<obligation::DescriptorSpec>()
         + size_of::<std::result::Result<obligation::DescriptorSpec, obligation::ObligationError>>()
         + 3 * size_of::<SystemWorkRef>()
@@ -190,21 +245,29 @@ pub(crate) fn source_census() -> SourceCensus {
         weights_chain(),
         parent_chain(),
     );
-    let peak = outer
-        + table
-            .max(audit)
-            .max(weights)
+    let allocator = allocator_chain();
+    let nested_build = build_outer
+        + weights
             .max(parent)
+            .max(allocator)
             .max(side)
-            .max(previous)
             .max(allocation_codec())
             .max(tree_structure());
+    let building =
+        (args + 128 + before_outer + table.max(audit).max(previous)).max(args + 128 + nested_build);
+    let verifying = outer + after_outer + audit.max(table).max(allocation_codec());
+    let peak = building.max(verifying).max(returning);
     SourceCensus {
         outer,
+        build_outer,
+        before_outer,
+        after_outer,
+        returning,
         table,
         audit,
         weights,
         parent,
+        allocator,
         side,
         previous,
         peak,
