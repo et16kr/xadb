@@ -1,6 +1,6 @@
 {
   "schema": "XADB_MODULE_GATE_RECORD_V1",
-  "change": "DEV3 08-1 partial: shared internal edit and split image candidates; no live SMO or schedule credit",
+  "change": "DEV3 08-1 partial: shared structural and rollback-weighted split candidates plus immutable selected-path search; no live SMO or schedule credit",
   "rust_tests": [
     {
       "paths": [
@@ -84,6 +84,90 @@
           "inputs": []
         }
       ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/tree_page.rs",
+        "crates/engine/src/storage/tree_page/structure.rs",
+        "crates/engine/src/storage/tree_page/structure/tests.rs"
+      ],
+      "reason": "New structure behavior and independently calculated boundary/path results; these tests do not claim live SMO or recovery.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/tree_page/structure/tests.rs",
+          "case": "storage::tree_page::structure::tests::weighted_split_preserves_rollback_space_without_installing_pending_edit",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/tree_page/structure/tests.rs",
+          "case": "storage::tree_page::structure::tests::weighted_split_rejects_invalid_reservations_without_scratch_changes",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/tree_page/structure/tests.rs",
+          "case": "storage::tree_page::structure::tests::weighted_split_matches_exhaustive_boundary_oracle",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/tree_page/structure/tests.rs",
+          "case": "storage::tree_page::structure::tests::weighted_split_without_single_boundary_retries_structure_before_pending_edit",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/tree_page.rs",
+        "crates/engine/src/storage/tree_page/search.rs",
+        "crates/engine/src/storage/tree_page/search/tests.rs"
+      ],
+      "reason": "New search behavior and independently calculated boundary/path results; these tests do not claim live SMO or recovery.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/tree_page/search/tests.rs",
+          "case": "storage::tree_page::search::tests::immutable_tree_search_matches_typed_points_and_exact_path",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/tree_page/search/tests.rs",
+          "case": "storage::tree_page::search::tests::immutable_tree_search_rejects_inherited_range_violations",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/tree_page/search/tests.rs",
+          "case": "storage::tree_page::search::tests::immutable_tree_search_rejects_wrong_child_and_ancestor_alias",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/tree_page/search/tests.rs",
+          "case": "storage::tree_page::search::tests::immutable_tree_search_bounds_height_and_rejects_bad_input_before_loading",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        }
+      ]
     }
   ],
   "reviews": [
@@ -98,13 +182,15 @@
       "verdict": "ACCEPT",
       "required_open": 0,
       "files": {
-        "crates/engine/src/storage/tree_page.rs": "53d10e0b562921d8a3a7dc2146d8b00b563b8255",
+        "crates/engine/src/storage/tree_page.rs": "332eb7a6d57f77bef338dfe3a26b5a6b183a6ebf",
         "crates/engine/src/storage/tree_page/edit.rs": "91fbe2a8bb293a274b6f9a8a44f0f4a75eb13ac9",
-        "crates/engine/src/storage/tree_page/structure.rs": "d921353d19ecebd6db8e9475b8eb33a902a26d0a",
-        "crates/engine/src/storage/tree_page/structure/tests.rs": "3c43649402060f34a6379aa8d3bf1f83daadb6ab",
-        "devdoc/contracts/dev3-tree-format.md": "5bfbeb6221aeae38b36b93ebabffddb39dc9606f"
+        "crates/engine/src/storage/tree_page/structure.rs": "6850a4f33e58855a8d0b763aa0c686ee598e378e",
+        "crates/engine/src/storage/tree_page/structure/tests.rs": "ae186624dd7c82f5a1575c23793a2d0eb0ef5d91",
+        "crates/engine/src/storage/tree_page/search.rs": "f1c7ddc3315c20ae9d2e3bf13d9a8e815f77aa7c",
+        "crates/engine/src/storage/tree_page/search/tests.rs": "8e2ac966071809757b7a38f46ecd673f91565761",
+        "devdoc/contracts/dev3-tree-format.md": "5f3dec100e4120ffeb591852088b03b023a684a0"
       },
-      "log": "module-gate/evidence/dev3-08-structure/review.md (sha256 54fdb24d67cc903250e7cf711eec8d9dbd840850848c969cdd13c259bae8516b)"
+      "log": "module-gate/evidence/dev3-08-structure/review.md (sha256 54fdb24d67cc903250e7cf711eec8d9dbd840850848c969cdd13c259bae8516b); module-gate/evidence/dev3-08-search/review.md (sha256 fd577618f012ebf19d377c66362b033aa448026ef7b38ce58b843597701eeb8f)"
     }
   ]
 }

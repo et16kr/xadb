@@ -49,6 +49,37 @@ root의 높이 축소와 달리 non-root는 parent→child level−1을 지키�
 
 ## 이어지는 실제 연결
 
+### 예약 가중치와 immutable 탐색의 후속 공급
+
+첫 checkpoint `b89a7084` 이후 [가중 분할](../contracts/dev3-tree-format.md#weighted-split-candidate)과
+[선택 경로 탐색](../contracts/dev3-tree-format.md#immutable-tree-search)을 추가했다.
+실행 로그·source/ELF hash와 별도 검토는
+[후속 증거](../../module-gate/evidence/dev3-08-search/)에 보존한다.
+
+| 실행 | 변경 범위·결과 |
+| --- | --- |
+| weighted-r0 | 신규3개:2 PASS, exhaustive oracle1 FAIL. 유효 입력에 항상 단일 boundary가 있다는 oracle 가정이 틀렸고 제품은 NotSplittable을 안전하게 반환 |
+| weighted-r1 | 수정 oracle와 검토 반례 신규1개:2 PASS. 원 성공2개는 반복하지 않음. 고유4개 완료 |
+| search-r0 | 새 bounded path 탐색4개:4 PASS |
+| search-r1 | rightmost 조상 상한과 callback 오류 전파를 보강한2개:2 PASS. 무변경2개는 반복하지 않음. 고유4개 완료 |
+
+가중치는 수치 입력일 뿐이며 아직 Undo/owner 그래프에서 유도하지 않는다. pending 행의
+bytes·version을 구조-only 후보에 설치하지 않는다. 단일 split으로 수용하지 못하면 먼저
+구조-only split 후 재탐색해야 한다는 반례를 고정했다. 탐색은 3 family·최대16 read의
+immutable 경로만 검산하며, live latch/pin이나 off-path audit를 제공하지 않는다.
+
+독립 reviewer `/root/dev3_08_review`가 계약·source와 위 원 로그를 직접 읽고 두 공급 모두
+D2/D1 ACCEPT·필수0으로 판정했다. weighted 최종 assertion의 상수8094를 동일한 request
+field에서 읽도록 바꾼 것은 lint-only이며 동등성 재검토를 받았다. 원 runtime 증거를
+후기 source의 재실행으로 바꾸지 않았다. 각 실행 한도180초·build4 jobs였으며 전체 wrapper와
+무변경 기존 시험은 실행하지 않았다.
+
+후속 engine all-targets/all-features Clippy는 최초 literal `Some`의 `unwrap()` lint1건을
+지적했다. request를 plain struct로 두고 동일한 두 호출에서 `Some(request)`로 감싸도록
+고쳤으며 재검사는 PASS다. 이 lint-only 수정으로 runtime 시험을 반복하지 않았다.
+
+### 다음 제품 연결
+
 08 전체의 승인 범위는 유지한다. 다음 작업은 08-1의 실제 system owner·WAL·복구다.
 독립 사전 검토에서 새 사용자 판단이 필요한 제품 방향 충돌은 발견하지 않았다.
 

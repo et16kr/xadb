@@ -666,3 +666,261 @@ fn new_root_short_cell_and_output_preserve_output() {
         }
     }
 }
+
+#[test]
+fn weighted_split_preserves_rollback_space_without_installing_pending_edit() {
+    for (kind, arity) in [
+        (PageKind::RowLeaf, 0),
+        (PageKind::CatalogLeaf, 0),
+        (PageKind::IndexLeaf, 1),
+    ] {
+        let expected = expectation(kind, arity, 0);
+        let cells = vec![
+            metadata(arity, None),
+            leaf_cell(arity, 10, 0),
+            leaf_cell(arity, 20, 0),
+            leaf_cell(arity, 30, 0),
+        ];
+        let source = raw_page(expected, &cells, 7);
+        let view = decode_tree_page(&source, expected).unwrap();
+        for (weights, request, boundary) in [
+            ([8000, 1000, 1000], None, 1),
+            ([1000, 1000, 1000], Some((30, 2000)), 2),
+            ([1000, 1000, 1000], Some((10, 2000)), 1),
+            ([8000, 1000, 1000], Some((10, 16 + usize::from(arity))), 1),
+            ([8094, 4000, 4000], Some((5, 8094)), 1),
+            ([8094, 4000, 4000], Some((40, 8094)), 2),
+        ] {
+            let pending_key = request.map(|(n, _)| key(arity, n));
+            let pending = request.map(|(_, entry_cost)| LeafSpaceRequest {
+                key: pending_key.as_deref().unwrap(),
+                entry_cost,
+            });
+            let mut refs = [&b"tail"[..]; 6];
+            let split = view
+                .prepare_leaf_split(&weights, pending, reference(90), &mut refs)
+                .unwrap();
+            assert_eq!(split.separator(), key(arity, 10 * (boundary as u64 + 1)));
+            for right in [false, true] {
+                let mut meta = [0; 32];
+                let mut scratch = [&[][..]; 4];
+                let mut output = vec![0; PAGE_BYTES];
+                split
+                    .encode_side(right, PageLsn(19), &mut meta, &mut scratch, &mut output)
+                    .unwrap();
+                let mut side = expected;
+                if right {
+                    side.identity.page = reference(90);
+                }
+                let mut expected_cells = vec![cells[0].clone()];
+                expected_cells.extend_from_slice(if right {
+                    &cells[boundary + 1..]
+                } else {
+                    &cells[1..boundary + 1]
+                });
+                // The new key/grown value is NOT installed by the system split.
+                assert_eq!(output, raw_page(side, &expected_cells, 19));
+            }
+            assert_eq!(&refs[4..], &[&b"tail"[..]; 2]);
+        }
+    }
+}
+
+#[test]
+fn weighted_split_rejects_invalid_reservations_without_scratch_changes() {
+    let expected = expectation(PageKind::RowLeaf, 0, 0);
+    let cells = [
+        metadata(0, None),
+        leaf_cell(0, 10, 0),
+        leaf_cell(0, 20, 0),
+        leaf_cell(0, 30, 0),
+    ];
+    let source = raw_page(expected, &cells, 7);
+    let view = decode_tree_page(&source, expected).unwrap();
+    for weights in [
+        &[16, 16][..],
+        &[15, 16, 16],
+        &[8095, 16, 16],
+        &[8094, 8094, 16],
+    ] {
+        let mut refs = [&b"tail"[..]; 4];
+        assert!(
+            view.prepare_leaf_split(weights, None, reference(90), &mut refs)
+                .is_err()
+        );
+        assert_eq!(refs, [&b"tail"[..]; 4]);
+    }
+    for (query, cost) in [
+        (&b""[..], 16),
+        (&10u64.to_be_bytes()[..], 0),
+        (&10u64.to_be_bytes()[..], 8095),
+    ] {
+        let mut refs = [&b"tail"[..]; 4];
+        assert!(
+            view.prepare_leaf_split(
+                &[16; 3],
+                Some(LeafSpaceRequest {
+                    key: query,
+                    entry_cost: cost
+                }),
+                reference(90),
+                &mut refs
+            )
+            .is_err()
+        );
+        assert_eq!(refs, [&b"tail"[..]; 4]);
+    }
+    let mut refs = [&b"tail"[..]; 3];
+    assert!(matches!(
+        view.prepare_leaf_split(&[16; 3], None, reference(90), &mut refs),
+        Err(StructureError::ScratchTooSmall)
+    ));
+    assert_eq!(refs, [&b"tail"[..]; 3]);
+    for incarnation in [4, 5] {
+        let mut right = reference(3);
+        right.incarnation = Generation::new(incarnation).unwrap();
+        let mut refs = [&b"tail"[..]; 4];
+        assert!(
+            view.prepare_leaf_split(&[16; 3], None, right, &mut refs)
+                .is_err()
+        );
+        assert_eq!(refs, [&b"tail"[..]; 4]);
+    }
+}
+
+#[test]
+fn weighted_split_matches_exhaustive_boundary_oracle() {
+    let expected = expectation(PageKind::RowLeaf, 0, 0);
+    let mut checked = 0;
+    for seed in 1u64..=64 {
+        let mut state = seed;
+        for _ in 0..128 {
+            let mut next = || {
+                state = state.wrapping_mul(6364136223846793005).wrapping_add(1);
+                (state >> 32) as usize
+            };
+            let count = 2 + next() % 7;
+            let mut weights = vec![16; count];
+            let mut remaining = 16_188 - 16 * count;
+            for weight in &mut weights {
+                let additional = next() % (remaining.min(8_094 - 16) + 1);
+                *weight += additional;
+                remaining -= additional;
+            }
+            let query = (1 + next() % (2 * count + 1)) as u64;
+            let requested = 16 + next() % (8_094 - 15);
+            // Independent typed-key oracle: each existing row is (2,4,...).
+            // Keep the full maximum history cost when an update shrinks.
+            let mut candidates = Vec::new();
+            for at in 1..count {
+                let mut left = weights[..at].iter().sum::<usize>();
+                let mut right = weights[at..].iter().sum::<usize>();
+                let old = if query.is_multiple_of(2) && query / 2 <= count as u64 {
+                    weights[(query / 2 - 1) as usize]
+                } else {
+                    0
+                };
+                let increase = requested.saturating_sub(old);
+                if query < 2 * (at as u64 + 1) {
+                    left += increase;
+                } else {
+                    right += increase;
+                }
+                if left <= 16_188 && right <= 16_188 {
+                    candidates.push((left.max(right), at));
+                }
+            }
+            candidates.sort_unstable();
+            let best = candidates.first().map(|candidate| candidate.1);
+            let mut cells = vec![metadata(0, None)];
+            for i in 1..=count {
+                cells.push(leaf_cell(0, 2 * i as u64, 0));
+            }
+            let source = raw_page(expected, &cells, 7);
+            let view = decode_tree_page(&source, expected).unwrap();
+            let query_bytes = query.to_be_bytes();
+            let mut scratch = vec![&[][..]; count + 1];
+            let result = view.prepare_leaf_split(
+                &weights,
+                Some(LeafSpaceRequest {
+                    key: &query_bytes,
+                    entry_cost: requested,
+                }),
+                reference(90),
+                &mut scratch,
+            );
+            if let Some(best) = best {
+                let split = result.unwrap();
+                assert_eq!(
+                    split.separator(),
+                    (2 * (best as u64 + 1)).to_be_bytes(),
+                    "seed {seed}, query {query}, weights {weights:?}"
+                );
+            } else {
+                assert!(matches!(
+                    result,
+                    Err(StructureError::Tree(TreeError::NotSplittable))
+                ));
+                assert!(scratch.iter().all(|entry| entry.is_empty()));
+            }
+            checked += 1;
+        }
+    }
+    assert_eq!(checked, 8192);
+}
+
+#[test]
+fn weighted_split_without_single_boundary_retries_structure_before_pending_edit() {
+    let expected = expectation(PageKind::RowLeaf, 0, 0);
+    let cells = [
+        metadata(0, None),
+        leaf_cell(0, 10, 0),
+        leaf_cell(0, 20, 0),
+        leaf_cell(0, 30, 0),
+    ];
+    let source = raw_page(expected, &cells, 7);
+    let view = decode_tree_page(&source, expected).unwrap();
+    let pending_key = 25u64.to_be_bytes();
+    let request = LeafSpaceRequest {
+        key: &pending_key,
+        entry_cost: 8094,
+    };
+    let mut refs = [&b"sentinel"[..]; 4];
+    assert!(matches!(
+        view.prepare_leaf_split(&[5000, 8000, 3000], Some(request), reference(90), &mut refs),
+        Err(StructureError::Tree(TreeError::NotSplittable))
+    ));
+    assert_eq!(refs, [&b"sentinel"[..]; 4]);
+    // Structural-only split remains valid. Its right page is the next search
+    // result; the owner must revalidate it after publishing the first SMO.
+    let first = view
+        .prepare_leaf_split(&[5000, 8000, 3000], None, reference(90), &mut refs)
+        .unwrap();
+    assert_eq!(first.separator(), 20u64.to_be_bytes());
+    let mut meta = [0; 32];
+    let mut scratch = [&[][..]; 4];
+    let mut right = vec![0; PAGE_BYTES];
+    first
+        .encode_side(true, PageLsn(19), &mut meta, &mut scratch, &mut right)
+        .unwrap();
+    let mut expected_right = expected;
+    expected_right.identity.page = reference(90);
+    let right_view = decode_tree_page(&right, expected_right).unwrap();
+    let mut refs = [&[][..]; 3];
+    let second = right_view
+        .prepare_leaf_split(&[8000, 3000], Some(request), reference(91), &mut refs)
+        .unwrap();
+    assert_eq!(second.separator(), 30u64.to_be_bytes());
+    let mut meta = [0; 32];
+    let mut scratch = [&[][..]; 3];
+    let mut leaf = vec![0; PAGE_BYTES];
+    second
+        .encode_side(false, PageLsn(20), &mut meta, &mut scratch, &mut leaf)
+        .unwrap();
+    assert_eq!(
+        leaf,
+        raw_page(expected_right, &[cells[0].clone(), cells[2].clone()], 20)
+    );
+    // The reserved maximum for old row20 plus future row25 fits this page.
+    assert!(8000 + request.entry_cost <= TREE_ENTRY_CAPACITY);
+}

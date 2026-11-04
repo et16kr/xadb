@@ -5,6 +5,7 @@
 #![allow(dead_code)]
 
 pub(crate) mod edit;
+pub(crate) mod search;
 pub(crate) mod structure;
 
 use std::cmp::Ordering;

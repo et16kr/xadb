@@ -6,6 +6,11 @@
 기준은 UPDATE PR #49 병합 `23976330`이며, 아래 오래된 상태는 당시 기록으로 보존한다.
 실제 system WAL·SMO·복구, 08-2–08-4와 전체 DEV3/S5는 미완료다.
 
+이어 rollback 예약 가중치를 보존하는 leaf split 후보와 immutable image 집합의
+root→leaf 탐색을 공급했다. 각각 신규 고유4개 선택 PASS·독립 D2/D1 ACCEPT다.
+단일 분할로 pending 행을 수용할 수 없는 반례와 원 시험 실패를 보존했다.
+이 helper들은 실제 Undo 가중치 증명·live pin·WAL/복구 적용 권한이 아니며 일정 적립은 없다.
+
 <a id="catalog-remaining"></a>
 2026-10-26 [Catalog CREATE 남은 메모리 사례](../evidence/dev3-catalog-remaining-20261026.md): 남은 9개를 모두 source별로 PASS했다. lookup이 Live CREATE Undo를 초기 Free page로만 검증해 fence하던 결함을 고쳤고 Writer 준비 분리를 포함했다. 같은 epoch 두 번째 CREATE의 pair victim 준비를 [D3-CATALOG-CREATE-002](../contracts/dev3-catalog-create.md#sequential-create)로 보완해 MT02가 r36에서 통과했다. [검토 후 수정](../evidence/dev3-catalog-review-fix-20261026.md)에서 Profile에 맞는 Root/Jobs decoder를 연결하고 신규8개와 변경 source 계산2개를 통과했다. 첫 Row INSERT·runtime F05·DEV3/S5는 미완료다.
 

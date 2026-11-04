@@ -48,7 +48,122 @@ pub(crate) struct InternalCandidate<'cells, 'bytes> {
     entry_bytes: usize,
 }
 
+/// Space to leave for a subsequent row edit, not the edit itself. The owner
+/// derives this from the validated cell and its rollback obligation. Splitting
+/// never installs the pending row, changes its version, or consumes its Undo.
+#[derive(Clone, Copy)]
+pub(crate) struct LeafSpaceRequest<'a> {
+    pub(crate) key: &'a [u8],
+    pub(crate) entry_cost: usize,
+}
+
 impl<'bytes> TreePageView<'bytes> {
+    /// Split an observed leaf while retaining its rollback space. `weights`
+    /// is the owner's maximum restorable cell+slot cost for each current row,
+    /// including its current cost. This layer validates numeric bounds but
+    /// cannot establish the historical Undo/owner proof behind those weights.
+    ///
+    /// Choose among boundaries of the EXISTING rows, so both resulting leaves
+    /// are nonempty even when the request is a new row. The pending row only
+    /// changes the capacity calculation. Minimize the larger resulting weight
+    /// (including the request), breaking ties at the earlier boundary. Errors
+    /// preserve the reference scratch; successful candidates preserve all row
+    /// bytes and logical versions and are still not installation authority.
+    pub(crate) fn prepare_leaf_split<'cells>(
+        &self,
+        weights: &[usize],
+        pending: Option<LeafSpaceRequest<'_>>,
+        right: PageRef,
+        scratch: &'cells mut [&'bytes [u8]],
+    ) -> Result<SplitCandidate<'cells, 'bytes>, StructureError> {
+        let header = self.header();
+        if !is_leaf(header.kind)?
+            || weights.len() != self.len()
+            || same_address(header.identity.page, right)
+        {
+            return Err(TreeError::InvalidInput.into());
+        }
+        if self.len() < 2 {
+            return Err(TreeError::NotSplittable.into());
+        }
+        if scratch.len() < self.page.len() {
+            return Err(StructureError::ScratchTooSmall);
+        }
+        let mut total = 0usize;
+        let mut actual = 0usize;
+        for (index, &weight) in weights.iter().enumerate() {
+            let cost = self.page.cell(index + 1).ok_or(TreeError::Corrupt)?.len() + 4;
+            if !(cost..=MAX_TREE_ENTRY_COST).contains(&weight) {
+                return Err(TreeError::InvalidInput.into());
+            }
+            total = total
+                .checked_add(weight)
+                .filter(|n| *n <= TREE_ENTRY_CAPACITY)
+                .ok_or(TreeError::NoSpace)?;
+            actual += cost;
+        }
+        let request = if let Some(pending) = pending {
+            let position = self.lower_bound(pending.key)?;
+            // A canonical key bounds its length. Even an empty value needs
+            // the four-byte cell prefix and four-byte slot beside that key.
+            if !(pending.key.len() + 8..=MAX_TREE_ENTRY_COST).contains(&pending.entry_cost) {
+                return Err(TreeError::InvalidInput.into());
+            }
+            let increment = if position.equal {
+                pending.entry_cost.saturating_sub(weights[position.index])
+            } else {
+                pending.entry_cost
+            };
+            Some((
+                checked_key(header.kind, self.arity, pending.key)?,
+                increment,
+            ))
+        } else {
+            None
+        };
+        let mut left_weight = 0;
+        let mut left_bytes = 0;
+        let mut best: Option<(usize, usize, usize)> = None;
+        for boundary in 1..self.len() {
+            left_weight += weights[boundary - 1];
+            left_bytes += self.page.cell(boundary).ok_or(TreeError::Corrupt)?.len() + 4;
+            let mut left = left_weight;
+            let mut right_weight = total - left_weight;
+            if let Some((key, increment)) = request {
+                let separator = checked_key(header.kind, self.arity, self.entry(boundary)?.key)?;
+                if key.compare(separator) == Ordering::Less {
+                    left += increment;
+                } else {
+                    right_weight += increment;
+                }
+            }
+            if left <= TREE_ENTRY_CAPACITY && right_weight <= TREE_ENTRY_CAPACITY {
+                let score = left.max(right_weight);
+                if best.is_none_or(|(_, _, previous)| score < previous) {
+                    best = Some((boundary, left_bytes, score));
+                }
+            }
+        }
+        let (index, left_bytes, _) = best.ok_or(TreeError::NotSplittable)?;
+        let split = SplitPlan {
+            index,
+            left_bytes,
+            right_bytes: actual - left_bytes,
+            separator: self.entry(index)?.key,
+            right_leftmost: None,
+        };
+        for (slot, target) in scratch[..self.page.len()].iter_mut().enumerate() {
+            *target = self.page.cell(slot).expect("decoded immutable leaf slot");
+        }
+        Ok(SplitCandidate {
+            header,
+            arity: self.arity,
+            cells: &scratch[..self.page.len()],
+            right,
+            split,
+        })
+    }
+
     /// Validate the entire mapping before writing either scratch prefix.
     /// On success, metadata and cell references remain borrowed by the plan.
     /// All errors, and `Collapse`, preserve both scratch buffers.

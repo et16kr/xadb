@@ -1,0 +1,10 @@
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 30.82s
+     Running unittests src/lib.rs (artifacts/dev3-08/target/debug/deps/engine-e4e141083d864921)
+
+running 2 tests
+test storage::tree_page::structure::tests::weighted_split_without_single_boundary_retries_structure_before_pending_edit ... ok
+test storage::tree_page::structure::tests::weighted_split_matches_exhaustive_boundary_oracle ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 2199 filtered out; finished in 0.73s
+

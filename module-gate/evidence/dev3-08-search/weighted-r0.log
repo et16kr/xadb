@@ -1,0 +1,38 @@
+   Compiling version_check v0.9.5
+   Compiling typenum v1.20.1
+   Compiling autocfg v1.5.1
+   Compiling cfg_aliases v0.2.2
+   Compiling cfg-if v1.0.5
+   Compiling libc v0.2.191
+   Compiling generic-array v0.14.7
+   Compiling nix v0.30.1
+   Compiling memoffset v0.9.1
+   Compiling cpufeatures v0.2.17
+   Compiling bitflags v2.13.2
+   Compiling crypto-common v0.1.7
+   Compiling block-buffer v0.10.4
+   Compiling digest v0.10.7
+   Compiling sha2 v0.10.9
+   Compiling xadb-foundation v0.1.0 (/workspace/xadb/crates/foundation)
+   Compiling xadb-platform v0.1.0 (/workspace/xadb/crates/platform)
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 37s
+     Running unittests src/lib.rs (artifacts/dev3-08/target/debug/deps/engine-e4e141083d864921)
+
+running 3 tests
+test storage::tree_page::structure::tests::weighted_split_rejects_invalid_reservations_without_scratch_changes ... ok
+test storage::tree_page::structure::tests::weighted_split_preserves_rollback_space_without_installing_pending_edit ... ok
+
+thread 'storage::tree_page::structure::tests::weighted_split_matches_exhaustive_boundary_oracle' (4164) panicked at crates/engine/src/storage/tree_page/structure/tests.rs:836:18:
+bounded row weights admit a nonempty split
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test storage::tree_page::structure::tests::weighted_split_matches_exhaustive_boundary_oracle ... FAILED
+
+failures:
+
+failures:
+    storage::tree_page::structure::tests::weighted_split_matches_exhaustive_boundary_oracle
+
+test result: FAILED. 2 passed; 1 failed; 0 ignored; 0 measured; 2197 filtered out; finished in 0.02s
+
+error: test failed, to rerun pass `-p xadb-engine --lib`

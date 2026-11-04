@@ -188,3 +188,92 @@ internal 준비의 국소 metadata는32B다. output은 호출자가 예약한16K
 양쪽 이미지를 검산하도록 보강했다. 최초7개 PASS 뒤 이 변경·신규3개만 실행해 PASS했다.
 고유9개이며 완료된 무변경6개는 반복하지 않았다. 원 compile 실패와 source별 결과는
 [실행 기록](../evidence/dev3-tree-structure-20261104.md)에 보존한다.
+
+<a id="weighted-split-candidate"></a>
+### D3-TREE-STRUCTURE-002 — rollback 공간을 보존하는 leaf split 후보
+
+2026-11-04 · **독립 D2/D1 ACCEPT / 고유4개 선택 PASS / live owner 미연결**.
+08-1의 실제 SMO 연결 준비다. 기존 001 byte-only 후보의 의미는 유지한다.
+
+현재 행별 cell+slot 비용을 `c(r)`, 아직 rollback으로 복원 가능한 이력의 최대 cell+slot
+비용을 `b(r)`라 하면 `w(r)=max(c(r),b(r))`, leaf의 예약은 `D=Σ(w−c)`다.
+같은 RowId의 반복 이력 차액을 더하는 대신 실제 도달 가능한 복원 상태의 최댓값을 쓴다.
+**이 helper는 Undo·rollback owner·cut 상태에서 b를 증명하지 않는다.** 실제 C와 replay는
+그 증명을 같은 원 그래프에서 계산해야 하며, 호출자가 넘긴 숫자를 권한으로 받을 수 없다.
+기존 Row Job·CLR·retirement 의미를 이 표현 helper만으로 바꾸지 않는다.
+
+`TreePageView::prepare_leaf_split(weights, pending, right, scratch)`는 각 현재 cell 순서의
+weight가 `c≤w≤8094`, 현재 합이 `≤16188`임을 검산한다. pending은 후속 변경의 key와
+canonical cell+slot 비용이며, 새 key이면 그 비용을, 기존 key이면 `max(0,c_pending−w)`를
+분할 후 해당 key를 찾을 쪽의 요구량에 더한다. 축소 UPDATE는 이전 rollback 예약을 줄이지 않는다.
+requested 비용은 canonical key 길이+8 이상,8094 이하다.
+
+후보 boundary는 **현재 행 사이**만 고른다(1..N−1). pending row는 설치하지 않으며
+현재 모든 행 bytes·version을 그대로 두 page로 나눈다. 각 쪽의 예약 포함 비용이16188 이하인
+boundary 중 양쪽 비용의 최댓값을 최소화하고 동률이면 작은 boundary를 택한다. separator는
+기존 오른쪽 첫 key다. 기존 byte-only 최소화 함수로 예약 계산을 대체하지 않는다.
+오류 시 scratch를 보존하고, 성공 시 source의 metadata 포함 reference prefix만 채운다.
+
+최초 선택 검증은 신규3개로 고정했다. 아래 검토 반례1개를 추가해 고유4개다.
+완료된 001의9개는 반복하지 않았다.
+
+| 사례 | 입력과 독립 판정 |
+| --- | --- |
+| weighted_split_preserves_rollback_space_without_installing_pending_edit | 3 family×6 고정 weight/request, 축소·증가·새 key, 양쪽 전체 page bytes에 pending 변경이 없음을 검산 |
+| weighted_split_rejects_invalid_reservations_without_scratch_changes | 개수·과소/과대 weight·총량·비정규 key·request 비용·alias·scratch 부족에서 무변경 |
+| weighted_split_matches_exhaustive_boundary_oracle | seed1..64×128=8192 입력. LCG 6364136223846793005·+1,2..8행, typed 숫자 key, 모든 boundary 열거 후 `(최대 비용,boundary)` 정렬 oracle와 대조 |
+
+각 선택 실행은 build 포함180초,4 jobs다. F05는 caller weight 배열 최대1011×8=8088B와
+reference scratch를 동시에 센다. 새 helper의 실제 live admission·Undo 최댓값 증명·SMO fault
+인수는 후속이며, 이 공급도 일정08-1을 완료하지 않는다.
+
+독립 검토가 유효한 weight `[5000,8000,3000]`, key `[10,20,30]`, 신규 key25/cost8094에서
+단일 boundary가 없음을 지적했다. 첫 시험의 oracle는 항상 boundary가 있다고 잘못 가정하여
+FAIL했고 제품은 `NotSplittable`을 안전하게 반환했다. oracle를 후보 없음까지 대조하게 고쳤다.
+새 `weighted_split_without_single_boundary_retries_structure_before_pending_edit`는 이 반례의
+scratch 보존과 pending 없이 먼저 분할→현재 오른쪽에서 두 번째 분할을 확인한다.
+`NotSplittable`은 이 요청을 한 번에 수용하는 boundary가 없다는 뜻이며 intrinsic RowTooLarge가
+아니다. live owner는 pending 없는 구조 split 후 재탐색·필요한 추가 split을 수행하고, 그 동안의
+완료 SMO와 실제 Capacity 거절을 구분해야 한다. 이 후속 실행은 실패 oracle와 신규 반례2개만 선택한다.
+
+<a id="immutable-tree-search"></a>
+### D3-TREE-SEARCH-001 — immutable image 집합의 bounded path 탐색
+
+2026-11-04 · **독립 D2/D1 ACCEPT / 고유4개 선택 PASS / live pin·SMO 미연결**.
+계약·구현은 `/root`, 독립 검토는 `/root/dev3_08_review`다. 기존 D2 위임 안의 내부 공급이며
+root 한 page라는 현재 소비자 가정을 걷어내기 위한 준비다. wire 형식은 바꾸지 않는다.
+
+`find_leaf_in_images(root, query, image)`는 호출 중 변하지 않는 canonical replay/recovery
+arena를 읽는다. root expectation은 소유자가 검증한 anchor/schema에서 오며, callback은
+각 exact expectation의 page bytes만 공급한다. page가 자기 header로 기대 identity를 정하지 않는다.
+최대 높이16의 root→leaf 경로에서 owner/generation·PageRef/incarnation·kind/level/arity를
+기존 decoder로 검증한다. 부모 separator와 같은 key는 오른쪽으로 간다.
+
+각 경로의 하한은 포함, 상한은 제외한다. 부모가 정한 범위를 자손으로 전달하고, 선택 page의
+정렬된 첫/마지막 key를 범위와 대조한다. leftmost/rightmost에서 새 경계가 없으면 조상 경계를
+유지한다. 선택 경로에서 이미 지난 물리 주소를 incarnation 변경 여부와 무관하게 다시 읽기
+전에 거절한다. level은 한 단계씩 감소하며 root level15이면 최대16회 image 호출이다.
+empty leaf도 정상 결과이며 부재 행 판정은 반환 leaf의 lower_bound가 소유한다.
+
+root shape·query가 잘못되면 image 호출 전에 `InvalidInput`이다. 범위 위반·경로 alias는
+`Corrupt`, page 및 callback 오류는 그대로 반환한다. 함수는 부재·손상을 서로 바꾸지 않는다.
+다른 child까지 감사하지 않으므로 whole-tree reachability·고아 page·중복 subtree 증명이 아니다.
+live pool의 pin/latch·anchor revision 재검증을 이 immutable 함수로 대신하지 않는다.
+
+재귀·heap·page scratch는 없다. 방문 PageRef16개와 두 borrowed 경계, view만 유지한다.
+부모 bytes의 경계가 자손 탐색 중 살아 있으므로 callback의 모든 반환 bytes는 같은 call lifetime에
+불변이어야 한다. live page를 그때그때 unpin하는 대안은 이 수명 조건을 만족하지 않아 별도다.
+함수의 실제 C 호출자 stack·arena 회계는 해당 연결의 F05에 포함한다.
+
+선택 시험은 신규4개, build 포함180초·4 jobs다. source page는 기존 검증 codec으로 조립하되
+기대 경로·행 존재 여부는 독립 typed key/page map으로 정한다. 기존 codec/structure 시험은 반복하지 않는다.
+
+| 사례 | 고정 입력·판정 |
+| --- | --- |
+| immutable_tree_search_matches_typed_points_and_exact_path | Row/Catalog/Index 3 family, 높이3·leaf6·행12, query1..120의 존재와 exact path·family/level/arity |
+| immutable_tree_search_rejects_inherited_range_violations | family별 leaf 하한·상한, internal 조상 하한·상한, leftmost 전파 상한, rightmost의 조상 상한 유지 위반6개 |
+| immutable_tree_search_rejects_wrong_child_and_ancestor_alias | 다른 정상 leaf로 대체 거절, 조상 주소의 동일/다른 incarnation을 세 번째 load 전에 거절, 중간 callback 오류의 동일 전파·추가 load 없음 |
+| immutable_tree_search_bounds_height_and_rejects_bad_input_before_loading | family별 높이16 정상·호출16회, level16·RowId0의 load 전 거절, empty root leaf |
+
+이 공급은 실제 SMO·cursor 인수가 아니며 일정08 적립은 없다. 소비자를 연결할 때 live source
+안정성이나 full-tree audit가 필요한 경우 이 API 경계와 시험 범위를 다시 검토한다.
