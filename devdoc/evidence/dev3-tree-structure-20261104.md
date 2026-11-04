@@ -247,6 +247,33 @@ MAX_PAGE_SLOTS3,244를 사용한 실제 refs/weights 크기를 계약에 기록�
 실제 계산으로 재사용하지 않으며 after의 불변 수명 결합·실제 source census·global closure의
 일반화·live/replay/fault 인수는 후속 의무다. 일정08 적립은0이다.
 
+<a id="scope4-producer"></a>
+### scope4 생산과 정본 before 비교
+
+`a5570a38` 뒤 [생산·비교 계약](../contracts/dev3-tree-smo.md#scope4-producer)을 구현했다.
+각 공개 호출이 원 before에서 새 후보를 만든 뒤 private emitter가 그 after를 immutable하게
+빌린다. group·descriptor·core·native와 canonical decoded redo 전체를 비교하고 outer·trailer는
+scope4 decoder로 검산한다. 이전 Candidate를 받아 caller가 바꾼 after를 쓰는 API는 없다.
+
+[원 로그·hash](../../module-gate/evidence/dev3-08-frame/)의 r0는 신규6개만 실행해6 PASS다.
+build1분39초·runtime0.09초·기존2,245개 filtered다. 별도 raw section writer는 이미 검증한
+candidate after/core를 입력으로 쓰며 제품 emitter·descriptor/redo encoder는 호출하지 않는다.
+Root/Child leaf/internal 네 형식의 exact bytes와 after를 대조했다. Root/Child 각8종 변조는
+checksum을 보정해 wire decode의 수락과 canonical observe의 거절을 모두 확인했다.
+
+자체 점검에서 이전 epoch 사례가 old descriptor와 old before를 조합한 local 형식 증거에
+머무는 점을 보강했다. 첫 Internal RootSplit의 실제 after5를 fixture에 반영하고 그 successor의
+leaf13을 다음 epoch에서 ChildSplit한다. root와 parent가 다른 deeper child도 함께 덮는다.
+r1은 이 변경1개만 실행해1 PASS(build32.77초·runtime0.03초·2,250개 filtered)다. 고유6개이며
+무변경 완료 사례와 이전 suite는 반복하지 않았다. engine all-targets/all-features Clippy-r0는
+1분18초에 PASS다. 독립 D1/D2는 한정 ACCEPT·필수0이다
+([검토 기록](../../module-gate/evidence/dev3-08-frame/review.md)).
+
+현재 fixture는 table/tree와 Job/U의 local 관계이며 전체 Root/Status/ATT와 선택된 역사까지
+증명하는 입력은 아니다. pure observation 반환 뒤의 출력 변경은 후속 설치 경로가 별도로
+결합해야 한다. stage/install·복구 수락·global closure·실제 source census/F05·native fault는
+미완료이며 일정08 적립은0을 유지한다.
+
 08 전체의 승인 범위는 유지한다. 다음 작업은 08-1의 실제 system owner·WAL·복구다.
 독립 사전 검토에서 새 사용자 판단이 필요한 제품 방향 충돌은 발견하지 않았다.
 

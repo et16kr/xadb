@@ -1,0 +1,134 @@
+{
+  "schema": "XADB_MODULE_GATE_RECORD_V1",
+  "change": "DEV3 08: produce and compare canonical scope4 frames within one immutable after-image borrow; no stage/install authority",
+  "rust_tests": [
+    {
+      "paths": [
+        "crates/engine/src/storage/semantic_row/structure.rs",
+        "crates/engine/src/storage/semantic_row/structure/frame.rs",
+        "crates/engine/src/storage/semantic_row/structure/weights/candidate_tests.rs",
+        "crates/engine/src/storage/semantic_row/structure/weights/frame_tests.rs"
+      ],
+      "reason": "Six new frame cases use an independent section writer and wire-valid semantic mutations. Earlier candidate/wire/weight bodies are unchanged; declaration-only additions receive static review.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/frame_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::frame::structural_frame_matches_independent_sections_for_all_four_splits",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/scope3/profile3.bin",
+            "tests/fixtures/module-row-format/transition-delete/blobs.bin",
+            "tests/fixtures/module-row-format/transition-delete/index.tsv",
+            "tests/fixtures/module-row-format/transition-update/blobs.bin",
+            "tests/fixtures/module-row-format/transition-update/index.tsv",
+            "crates/engine/src/storage/semantic_row/structure/weights/tests.rs"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/frame_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::frame::structural_frame_rejects_wire_valid_canonical_mutations",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/scope3/profile3.bin",
+            "tests/fixtures/module-row-format/transition-delete/blobs.bin",
+            "tests/fixtures/module-row-format/transition-delete/index.tsv",
+            "tests/fixtures/module-row-format/transition-update/blobs.bin",
+            "tests/fixtures/module-row-format/transition-update/index.tsv",
+            "crates/engine/src/storage/semantic_row/structure/weights/tests.rs"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/frame_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::frame::structural_frame_recomputes_workspace_and_binds_actual_before",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/scope3/profile3.bin",
+            "tests/fixtures/module-row-format/transition-delete/blobs.bin",
+            "tests/fixtures/module-row-format/transition-delete/index.tsv",
+            "tests/fixtures/module-row-format/transition-update/blobs.bin",
+            "tests/fixtures/module-row-format/transition-update/index.tsv",
+            "crates/engine/src/storage/semantic_row/structure/weights/tests.rs"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/frame_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::frame::structural_frame_buffer_shortage_preserves_frame_and_checks_input_before_callback",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/scope3/profile3.bin",
+            "tests/fixtures/module-row-format/transition-delete/blobs.bin",
+            "tests/fixtures/module-row-format/transition-delete/index.tsv",
+            "tests/fixtures/module-row-format/transition-update/blobs.bin",
+            "tests/fixtures/module-row-format/transition-update/index.tsv",
+            "crates/engine/src/storage/semantic_row/structure/weights/tests.rs"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/frame_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::frame::structural_frame_new_owner_is_distinct_from_previous_epoch_owner",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/scope3/profile3.bin",
+            "tests/fixtures/module-row-format/transition-delete/blobs.bin",
+            "tests/fixtures/module-row-format/transition-delete/index.tsv",
+            "tests/fixtures/module-row-format/transition-update/blobs.bin",
+            "tests/fixtures/module-row-format/transition-update/index.tsv",
+            "crates/engine/src/storage/semantic_row/structure/weights/tests.rs"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/frame_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::frame::structural_frame_propagates_original_source_error",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/scope3/profile3.bin",
+            "tests/fixtures/module-row-format/transition-delete/blobs.bin",
+            "tests/fixtures/module-row-format/transition-delete/index.tsv",
+            "tests/fixtures/module-row-format/transition-update/blobs.bin",
+            "tests/fixtures/module-row-format/transition-update/index.tsv",
+            "crates/engine/src/storage/semantic_row/structure/weights/tests.rs"
+          ]
+        }
+      ]
+    }
+  ],
+  "reviews": [
+    {
+      "id": "dev3-08-frame-d2-d1",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/semantic_row/structure.rs": "d4bd9385cf1b438bfdca14e78b8557723ea3d637",
+        "crates/engine/src/storage/semantic_row/structure/frame.rs": "2352c3c014c2696748a52fd57b300262cabfe3b9",
+        "crates/engine/src/storage/semantic_row/structure/weights/candidate_tests.rs": "95cefae4fd55f3c505f965ca6a7a8415cd9c77c6",
+        "crates/engine/src/storage/semantic_row/structure/weights/frame_tests.rs": "414b869d23b76b173fbc5f3bae2c575b186bdf7d",
+        "tests/fixtures/module-row-format/scope3/profile3.bin": "c713f45e89c706c3b4bc742e57e9ea8acd8b8537",
+        "tests/fixtures/module-row-format/transition-delete/blobs.bin": "8f47189af0de5c6d8523ebdcc34c06a8279cfd8a",
+        "tests/fixtures/module-row-format/transition-delete/index.tsv": "e3964f427f7bce03744c23930a01b02d50a2005f",
+        "tests/fixtures/module-row-format/transition-update/blobs.bin": "ba303c13e8016eeb7ca75d572fb3dbc1ab77ea5f",
+        "tests/fixtures/module-row-format/transition-update/index.tsv": "848b500aca95c7483ec3fba42c8cc7055b08fa5a",
+        "crates/engine/src/storage/semantic_row/structure/weights/tests.rs": "e113f184c4f7c43b17a8e39bc79e2598ed89ab7e",
+        "devdoc/contracts/dev3-tree-smo.md": "6ee9b4ce9aa505576f538af9691ac019a0dbb1cb"
+      },
+      "log": "module-gate/evidence/dev3-08-frame/review.md (sha256 82cbef1f0666cc3001181a90d99c556d89f21ccfab9c5a116323f8d1f11d0a5d)"
+    }
+  ]
+}

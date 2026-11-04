@@ -436,3 +436,30 @@ F05로 재사용하지 않는다. 후속 source census에서 실제 수명과 �
 검산한다. 현재 Candidate는 after를 borrow하지 않으므로 후속 frame emit/compare는 immutable
 output borrow 또는 저장한 결과와의 재검산을 결합해야 한다. 성공 후 caller가 바꾼 after에
 이전 성공 결과를 재사용하는 API로 연결하지 않는다.
+
+<a id="scope4-producer"></a>
+## scope4 생산·정본 비교
+
+`structure::frame::produce/observe`는 같은 호출 안에서 `candidate::prepare`를 먼저 수행한 뒤
+그 결과와 다섯 after의 immutable borrow를 private Write/Compare emitter에 넘긴다. 외부
+Candidate나 이전 성공 결과를 받아 frame을 만드는 우회 API는 없다. page callback·Job/bank의
+원 cut 안정성과 전체 actor/history closure는 앞 절과 같이 원 owner 의무다.
+
+새 descriptor는 원 complete LSN·epoch로 만든 Structural owner의 Finished·잔여0이다.
+group의 previous/digest는0이고 이전 bank의 high-water/digest는 core에만 기록한다.
+native5/redo5는 실제 물리 순서이며 기존 page의 priorLSN·before/after full digest와 신규
+INIT full image를 결합한다. 하나의 emitter가 group·descriptor·core·native를 쓰거나 exact
+비교하고 redo는 canonical decoded 모든 필드/data를 비교한다. outer header·exact length·
+trailer는 scope4 decoder와 재계산 header 비교로 함께 검산한다. 두 번째 full frame은 만들지 않는다.
+
+frame buffer 부족은 다섯 after 준비 뒤 확인하므로 after는 이미 바뀔 수 있지만 frame은
+보존된다. 성공은 정확 used prefix의 길이를 반환하며 그 밖 tail을 보존한다. 그 외 오류에서는
+두 buffer 모두 workspace이고 성공 없이는 소비하지 않는다. 호출 중 after를 바꿀 외부 실행
+간격은 없다. 반환 후 caller가 바꾼 after에 대한 설치 권한은 별도 문제이며, live 설치 경로가
+immutable borrow 또는 재검산으로 결합해야 한다. 이 API는 stage·설치·복구 수락 권한이 아니다.
+
+사전 D2는 이 API 경계와 단일 emitter를 한정 수용했다. 새 시험의 독립 section serializer는
+이미 별도로 시험한 후보의 이미지/core를 입력으로 받되 제품 frame emitter·descriptor/redo
+encoder를 호출하지 않는다. 이는 frame 형식 oracle이며 전체 SMO 의미의 별도 재구현은 아니다.
+Root/Child leaf/internal의 bytes, wire decode는 수락하는 checksum 보정 변조의 canonical
+거절, 실제 before 결합, output 재계산, buffer/tail·이전 epoch owner·callback 오류를 검산한다.

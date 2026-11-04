@@ -180,6 +180,22 @@
         "devdoc/contracts/dev3-tree-smo.md": "295800c90fec75685c3bbf597251fce42fc6d1b1"
       },
       "log": "module-gate/evidence/dev3-08-candidate/review.md (sha256 5f7b2d00f471e2da180782e581e24e6c9063c89d2e3abea9fcc490d98d735f8a)"
+    },
+    {
+      "id": "dev3-08-candidate-frame-modules",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/semantic_row/structure.rs": "d4bd9385cf1b438bfdca14e78b8557723ea3d637",
+        "crates/engine/src/storage/semantic_row/structure/weights/candidate_tests.rs": "95cefae4fd55f3c505f965ca6a7a8415cd9c77c6"
+      },
+      "log": "module-gate/evidence/dev3-08-frame/review.md (sha256 82cbef1f0666cc3001181a90d99c556d89f21ccfab9c5a116323f8d1f11d0a5d)"
     }
   ]
 }
