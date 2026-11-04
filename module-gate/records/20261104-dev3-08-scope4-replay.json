@@ -460,6 +460,23 @@
         "tests/fixtures/module-row-format/transition-update/index.tsv": "848b500aca95c7483ec3fba42c8cc7055b08fa5a"
       },
       "log": "module-gate/evidence/dev3-08-scope4-replay/review.md (sha256 2a39d85aadb8513bea28d051226c800aad689f902668809681b711c29df1c15f)"
+    },
+    {
+      "id": "dev3-08-live-prepare-d2-d1-overlap",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "devdoc/contracts/dev3-tree-smo.md": "8857b485a202d469c5e6d69b2de9b763795a4642",
+        "devdoc/evidence/dev3-tree-structure-20261104.md": "651347811cca9f197d482b935334cba8d7bf206b",
+        "devdoc/implementation/dev3-implementation.md": "34aed4a7876e914d07529fdb9807b81b0d4aa951"
+      },
+      "log": "module-gate/evidence/dev3-08-live-prepare/review.md (sha256 a3e3c1ad6f8917646d8be488cf6818d39703367849d00f495746cd16f5eba0f8)"
     }
   ]
 }

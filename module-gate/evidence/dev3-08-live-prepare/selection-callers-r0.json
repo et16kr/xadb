@@ -1,0 +1,9 @@
+{
+  "filters": [
+    "recovery_source_memory",
+    "recovery_source_native"
+  ],
+  "reason": "changed RetentionSourceCensus now includes structural_prepare branch; verify actual original memory/native envelopes without I/O",
+  "source": "source-r5.sha256",
+  "elf": "elf-r5.sha256"
+}

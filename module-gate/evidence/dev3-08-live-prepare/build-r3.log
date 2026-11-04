@@ -1,0 +1,90 @@
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+error[E0597]: `slot` does not live long enough
+   --> crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs:779:17
+    |
+773 |                let mut slot = boxed::<1_048_576>();
+    |                    -------- binding `slot` declared here
+...
+779 |                    &mut slot,
+    |                    ^^^^^^^^^ borrowed value does not live long enough
+...
+881 |            };
+    |            - `slot` dropped here while still borrowed
+    |
+   ::: crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_prepare.rs:157:9
+    |
+157 | /          with_fresh!(
+158 | |              oracle,
+159 | |              frames = 28,
+160 | |              |live,
+...   |
+233 | |                      let held = pool
+    | | ________________________________-
+234 | ||                         .reserve_target_set(&mut blocker, &[source])
+    | ||____________________________________________________________________- argument requires that `slot` is borrowed for `'static`
+...   |
+392 | |          );
+    | |__________- in this macro invocation
+    |
+    = note: this error originates in the macro `with_fresh` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0597]: `dwb` does not live long enough
+   --> crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs:783:34
+    |
+775 |                let mut dwb = boxed::<4_194_304>();
+    |                    ------- binding `dwb` declared here
+...
+783 |                .install_doublewrite(&mut dwb)
+    |                                     ^^^^^^^^ borrowed value does not live long enough
+...
+881 |            };
+    |            - `dwb` dropped here while still borrowed
+    |
+   ::: crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_prepare.rs:157:9
+    |
+157 | /          with_fresh!(
+158 | |              oracle,
+159 | |              frames = 28,
+160 | |              |live,
+...   |
+233 | |                      let held = pool
+    | | ________________________________-
+234 | ||                         .reserve_target_set(&mut blocker, &[source])
+    | ||____________________________________________________________________- argument requires that `dwb` is borrowed for `'static`
+...   |
+392 | |          );
+    | |__________- in this macro invocation
+    |
+    = note: this error originates in the macro `with_fresh` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0597]: `storage` does not live long enough
+   --> crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs:787:45
+    |
+776 |                let storage = FreshStorageSession::create_retention_catalog(
+    |                    ------- binding `storage` declared here
+...
+787 |                let core = PageConcurrency::new(storage.session_fence()).unwrap();
+    |                                                ^^^^^^^ borrowed value does not live long enough
+...
+881 |            };
+    |            - `storage` dropped here while still borrowed
+    |
+   ::: crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_prepare.rs:157:9
+    |
+157 | /          with_fresh!(
+158 | |              oracle,
+159 | |              frames = 28,
+160 | |              |live,
+...   |
+233 | |                      let held = pool
+    | | ________________________________-
+234 | ||                         .reserve_target_set(&mut blocker, &[source])
+    | ||____________________________________________________________________- argument requires that `storage` is borrowed for `'static`
+...   |
+392 | |          );
+    | |__________- in this macro invocation
+    |
+    = note: this error originates in the macro `with_fresh` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+For more information about this error, try `rustc --explain E0597`.
+error: could not compile `xadb-engine` (lib test) due to 3 previous errors

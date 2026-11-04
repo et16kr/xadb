@@ -1,0 +1,13 @@
+# DEV3 original split preparation review
+
+Author `/root`; independent reviewer `/root/dev3_08_review`; D2/common and D1 implementation.
+
+The original canonical replay loan, original writer/pool and immutable caller Row loans prepare a RootSplit/ChildSplit observation. Preparation checks existing before images and stamps, allocator identities, vacant new destinations, checked release and the complete prefix/control cut. It grants no claim, WAL stage, installation, publication or durability authority. Outstanding credit/XOI and victim/DWB/flush obligations remain.
+
+The reviewer accepted the implementation and source-specific runtime results with zero required findings. r4 passed three new cases; r5 passed the corrected actual-C Root case only. Original memory/native callers passed two cases. All compile/runtime failures remain in the original logs. The reviewer verified that reversing the test tuple alias and array-size spelling exactly reproduces the r5 source hash. No completed runtime was repeated for lint changes. Clippy-r0 failed two diagnostics; Clippy-r1 passed (1m29s).
+
+The raw Child case uses a separate fixture pool with registration FrameStamp LSN/counter zero. It validates four-target physical reads including the parent and is not a canonical live factory/LOAD/claim test. Child role4 is an existing nonzero parent, excluded only from new-destination vacancy checks. Resource lower bounds independently enumerate selected nested values, not the full census or measured stack/RSS.
+
+Source/ELF/input identities and selections remain attached to their executions. r5 source-manifest SHA-256 is 53ce8508fde71b7cecab5fdbe8d76875351045ead98f0eded2266f2ece50bf10 and ELF SHA-256 is d9d251a46f64e851e7e834667a2bef75950c709687e0f72c434d64f907db1420. source-r6 records only the equivalent lint edits. review-files.json binds final reviewed source/docs, selected test sources and conservative corpus inputs; explicit inputs include the full indexed raw corpus although each case uses only its setup's subset.
+
+Final artifact/document binding: ACCEPT, zero required findings. The independent reviewer verified all 1,030 source-r6 entries, all 707 exact blobs, all six case/file/input mappings against the PASS union, unchanged corpus identities, exact copies of the original evidence, Clippy-r1 and the stated scope boundaries. The recommended page-header level versus allocator-entry wording was applied. This input-identity check is not a fresh semantic acceptance or execution of the full corpus. Pre-baseline DELETE/UPDATE records remain unchanged. Schedule08 receives no credit; 08-1 remains active.

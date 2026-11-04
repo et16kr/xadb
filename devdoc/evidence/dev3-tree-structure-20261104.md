@@ -541,3 +541,64 @@ Clippy와 최종 독립 D1/D2는 같은 증거 디렉터리의 review 기록에 
 08-1 전체 완료 목표는 계속된다. 원 writer/pool의 claim·stage·install·durability, 선택된 WAL의
 실제 복구·CURRENT publication·native fault/reopen, empty-leaf unlink·unary repair·root shrink·
 retirement와 전체 F05는 필수 잔여다. 일정08 적립0·누적38.37%는 유지한다.
+
+<a id="original-split-prepare"></a>
+### 원 writer의 split 준비와 물리 before 대조
+
+`47b7529d` 뒤 [준비 계약](../contracts/dev3-tree-smo.md#original-split-prepare)을 구현한다.
+D2 선택은 원 CatalogPreparation의 진입 검사와 RuntimeHistory replay loan을 재사용하고,
+원 RowLoanLayout의 frame/before/after 공간만 빌리는 것이다. 외부 raw before 또는 후보를
+설치 권한으로 받는 대안은 쓰지 않는다. same-cut control을 후보 생산 전에 포착하고,
+canonical replay 후 기존3page(Root) 또는4page(Child)를 원 pool에서 물리 순서로 읽는다.
+전체 before bytes·실제 FrameStamp·page의 kind/level과 allocator의 소유/세대/kind를 검산하며, Root 두
+신규 목적지와 Child 한 신규 목적지는 image와 INIT provenance 모두 비어 있어야 한다.
+모든 target/replay loan을 checked return한 뒤 전체 WalPrefix와 control cut을 다시 비교한다.
+
+반환 PreparedStructural의 필드는 private이며 frame/after/before는 caller 공간의 immutable
+borrow다. 현재는 WAL/ledger/pending/issued/installed frontier를 바꾸지 않고 claim·stage·설치
+권한도 발급하지 않는다. outstanding WAL/step credit, XOI successor, victim 선택과 DWB/flush
+정지, claim 이후 재검산과 실제 효과 연결은 후속 F02/F05 의무다. 준비 일부의 성공을 전체
+F02 완료로 바꾸지 않는다. D2 방향과 D1 최종 범위는 아래 검토 기록에 결속한다.
+
+[원 로그·source/ELF/입력 지문](../../module-gate/evidence/dev3-08-live-prepare/)은 각 실행을
+그 source에 귀속한다. 새 고유4개와 변경된 자원 가지를 소비하는 원 caller2개가 통과했다.
+
+| 실행 | 실제 결과와 수정 |
+| --- | --- |
+| r0 | compile 실패5건; private helper 가시성·foreign owner 수명 수정. runtime0 |
+| r1 | compile PASS; 필수 source 지문 환경 누락으로 fixture 전 실패 |
+| r2 | r1 ELF 그대로 올바른 환경을 넣었으나 두 번째 INSERT의 Undo fixture 부족으로 실패; 새 준비 경로 미도달 |
+| r3 | 실제 추가 Undo INIT와 시험3개 추가; erased pool callback의 owner lifetime compile 실패3건, runtime0 |
+| r4 | 원 typed pool getter 사용 뒤 build PASS, 새4개 중3 PASS·1 FAIL; 등록되지 않은 slot의 target_request 진단이 fixture를 fence함 |
+| r5 | registered_index로 등록 slot만 관측하도록 시험 수정; 실패한 Root 사례1개만 PASS. 앞서 PASS한3개 반복 없음 |
+| callers-r0 | r5 ELF/source에서 memory/native 원 호출자2 PASS; I/O 효과0 |
+| clippy-r0 | 시험용 tuple type_complexity와 byte 수의 manual_bits 두 지적 |
+| clippy-r1 | tuple 별칭과 size_of 배열의 동등 표현으로 수정 후 검사. 최종 결과는 review 기록에 둠; runtime 재실행 없음 |
+
+SMO-P01은 실제 CREATE·Undo INIT·INSERT 두 행·Commit·정리 뒤 RootSplit을 준비한다.
+서로 다른 두 결과 leaf의 RowId, 신규2page, 실제 기존3개의 FrameStamp와 전체 물리 순서를
+검산한다. 마지막 기존 target의 write 충돌은 earlier pin과 replay를 반환하고, 외부 owner·
+stale schema/incarnation을 거절한다. 성공/거절에서 WAL·bank·Jobs 불변을 확인한다.
+원 read-release pause 중 다른 thread의 fence는 CallerMustResolve로 끝나며 pin0과 replay
+반환을 관측한다. fence 뒤 writer의 재사용을 주장하지 않는다. cut guard의 prefix와 control
+mutant는 독립적으로 거절한다.
+
+SMO-P02는 독립 raw internal-child-before.xrb의 기존4page를 별도 SharedPool에 등록하여
+물리 읽기 helper만 부른다. parent level2·role4와4개의 exact before, role3 미접근을 검산한다.
+등록된 fixture의 FrameStamp는LSN0/counter0이며 image LSN과 다르다. 원 LOAD/current selected
+source·canonical factory·PreparedStructural 발급 또는 실제 ChildSplit 효과 증거는 아니다.
+순수 신규 목적지 시험은 Root 두 번째 image/claim 충돌과 page64 경계를 거절하고, Child의
+기존 parent(role4)가 nonzero여도 신규 목적지 검사에 포함하지 않음을 확인한다.
+
+source inventory는 outer1,176·scope376, allocation4,866, semantic24,580, physical10,650,
+cleanup6,168, replay31,556, returning9,296, peak33,372B다. decoder3,914·physical6,802·
+return6,312B floor는 부분 독립 중첩 목록이며 전체 census를 독립 산출하거나 stack/RSS를
+측정한 것이 아니다. 원 memory/native recovery peak65,392/65,400, metadata104,152/104,160,
+whole169,688/169,696B와 retained live64,016/64,024·187,024/187,032·252,560/252,568B는
+기존65,536/196,608/262,144B 한도를 유지한다. source-r5 지문은
+`53ce8508fde71b7cecab5fdbe8d76875351045ead98f0eded2266f2ece50bf10`, ELF는
+`d9d251a46f64e851e7e834667a2bef75950c709687e0f72c434d64f907db1420`다.
+
+08-1 전체 완료 목표는 계속된다. 실제 claim·stage·install·durability·fault/reopen,
+multi-level 행 변경, unlink·unary repair·root shrink·retirement와 전체 F05가 남아 있다.
+일정 적립0·누적38.37%를 유지하며 독립 D1/D2와 gate 결과는 같은 증거 디렉터리에 남긴다.

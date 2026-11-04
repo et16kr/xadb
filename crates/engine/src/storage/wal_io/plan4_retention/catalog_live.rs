@@ -31,6 +31,9 @@ pub(in super::super) mod row_preflight;
 mod targets;
 use targets::CatalogTargetAccess;
 
+#[path = "structural_prepare.rs"]
+pub(in super::super) mod structural;
+
 const PRIVATE_BYTES: usize = semantic_catalog::PRIVATE_BYTES;
 const BANK_END: usize = 65_536;
 const JOB_END: usize = 131_072;

@@ -708,3 +708,33 @@ bank/high-water 인계, 유효 checksum을 가진 canonical 변조와 occupied d
 기존 recovery/metadata/live cap으로 검산한다. 실제 owner의 선택된 WAL과 CURRENT publication,
 원 pool 설치·native fault/재진입 및 retirement는 이후 효과 인수로 연결하며 이 순수 replay
 단위만으로08-1 완료를 선언하지 않는다.
+
+<a id="original-split-prepare"></a>
+### 원 이력과 pool의 split 비교 준비
+
+F02의 첫 연결은 원 `RetentionWriter::prepare_row_split`과 private
+`PreparedStructural`이다. `/root/dev3_08_review`가 준비 순서와 아래 한정을
+D2로 수용했으며 구현·선택 실행의 결과는 [08 증거](../evidence/dev3-tree-structure-20261104.md)에
+별도로 기록한다. 이 결과는 claim·WAL stage·install 권한이 아니다.
+
+- 원 `existing_entry`의 health, pending/population Reserved 배제, visibility/core,
+  idle owner/reader, owner identity와 ledger 검산을 재사용한다. `ControlCut`의
+  bank·Jobs·XOI digest와 issued/adopted를 생산 **전** 포착한다.
+- 원 `RuntimeHistory`의 checkout에서 `validate_live`로 실제 durable WAL을 재생한다.
+  파일 읽기가 끝난 뒤 같은 arena와 원 Jobs/Structural bank로 split을 새로 계산한다.
+  Candidate의 전체 트리·allocator·Undo weight·전역 RootReserved 검산을 유지한다.
+- 새1/2개 목적지의 canonical image와352B claim이 비어 있어야 한다. Root의 둘째
+  INIT도 검사한다. Child의 role4는 기존 parent이므로 이 vacancy 검사의 대상이 아니다.
+- 기존3/4개 target만 물리 순서로 원 pool에서 읽는다. before bytes가 canonical
+  arena와 같고 identity/kind/level 및 latched allocator의 Allocated entry와 일치해야
+  한다. 실제 FrameStamp와 role 대응을 보존하며 INIT에 옛 stamp를 만들지 않는다.
+- 성공·실패 모두 read의 checked 반환, replay loan의 checked 반환, audit 종료 순서를
+  따른다. prefix 전체와 최초 ControlCut을 종료 때 다시 대조한다. WAL/control/history의
+  installed/durable/pending/issued 상태를 전진시키지 않는다.
+- 원425984B `RowLoanLayout`의 FRAME·BEFORE·AFTER를 빌린다. frame과 before/after의
+  불변 borrow 및 정렬한 request/role/stamp를 private non-Clone 결과에 함께 보관한다.
+
+원 writer에서 실제 claim을 시작하기 전에는 owner/core/binding/fence, prefix/control cut,
+각 before stamp를 다시 확인해야 한다. 남은 전체 F02 준비에는 기존 outstanding WAL/steps를
+보존한 이번 그룹의 용량·counter 여유, XOI successor, victim 세대와 selected-DWB/flush의
+quiescence가 포함된다. 이 비교 준비 단위는 그 의무를 대신하지 않으며 실제 effect를 열지 않는다.

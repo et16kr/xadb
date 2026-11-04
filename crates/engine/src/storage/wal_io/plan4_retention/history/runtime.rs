@@ -101,6 +101,15 @@ impl<'a, 'c, 's> RuntimeHistory<'a, 'c, 's> {
     pub(in crate::storage) fn test_replay_checkouts(&self) -> u64 {
         self.replay.lock().map_or(0, |state| state.last_attempt)
     }
+    /// Fenced diagnostic only: no new checkout or health claim is issued.
+    #[cfg(test)]
+    pub(in crate::storage) fn test_replay_returned(&self) -> bool {
+        let state = self
+            .replay
+            .lock()
+            .unwrap_or_else(|error| error.into_inner());
+        state.available.is_some() && state.active.is_none()
+    }
     fn replay_state(&self) -> Result<MutexGuard<'_, ReplayState<'a>>> {
         self.healthy()?;
         let state = self.replay.try_lock().map_err(|error| match error {

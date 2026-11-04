@@ -259,3 +259,6 @@ fn lrc_j02_drain_leaves_a_held_prune_for_a_later_drain() {
         );
     });
 }
+
+#[path = "structural_prepare.rs"]
+mod structural_prepare;

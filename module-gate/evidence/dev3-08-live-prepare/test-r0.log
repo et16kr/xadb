@@ -1,0 +1,122 @@
+   Compiling version_check v0.9.5
+   Compiling typenum v1.20.1
+   Compiling autocfg v1.5.1
+   Compiling cfg_aliases v0.2.2
+   Compiling libc v0.2.191
+   Compiling generic-array v0.14.7
+   Compiling memoffset v0.9.1
+   Compiling cfg-if v1.0.5
+   Compiling nix v0.30.1
+   Compiling cpufeatures v0.2.17
+   Compiling bitflags v2.13.2
+   Compiling crypto-common v0.1.7
+   Compiling block-buffer v0.10.4
+   Compiling digest v0.10.7
+   Compiling sha2 v0.10.9
+   Compiling xadb-foundation v0.1.0 (/workspace/xadb/crates/foundation)
+   Compiling xadb-platform v0.1.0 (/workspace/xadb/crates/platform)
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+error[E0603]: function `raw_descriptor` is private
+   --> crates/engine/src/storage/wal_io/plan4_retention/structural_prepare.rs:119:47
+    |
+119 | ...                   history::catalog::raw_descriptor(bank_row).expect("checked bank"),
+    |                                         ^^^^^^^^^^^^^^ private function
+    |
+note: the function `raw_descriptor` is defined here
+   --> crates/engine/src/storage/wal_io/plan4_retention/history/catalog.rs:92:1
+    |
+ 92 | pub(super) fn raw_descriptor(row: &[u8]) -> Option<&[u8; 1536]> {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0603]: function `image` is private
+   --> crates/engine/src/storage/wal_io/plan4_retention/structural_prepare.rs:124:39
+    |
+124 |                     history::catalog::image(replay.bytes(), reference)
+    |                                       ^^^^^ private function
+    |
+note: the function `image` is defined here
+   --> crates/engine/src/storage/wal_io/plan4_retention/history/catalog.rs:83:1
+    |
+ 83 | pub(super) fn image(arena: &[u8], page: PageRef) -> ObservationResult<&[u8; PAGE_BYTES]> {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0603]: function `image` is private
+   --> crates/engine/src/storage/wal_io/plan4_retention/structural_prepare.rs:204:51
+    |
+204 |                 let canonical = history::catalog::image(arena, target.identity.page)
+    |                                                   ^^^^^ private function
+    |
+note: the function `image` is defined here
+   --> crates/engine/src/storage/wal_io/plan4_retention/history/catalog.rs:83:1
+    |
+ 83 | pub(super) fn image(arena: &[u8], page: PageRef) -> ObservationResult<&[u8; PAGE_BYTES]> {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0603]: function `source_bytes` is private
+   --> crates/engine/src/storage/wal_io/plan4_retention/resources.rs:234:69
+    |
+234 |     let structural_prepare = create_pair::catalog_live::structural::source_bytes::<W>();
+    |                                                                     ^^^^^^^^^^^^ private function
+    |
+note: the function `source_bytes` is defined here
+   --> crates/engine/src/storage/wal_io/plan4_retention/structural_prepare.rs:313:1
+    |
+313 | pub(in super::super) fn source_bytes<W: WriterNamespace>() -> usize {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0597]: `foreign` does not live long enough
+   --> crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_prepare.rs:63:33
+    |
+ 62 |                 let foreign = PageConcurrency::new(fence).unwrap();
+    |                     ------- binding `foreign` declared here
+ 63 |                 let mut other = foreign.try_owner(OwnerRole::Foreground).unwrap();
+    |                                 ^^^^^^^ borrowed value does not live long enough
+...
+147 |             }
+    |             - `foreign` dropped here while still borrowed
+    |
+   ::: crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs:881:9
+    |
+881 |         };
+    |         - borrow might be used here, when `owner` is dropped and runs the `Drop` code for type `transaction::concurrency::Owner`
+    |
+    = note: values in a scope are dropped in the opposite order they are defined
+
+warning: unused variable: `core`
+   --> crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs:865:17
+    |
+865 |                   $core,
+    |                   ^^^^^
+    |
+   ::: crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_prepare.rs:11:9
+    |
+ 11 | /         with_fresh!(
+ 12 | |             oracle,
+ 13 | |             frames = 28,
+ 14 | |             |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+...   |
+148 | |         );
+    | |_________- in this macro invocation
+    |
+help: `core` is captured in macro and introduced a unused variable
+   --> crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs:865:17
+    |
+865 |                   $core,
+    |                   ^^^^^
+    |
+   ::: crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_prepare.rs:11:9
+    |
+ 11 | /         with_fresh!(
+ 12 | |             oracle,
+ 13 | |             frames = 28,
+ 14 | |             |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+...   |
+148 | |         );
+    | |_________- in this macro invocation
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+    = note: this warning originates in the macro `with_fresh` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+Some errors have detailed explanations: E0597, E0603.
+For more information about an error, try `rustc --explain E0597`.
+warning: `xadb-engine` (lib test) generated 1 warning
+error: could not compile `xadb-engine` (lib test) due to 5 previous errors; 1 warning emitted

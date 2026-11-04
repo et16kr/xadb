@@ -1,0 +1,19 @@
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 39s
+     Running unittests src/lib.rs (artifacts/dev3-08/target/debug/deps/engine-e4e141083d864921)
+
+running 1 test
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_prepare::structural_prepare_original_live_two_rows_preserves_state_and_binds_stamps' (42035) panicked at crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs:488:59:
+missing XADB_CATALOG_SOURCE_SHA256
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_prepare::structural_prepare_original_live_two_rows_preserves_state_and_binds_stamps ... FAILED
+
+failures:
+
+failures:
+    storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_prepare::structural_prepare_original_live_two_rows_preserves_state_and_binds_stamps
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 2303 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p xadb-engine --lib`

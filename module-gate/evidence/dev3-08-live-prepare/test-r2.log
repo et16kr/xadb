@@ -1,0 +1,18 @@
+
+running 1 test
+CATALOG_MEMORY_CONTEXT	SMO-P01	7f22cc8da3f8d5c0fdf0ece0e8c7a881e1097eccd8e0fa42a5c6c59694b12051	4c88e1d349e6d403f674146a05e59e8dfd0648af66ec32b958900b97feb4ae33	40363d2d96bd8edf0a1bfc52f76ae770909fe9b67f97581a10a8214e9034c01c	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	SMO-P01
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_prepare::structural_prepare_original_live_two_rows_preserves_state_and_binds_stamps' (42064) panicked at crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_prepare.rs:40:28:
+A's statement refused Failure { stage: Preflight, error: Disk(RetentionError { phase: Prepare, cause: Capacity, effect: Unchanged }), cleanup: None, must_resolve: false }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+CATALOG_MEMORY_FAIL	SMO-P01
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_prepare::structural_prepare_original_live_two_rows_preserves_state_and_binds_stamps ... FAILED
+
+failures:
+
+failures:
+    storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_prepare::structural_prepare_original_live_two_rows_preserves_state_and_binds_stamps
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 2303 filtered out; finished in 0.90s
+

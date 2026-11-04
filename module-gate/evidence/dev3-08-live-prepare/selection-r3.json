@@ -1,0 +1,7 @@
+{
+  "filter": "structural_prepare_",
+  "cases": 4,
+  "reason": "new canonical prepare root/child physical helper, new destination predicate, independent resource inventory; r2 setup failed before new product entry; all four uncompleted",
+  "timeout_build": 240,
+  "timeout_runtime": 200
+}
