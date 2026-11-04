@@ -93,6 +93,13 @@ WAL slot1MiB와 component64KiB는 metadata8MiB 안의 기존 배정이다. calle
 | A2 redo 표현 | 현재 한 frame/page당 한 연속 patch와 다중 구간·연산형 대안. native before/after가 제공하는 effect/RowId/C′/projection을 어디서 복구하는지 대응 | canonical 순서·중복/겹침 거절·pageLSN·원자 적용·부분 실패·scratch와 frame 상한, independent replay 및 current-build 복구 입력 동결. 진단이라고 부르며 필수 의미를 삭제하지 않음 |
 | A3 stage/sync 분리 | Begin/Reserve/Forward/CLR/정리/Commit별 durable 요구와 실패 certainty. 현 단일 slot 대 bounded queue/batch, sync 전 dirty page flush, Commit@c 미설치 뒤 같은 Status page@c+1 flush 반례 | complete/synced/installed/published frontier·WAL-before-data·Commit 설치·batch prefix 검증·Q 공개·checkpoint의 같은-cut·취소/UNKNOWN·bounded 대기와 종료 예약을 하나의 상태도로 증명 |
 
-A1은 기존 전체 재생 유지·base 전환·증분 owner를 비교한다. touched-page 검증만으로 과거 prefix의 불변성이 입증된다고 가정하지 않는다. 독립 audit·복구의 전체 재구성 책임을 live 최적화와 분리하고, 기존 검출 범위를 바꿔야 하는 경우 그 범위·복구 가능성·운영 전제를 명시적으로 검토한다. 고정 snapshot에서의 projection·ledger·page 결과는 독립 이력과 대조한다. 반례가 남으면 현재 검증을 유지한다.
+A1은 기존 전체 재생 유지·base 전환·증분 owner를 비교한다. touched-page 검증만으로 과거 prefix의 불변성이 입증된다고 가정하지 않는다. 독립 audit·복구의 전체 재구성 책임을 live 최적화와 분리하고, 기존 검출 범위를 바꿔야 하는 경우 그 범위·복구 가능성·운영 전제를 명시적으로 검토한다. 고정 snapshot에서의 projection·ledger·page 결과는 독립 이력과 대조한다. 반례가 남으면 현재 검증을 유지하되 아래 비용 목표를 충족한 개선 완료로 처리하지 않는다.
+
+<a id="a1-cost-target"></a>
+### A1 비용 목표와 미달 처리
+
+초기 open/복구의 재구성 뒤, 같은 live 상태·동일 연산/변경량·동일 동시부하에서 **매 연산의 검증이 과거 전체 WAL 길이 E에 비례하는 hash/replay를 수행하지 않는 것**을 목표로 한다. 연산의 실제 변경량·새 durable 구간에 비례한 일은 구별한다. 전체 replay 유지는 비교 기준선이며 그 자체로 목표 달성이 아니다. base/checkpoint 전환을 택하면 전환 빈도·상각 비용과 foreground+정리+유지보수의 누적 read/hash/frame 비용을 함께 제시하여 전체 재생을 다른 경로로 옮긴 것을 개선으로 세지 않는다. open/복구·손상 의심 시 재검증의 범위와 비용도 따로 명시한다. 이 목표는 TPS나 절대 지연의 실측 합격 기준을 대신하지 않는다.
+
+안전성과 이 목표를 동시에 만족하는 후보가 없으면 A1은 목표 미달·미완료다. 현재 구현은 보호를 유지하며, 담당은 실패한 반례·재설계안·제한 운영안·일정 영향을 제시한다. 목표 완화나 제품 범위/보장 변경이 필요한 안은 사용자 결정에 올리고, 기존 목표 안의 재설계는 D2로 이어간다. 현재 방식을 유지한 이유만 기록해 A1을 완료하거나 제한 profile을 일반 규모에 인수하지 않는다.
 
 각 후보의 전이·native fault·계수 비교는 [D3-ADOPT-01–03](../plans/dev3-test-plan.md#review-adoption-20261104)으로 공급한다. 새 구현을 검증할 입력을 먼저 정하고, 기존 M0 API read/hash byte를 장치 I/O·TPS 또는 새 실행의 결과로 옮겨 쓰지 않는다. A1은 먼저 상세 설계하며 A2/A3 전체 구현을 선행 조건으로 두지 않는다.

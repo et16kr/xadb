@@ -1,6 +1,6 @@
 {
   "schema": "XADB_MODULE_GATE_RECORD_V1",
-  "change": "DEV3-REVIEW-012: integrate PR48/PR50 review dispositions, A0-A7 design order, owner contracts, implementation-bound acceptance and schedule re-estimation boundaries. Documentation only; V1 33/86 unchanged.",
+  "change": "DEV3-REVIEW-012 planning and PR51 comment follow-up: distinguish working semantics from compatibility decisions, compare row-lock/ITL/column-delta designs, require A1 WAL-cost target and report non-credit design progress. Documentation only; V1 33/86 unchanged. Owner/integrator /root confirmed r3 adoption.",
   "reviews": [
     {
       "id": "dev3-review-adoption-d2",
@@ -27,7 +27,34 @@
         "devdoc/plans/dev3-test-plan.md": "9065166adab1386bae8223ea07e1bd4adc4423a5",
         "devdoc/plans/module-independence-followup-plan.md": "1cea87ee332a23fc376de7b8544eaacce31d0700"
       },
-      "log": "module-gate/evidence/dev3-review-adoption/review.md (r2 final; sha256 c797af6c21cb95b11070629ec85333778c1a25d78a778f09a351026edd2559a2)"
+      "log": "module-gate/evidence/dev3-review-adoption/review.md at d8b4125d162fba9489a06e67d4e4599fff6516c7 (r2 final; sha256 c797af6c21cb95b11070629ec85333778c1a25d78a778f09a351026edd2559a2)"
+    },
+    {
+      "id": "dev3-review-adoption-comments-d2",
+      "class": "D2",
+      "scopes": [
+        "policy"
+      ],
+      "author": "/root",
+      "reviewer": "/root/pr51_comment_fix_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "devdoc/README.md": "a6f01436920edf9d324c959643212d543aa4314b",
+        "devdoc/contracts/dev3-resource-bounds.md": "b47142b849b5eb71db2d1b09e8ac9759c7d06a7d",
+        "devdoc/contracts/dev3-task-04-wal.md": "31e6701baa7ea045e3ac86528e9c5d24df87f3fe",
+        "devdoc/contracts/dev3-task-10-concurrency.md": "39edaf02f3b37146863c5af03025d055a056ed4d",
+        "devdoc/contracts/dev3-task-13-checkpoint.md": "323d0336237a34b93d9e81a17240baac6c850d04",
+        "devdoc/contracts/dev3-task-15-backup-integrity.md": "46d6b25b9ed2c931aed5f5f6b5a1dd6c07dc3895",
+        "devdoc/contracts/dev3-task-16-qualification.md": "a2969e21fb8ca62635bbaea2b1e7e648b8512914",
+        "devdoc/contracts/disk-storage-design.md": "b4d0d50bc22ca4716c566d90a7a6bdf4c7c42825",
+        "devdoc/plans/README.md": "cda3bc3fc517686c4439a718527723de194f4748",
+        "devdoc/plans/dev3-implementation-plan.md": "1303d03e742b8f002528f105bb7753cc3d415c91",
+        "devdoc/plans/dev3-schedule-baseline.md": "482e1eadd7e35fd768b82044abf67ea8a30e9bc4",
+        "devdoc/plans/dev3-test-plan.md": "eb0ad4436331e5e148e579aa75bc3ee45c47edb0",
+        "devdoc/plans/module-independence-followup-plan.md": "663b4d13170f7213a67698fd2b297499b6741b73"
+      },
+      "log": "module-gate/evidence/dev3-review-adoption/review.md#comment-followup (r3 final; sha256 79b352268e85e4686941adfb01e74f1b9c45ffcc7fa09e2d4044003e4ce9e9e7)"
     }
   ]
 }

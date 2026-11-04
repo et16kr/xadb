@@ -1,6 +1,6 @@
 # 개발 계획
 
-현재 작업은 [DEV3-REVIEW-012 채택·실행 순서](dev3-implementation-plan.md#review-adoption-20261104)다. 두 리뷰의 타당한 과제를 기존 owner에 연결하고 [구현 동반 인수](dev3-test-plan.md#review-adoption-20261104)·[일정 배정 경계](dev3-schedule-baseline.md#review-adoption-20261104)를 보강한다. 첫 후속은 A1 live WAL 재검증 상세 설계이며 제품 구현·시험은 이번 계획에 포함하지 않는다. 아래 과거 작업 경과와 완료 증거는 보존한다.
+현재 작업은 [DEV3-REVIEW-012 채택·실행 순서](dev3-implementation-plan.md#review-adoption-20261104)다. 두 리뷰의 타당한 과제를 기존 owner에 연결하고 [구현 동반 인수](dev3-test-plan.md#review-adoption-20261104)·[일정 배정 경계](dev3-schedule-baseline.md#review-adoption-20261104)를 보강한다. 첫 후속은 A1 live WAL 재검증 상세 설계이며 제품 구현·시험은 이번 계획에 포함하지 않는다. A1 상세 설계는 V1 적립 항목 밖이며 적립 없이 산출물 상태를 보고한다. 아래 과거 작업 경과와 완료 증거는 보존한다.
 
 - [DEV3 전체 예상 일정·누적 진척률 V1](dev3-schedule-baseline.md) — 전체 86 기준일(공급 단위 × 2일); ID별 가중치·일정 항목·완료 조건·최신 적립 대장·잔여 예측과 향후 적립/개정 규칙의 정본.
 
