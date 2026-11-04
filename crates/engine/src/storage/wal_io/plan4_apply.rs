@@ -924,9 +924,20 @@ pub(crate) enum RowProducerInput {
         cell_bytes: usize,
         projection: [u8; 32],
     },
-    /// The CLR of either effect: an INSERT root's removes its row, a DELETE
-    /// root's restores the row from U; `current_row_len` is the RootJob's
-    /// cell C and `current_projection` its projection.
+    /// An UPDATE root's Forward (dev3-row-update.md#api): the sealed new
+    /// canonical value's length and digest, the RootJob's old cell C and its
+    /// projection, which is the planned new row's (unlike `Delete`'s, which
+    /// is the old row's).
+    Update {
+        canonical_len: usize,
+        canonical_digest: [u8; 32],
+        old_cell: usize,
+        projection: [u8; 32],
+    },
+    /// The CLR of any effect: an INSERT root's removes its row, a DELETE or
+    /// UPDATE root's restores the row from U; `current_row_len` is the
+    /// current row's cell (the RootJob's C, or an UPDATE root's new C') and
+    /// `current_projection` the RootJob's projection.
     Clr {
         current_row_len: usize,
         current_projection: [u8; 32],
@@ -1100,10 +1111,11 @@ pub(crate) struct RowLoanLayout;
     reason = "the producer lane and prepare (S2-c) carve XOI, C_SCRATCH and A_SCRATCH by name"
 )]
 impl RowLoanLayout {
-    /// Row frame (largest Row frame 95888 B, DeleteForward; INSERT Prune ≤
-    /// 94080 B, Forward ≤ 93660 B, CLR ≤ 93452 B; dev3-row-delete.md
-    /// #delete-costs). Inside preflight, before any frame is produced, it is
-    /// first the retention LOAD scratch of six pages.
+    /// Row frame (largest Row frame 97936 B, UpdateForward; DeleteForward ≤
+    /// 95888 B, INSERT Prune ≤ 94080 B, Forward ≤ 93660 B, CLR ≤ 93452 B;
+    /// dev3-row-update.md #update-costs, dev3-row-delete.md #delete-costs).
+    /// Inside preflight, before any frame is produced, it is first the
+    /// retention LOAD scratch of six pages.
     pub(crate) const FRAME: std::ops::Range<usize> = 0..98_304;
     /// Nine stable before/proof images of the write target set T.
     pub(crate) const BEFORE: std::ops::Range<usize> = 98_304..245_760;

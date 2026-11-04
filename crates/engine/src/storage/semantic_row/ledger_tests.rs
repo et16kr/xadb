@@ -517,3 +517,53 @@ fn rdl_f09_ledger_rows_follow_each_root_effect() {
     }
     assert!(converted > 0);
 }
+
+/// RUP-F07 (dev3-row-update.md#update-costs): an UPDATE root's ledger rows.
+/// Turning every Reserved/Retained literal root into an UPDATE root (effect
+/// 2, C' at `[286,288)`, cleanup `311428+C+2C'+128h`) moves the Forward row
+/// from `91304+C+128h` to `91124+2C+C'+128h` and a non-terminal CLR row from
+/// `91096+C+128h` to `90916+2C+C'+128h`, i.e. by `C+C'−180` per root, for a
+/// minimal and a maximal C'; nothing else moves.
+#[test]
+fn rup_f07_ledger_rows_of_update_roots() {
+    let namespace = profile().spec().namespace;
+    for n in [185u64, 2228] {
+        let mut converted = 0;
+        for case in 0..COUNT {
+            let Ok(base) = residual(case, jobs(case)) else {
+                continue;
+            };
+            let mut bank = *jobs(case);
+            let (mut forward, mut clr) = (0, 0);
+            for cell in bank.iter_mut() {
+                let job = row::decode_job(cell, namespace).unwrap();
+                let state = job.state();
+                if !matches!(state, JobState::RootReserved | JobState::RootRetained) {
+                    continue;
+                }
+                let c = u64::from(job.cell_bytes());
+                let h = 128 * u64::from(job.has_previous_transaction().unwrap());
+                assert_eq!(get(cell, 784), 311_608 + 2 * c + h);
+                cell[284] = 2;
+                cell[286..288].copy_from_slice(&(n as u16).to_le_bytes());
+                put(cell, 784, 311_428 + c + 2 * n + h);
+                put(cell, 880, 311_428 + c + 2 * n + h);
+                let delta = c + n - 180;
+                if state == JobState::RootReserved {
+                    forward += delta;
+                }
+                clr += delta;
+                converted += 1;
+            }
+            let mut expected = base;
+            if base[0].steps > 0 {
+                expected[0].wal += clr;
+                expected[0].protected += clr;
+            }
+            expected[1].wal += forward;
+            expected[1].protected += forward;
+            assert_eq!(residual(case, &bank), Ok(expected), "case {case} C' {n}");
+        }
+        assert!(converted > 0);
+    }
+}

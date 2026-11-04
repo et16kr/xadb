@@ -73,7 +73,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             status,
             slot,
             statement: job.statement(),
-            delete: job.effect() == job3::RowEffect::Delete,
+            effect: job.effect(),
         })
     }
     pub(in super::super::super::super::super::super::super) fn row_prepare_clr(

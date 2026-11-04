@@ -62,10 +62,11 @@ from_error!(row_record::RowError, Row);
 /// A DELETE root's tombstone cell (dev3-row-delete.md#formats).
 const TOMBSTONE_CELL: usize = 180;
 
-/// The before of an effect-1 (DELETE) root's U (dev3-row-delete.md
-/// #recovery): the replaced row's stamp (gone at release cursor 3) and
-/// logical version. INSERT roots have none.
-type DeleteBefore = Option<(Option<VersionStamp>, LogicalRowVersion)>;
+/// The before of an effect-1 (DELETE) or effect-2 (UPDATE) root's U
+/// (dev3-row-delete.md#recovery, dev3-row-update.md#recovery): the replaced
+/// row's stamp (gone at release cursor 3) and logical version. INSERT roots
+/// have none.
+type ValueBefore = Option<(Option<VersionStamp>, LogicalRowVersion)>;
 
 /// Counts for this actor only. No reservation, selected source or READY proof.
 #[derive(Debug, PartialEq, Eq)]
@@ -156,17 +157,21 @@ impl<'a, 'j> Graph<'a, 'j> {
         Ok(schema)
     }
     /// One root's U. An INSERT root's is the Missing material in
-    /// `INITIAL_UNDO_CELL`. A DELETE root's (dev3-row-delete.md#recovery) is
-    /// Live RowValue with the replaced row's `Committed` stamp, logical and
-    /// value in `[16352-(432+L), 16352)` (`L = C-180`) while Retained, read
-    /// through entry (a) with the table schema, and Releasing without the
-    /// value in `INITIAL_UNDO_CELL` after its CLR or Prune.
-    fn undo(&self, job: JobView<'_>) -> Result<DeleteBefore> {
-        let delete = job.effect() == row::RowEffect::Delete;
+    /// `INITIAL_UNDO_CELL`. A DELETE or UPDATE root's
+    /// (dev3-row-delete.md#recovery, dev3-row-update.md#recovery) is Live
+    /// RowValue with the replaced row's `Committed` stamp, logical and value
+    /// in `[16352-(432+L), 16352)` (`L = C-180`, C the old cell) while
+    /// Retained, read through entry (a) with the table schema, and Releasing
+    /// without the value in `INITIAL_UNDO_CELL` after its CLR or Prune.
+    fn undo(&self, job: JobView<'_>) -> Result<ValueBefore> {
+        let value = match job.effect() {
+            row::RowEffect::Insert => false,
+            row::RowEffect::Delete | row::RowEffect::Update => true,
+        };
         let reference = job.undo().ok_or(Error::Identity)?;
         let (bytes, header) = self.page(reference.page(), PageKind::Undo, 3)?;
         let page = page::decode_page(bytes, header.identity, PageKind::Undo)?;
-        let live_value = if delete && job.state() == JobState::RootRetained {
+        let live_value = if value && job.state() == JobState::RootRetained {
             Some(
                 (job.cell_bytes() as usize)
                     .checked_sub(TOMBSTONE_CELL)
@@ -203,7 +208,7 @@ impl<'a, 'j> Graph<'a, 'j> {
                 key: &[],
             },
         };
-        let decoded = if delete {
+        let decoded = if value {
             let schema = self.schema(object)?;
             undo_record::decode_undo_record(raw, expected, &RowSchemaInput::Catalog(schema))?
         } else {
@@ -212,7 +217,7 @@ impl<'a, 'j> Graph<'a, 'j> {
         let metadata = decoded.metadata()?;
         // before kind and payload kind; an INSERT's before stamp and
         // logical bytes are zero.
-        let kinds = match (delete, live_value) {
+        let kinds = match (value, live_value) {
             (false, _) => [0, 0],
             (true, Some(_)) => [2, 1],
             (true, None) => [2, 0],
@@ -223,14 +228,14 @@ impl<'a, 'j> Graph<'a, 'j> {
             || metadata.mutation_sequence != job.mutation()
             || raw.len() != undo_record::UNDO_RECORD_BYTES + live_value.unwrap_or(0)
             || raw[324..326] != kinds
-            || (!delete && raw[216..320].iter().any(|&b| b != 0))
+            || (!value && raw[216..320].iter().any(|&b| b != 0))
             || header.lsn.0 < job.last_step()
         {
             return Err(Error::Identity);
         }
         // The codec has validated the record; its before stamp (zero once
         // release cursor 3 drops it) and logical are read from their bytes.
-        let before = if delete {
+        let before = if value {
             let stamp = if raw[216..272].iter().all(|&b| b == 0) {
                 None
             } else {
@@ -253,7 +258,7 @@ impl<'a, 'j> Graph<'a, 'j> {
             }
             let record = decoded.live_before()?;
             let previous = self.predecessor(job)?;
-            let before_matches = if delete {
+            let before_matches = if value {
                 matches!(record.payload, UndoPayload::Inline(value) if Some(value.len()) == live_value)
             } else {
                 record.before_kind == UndoBeforeKind::Missing
@@ -364,14 +369,17 @@ impl<'a, 'j> Graph<'a, 'j> {
                 }
                 let row = job.row_id().ok_or(Error::Identity)?;
                 let position = leaf.lower_bound(&row.get().to_be_bytes())?;
-                let delete = job.effect() == row::RowEffect::Delete;
                 // An INSERT root's key exists while Retained or after its
                 // Prune; a DELETE root's until its Prune
-                // (dev3-row-delete.md#recovery).
-                let present = match job.state() {
-                    JobState::RootReserved | JobState::RootReleasingCompensated => delete,
-                    JobState::RootReleasingCommitted => !delete,
-                    _ => true,
+                // (dev3-row-delete.md#recovery); an UPDATE root's always
+                // (dev3-row-update.md#recovery).
+                let present = match job.effect() {
+                    row::RowEffect::Insert => !matches!(
+                        job.state(),
+                        JobState::RootReserved | JobState::RootReleasingCompensated
+                    ),
+                    row::RowEffect::Delete => job.state() != JobState::RootReleasingCommitted,
+                    row::RowEffect::Update => true,
                 };
                 if !present {
                     if position.equal {
@@ -391,9 +399,16 @@ impl<'a, 'j> Graph<'a, 'j> {
                     RowSchemaInput::Catalog(schema),
                 )?;
                 let version = row.version();
-                if delete {
-                    self.delete_row(job, bytes, row.payload(), version)?;
-                    continue;
+                match job.effect() {
+                    row::RowEffect::Insert => {}
+                    row::RowEffect::Delete => {
+                        self.delete_row(job, bytes, row.payload(), version)?;
+                        continue;
+                    }
+                    row::RowEffect::Update => {
+                        self.update_row(job, bytes, row.payload(), version)?;
+                        continue;
+                    }
                 }
                 if !matches!(row.payload(), RowPayload::Inline(_))
                     || version.logical.transaction() != self.actor.id()
@@ -474,20 +489,21 @@ impl<'a, 'j> Graph<'a, 'j> {
                         if actor != self.actor {
                             return Err(Error::Identity);
                         }
-                        // An Inline row pairs with one Retained INSERT root,
-                        // a tombstone with one Retained DELETE root.
-                        let effect = if tombstone {
-                            row::RowEffect::Delete
-                        } else {
-                            row::RowEffect::Insert
-                        };
+                        // An Inline row pairs with one Retained INSERT or
+                        // UPDATE root (whose cell C' the forward check
+                        // above binds), a tombstone with one Retained
+                        // DELETE root.
                         let mut matches = 0;
                         for ordinal in 0..JOB_COUNT {
                             let job = self.job(ordinal)?;
+                            let paired = match job.effect() {
+                                row::RowEffect::Insert | row::RowEffect::Update => !tombstone,
+                                row::RowEffect::Delete => tombstone,
+                            };
                             matches += usize::from(
                                 job.source() == Some(self.actor)
                                     && job.state() == JobState::RootRetained
-                                    && job.effect() == effect
+                                    && paired
                                     && job.row_id() == Some(row)
                                     && job.object() == Some(h.identity)
                                     && job.undo() == version.undo,
@@ -596,6 +612,61 @@ impl<'a, 'j> Graph<'a, 'j> {
                 }
             }
             _ => return Err(Error::Identity),
+        }
+        Ok(())
+    }
+
+    /// The present row of one UPDATE root (dev3-row-update.md#recovery):
+    /// Reserved, the committed Inline row to replace, of the old cell C and
+    /// not the actor's; Retained, the actor's new Inline row of cell C' with
+    /// the Job projection, its logical and its U; compensated, the restored
+    /// committed Inline row with U's before logical (and stamp before release
+    /// cursor 3); committed, the new row restamped `Committed(q)` with the
+    /// actor's logical and no U. A Releasing Job keeps neither C nor C', so
+    /// the two Releasing rows' lengths are only the canonical decode's.
+    fn update_row(
+        &self,
+        job: JobView<'_>,
+        bytes: &[u8],
+        payload: RowPayload<'_>,
+        version: row_record::RecordVersion,
+    ) -> Result<()> {
+        if !matches!(payload, RowPayload::Inline(_)) {
+            return Err(Error::Identity);
+        }
+        let committed = matches!(version.stamp, VersionStamp::Committed(_));
+        let own = version.logical.transaction() == self.actor.id()
+            && version.logical.mutation_sequence() == job.mutation();
+        let ok = match job.state() {
+            JobState::RootReserved => {
+                committed
+                    && version.undo.is_none()
+                    && bytes.len() + 12 == job.cell_bytes() as usize
+                    && version.logical.transaction() != self.actor.id()
+            }
+            JobState::RootRetained => {
+                version.stamp == VersionStamp::Transaction(self.actor)
+                    && own
+                    && version.undo == job.undo()
+                    && bytes.len() + 12 == job.new_cell() as usize
+                    && projection(job, bytes)? == *job.projection_digest()
+            }
+            JobState::RootReleasingCompensated => {
+                let (stamp, logical) = self.undo(job)?.ok_or(Error::Identity)?;
+                committed
+                    && version.undo.is_none()
+                    && version.logical == logical
+                    && stamp.is_none_or(|stamp| stamp == version.stamp)
+            }
+            JobState::RootReleasingCommitted => {
+                matches!(version.stamp, VersionStamp::Committed(q) if q.get() == job.commit_q())
+                    && version.undo.is_none()
+                    && own
+            }
+            _ => false,
+        };
+        if !ok {
+            return Err(Error::Identity);
         }
         Ok(())
     }

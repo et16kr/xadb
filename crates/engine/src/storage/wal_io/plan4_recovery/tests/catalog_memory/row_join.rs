@@ -51,21 +51,10 @@ use std::{
 
 const WAIT: Duration = Duration::from_secs(10);
 
-/// The Int64 value of T's (or U's) one column in a copied canonical row.
+/// The Int64 value of T's (or U's) one column in a copied canonical row
+/// (`row_literal::NULL_INT` for a NULL of the UPDATE tests' nullable T).
 fn int_of(output: &[u8], len: usize) -> i64 {
-    let row = crate::storage::row_record::decode_canonical_row(
-        &output[..len],
-        &[Column {
-            name: "i".into(),
-            data_type: DataType::Int64,
-            nullable: false,
-        }],
-    )
-    .unwrap();
-    match row.value(0).unwrap() {
-        ValueRef::Int64(value) => value,
-        other => panic!("column value {other:?}"),
-    }
+    super::row_literal::int_of(output, len)
 }
 
 /// B's cursor over the whole table on `view`: (RowId, value) of each

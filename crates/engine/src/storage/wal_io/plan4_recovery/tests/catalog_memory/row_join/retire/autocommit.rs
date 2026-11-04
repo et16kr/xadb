@@ -1135,3 +1135,9 @@ fn lxt_j05_refused_begin_and_fenced_statement_leave_the_holder_empty() {
 /// transaction's end, the caller's cleanup and restart.
 #[path = "delete.rs"]
 mod delete;
+
+/// The UPDATE first path over the actual C (dev3-row-update.md#tests,
+/// RUP-J and RUP-R): A's autocommit and explicit UPDATE entries from Begin
+/// to the transaction's end, the caller's cleanup, reads and restart.
+#[path = "update.rs"]
+mod update;

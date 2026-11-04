@@ -1,0 +1,2208 @@
+{
+  "schema": "XADB_MODULE_GATE_RECORD_V1",
+  "change": "DEV3 Row UPDATE first path, stages 2 to 4 (07-2 to 07-4, dev3-row-update.md#implementation-2, #implementation-3, #implementation-4). Stage 2: scope3 opcodes UpdateForward=10/UpdateClr=13/UpdatePrune=24 with two-cell shapes and frames (largest Row frame 97936 B) and the kind-1 header C' derivation; Job3 effect 2 with C' in [286,288), the UPDATE recipes and the widened leaf reservation D; C's whole-group transitions (update RowReserve, UpdatePrune; observe A's UpdateForward/UpdateClr) with the effect-2 previous root proof, against an independent author's history U. Stage 3: the product path. A's autocommit_update_live/transaction_update_live executor and UpdateForward/UpdateClr producer; C's update preflight with the holder-root classification and reserve_update; the install allow list; B's value_before over an updated row; live and recovery UpdatePrune, scope(), Row replay, base4 and the test-only observers; RUP-A/C/J/B/R over literals and the actual C. Census: RowWrite C margins preflight 704 B and reserve 499 B, S1B Row arm 25,739 <= 25,743 B unchanged, A driver sites 54 within the F4 ceilings, read cursor value_before load 34,468 <= 34,586 B. Stage 4 (07-4, #implementation-4): native fault cuts RUP-N01..N06 before and after UpdatePrune, UpdateForward and UpdateClr (memory twins in CI, an ignored native worker and its controller with a frozen inventory); no product code changes in stage 4.",
+  "rust_tests": [
+    {
+      "paths": [
+        "crates/engine/src/storage/semantic_row/operation.rs",
+        "crates/engine/src/storage/semantic_row/wire.rs",
+        "crates/engine/src/storage/semantic_row/wire_tests.rs"
+      ],
+      "reason": "Scope3 opcodes UpdateForward=10/UpdateClr=13/UpdatePrune=24 (decode, role, outer, handoff, native mask), their two-cell shapes and frames (Shape.new_cell is C' as u16; largest Row frame 97936 B) and the kind-1 header pre-scan that reads C' (at most five records, Corrupt on any leftover byte) and C from the native total (dev3-row-update.md#update-shape). The one-cell shape()/frame_bytes() forms are cfg(test) now: product code names C' through shape_cells. RUP-F01..F04/F08 and the DELETE/INSERT wire literals check every opcode, both cells' bounds and every refusal; the C transition literals and A's producer use the same shapes.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+          "case": "storage::semantic_row::wire_tests::rup_f01_update_opcodes_decode_role_outer_handoff",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+          "case": "storage::semantic_row::wire_tests::rup_f02_update_shape_and_frame_equations",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+          "case": "storage::semantic_row::wire_tests::rup_f03_update_frames_decode_with_contract_native_sides",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+          "case": "storage::semantic_row::wire_tests::rup_f04_update_cell_derivation_refused",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+          "case": "storage::semantic_row::wire_tests::rup_f08_update_core_role_rules",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+          "case": "storage::semantic_row::wire_tests::rdl_f01_delete_opcodes_decode_role_outer_handoff",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+          "case": "storage::semantic_row::wire_tests::rdl_f02_delete_shape_and_frame_equations",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+          "case": "storage::semantic_row::wire_tests::rdl_f03_delete_frames_decode_with_contract_native_sides",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+          "case": "storage::semantic_row::wire_tests::rdl_f04_delete_native_totals_and_sides_refused",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+          "case": "storage::semantic_row::wire_tests::wire_independent_thirty_frames_and_profile_ids",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+          "case": "storage::semantic_row::wire_tests::wire_closed_shape_equations_and_boundaries",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+          "case": "storage::semantic_row::wire_tests::wire_dialect_reports_unsupported_before_semantic_use",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+          "case": "storage::semantic_row::wire_tests::wire_rejects_native_kind_length_presence_digest_and_order",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+          "case": "storage::semantic_row::wire_tests::wire_rejects_profile_scope_opcode_and_outer_aliases",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_update_tests.rs",
+          "case": "storage::semantic_row::transition::tests::update::rup_c_update_history_matches_literals",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/group_update_tests.rs",
+          "case": "storage::row::insert::group_update_tests::rup_a_update_groups_match_literals",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/retention_page/row/job.rs",
+        "crates/engine/src/storage/retention_page/row/job_tests.rs"
+      ],
+      "reason": "Job3 effect 2 at @284 with C' in [286,288) (dev3-row-update.md#job-effect): the codec accepts effect <= 2 on Row roots, C' 185..2228 on effect-2 Reserved/Retained roots and zero elsewhere; JobView::new_cell and restore_bytes (D: DELETE C-180, UPDATE max(0,C-C')); the Forward/CLR/cleanup recipes take the effect. RUP-F05/F06 and the DELETE/INSERT Job3 literals check every byte; base4 and the observers read the same views.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/retention_page/row/job_tests.rs",
+          "case": "storage::retention_page::row::job_tests::rup_f05_update_effect_accept_and_reject",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/retention_page/row/job_tests.rs",
+          "case": "storage::retention_page::row::job_tests::rup_f06_update_recipes_and_has_previous",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/retention_page/row/job_tests.rs",
+          "case": "storage::retention_page::row::job_tests::rdl_f05_effect_byte_accept_and_reject",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/retention_page/row/job_tests.rs",
+          "case": "storage::retention_page::row::job_tests::rdl_f06_effect_recipes_and_has_previous",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/retention_page/row/job_tests.rs",
+          "case": "storage::retention_page::row::job_tests::job3_literal_views_and_exact_recipes",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/retention_page/row/job_tests.rs",
+          "case": "storage::retention_page::row::job_tests::job3_closed_grammar_and_identity_rejections",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/retention_page/row/job_tests.rs",
+          "case": "storage::retention_page::row::job_tests::job3_budget_every_byte_is_checked",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/retention_page/row/job_tests.rs",
+          "case": "storage::retention_page::row::job_tests::job3_independent_multi_root_censuses",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_update_tests.rs",
+          "case": "storage::semantic_row::transition::tests::update::rup_c_update_history_matches_literals",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::rup_r_base4_update_root_needs_its_old_row",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/semantic_row/ledger_tests.rs"
+      ],
+      "reason": "RUP-F07: the ledger's Forward/CLR rows of effect-2 roots follow the UPDATE recipes through JobView (ledger.rs itself is unchanged); the RDL-F09 and INSERT ledger cases are unchanged.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/semantic_row/ledger_tests.rs",
+          "case": "storage::semantic_row::ledger::tests::rup_f07_ledger_rows_of_update_roots",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/ledger_tests.rs",
+          "case": "storage::semantic_row::ledger::tests::rdl_f09_ledger_rows_follow_each_root_effect",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/ledger_tests.rs",
+          "case": "storage::semantic_row::ledger::tests::row_ledger_literal_states_and_residuals",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/semantic_row/transition.rs",
+        "crates/engine/src/storage/semantic_row/transition/cells.rs",
+        "crates/engine/src/storage/semantic_row/transition/frame.rs",
+        "crates/engine/src/storage/semantic_row/transition/prepare.rs",
+        "crates/engine/src/storage/semantic_row/transition/source.rs",
+        "crates/engine/src/storage/semantic_row/transition_tests.rs",
+        "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
+        "crates/engine/src/storage/semantic_row/transition_update_tests.rs",
+        "tests/fixtures/module-row-format/transition-update/author.py",
+        "tests/fixtures/module-row-format/transition-update/blobs.bin",
+        "tests/fixtures/module-row-format/transition-update/index.tsv",
+        "tests/fixtures/module-row-format/transition-update/input-plan.json"
+      ],
+      "reason": "C's whole-group transition layer admits UPDATE (dev3-row-update.md#implementation-2): Change::ReserveUpdate produces the update RowReserve (effect 2, old C from the leaf, C' and projection of A's planned new row, built inside reserve_target; ReserveAdopted adopts effect, RowId, C' and projection), UpdateForward/UpdateClr are A's groups which C observes, and C produces UpdatePrune. The effect-2 previous-root proof uses the 'effect not 0' rule, and the widened leaf reservation D bounds the growing Reserve/Forward. The independent author (transition-update/author.py) writes history U (U-546..U-579, 34 groups) and 13 variants; RUP-C compares C's 29 groups byte for byte, observes A's 5 and refuses every variant. The N1 cross-check now runs the jobs/undo/leaf observers on the UPDATE groups. Census: N1 bound 30,359 B, S1B Row arm 25,739 <= 25,743 B, RowWrite C margins (S2W-C01/C06).",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_update_tests.rs",
+          "case": "storage::semantic_row::transition::tests::update::rup_c_update_history_matches_literals",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_update_tests.rs",
+          "case": "storage::semantic_row::transition::tests::update::rup_c_update_history_rejects_variants",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_update_tests.rs",
+          "case": "storage::semantic_row::transition::tests::update::rup_c_update_history_borrowed_observer",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_update_tests.rs",
+          "case": "storage::semantic_row::transition::tests::update::rup_c_update_history_borrowed_producer",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_update_tests.rs",
+          "case": "storage::semantic_row::transition::tests::update::rup_c_leaf_reservation_bounds_update_reserve",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_update_tests.rs",
+          "case": "storage::semantic_row::transition::tests::update::rup_c_leaf_reservation_forward_prune_and_clr",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_update_tests.rs",
+          "case": "storage::semantic_row::transition::tests::update::rup_c_update_forward_of_another_row_is_refused",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_update_tests.rs",
+          "case": "storage::semantic_row::transition::tests::update::rup_c_effect2_previous_proof_binds_the_h_page",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
+          "case": "storage::semantic_row::transition::tests::delete::rdl_c_delete_history_matches_literals",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
+          "case": "storage::semantic_row::transition::tests::delete::rdl_c_delete_history_rejects_variants",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
+          "case": "storage::semantic_row::transition::tests::delete::rdl_c_delete_history_borrowed_observer",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
+          "case": "storage::semantic_row::transition::tests::delete::rdl_c_delete_history_borrowed_producer",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
+          "case": "storage::semantic_row::transition::tests::delete::rdl_c_leaf_reservation_bounds_every_leaf_step",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
+          "case": "storage::semantic_row::transition::tests::delete::rdl_c_leaf_reservation_forward_and_delete_prune",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
+          "case": "storage::semantic_row::transition::tests::delete::rdl_c_delete_forward_of_another_row_is_refused",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+          "case": "storage::semantic_row::transition::tests::rdl_c_delete_effect_binds_the_att_forward_debt",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+          "case": "storage::semantic_row::transition::tests::n1_statement_reserve_commit_prune_match_literals",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+          "case": "storage::semantic_row::transition::tests::n1_transition_source_bounds_cover_measured_frames",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+          "case": "storage::semantic_row::transition::tests::s1a_borrowed_observer_accepts_n1_and_a_literals",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+          "case": "storage::semantic_row::transition::tests::s1a_borrowed_observer_source_bound_covers_measured_frames",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+          "case": "storage::semantic_row::transition::tests::s1d_borrowed_producer_matches_owned_groups",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+          "case": "storage::semantic_row::transition::tests::s1d_borrowed_producer_source_bound_covers_measured_frames",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+          "case": "storage::semantic_row::transition::tests::s1g_reserve_adopted_equals_produced",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/row_gate.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::row_gate::s1b_row_arm_census_memory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/row_gate.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::row_gate::s1b_row_arm_census_native",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c01_row_write_phase_census_memory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c02_row_write_phase_census_native",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c03_row_lifecycle_unchanged_beside_the_row_write_layout",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c04_live_and_recovered_peaks_unchanged",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c06_row_write_c_margins_against_both_bounds",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/group_update_tests.rs",
+          "case": "storage::row::insert::group_update_tests::rup_a_update_forward_needs_only_its_growth",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/group_update_tests.rs",
+          "case": "storage::row::insert::group_update_tests::rup_a_growing_update_forward_beside_d",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/group_update_tests.rs",
+          "case": "storage::row::insert::group_update_tests::rup_a_update_groups_at_the_leaf_reservation_boundary",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/group_delete_tests.rs",
+          "case": "storage::row::insert::group_delete_tests::rdl_a_groups_at_the_leaf_reservation_boundary",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/semantic_row/jobs.rs",
+        "crates/engine/src/storage/semantic_row/undo.rs",
+        "crates/engine/src/storage/semantic_row/leaf.rs",
+        "crates/engine/src/storage/semantic_row/jobs_tests.rs"
+      ],
+      "reason": "The test-only per-native observers learn UPDATE (07-3): jobs.rs binds effect 2 to opcodes 10/13/24 and checks C' against the new cell, undo.rs observes the update U (RowValue before of the old row) and its Releasing/Free steps with an exhaustive effect match, leaf.rs observes the replaced Inline row and its restoration. RUP-C's job observer case and the N1 cross-check over history U (U-558, U-560, U-562, U-567, U-569, U-571 and the effect-2 H groups) run each observer; the INSERT/DELETE observer literals are unchanged.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/semantic_row/jobs_tests.rs",
+          "case": "storage::semantic_row::jobs_tests::rup_c_job_observer_binds_update_effect_and_new_cell",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/jobs_tests.rs",
+          "case": "storage::semantic_row::jobs_tests::rdl_j_job_observer_binds_effect_to_opcode",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/jobs_tests.rs",
+          "case": "storage::semantic_row::jobs_tests::jobs_twenty_six_raw_pairs_and_page_boundaries",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/jobs_tests.rs",
+          "case": "storage::semantic_row::jobs_tests::jobs_options_core_and_unsupported_boundary",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/undo_tests.rs",
+          "case": "storage::semantic_row::undo_tests::undo_independent_seventeen_pairs_and_same_frame_status",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/undo_tests.rs",
+          "case": "storage::semantic_row::undo_tests::undo_rejects_operations_without_undo_native",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/leaf_tests.rs",
+          "case": "storage::semantic_row::leaf_tests::leaf_fifteen_raw_pairs_and_current_anchor",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/leaf_tests.rs",
+          "case": "storage::semantic_row::leaf_tests::leaf_requires_same_frame_undo_status_and_supported_operation",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_update_tests.rs",
+          "case": "storage::semantic_row::transition::tests::update::rup_c_update_history_matches_literals",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_update_tests.rs",
+          "case": "storage::semantic_row::transition::tests::update::rup_c_update_history_rejects_variants",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
+          "case": "storage::semantic_row::transition::tests::delete::rdl_c_delete_history_matches_literals",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+          "case": "storage::semantic_row::transition::tests::n1_statement_reserve_commit_prune_match_literals",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/row/insert.rs",
+        "crates/engine/src/storage/row/insert/group.rs",
+        "crates/engine/src/storage/row/insert/group/frame.rs",
+        "crates/engine/src/storage/row/insert/group/images.rs",
+        "crates/engine/src/storage/row/insert/group_tests.rs",
+        "crates/engine/src/storage/row/insert/group_delete_tests.rs",
+        "crates/engine/src/storage/row/insert/group_update_tests.rs",
+        "crates/engine/src/storage/wal_io/plan4_apply.rs"
+      ],
+      "reason": "A's group producer makes UpdateForward (new row cell from the sealed new canonical, checked against RowProducerInput::Update's length and digest) and UpdateClr (the old row rebuilt from U's before with the table schema), with the effect-2 H proof under the 'effect not 0' rule and the widened D (dev3-row-update.md#api). plan4_apply.rs adds RowProducerInput::Update and the CLR's current cell C' (and the RowLoanLayout::FRAME comment). RUP-A compares A's 5 UPDATE groups with the independent literals, refuses before output, and checks the growth/D boundaries (07-2 review r1 #1/#2); rup_a_insert_producer_binds_update_root replaces the stage-2 refusal guard; the INSERT/DELETE producer literals and the C observers of produced groups are unchanged.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/row/insert/group_update_tests.rs",
+          "case": "storage::row::insert::group_update_tests::rup_a_update_groups_match_literals",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/group_update_tests.rs",
+          "case": "storage::row::insert::group_update_tests::rup_a_update_producer_refuses_before_output",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/group_update_tests.rs",
+          "case": "storage::row::insert::group_update_tests::rup_a_update_forward_needs_only_its_growth",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/group_update_tests.rs",
+          "case": "storage::row::insert::group_update_tests::rup_a_growing_update_forward_beside_d",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/group_update_tests.rs",
+          "case": "storage::row::insert::group_update_tests::rup_a_update_groups_at_the_leaf_reservation_boundary",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+          "case": "storage::row::insert::group_tests::rup_a_insert_producer_binds_update_root",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+          "case": "storage::row::insert::group_tests::rdl_f_insert_producer_refuses_delete_root",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+          "case": "storage::row::insert::group_tests::mca00_v06_forward_without_h_matches_literals",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+          "case": "storage::row::insert::group_tests::mca00_v06_forward_with_h_matches_literals",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+          "case": "storage::row::insert::group_tests::mca00_v06_clr_without_h_matches_literals",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+          "case": "storage::row::insert::group_tests::mca00_v06_clr_with_h_matches_literals",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+          "case": "storage::row::insert::group_tests::mca00_v06_produced_groups_pass_c_observers",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/group_delete_tests.rs",
+          "case": "storage::row::insert::group_delete_tests::rdl_a_delete_groups_match_literals",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/group_delete_tests.rs",
+          "case": "storage::row::insert::group_delete_tests::rdl_a_delete_producer_refuses_before_output",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/group_delete_tests.rs",
+          "case": "storage::row::insert::group_delete_tests::rdl_a_groups_at_the_leaf_reservation_boundary",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_update_tests.rs",
+          "case": "storage::semantic_row::transition::tests::update::rup_c_update_history_matches_literals",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::rup_j01_autocommit_update_commits_and_its_prune_keeps_the_new_value",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::rup_j02_growing_and_shrinking_updates_roll_back_then_commit",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/row/insert/driver.rs",
+        "crates/engine/src/storage/row/insert/driver/live.rs",
+        "crates/engine/src/storage/row/insert/driver/tests.rs",
+        "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+        "crates/engine/src/storage/wal_io/plan4_apply/row/write_operation.rs"
+      ],
+      "reason": "A's UPDATE executor (dev3-row-update.md#api): autocommit_update_live and transaction_update_live reuse the DELETE executor's steps and slot; update_row runs the preflight (flush retry, NoRow 0 rows), then rewrite_row checks the new value with validate_insert (over 2048 B Unsupported), calls reserve_update (new RowPreflightOperation method) and follows INSERT's Forward production, prepare and apply, each in a never-inlined frame. The driver census grows from 39 to 54 sites (15 update.*) within the unchanged F4 ceilings (RUP-A08, update.preflight margin 671/904 B). The executor's 1 row/0 rows/Busy/Unsupported/SerializationConflict/statement failure paths run over the actual C in RUP-J; RUP-J08 pins that the new value is checked after C's row judgement (validation lane only on a Ready preflight; section 5 amended): a wrong-type or long value is 0 rows on a missing key, Busy/SerializationConflict on another transaction's row, Unsupported on the own row. The INSERT/DELETE driver cases are unchanged.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+          "case": "storage::row::insert::driver::budget_tests::rup_a08_autocommit_update_budgets_memory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+          "case": "storage::row::insert::driver::budget_tests::rup_a08_autocommit_update_budgets_native",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+          "case": "storage::row::insert::driver::budget_tests::rup_a08_explicit_update_budgets_memory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+          "case": "storage::row::insert::driver::budget_tests::rup_a08_explicit_update_budgets_native",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+          "case": "storage::row::insert::driver::budget_tests::rdl_a08_autocommit_delete_budgets_memory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+          "case": "storage::row::insert::driver::budget_tests::rdl_a08_autocommit_delete_budgets_native",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+          "case": "storage::row::insert::driver::budget_tests::rdl_a08_explicit_delete_budgets_memory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+          "case": "storage::row::insert::driver::budget_tests::rdl_a08_explicit_delete_budgets_native",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+          "case": "storage::row::insert::driver::budget_tests::f4_a_autocommit_budgets_memory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+          "case": "storage::row::insert::driver::budget_tests::f4_a_explicit_budgets_memory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+          "case": "storage::row::insert::driver::budget_tests::f4_a_caller_budgets_memory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::mca00_d01_one_row_statement_reserves_produces_applies_and_finishes",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::mca00_d05_c_refusals_keep_busy_capacity_unsupported_distinct",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::mca00_d06_failures_after_reserve_cancel_the_one_reservation",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::mca00_d12_driver_frames_stay_within_the_driver_source_bound",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::mca00_d15_memory_call_site_shares_fit_the_caller_bounds",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::mca00_d15_native_call_site_shares_fit_the_caller_bounds",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::lxt_a01_two_statements_then_commit",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::lxt_a02_failed_statement_keeps_the_earlier_one",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::lrc_a01_drain_installs_every_selected_group",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/delete_tests.rs",
+          "case": "storage::row::insert::driver::tests::delete::rdl_a01_one_row_is_reserved_produced_applied_and_finished",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/delete_tests.rs",
+          "case": "storage::row::insert::driver::tests::delete::rdl_a02_no_row_finishes_the_statement_with_zero",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/delete_tests.rs",
+          "case": "storage::row::insert::driver::tests::delete::rdl_a03_a05_preflight_refusals_stay_distinct_and_hold_nothing",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/delete_tests.rs",
+          "case": "storage::row::insert::driver::tests::delete::rdl_a06_explicit_transaction_goes_on_after_a_failed_delete",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/delete_tests.rs",
+          "case": "storage::row::insert::driver::tests::delete::rdl_a07_steps_after_the_preflight_follow_the_insert_rules",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::rup_j01_autocommit_update_commits_and_its_prune_keeps_the_new_value",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::rup_j02_growing_and_shrinking_updates_roll_back_then_commit",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::rup_j03_statement_rollback_between_two_updates",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::rup_j04_update_then_insert_delete_and_update_in_one_transaction",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_busy.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::busy::rup_j06_rows_another_transaction_updates_are_busy_until_its_cleanup",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_busy.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::busy::rup_j07_long_new_value_is_refused_before_any_effect",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_busy.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::busy::rup_j08_the_new_value_is_checked_after_the_row_judgement",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/wal_io/plan4_apply/row.rs",
+        "crates/engine/src/storage/wal_io/plan4_apply/row/write.rs",
+        "crates/engine/src/storage/wal_io/plan4_retention/row_preflight.rs",
+        "crates/engine/src/storage/wal_io/plan4_retention/row_write.rs",
+        "crates/engine/src/storage/wal_io/plan4_retention/row_update_tests.rs",
+        "crates/engine/src/storage/wal_io/plan4_retention/row_delete_tests.rs",
+        "crates/engine/src/storage/wal_io/plan4_retention/row_write_tests.rs"
+      ],
+      "reason": "C's UPDATE preflight and reserve (dev3-row-update.md#classification, #api): RowPreflightCut carries target and effect, and reserve/reserve_delete/reserve_update take only their own effect (Before InvalidInput otherwise). row_class splits another transaction's Inline row by the one root holding its RowId (holder_effect); any field of the holder bundle out of place, or 0/2 holders, is corrupt; own Inline rows are Unsupported, own tombstones 0 rows. reserve_update builds the update RowReserve with the planned row; Capacity is the growth beside D. RUP-C class table and holder mutants, the update Capacity case and the unchanged DELETE class cases; RUP-J over the actual C; census S2W-C01/C06 (preflight C margin 704 B, reserve 499 B), MBC40-V09 and F4 operation census. rup_c_each_reserve_takes_only_its_own_effect calls the other effects' reserves on an actual UPDATE and DELETE preflight: Before InvalidInput, the same preflight back, no file or Job changed, not fenced.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/row_update_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::row_preflight::update_tests::rup_c_update_class_follows_the_contract_table",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/row_update_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::row_preflight::update_tests::rup_c_update_class_never_lowers_a_holder_contradiction",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/row_delete_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::row_preflight::delete_tests::rdl_c_delete_class_follows_the_contract_table",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/row_delete_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::row_preflight::delete_tests::rdl_c_delete_class_never_lowers_a_contradiction",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/row_delete_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::row_preflight::delete_tests::rdl_c_delete_class_overflow_and_undo_less_rows",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/row_delete_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::row_preflight::delete_tests::rdl_c_indexed_table_is_unsupported_before_the_class",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/row_write_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::lifecycle::row::write::tests::rup_c_update_capacity_is_the_growth_beside_the_reservation",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/row_write_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::lifecycle::row::write::tests::rdl_c_insert_capacity_keeps_the_leaf_reservation",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c01_row_write_phase_census_memory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c02_row_write_phase_census_native",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c03_row_lifecycle_unchanged_beside_the_row_write_layout",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c04_live_and_recovered_peaks_unchanged",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c06_row_write_c_margins_against_both_bounds",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/v09_census_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::v09_census_tests::mbc40_v09_row_write_census_memory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/v09_census_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::v09_census_tests::mbc40_v09_row_write_census_native",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/write_operation_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::write_operation_tests::f4_row_operation_census_memory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/write_operation_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::write_operation_tests::f4_row_operation_census_native",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::rup_j01_autocommit_update_commits_and_its_prune_keeps_the_new_value",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::rup_c_each_reserve_takes_only_its_own_effect",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_busy.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::busy::rup_j06_rows_another_transaction_updates_are_busy_until_its_cleanup",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_busy.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::busy::rup_j08_the_new_value_is_checked_after_the_row_judgement",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j01_autocommit_delete_commits_and_its_prune_removes_the_row",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_busy.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::busy::rdl_j11_rows_another_transaction_holds_are_busy_until_its_cleanup",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/wal_io/plan4_retention/row_forward.rs",
+        "crates/engine/src/storage/wal_io/plan4_retention/row_clr.rs",
+        "crates/engine/src/storage/wal_io/plan4_retention/row_rollback_select.rs",
+        "crates/engine/src/storage/wal_io/plan4_retention/row_start.rs"
+      ],
+      "reason": "C's Forward lane takes the UPDATE producer input (old cell, new projection) by an exhaustive effect match and selects UpdateForward/UpdateClr from ReservedEntry's effect; the CLR selection's current row length is C' for effect 2; the install body's Row write allow list (row_start.rs row_write) admits UpdateForward and UpdateClr. That omission surfaced only over the actual C (Apply Prepare/Unsupported on every UPDATE) since the memory transition tests do not pass the install body, so RUP-J01..J07 are the cases; INSERT/DELETE Forward, CLR and rollback cases are unchanged.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::rup_j01_autocommit_update_commits_and_its_prune_keeps_the_new_value",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::rup_j02_growing_and_shrinking_updates_roll_back_then_commit",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::rup_j03_statement_rollback_between_two_updates",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::rup_j04_update_then_insert_delete_and_update_in_one_transaction",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::rup_j05_reads_before_cleanup_and_a_held_update_prune",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::rup_r01_r04_recovery_of_each_update_state",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_busy.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::busy::rup_j06_rows_another_transaction_updates_are_busy_until_its_cleanup",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j01_autocommit_delete_commits_and_its_prune_removes_the_row",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j02_explicit_delete_rolls_back_then_commits",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_forward.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_forward::s2w_r09_forward_lands_the_literal_and_retains_the_root",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_forward.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_forward::s2w_r13_two_statements_of_three_rows_inherit_the_statement_credit",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_recovery.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_recovery::s6r_m01_one_committed_row_with_row_clr",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/rollback_census_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::rollback::census::s4_c01_memory_rollback_census",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/rollback_census_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::rollback::census::s4_c01_native_rollback_census",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/wal_io/plan4_retention/row_start/retire.rs",
+        "crates/engine/src/storage/wal_io/plan4_retention/row_start/recovery.rs",
+        "crates/engine/src/storage/wal_io/plan4_retention/recovery/catalog.rs",
+        "crates/engine/src/storage/wal_io/plan4_retention/visibility/row_retirement.rs"
+      ],
+      "reason": "Cleanup of UPDATE roots (dev3-row-update.md#retirement, #recovery): the live (row_cleanup_next) and recovery cleanup choices give an effect-2 Retained head root UpdatePrune, then ReleaseRole/RootFree as for the other effects; scope() is a wildcard-free match with UpdatePrune a ValuePrune; recovery's row_start admits UpdatePrune groups. RUP-J01/J02/J05/J06 drain UpdatePrune (including a held one) over the actual C, RUP-R01..R04 recover each state; live cleanup over many transactions, the held-prune and recovery-finish cases and the retirement census are unchanged.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::rup_j01_autocommit_update_commits_and_its_prune_keeps_the_new_value",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::rup_j02_growing_and_shrinking_updates_roll_back_then_commit",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::rup_j03_statement_rollback_between_two_updates",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::rup_j04_update_then_insert_delete_and_update_in_one_transaction",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::rup_j05_reads_before_cleanup_and_a_held_update_prune",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::rup_r01_r04_recovery_of_each_update_state",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_busy.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::busy::rup_j06_rows_another_transaction_updates_are_busy_until_its_cleanup",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::lrr01_live_cleanup_reuses_jobs_status_and_undo_beyond_32_transactions",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::lrr02_older_snapshot_keeps_prune_busy_until_it_ends",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::lrr06_recovery_finishes_a_partial_live_cleanup",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/driver.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::lrc_j01_drain_after_commit_and_abort_frees_every_row_job",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/driver.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::lrc_j02_drain_leaves_a_held_prune_for_a_later_drain",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::visibility_busy_tests::lrc_c01_only_unchanged_visibility_busy_is_held",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::live_row_retirement_fits_the_progress_charge",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j01_autocommit_delete_commits_and_its_prune_removes_the_row",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j04_committed_delete_is_pruned_by_recovery",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/wal_io/plan4_retention/history/row.rs",
+        "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs"
+      ],
+      "reason": "Row replay admits opcodes 10/13/24 and the effect-2 RowReserve (the stage-2 refusals are gone): rup_r_row_arm_replays_history_u replays history D then all of history U through the Row arm; the restarts of RUP-J and RUP-R replay UPDATE groups from actual WAL; S1B Row arm frame unchanged at 25,739 B.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::rup_r_row_arm_replays_history_u",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::rdl_j_row_arm_replays_history_d",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1b_row_arm_replays_n1_and_a_literals",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1b_row_arm_refuses_mutations_without_effect",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1g_row_reserve_replays_n1_literals",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/row_gate.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::row_gate::s1b_row_arm_census_memory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/row_gate.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::row_gate::s1b_row_arm_census_native",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::rup_r01_r04_recovery_of_each_update_state",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::rup_j01_autocommit_update_commits_and_its_prune_keeps_the_new_value",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/plan4_recovery_base/row/actor.rs",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph.rs",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs"
+      ],
+      "reason": "Base4 takes UPDATE roots (dev3-row-update.md#recovery): the actor checks each effect-2 state (Reserved: the old committed row, cell C, U Free; Retained: own Transaction(T) new row, cell C', projection, undo; ReleasingCompensated: the row restored from U's logical/stamp; ReleasingCommitted: own row restamped Committed(q)), graph's D is max(0,C-C'), and the backward scan pairs an Inline row with an effect 0/2 root and a tombstone with an effect-1 root. rup_r_base4_update_root_needs_its_old_row replaces the stage-2 refusal guard; RUP-R05..R07 accept each state and refuse restamped, unpaired, non-C' cell, non-canonical U and widened-D images over the Retained base, a non-C cell and the actor's own logical over the Reserved base, and a foreign logical and a q other than commit_q over the ReleasingCommitted base; RDL-R02 now also refuses an Inline row under an effect-1 root.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::rup_r_base4_update_root_needs_its_old_row",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::base4_closure_accepts_row_undo_slot_reservation",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::base4_closure_relation_variants",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::base4_closure_orders_ready_row_writer_after_creator",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/source_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::source::tests::base4_closure_source_bound_covers_measured_frames",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_base.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::base::rup_r05_base4_takes_each_update_state",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_base.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::base::rup_r06_base4_refuses_broken_update_states",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_base.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::base::rup_r07_base4_takes_the_cursor_three_compensated_update_by_its_logical",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_base.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::base::rup_r06_base4_refuses_broken_reserved_and_pruned_update_rows",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_base.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::base::rdl_r01_base4_takes_each_delete_state",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_base.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::base::rdl_r02_to_r06_base4_refuses_broken_delete_states",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_base.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::base::rdl_r07_base4_takes_the_cursor_three_compensated_row_by_its_logical",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::rup_r01_r04_recovery_of_each_update_state",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/wal_io/plan4_apply/row/read.rs",
+        "crates/engine/src/storage/row/read/driver.rs",
+        "crates/engine/src/storage/row/read/driver/live.rs",
+        "crates/engine/src/storage/row/read/driver/tests.rs",
+        "crates/engine/src/storage/row/read/driver/update_tests.rs"
+      ],
+      "reason": "B reads an updated row (dev3-row-update.md#read): C's missing_before judges U's outline by the section-7 table and reports a value before (MissingRowEvidence.value with its capture number); value_before takes only a tombstone candidate or an Inline candidate reported in the same capture (Unchanged WrongState otherwise) and copies the old value to copy[10240..12288), so copy_candidate still yields the new value. B's driver goes to select_before when MissingObserved::value_before() is true. RUP-B01..B05 (literal C0 source), RUP-B06/B07 (every outline row: Releasing and creator stamp Fatal at read.rs, no logical and a 4 B Inline value made as bytes and refused by the codec, RowDeleted and Chunks Unsupported) and RUP-J05 over the actual C, the DELETE read cases and read census (cursor value_before load 34,468 <= 34,586 B).",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/row/read/driver/update_tests.rs",
+          "case": "storage::row::read::driver::tests::update::rup_b01_b02_own_and_visible_update_read_the_new_value",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/read/driver/update_tests.rs",
+          "case": "storage::row::read::driver::tests::update::rup_b03_b04_b05_invisible_update_reads_the_old_value",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/read/driver/update_tests.rs",
+          "case": "storage::row::read::driver::tests::update::rup_b03_cursor_mixes_insert_and_update_rows",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/read/driver/delete_tests.rs",
+          "case": "storage::row::read::driver::tests::delete::rdl_b01_point_over_another_transactions_tombstone",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/read/driver/delete_tests.rs",
+          "case": "storage::row::read::driver::tests::delete::rdl_b02_own_tombstone_reads_no_row",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/read/driver/delete_tests.rs",
+          "case": "storage::row::read::driver::tests::delete::rdl_b03_cursor_skips_or_returns_the_old_value",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/read/driver/delete_tests.rs",
+          "case": "storage::row::read::driver::tests::delete::rdl_b04_value_before_flush_errors_and_mismatch",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/read/driver/delete_tests.rs",
+          "case": "storage::row::read::driver::tests::delete::rdl_b05_output_and_tombstone_version_checks",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/read/driver/tests.rs",
+          "case": "storage::row::read::driver::tests::mcb00_d02_point_status_and_missing_before_select_the_version",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/read/driver/tests.rs",
+          "case": "storage::row::read::driver::tests::mcb00_d03_flush_required_passes_through_after_cleanup",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/read/driver/tests.rs",
+          "case": "storage::row::read::driver::tests::mcb00_d05_cursor_next_returns_rows_in_order_then_end",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/read/driver/tests.rs",
+          "case": "storage::row::read::driver::tests::mcb00_d13_memory_call_inventory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/read/driver/tests.rs",
+          "case": "storage::row::read::driver::tests::mcb00_d13_native_call_inventory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/read/tombstone_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::read::tombstone_tests::rdl_b_tombstone_before_refuses_every_other_u",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/read/tombstone_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::read::tombstone_tests::rdl_b_tombstone_before_takes_the_committed_inline_row",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_live.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_read_live::s5r_r02_empty_table_and_r04_actual_capture_copy",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_live.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_read_live::s5r_r05_r07_retiring_capture_and_corrupt_undo",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_live.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_read_live::s5r_r06_old_and_new_statement_snapshot",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_census.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_read_census::s5r_c01_memory_source_inventory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_census.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_read_census::s5r_c02_native_source_inventory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_read.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::read::rup_b06_update_clr_waits_for_a_captured_read",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_read.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::read::rup_b07_broken_update_states_are_never_a_row",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_read.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::read::rup_b07_value_before_needs_the_report_and_keeps_the_capture",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::rup_j05_reads_before_cleanup_and_a_held_update_prune",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_read.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::read::rdl_b06_delete_clr_waits_for_a_captured_read",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_read.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::read::rdl_b07_b09_broken_delete_states_are_fatal",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_literal.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/autocommit.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_busy.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_read.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_base.rs"
+      ],
+      "reason": "Test-only JOIN supply for UPDATE over the actual C: row_literal's int_of decodes nullable Int64 (NULL maps to NULL_INT) and row_join's int_of delegates to it; autocommit.rs mounts update.rs, which mounts update_busy/read/base. The RUP-J/B/R cases are these files' own; the LXT/LAC JOIN cases use the shared helpers; update.rs also mounts the Linux-only RUP-N module (update_native.rs).",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::rup_j01_autocommit_update_commits_and_its_prune_keeps_the_new_value",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::rup_j02_growing_and_shrinking_updates_roll_back_then_commit",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::rup_j03_statement_rollback_between_two_updates",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::rup_j04_update_then_insert_delete_and_update_in_one_transaction",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::rup_j05_reads_before_cleanup_and_a_held_update_prune",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::rup_r01_r04_recovery_of_each_update_state",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::rup_c_each_reserve_takes_only_its_own_effect",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_busy.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::busy::rup_j06_rows_another_transaction_updates_are_busy_until_its_cleanup",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_busy.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::busy::rup_j07_long_new_value_is_refused_before_any_effect",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_busy.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::busy::rup_j08_the_new_value_is_checked_after_the_row_judgement",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_read.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::read::rup_b06_update_clr_waits_for_a_captured_read",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_read.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::read::rup_b07_broken_update_states_are_never_a_row",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_read.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::read::rup_b07_value_before_needs_the_report_and_keeps_the_capture",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_base.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::base::rup_r05_base4_takes_each_update_state",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_base.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::base::rup_r06_base4_refuses_broken_update_states",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_base.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::base::rup_r07_base4_takes_the_cursor_three_compensated_update_by_its_logical",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_base.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::base::rup_r06_base4_refuses_broken_reserved_and_pruned_update_rows",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/autocommit.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::lxt_j01_two_statements_commit_and_restart",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/autocommit.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::lxt_j02_failed_statement_between_two_that_commit",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/autocommit.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::lxt_j03_caller_rollback_then_a_commit",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/autocommit.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::lac_j01_autocommit_of_thirteen_rows_commits_and_two_drains_clean_it",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_native.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::native::rup_n01_n02_memory_update_prune_cuts",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_native.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::native::rup_n03_n04_memory_update_forward_cuts",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_native.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::native::rup_n05_n06_memory_update_clr_cuts",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_base.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_read.rs"
+      ],
+      "reason": "DELETE JOIN modules export their helpers to the UPDATE ones (pub(in super::super)). RDL-B09's Inline Transaction(T) row under a delete U is now an UPDATE-shaped row that B reads as the old value 100 (moved to the controls, dev3-row-update.md#open item 6); RDL-R02 adds that the same image under an effect-1 root is refused by base4 (Identity).",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j01_autocommit_delete_commits_and_its_prune_removes_the_row",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j02_explicit_delete_rolls_back_then_commits",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j03_reads_before_cleanup_see_the_old_value_then_no_row",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j04_committed_delete_is_pruned_by_recovery",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j05_active_delete_loser_is_restored_by_recovery",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j06_rolled_back_delete_is_freed_by_recovery",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j07_reserved_delete_is_cancelled_by_recovery",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j08_delete_then_insert_in_one_transaction",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j09_own_insert_row_is_unsupported_and_the_transaction_goes_on",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j10_two_deletes_roll_back_then_commit",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_read.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::read::rdl_b06_delete_clr_waits_for_a_captured_read",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_read.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::read::rdl_b07_b09_broken_delete_states_are_fatal",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_base.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::base::rdl_r01_base4_takes_each_delete_state",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_base.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::base::rdl_r02_to_r06_base4_refuses_broken_delete_states",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_base.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::base::rdl_r07_base4_takes_the_cursor_three_compensated_row_by_its_logical",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_read.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::read::rup_b06_update_clr_waits_for_a_captured_read",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_read.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::read::rup_b07_broken_update_states_are_never_a_row",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_base.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::base::rup_r05_base4_takes_each_update_state",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_base.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::base::rup_r06_base4_refuses_broken_update_states",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_native.rs",
+        "tests/fixtures/module-row-update/native-inventory.json"
+      ],
+      "reason": "RUP-N01..N06 (dev3-row-update.md#implementation-4): crashes before and after each UPDATE group over the actual C supply on a nullable Int64 T. UpdatePrune: N01 A's autocommit UPDATE of 100 to 200 ACKed at q 3, N02 plus the first live cleanup step. UpdateForward: N03 an explicit Serializable transaction's preflight and RowReserve of 100 to NULL (C' = C - 8), N04 its UPDATE statement with the transaction Active. UpdateClr: N05 after Y on a second Status commits 102 at q 3, A's Commit is refused (SerializationConflict) and its full RollbackStart, N06 plus the rollback's first step, which grows the row back inside the leaf's reservation. CI runs the memory twins: produce, recover (C recovery with A's CLR handler, B's read, a new ACK) and reenter over the memory directory, each asserting the frozen inventory's q, CLR count and values and the Row Job states C's restart binds at the cut, so the before and after cuts differ in CI too. The native worker is ignored; the controller (scripts/check_dev3_row_update_native.py) ran its 18 processes, recorded under module-gate/evidence/row-update-4/.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_native.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::native::rup_n01_n02_memory_update_prune_cuts",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_native.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::native::rup_n03_n04_memory_update_forward_cuts",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_native.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::native::rup_n05_n06_memory_update_clr_cuts",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    }
+  ],
+  "na": [],
+  "reviews": [
+    {
+      "id": "row-update-d2",
+      "class": "D2",
+      "scopes": [
+        "common",
+        "joint",
+        "policy"
+      ],
+      "author": "claude-thread-session/claude-project-thread-4x0sso",
+      "reviewer": "claude-independent-review/row-update-3",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "log": "module-gate/evidence/row-update/review.md",
+      "log_sha256": "85ab465c7b65ce41bed7165160585506b07d1725ed87a7c5d4dfe9f130baff3c",
+      "files": {
+        "crates/engine/src/storage/plan4_recovery_base/row/actor.rs": "32e322496f7dce618edd06011383537afc3cebda",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph.rs": "db9d3c0900d7e3946ce9ea90ee14da3af8aa9481",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph/source_tests.rs": "d4807bb11711c93e15061b5e5e8bf67ec1be7ce1",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs": "8397f7ee984ea3f2194d53aa5c8074edd3351906",
+        "crates/engine/src/storage/retention_page/row/job.rs": "2f56cf1a784cbe236826d6d67908f5f3909af694",
+        "crates/engine/src/storage/retention_page/row/job_tests.rs": "7b713bdabf0c0a3bf20f4c1ba074e9323e28400a",
+        "crates/engine/src/storage/row/insert.rs": "345f52bab8fd171e72c364451aaca0af1d5c1190",
+        "crates/engine/src/storage/row/insert/driver.rs": "5abb2e48af09e13abbebd606307996eb3b6c263a",
+        "crates/engine/src/storage/row/insert/driver/budget_tests.rs": "46ea83bfebad85f1f9ae46be59ea846bf72f6558",
+        "crates/engine/src/storage/row/insert/driver/delete_tests.rs": "e356d3f8a7316e83f29473a0023b5d6dd5ded16c",
+        "crates/engine/src/storage/row/insert/driver/live.rs": "ccc5364c5c83d875ff0e81fa86293065d2b16ccb",
+        "crates/engine/src/storage/row/insert/driver/tests.rs": "3288e8235e1262924b2365f28ebacd9206934d24",
+        "crates/engine/src/storage/row/insert/group.rs": "63470551dcd50b984f7b024881ce26714e1527db",
+        "crates/engine/src/storage/row/insert/group/frame.rs": "452667f3a8beea02429ede015e51058a97afc443",
+        "crates/engine/src/storage/row/insert/group/images.rs": "3687a5cbbc52fa426a4f546c1788266dcee2a06b",
+        "crates/engine/src/storage/row/insert/group_delete_tests.rs": "2dfdd3e7f724cadbc69231b51ad1bb8a56e373c7",
+        "crates/engine/src/storage/row/insert/group_tests.rs": "fac592565693837077857e6fee9019c1faca92ab",
+        "crates/engine/src/storage/row/insert/group_update_tests.rs": "7b569d48bdd53946eafcff7651c49403e606c2c7",
+        "crates/engine/src/storage/row/read/driver.rs": "d878bec96b47959a4c70b89d5930b879f9943f83",
+        "crates/engine/src/storage/row/read/driver/delete_tests.rs": "0cc116c7c33994816240aa28cc4819c4130a0c28",
+        "crates/engine/src/storage/row/read/driver/live.rs": "1203d3163e1b1ba3d28aaebe2e5fa2170551c749",
+        "crates/engine/src/storage/row/read/driver/tests.rs": "3f467e4e622b43dc4c36e82638aba9ebbed6e62f",
+        "crates/engine/src/storage/row/read/driver/update_tests.rs": "819262ed5d4f96b83d7da925348923389269d421",
+        "crates/engine/src/storage/semantic_row/jobs.rs": "1cfe746ac7a223d833f962b87c79a3410d4641e7",
+        "crates/engine/src/storage/semantic_row/jobs_tests.rs": "54870a8bb89058bc0e944f8e6ea939390c8005ae",
+        "crates/engine/src/storage/semantic_row/leaf.rs": "04c50bd3b3601bf94639ba9ab8262f7c72a69a45",
+        "crates/engine/src/storage/semantic_row/leaf_tests.rs": "08003546e9ceb4e024bf191ac9d6c33915b87b89",
+        "crates/engine/src/storage/semantic_row/ledger_tests.rs": "48b308ef04664962e9905698feb5a594fc736d11",
+        "crates/engine/src/storage/semantic_row/operation.rs": "c3787bea131efb76f8bdbdb85675163513e02719",
+        "crates/engine/src/storage/semantic_row/transition.rs": "2602d8737324a5a7c251bdbdc55793dd5592fe4a",
+        "crates/engine/src/storage/semantic_row/transition/cells.rs": "7c2be399ed0357545bb0facc1a4f05861393d230",
+        "crates/engine/src/storage/semantic_row/transition/frame.rs": "943dffd9c32632579064f1198b4d421a5f652e4a",
+        "crates/engine/src/storage/semantic_row/transition/prepare.rs": "561d6ffcc67135cd029e5a83b9613eaa10c38cd4",
+        "crates/engine/src/storage/semantic_row/transition/source.rs": "6814a37a4d621df836c6c02fc42c35e5847b435d",
+        "crates/engine/src/storage/semantic_row/transition_delete_tests.rs": "62255821879777437c6d87c8d0016600e516c9d2",
+        "crates/engine/src/storage/semantic_row/transition_tests.rs": "ca8110e61fc24433496b596fd3fb2d70bb3832cb",
+        "crates/engine/src/storage/semantic_row/transition_update_tests.rs": "e38b688a476934c18602f8104e56ffbf161270a0",
+        "crates/engine/src/storage/semantic_row/undo.rs": "092a3d1594f4d409ab3989e40463df24d473862d",
+        "crates/engine/src/storage/semantic_row/undo_tests.rs": "0a5117c8266d439b475d3413161ee98724c9fd27",
+        "crates/engine/src/storage/semantic_row/wire.rs": "7f5c1cfc8b6fe07e46aeb9b08b523973659afde0",
+        "crates/engine/src/storage/semantic_row/wire_tests.rs": "b910f9b7a42624dc4c9cfec220ec9ceb07586689",
+        "crates/engine/src/storage/wal_io/plan4_apply.rs": "5ea3ad4d6d616d7cfef928c95dfa9b7425536086",
+        "crates/engine/src/storage/wal_io/plan4_apply/row.rs": "fb6dfbb74365e9f851a2c2e1fda70eded1d496be",
+        "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs": "e174719c2ab4d8df3be253950de2a6f4ad18c7fc",
+        "crates/engine/src/storage/wal_io/plan4_apply/row/read.rs": "e83b80515ce7f967efe2dd0a3f4a267f904db04e",
+        "crates/engine/src/storage/wal_io/plan4_apply/row/read/tombstone_tests.rs": "7ebc02ae15bff6bfae06a18a4506236c1a279073",
+        "crates/engine/src/storage/wal_io/plan4_apply/row/rollback_census_tests.rs": "4be043d6ec6f7f6e6b9c46f06a1b2729f03bbb64",
+        "crates/engine/src/storage/wal_io/plan4_apply/row/v09_census_tests.rs": "cc7bb92d9e03dc79ba730447cd368645f7b98546",
+        "crates/engine/src/storage/wal_io/plan4_apply/row/write.rs": "85acb7033b74300c9010505e077cbb8bc73d2475",
+        "crates/engine/src/storage/wal_io/plan4_apply/row/write_operation.rs": "4acc5bca25d6b21f5f1c4fe649d72360ddadde73",
+        "crates/engine/src/storage/wal_io/plan4_apply/row/write_operation_tests.rs": "6d4f1549177da5e993a111a5a5b652c1715d5c69",
+        "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs": "068aa0effcc869730644983f97947bbb78c3163e",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_forward.rs": "3de238d9083e2e8d0b765f0a07d505e6f8043b0f",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join.rs": "957eaf8dd4bf49fe13fb23413a31e25e291fc08c",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs": "8819dde2c1622ccba05eee5f842a8b06a17759ad",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/autocommit.rs": "9fd1651f6334d897c17a8e142e6a95aae59f9e76",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs": "5fd16a5bafd8e99df08ccb48e7b062233dcfd810",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_base.rs": "ed304ba95e1eb1ac424f5da90cd6650578d80e6c",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_busy.rs": "c7f2792d5ed449301c33c1282b8844212953d84c",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_read.rs": "4127f648ab47cd9a61395cdee8914b209e51b9c2",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/driver.rs": "72cb004037b710eaf94461270944da2e3d7c6d06",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs": "e260fb12b59c996c8d7c9bd3bf1cdfafd1a90020",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_base.rs": "e0b3ed2aa3bf5d16173f1c50ad7c6640d55461fd",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_busy.rs": "f029fb4c1a2de980ec4685b62196f2cb197e4f80",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_native.rs": "9adf39c54d037950d1044011896fa957294bb494",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_read.rs": "6ee94e3f65988385657216f25b8b85839ec6c0c7",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_literal.rs": "cbe8854635f94e9a85f6fa07c2c4447f40fd4f83",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_census.rs": "8fe11b1c14275b80fb59ffe9fec82e0fe6349cf7",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_live.rs": "54830ec34a6759070b8a875d6aeacb5900b1c22d",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_recovery.rs": "4abd5a8886a303a978f15b30c13f82f5e1f72232",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/row_gate.rs": "5da48e8a7db04a354e04c7044485f89ce9cb6e7b",
+        "crates/engine/src/storage/wal_io/plan4_retention/history/row.rs": "21f1740a3c0f70d0763aad3f93cf202ab9b5898f",
+        "crates/engine/src/storage/wal_io/plan4_retention/recovery/catalog.rs": "1dd7188ee589217caf68b956007d532cbb36db2d",
+        "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs": "e37b202005f28c4dfa1597fedcc5f77bf40fd174",
+        "crates/engine/src/storage/wal_io/plan4_retention/row_clr.rs": "02b5fd93597e5af90ec30a6cb13e3cdeb4e7b408",
+        "crates/engine/src/storage/wal_io/plan4_retention/row_delete_tests.rs": "26de63b21f3fa315fbb048a07262bf2dc8df5ca2",
+        "crates/engine/src/storage/wal_io/plan4_retention/row_forward.rs": "aa9f9ad37b9d8f4fb0fcd5ea5ce236c2d642e20a",
+        "crates/engine/src/storage/wal_io/plan4_retention/row_preflight.rs": "9637e63ede69e04db611c3fe5bc5aeadfbd3127c",
+        "crates/engine/src/storage/wal_io/plan4_retention/row_rollback_select.rs": "6b07a3dcf437b9687958004e9067a41c96b642c8",
+        "crates/engine/src/storage/wal_io/plan4_retention/row_start.rs": "33a800bba7ba25fa5d4f80b06eb168ba83978159",
+        "crates/engine/src/storage/wal_io/plan4_retention/row_start/recovery.rs": "2cf545473134d89c07bb7aba210c18b5af7c502f",
+        "crates/engine/src/storage/wal_io/plan4_retention/row_start/retire.rs": "eaeb6a4e5e0743fa42f483786a815b71751ab429",
+        "crates/engine/src/storage/wal_io/plan4_retention/row_update_tests.rs": "bebae48cb77eadb7874831ad0d1c2873309790dc",
+        "crates/engine/src/storage/wal_io/plan4_retention/row_write.rs": "439a8ee35d9eb32e7e46d98e7ea07e0881cda473",
+        "crates/engine/src/storage/wal_io/plan4_retention/row_write_tests.rs": "ec8117d3dedbbec336102e0707a02a51e9870068",
+        "crates/engine/src/storage/wal_io/plan4_retention/visibility/row_retirement.rs": "4f19d95fb7a9d8fb7ad1777c65d4cce603ee274e",
+        "devdoc/contracts/dev3-module-boundaries.md": "d66d134079a4d61d1887fbd840b8979759acf897",
+        "devdoc/contracts/dev3-module-consumers.md": "5a70aa2cf49b91015a7c0bc14ea919f16898a3c2",
+        "scripts/check_dev3_row_update_native.py": "0c2a994079f05af175d970b0cfa627913397d1ee",
+        "tests/fixtures/module-row-format/transition-update/author.py": "956efc6249f53f3facdc8aa9264a7d0fc5a67402",
+        "tests/fixtures/module-row-format/transition-update/blobs.bin": "ba303c13e8016eeb7ca75d572fb3dbc1ab77ea5f",
+        "tests/fixtures/module-row-format/transition-update/index.tsv": "848b500aca95c7483ec3fba42c8cc7055b08fa5a",
+        "tests/fixtures/module-row-format/transition-update/input-plan.json": "876760e4138dbb89e65d43ffc6da7be7b908e10b",
+        "tests/fixtures/module-row-update/native-inventory.json": "7e05cf4ef69320aee4b413830cc39693189e68e1"
+      }
+    }
+  ]
+}

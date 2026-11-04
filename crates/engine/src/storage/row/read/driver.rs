@@ -50,8 +50,15 @@ trait Observed {
     }
 }
 
-/// C's observation of a tombstone's U before: the committed row it
-/// replaced, by row, `q_old` and canonical length.
+/// C's answer for a Transaction-stamped Inline row's U: Missing (an
+/// INSERT's: no row before) or a committed value before (an UPDATE's,
+/// dev3-row-update.md#read), which B then reads like a tombstone's.
+trait MissingObserved {
+    fn value_before(&self) -> bool;
+}
+
+/// C's observation of a tombstone's or an updated row's U before: the
+/// committed row it replaced, by row, `q_old` and canonical length.
 trait BeforeObserved {
     fn row(&self) -> RowId;
     fn q_old(&self) -> u64;
@@ -63,7 +70,7 @@ trait BeforeObserved {
 trait ReadSource {
     type Target;
     type Candidate: Observed;
-    type Missing;
+    type Missing: MissingObserved;
     type Before: BeforeObserved;
     type Copied: Observed;
     type Page<'g>: SearchPage<Candidate = Self::Candidate>
@@ -78,7 +85,8 @@ trait ReadSource {
         &mut self,
         candidate: &Self::Candidate,
     ) -> Result<Step<Self::Missing, Self::Target>, RetentionError>;
-    /// A tombstone's U RowValue before (dev3-row-delete.md#read).
+    /// A tombstone's U RowValue before (dev3-row-delete.md#read), or an
+    /// Inline row's whose `missing_before` reported one in this capture.
     fn value_before(
         &mut self,
         candidate: &Self::Candidate,
@@ -249,7 +257,8 @@ fn copy_selected<S: ReadSource>(
     Ok(())
 }
 /// One private result slot is published only after checked candidate/operation
-/// cleanup. An invisible INSERT still requires C's Missing-before evidence.
+/// cleanup. An invisible INSERT still requires C's Missing-before evidence;
+/// an invisible UPDATE's row is read from its U's value before.
 #[inline(never)]
 fn select_row<S: ReadSource>(
     source: &mut S,
@@ -267,10 +276,13 @@ fn select_row<S: ReadSource>(
         }
         Step::Ready(Visibility::Current) => {}
         Step::Ready(Visibility::ReadMissingBefore) => {
-            return Ok(match source.missing_before(candidate)? {
-                Step::Ready(_) => Step::Ready(false),
-                Step::FlushRequired { target } => Step::FlushRequired { target },
-            });
+            return match source.missing_before(candidate)? {
+                Step::Ready(missing) if missing.value_before() => {
+                    select_before(source, candidate, sample.q, output, cancel, copied_slot)
+                }
+                Step::Ready(_) => Ok(Step::Ready(false)),
+                Step::FlushRequired { target } => Ok(Step::FlushRequired { target }),
+            };
         }
         Step::Ready(Visibility::Deleted) => return Ok(Step::Ready(false)),
         Step::Ready(Visibility::ReadValueBefore) => {
@@ -281,9 +293,9 @@ fn select_row<S: ReadSource>(
     copy_selected(source, candidate, output, cancel, copied_slot)?;
     Ok(Step::Ready(true))
 }
-/// A tombstone whose DELETE the statement does not see: C reads U's
-/// RowValue before into its copy buffer, B judges `q_old` and only then
-/// copies the old value.
+/// A tombstone whose DELETE, or an Inline row whose UPDATE, the statement
+/// does not see: C reads U's RowValue before into its copy buffer, B judges
+/// `q_old` and only then copies the old value.
 #[inline(never)]
 fn select_before<S: ReadSource>(
     source: &mut S,

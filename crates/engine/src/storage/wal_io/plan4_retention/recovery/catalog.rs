@@ -95,7 +95,9 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
         })
     }
     /// A Row cell under the legacy binding: its analysis entry already
-    /// refused every Row state, so this is never reached by READY.
+    /// refused every Row state, so this is never reached by READY. Also an
+    /// UPDATE root's cleanup, which no product path makes before
+    /// dev3-row-update.md#stages stage 3.
     fn recovery_row_unsupported(&self) -> RetentionError {
         fatal(
             self.inner.storage,
@@ -330,10 +332,13 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
                             continue;
                         }
                         // A committed DELETE root's tombstone goes by
-                        // DeletePrune (dev3-row-delete.md#recovery).
+                        // DeletePrune (dev3-row-delete.md#recovery), an
+                        // UPDATE root's new row by UpdatePrune
+                        // (dev3-row-update.md#recovery).
                         match self.recovery_row_job(ordinal)?.effect() {
                             job3::RowEffect::Insert => RowOperation::Prune,
                             job3::RowEffect::Delete => RowOperation::DeletePrune,
+                            job3::RowEffect::Update => RowOperation::UpdatePrune,
                         }
                     }
                     job3::JobState::RootReleasingCommitted
@@ -537,7 +542,10 @@ impl<'s, 'c, W: WriterNamespace> Plan4Retention<'_, 's, 'c, '_, '_, '_, '_, '_, 
                 };
                 let job = self.recovery_row_job(ordinal)?;
                 push(2 + ordinal / 15)?;
-                let prune = matches!(operation, RowOperation::Prune | RowOperation::DeletePrune);
+                let prune = matches!(
+                    operation,
+                    RowOperation::Prune | RowOperation::DeletePrune | RowOperation::UpdatePrune
+                );
                 if prune
                     || matches!(
                         operation,

@@ -1,0 +1,110 @@
+[
+  {
+    "case": "RUP-N01",
+    "phase": "produce",
+    "exit": 0,
+    "seconds": 2.97
+  },
+  {
+    "case": "RUP-N01",
+    "phase": "recover",
+    "exit": 0,
+    "seconds": 3.42
+  },
+  {
+    "case": "RUP-N01",
+    "phase": "reenter",
+    "exit": 0,
+    "seconds": 1.27
+  },
+  {
+    "case": "RUP-N02",
+    "phase": "produce",
+    "exit": 0,
+    "seconds": 3.17
+  },
+  {
+    "case": "RUP-N02",
+    "phase": "recover",
+    "exit": 0,
+    "seconds": 3.12
+  },
+  {
+    "case": "RUP-N02",
+    "phase": "reenter",
+    "exit": 0,
+    "seconds": 1.27
+  },
+  {
+    "case": "RUP-N03",
+    "phase": "produce",
+    "exit": 0,
+    "seconds": 2.93
+  },
+  {
+    "case": "RUP-N03",
+    "phase": "recover",
+    "exit": 0,
+    "seconds": 2.62
+  },
+  {
+    "case": "RUP-N03",
+    "phase": "reenter",
+    "exit": 0,
+    "seconds": 1.27
+  },
+  {
+    "case": "RUP-N04",
+    "phase": "produce",
+    "exit": 0,
+    "seconds": 3.07
+  },
+  {
+    "case": "RUP-N04",
+    "phase": "recover",
+    "exit": 0,
+    "seconds": 3.92
+  },
+  {
+    "case": "RUP-N04",
+    "phase": "reenter",
+    "exit": 0,
+    "seconds": 1.32
+  },
+  {
+    "case": "RUP-N05",
+    "phase": "produce",
+    "exit": 0,
+    "seconds": 4.27
+  },
+  {
+    "case": "RUP-N05",
+    "phase": "recover",
+    "exit": 0,
+    "seconds": 7.13
+  },
+  {
+    "case": "RUP-N05",
+    "phase": "reenter",
+    "exit": 0,
+    "seconds": 1.42
+  },
+  {
+    "case": "RUP-N06",
+    "phase": "produce",
+    "exit": 0,
+    "seconds": 4.48
+  },
+  {
+    "case": "RUP-N06",
+    "phase": "recover",
+    "exit": 0,
+    "seconds": 7.89
+  },
+  {
+    "case": "RUP-N06",
+    "phase": "reenter",
+    "exit": 0,
+    "seconds": 1.83
+  }
+]

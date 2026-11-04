@@ -950,3 +950,43 @@ fn rdl_f_insert_producer_refuses_delete_root() {
         });
     }
 }
+
+/// Makes `job` a valid UPDATE root of the same old cell (dev3-row-update.md
+/// #job-effect): effect 2, C' = C in `[286,288)` and the UPDATE cleanup
+/// recipe `311428+C+2C'+128h` in both cleanup rows.
+fn as_update_root(job: &mut [u8; JOB_BYTES]) {
+    let cell = u64::from(u32::from_le_bytes(job[280..284].try_into().unwrap()));
+    let wal = u64::from_le_bytes(job[784..792].try_into().unwrap());
+    let h = wal - (311_608 + 2 * cell);
+    assert!(h == 0 || h == 128);
+    job[284] = 2;
+    job[286..288].copy_from_slice(&(cell as u16).to_le_bytes());
+    job[784..792].copy_from_slice(&(311_428 + 3 * cell + h).to_le_bytes());
+    job[880..888].copy_from_slice(&(311_428 + 3 * cell + h).to_le_bytes());
+    let view = row::decode_job(job, namespace()).unwrap();
+    assert_eq!(view.effect(), row::RowEffect::Update);
+    assert_eq!(view.new_cell() as u64, cell);
+}
+
+/// RUP-A (dev3-row-update.md#job-effect): the RootJob's effect names the
+/// group, as for DELETE (`rdl_f_insert_producer_refuses_delete_root`). An
+/// INSERT value on a valid UPDATE root (effect 2, C' = C, update cleanup
+/// budget) is Unsupported. A CLR compensates any effect, so it goes on to
+/// the Root's Job census, which the flipped Job no longer matches. Both
+/// refuse before the first output byte. A's UPDATE groups over real UPDATE
+/// pages, an effect-2 H among them, are `group_update_tests.rs`.
+#[test]
+fn rup_a_insert_producer_binds_update_root() {
+    use crate::storage::retention_page::RetentionError;
+    for (case, error) in [
+        (Case::ForwardNoH, InsertError::Unsupported),
+        (Case::ForwardH, InsertError::Unsupported),
+        (
+            Case::ClrNoH,
+            InsertError::Retention(RetentionError::Corrupt),
+        ),
+        (Case::ClrH, InsertError::Retention(RetentionError::Corrupt)),
+    ] {
+        refuses(case, error, |f| as_update_root(&mut f.bank[f.ordinal]));
+    }
+}

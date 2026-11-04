@@ -76,9 +76,24 @@ pub(super) struct ReservedEntry {
     pub(super) status: StatusSlotRef,
     pub(super) slot: usize,
     pub(super) statement: u64,
-    /// The RootJob's effect byte is DELETE (dev3-row-delete.md#job-effect):
-    /// its Forward is a DeleteForward and its CLR a DeleteClr.
-    pub(super) delete: bool,
+    /// The RootJob's effect byte (dev3-row-delete.md#job-effect,
+    /// dev3-row-update.md#job-effect): a DELETE root's Forward is a
+    /// DeleteForward and its CLR a DeleteClr, an UPDATE root's an
+    /// UpdateForward and an UpdateClr.
+    pub(super) effect: job3::RowEffect,
+}
+
+/// The group a Forward step (`clr` false) or a CLR step of a root of
+/// `effect` writes.
+fn effect_operation(clr: bool, effect: job3::RowEffect) -> row_semantic::Operation {
+    match (clr, effect) {
+        (false, job3::RowEffect::Insert) => row_semantic::Operation::Forward,
+        (true, job3::RowEffect::Insert) => row_semantic::Operation::Clr,
+        (false, job3::RowEffect::Delete) => row_semantic::Operation::DeleteForward,
+        (true, job3::RowEffect::Delete) => row_semantic::Operation::DeleteClr,
+        (false, job3::RowEffect::Update) => row_semantic::Operation::UpdateForward,
+        (true, job3::RowEffect::Update) => row_semantic::Operation::UpdateClr,
+    }
 }
 
 /// The private ranges a Forward step uses (`RowLoanLayout`): A's frame and
@@ -213,12 +228,7 @@ fn forward_observation(
     frame_bytes: usize,
 ) -> row_group::Observation {
     row_group::Observation {
-        operation: match (header.kind == FrameKind::Clr, entry.delete) {
-            (false, false) => row_semantic::Operation::Forward,
-            (true, false) => row_semantic::Operation::Clr,
-            (false, true) => row_semantic::Operation::DeleteForward,
-            (true, true) => row_semantic::Operation::DeleteClr,
-        },
+        operation: effect_operation(header.kind == FrameKind::Clr, entry.effect),
         header,
         order,
         count: 5,
@@ -406,17 +416,28 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             sources,
             after_order: changed.map(|(_, page)| page),
             after_count: 5,
-            input: if draft.operation == 0 && job.effect() == job3::RowEffect::Delete {
-                // The delete Reserve's draft: the old row's cell C and
-                // record projection (dev3-row-delete.md#api).
-                RowProducerInput::Delete {
-                    cell_bytes: usize::from(draft.input_len),
-                    projection: draft.input,
-                }
-            } else if draft.operation == 0 {
-                RowProducerInput::Insert {
-                    canonical_len: usize::from(draft.input_len),
-                    canonical_digest: draft.input,
+            input: if draft.operation == 0 {
+                match job.effect() {
+                    // The delete Reserve's draft: the old row's cell C and
+                    // record projection (dev3-row-delete.md#api).
+                    job3::RowEffect::Delete => RowProducerInput::Delete {
+                        cell_bytes: usize::from(draft.input_len),
+                        projection: draft.input,
+                    },
+                    job3::RowEffect::Insert => RowProducerInput::Insert {
+                        canonical_len: usize::from(draft.input_len),
+                        canonical_digest: draft.input,
+                    },
+                    // The update Reserve's draft: the sealed new value's
+                    // length and digest; the old cell C and the planned new
+                    // row's projection are the RootJob's
+                    // (dev3-row-update.md#api).
+                    job3::RowEffect::Update => RowProducerInput::Update {
+                        canonical_len: usize::from(draft.input_len),
+                        canonical_digest: draft.input,
+                        old_cell: job.cell_bytes() as usize,
+                        projection: *job.projection_digest(),
+                    },
                 }
             } else {
                 RowProducerInput::Clr {
@@ -559,7 +580,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             status,
             slot,
             statement: statement.row_sequence()?,
-            delete: job.effect() == job3::RowEffect::Delete,
+            effect: job.effect(),
         })
     }
 
@@ -725,17 +746,23 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                 frame: expected,
                 // Replay's boundary: the observer takes no statement mark
                 // for a Forward.
-                // The RootJob's effect picks DELETE's opcodes.
+                // The RootJob's effect picks DELETE's or UPDATE's opcodes.
                 change: if draft.operation == 0 {
                     let statement = StatementBoundary {
                         sequence: entry.statement,
                         mark: None,
                     };
                     let ordinal = entry.ordinal;
-                    if entry.delete {
-                        row_group::Change::DeleteForward { ordinal, statement }
-                    } else {
-                        row_group::Change::Forward { ordinal, statement }
+                    match entry.effect {
+                        job3::RowEffect::Insert => {
+                            row_group::Change::Forward { ordinal, statement }
+                        }
+                        job3::RowEffect::Delete => {
+                            row_group::Change::DeleteForward { ordinal, statement }
+                        }
+                        job3::RowEffect::Update => {
+                            row_group::Change::UpdateForward { ordinal, statement }
+                        }
                     }
                 } else {
                     let statement = match self.rollback_state(entry.issued.actor)? {
@@ -751,10 +778,14 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                         _ => None,
                     };
                     let ordinal = entry.ordinal;
-                    if entry.delete {
-                        row_group::Change::DeleteClr { ordinal, statement }
-                    } else {
-                        row_group::Change::Clr { ordinal, statement }
+                    match entry.effect {
+                        job3::RowEffect::Insert => row_group::Change::Clr { ordinal, statement },
+                        job3::RowEffect::Delete => {
+                            row_group::Change::DeleteClr { ordinal, statement }
+                        }
+                        job3::RowEffect::Update => {
+                            row_group::Change::UpdateClr { ordinal, statement }
+                        }
                     }
                 },
                 jobs: self.control.jobs(),

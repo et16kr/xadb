@@ -18,6 +18,7 @@ use super::{
     explicit::Explicit,
     finish_aborted, finish_rollback, finish_statement, insert_statement, map_commit_result,
     retire_finished, retry_task, rollback_step, start_full_rollback, start_statement_rollback,
+    update_statement,
 };
 use crate::storage::{
     disk::{
@@ -74,6 +75,9 @@ impl<P: RowPreflightOperation> Preflight for P {
     }
     fn reserve_delete(self) -> Result<Self::Reserved, RowOwnedError<Self>> {
         RowPreflightOperation::reserve_delete(self)
+    }
+    fn reserve_update(self, input: RowInputPlan) -> Result<Self::Reserved, RowOwnedError<Self>> {
+        RowPreflightOperation::reserve_update(self, input)
     }
     fn finish(self) -> Result<(), RetentionError> {
         RowPreflightOperation::finish(self)
@@ -253,6 +257,28 @@ impl<'x, 't, 'v, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> Boundar
     ) -> Result<PreflightNext<Self::Preflight<'r, 'i>, Plan4Target>, RetentionError> {
         Ok(
             match self.port.preflight_delete(
+                self.owner,
+                statement,
+                table,
+                row,
+                loan,
+                self.flusher,
+            )? {
+                RowDeleteStep::Ready(preflight) => PreflightNext::Ready(preflight),
+                RowDeleteStep::FlushRequired { target } => PreflightNext::Flush(target),
+                RowDeleteStep::NoRow => PreflightNext::NoRow,
+            },
+        )
+    }
+    fn preflight_update<'r, 'i>(
+        &'r mut self,
+        statement: &'r Self::Statement,
+        table: &'r CheckedTable<'c, 's>,
+        row: RowId,
+        loan: &'i mut Loan,
+    ) -> Result<PreflightNext<Self::Preflight<'r, 'i>, Plan4Target>, RetentionError> {
+        Ok(
+            match self.port.preflight_update(
                 self.owner,
                 statement,
                 table,
@@ -700,6 +726,55 @@ pub(in crate::storage) fn autocommit_delete_live<
     }
 }
 
+/// The autocommit UPDATE executor (dev3-row-update.md#api): one UPDATE of
+/// `row` to `values` in its own transaction, with `autocommit_delete_live`'s
+/// steps and slot. `Committed`'s count is the rows updated, 0 or 1, and
+/// `slot` holds the updated row's observation when it is 1. A target that
+/// is no row under the statement snapshot commits the transaction with no
+/// root. Its share at each C call is `autocommit_sites(Kind::Update)`'.
+#[inline(never)]
+#[allow(
+    clippy::too_many_arguments,
+    reason = "the call, Begin's status and isolation, the table source, the loan, the target row, its new values and its slot, and the result slot"
+)]
+pub(in crate::storage) fn autocommit_update_live<
+    'b,
+    'a,
+    's,
+    'c,
+    W: WriterNamespace,
+    T: LiveTables<'a, 'c, 's, W>,
+>(
+    call: &mut Live<'_, '_, 'b, 'b, 'a, 's, 'c, '_, '_, '_, '_, '_, W>,
+    status: &Plan4Target,
+    isolation: IsolationLevel,
+    tables: &mut T,
+    private: &mut Loan,
+    (row, values): (RowId, &[ValueRef<'_>]),
+    slot: &mut Option<RowMutationObservation>,
+    out: &mut Autocommit<RowCommitObservation>,
+) {
+    match call
+        .port
+        .begin_row_transaction(call.owner, isolation, status, private, call.flusher)
+    {
+        Ok(transaction) => {
+            match statement_live(
+                call,
+                &transaction,
+                tables,
+                private,
+                (row, values, slot),
+                out,
+            ) {
+                Some(rows) => commit_live_step(call, transaction, private, rows, out),
+                None => abort_transaction(call, transaction, private, out),
+            }
+        }
+        Err(error) => refused(out, Stage::Begin, error, Autocommit::NotBegun),
+    }
+}
+
 /// A statement's rows as the executor's statement frames pass them on to
 /// the driver: an INSERT's rows and their slots (`insert_statement`), or a
 /// DELETE's target row and its slot (`delete_statement`). `run` is a
@@ -741,6 +816,21 @@ impl StatementRows for (RowId, &mut Option<RowMutationObservation>) {
     ) -> Result<usize, DriveError<RowStatementView<'t, 'b, 'a, 'c, 's>>> {
         let (row, slot) = self;
         delete_statement(call, statement, table, private, row, slot)
+    }
+}
+
+/// An UPDATE's target row, its new values and its slot
+/// (`update_statement`).
+impl StatementRows for (RowId, &[ValueRef<'_>], &mut Option<RowMutationObservation>) {
+    fn run<'t, 'b, 'a, 's, 'c, W: WriterNamespace>(
+        self,
+        call: &mut Live<'_, 't, 'b, 'b, 'a, 's, 'c, '_, '_, '_, '_, '_, W>,
+        statement: RowStatementView<'t, 'b, 'a, 'c, 's>,
+        table: &CheckedTable<'c, 's>,
+        private: &mut Loan,
+    ) -> Result<usize, DriveError<RowStatementView<'t, 'b, 'a, 'c, 's>>> {
+        let (row, values, slot) = self;
+        update_statement(call, statement, table, private, (row, values), slot)
     }
 }
 
@@ -954,6 +1044,51 @@ pub(in crate::storage) fn transaction_delete_live<
         &mut *call.flush_owner,
     );
     let ran = start_statement_live(&mut call, transaction, tables, private, (row, slot));
+    match statement_ended(&mut call, transaction, ran, private, out) {
+        Some(rows) => *out = Explicit::Done { rows },
+        None if matches!(out, Explicit::Fenced(_)) => *holder = None,
+        None => {}
+    }
+}
+
+/// One UPDATE statement of `row` to `values` in the explicit transaction
+/// in `holder` (dev3-row-update.md#api), with `transaction_delete_live`'s
+/// steps and slot: `Done`'s count is the rows updated, 0 or 1, and `slot`
+/// holds the updated row's observation when it is 1. A refused UPDATE
+/// leaves nothing of the statement, which is finished: the slot says
+/// `Failed` and the transaction goes on. Its share at each C call is
+/// `explicit_sites(Kind::Update)`'.
+#[inline(never)]
+#[allow(
+    clippy::too_many_arguments,
+    reason = "the call, the transaction's holder, the table source, the loan, the target row, its new values and its slot, and the result slot"
+)]
+pub(in crate::storage) fn transaction_update_live<
+    'b,
+    'a,
+    's,
+    'c,
+    W: WriterNamespace,
+    T: LiveTables<'a, 'c, 's, W>,
+>(
+    call: &mut Live<'_, '_, 'b, 'b, 'a, 's, 'c, '_, '_, '_, '_, '_, W>,
+    holder: &mut Option<RowTransaction<'b, 'a, 'c, 's>>,
+    tables: &mut T,
+    private: &mut Loan,
+    (row, values): (RowId, &[ValueRef<'_>]),
+    slot: &mut Option<RowMutationObservation>,
+    out: &mut Explicit<RowCommitObservation>,
+) {
+    let Some(transaction) = holder.as_ref() else {
+        return no_transaction(Stage::Statement, out);
+    };
+    let mut call = LiveCall::new(
+        &mut *call.port,
+        &mut *call.owner,
+        &mut *call.flusher,
+        &mut *call.flush_owner,
+    );
+    let ran = start_statement_live(&mut call, transaction, tables, private, (row, values, slot));
     match statement_ended(&mut call, transaction, ran, private, out) {
         Some(rows) => *out = Explicit::Done { rows },
         None if matches!(out, Explicit::Fenced(_)) => *holder = None,
@@ -1311,6 +1446,9 @@ pub(in crate::storage) enum Kind {
     /// `autocommit_delete_live`, `transaction_delete_live`: the target row
     /// and its slot, under the `delete.*` sites.
     Delete,
+    /// `autocommit_update_live`, `transaction_update_live`: the target row,
+    /// its new values and its slot, under the `update.*` sites.
+    Update,
 }
 
 #[cfg(test)]
@@ -1320,11 +1458,12 @@ impl Kind {
         match self {
             Self::Insert => "insert.",
             Self::Delete => "delete.",
+            Self::Update => "update.",
         }
     }
 
     /// The rows argument: an INSERT's two slices, a DELETE's RowId and the
-    /// reference to its slot.
+    /// reference to its slot, an UPDATE's RowId, new values and slot.
     fn rows(self) -> usize {
         use std::mem::size_of;
         match self {
@@ -1333,6 +1472,11 @@ impl Kind {
                 &'static mut [Option<RowMutationObservation>],
             )>(),
             Self::Delete => size_of::<(RowId, &'static mut Option<RowMutationObservation>)>(),
+            Self::Update => size_of::<(
+                RowId,
+                &'static [ValueRef<'static>],
+                &'static mut Option<RowMutationObservation>,
+            )>(),
         }
     }
 }
@@ -1513,6 +1657,7 @@ fn executor_sites<W: WriterNamespace + 'static>(path: PathTerms) -> ExecutorCens
     let end = site(match kind {
         Kind::Insert => "insert.finish_statement",
         Kind::Delete => "delete.finish_statement",
+        Kind::Update => "update.finish_statement",
     });
     let statement_end = end.bytes + end.dead + below_statement;
     // The cleanup after the transaction ended: the caller with its slot for

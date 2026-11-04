@@ -290,7 +290,10 @@ pub(in super::super) fn apply(
         let ordinal = match op {
             Operation::AgingStart => None,
             Operation::Begin | Operation::Reserve => Some(first_free(arena, jobs, profile)?),
-            Operation::Forward | Operation::DeleteForward | Operation::Cancel => Some(actor_job(
+            Operation::Forward
+            | Operation::DeleteForward
+            | Operation::UpdateForward
+            | Operation::Cancel => Some(actor_job(
                 jobs,
                 profile,
                 actor.ok_or_else(invalid)?,
@@ -304,6 +307,8 @@ pub(in super::super) fn apply(
             | Operation::Prune
             | Operation::DeleteClr
             | Operation::DeletePrune
+            | Operation::UpdateClr
+            | Operation::UpdatePrune
             | Operation::ReleaseRole
             | Operation::RootFree
             | Operation::TerminalFinish => Some(native_before(view, jobs)?),
@@ -322,9 +327,11 @@ pub(in super::super) fn apply(
                     profile.spec().namespace,
                 )
                 .map_err(RetentionCause::Retention)?;
-                // An INSERT or a DELETE root (dev3-row-delete.md#job-effect):
-                // `ReserveAdopted` adopts the effect and the RowId of a DELETE
-                // root from this after and recomputes every other byte.
+                // An INSERT, DELETE or UPDATE root (dev3-row-delete.md
+                // #job-effect, dev3-row-update.md#job-effect):
+                // `ReserveAdopted` adopts the effect, and a DELETE or UPDATE
+                // root's RowId (an UPDATE root's C' and planned projection
+                // too), from this after and recomputes every other byte.
                 if cell.scope() != Some(JobScope::Row)
                     || cell.state() != job3::JobState::RootReserved
                     || cell.source() != actor
@@ -353,7 +360,10 @@ pub(in super::super) fn apply(
             _ => Some(selected.and_then(|j| j.status()).ok_or_else(invalid)?),
         };
         let home = match op {
-            Operation::Clr | Operation::DeleteClr | Operation::RollbackStart => {
+            Operation::Clr
+            | Operation::DeleteClr
+            | Operation::UpdateClr
+            | Operation::RollbackStart => {
                 Some(status_home(arena, profile, location.ok_or_else(invalid)?)?)
             }
             _ => None,
@@ -405,6 +415,17 @@ pub(in super::super) fn apply(
                     mark: None,
                 },
             },
+            Operation::UpdateForward => Change::UpdateForward {
+                ordinal: ordinal_of()?,
+                statement: StatementBoundary {
+                    sequence: core.statement(),
+                    mark: None,
+                },
+            },
+            Operation::UpdateClr => Change::UpdateClr {
+                ordinal: ordinal_of()?,
+                statement: clr_statement(home.ok_or_else(invalid)?, core.statement()),
+            },
             Operation::StatementFinish => Change::StatementFinish {
                 terminal: ordinal_of()?,
                 statement: StatementBoundary {
@@ -422,6 +443,9 @@ pub(in super::super) fn apply(
                 ordinal: ordinal_of()?,
             },
             Operation::DeletePrune => Change::DeletePrune {
+                ordinal: ordinal_of()?,
+            },
+            Operation::UpdatePrune => Change::UpdatePrune {
                 ordinal: ordinal_of()?,
             },
             Operation::ReleaseRole => Change::ReleaseRole {
@@ -442,6 +466,9 @@ pub(in super::super) fn apply(
             | Operation::DeleteForward
             | Operation::DeleteClr
             | Operation::DeletePrune
+            | Operation::UpdateForward
+            | Operation::UpdateClr
+            | Operation::UpdatePrune
             | Operation::ReleaseRole
             | Operation::RootFree => {
                 Some(selected.and_then(|j| j.undo()).ok_or_else(invalid)?.page())
@@ -450,16 +477,9 @@ pub(in super::super) fn apply(
             Operation::Reserve => Some(reserved.and_then(|j| j.undo()).ok_or_else(invalid)?.page()),
             _ => None,
         };
-        // The groups that change the RowLeaf (an INSERT's or a DELETE's).
-        let row = matches!(
-            op,
-            Operation::Forward
-                | Operation::Clr
-                | Operation::Prune
-                | Operation::DeleteForward
-                | Operation::DeleteClr
-                | Operation::DeletePrune
-        );
+        // The groups that change the RowLeaf (an INSERT's, a DELETE's or
+        // an UPDATE's).
+        let row = op.row();
         let previous = if row {
             core.next().map(|u| u.page())
         } else {

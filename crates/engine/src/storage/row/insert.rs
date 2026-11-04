@@ -17,6 +17,8 @@ mod group;
 mod group_delete_tests;
 #[cfg(test)]
 mod group_tests;
+#[cfg(test)]
+mod group_update_tests;
 mod leaf;
 #[cfg(test)]
 mod tests;
@@ -304,15 +306,18 @@ pub(in crate::storage) fn produce_insert_leaf(
 /// and five after images in the lane's physical order. The canonical value is
 /// the reserve-sealed candidate prefix. Nothing here reserves, stages, installs
 /// or appends; the original owner must recheck the proposal and every byte.
-/// A DELETE root's lane yields its DeleteForward (dev3-row-delete.md#api).
+/// A DELETE root's lane yields its DeleteForward (dev3-row-delete.md#api),
+/// an UPDATE root's its UpdateForward over the sealed new value
+/// (dev3-row-update.md#api).
 pub(in crate::storage) fn produce_insert(lane: RowProducerLane<'_>) -> Result<RowProposal> {
     propose(lane, RowOperation::Forward)
 }
 
 /// Complete CLR candidate for the U-owned root, using the owner's actual
 /// current Row/RootJob observation and rollback target: an INSERT root's CLR
-/// removes its row, a DELETE root's restores the row from U
-/// (dev3-row-delete.md#delete-states). Same limits.
+/// removes its row, a DELETE or UPDATE root's restores the row from U
+/// (dev3-row-delete.md#delete-states, dev3-row-update.md#update-states).
+/// Same limits.
 pub(in crate::storage) fn produce_clr(lane: RowProducerLane<'_>) -> Result<RowProposal> {
     propose(lane, RowOperation::Clr)
 }
@@ -359,6 +364,27 @@ fn propose(lane: RowProducerLane<'_>, operation: RowOperation) -> Result<RowProp
             cell_bytes: *cell_bytes,
             projection: *projection,
         },
+        (
+            RowOperation::Forward,
+            RowProducerInput::Update {
+                canonical_len,
+                canonical_digest,
+                old_cell,
+                projection,
+            },
+        ) => {
+            let canonical = candidate
+                .get(..*canonical_len)
+                .ok_or(InsertError::IdentityMismatch)?;
+            if content_digest(canonical) != *canonical_digest {
+                return Err(InsertError::IdentityMismatch);
+            }
+            group::Change::UpdateForward {
+                canonical,
+                old_cell: *old_cell,
+                projection: *projection,
+            }
+        }
         (
             RowOperation::Clr,
             RowProducerInput::Clr {

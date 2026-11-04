@@ -23,6 +23,7 @@ impl<'i, 'c, 's, const T: usize> PreparedRowGroup<'i, 'c, 's, T> {
             row_semantic::Operation::Cancel
                 | row_semantic::Operation::Prune
                 | row_semantic::Operation::DeletePrune
+                | row_semantic::Operation::UpdatePrune
                 | row_semantic::Operation::ReleaseRole
                 | row_semantic::Operation::RootFree
                 | row_semantic::Operation::TerminalFinish
@@ -30,13 +31,16 @@ impl<'i, 'c, 's, const T: usize> PreparedRowGroup<'i, 'c, 's, T> {
     }
 }
 
-/// A committed root's Prune: an INSERT root's, or a DELETE root's
-/// DeletePrune (dev3-row-delete.md#retirement). Both take the same target
-/// set, table source and H proof.
+/// A committed root's Prune: an INSERT root's, a DELETE root's DeletePrune
+/// (dev3-row-delete.md#retirement) or an UPDATE root's UpdatePrune
+/// (dev3-row-update.md#retirement). All three take the same target set,
+/// table source and H proof.
 fn prune(operation: row_semantic::Operation) -> bool {
     matches!(
         operation,
-        row_semantic::Operation::Prune | row_semantic::Operation::DeletePrune
+        row_semantic::Operation::Prune
+            | row_semantic::Operation::DeletePrune
+            | row_semantic::Operation::UpdatePrune
     )
 }
 
@@ -72,7 +76,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     /// Cancel takes Allocation, Root, RootJob page, Status and U (the latter
     /// two read proofs); ReleaseRole/RootFree take Allocation, Root, RootJob
     /// page and U; TerminalFinish Allocation, Root, Terminal page and Status;
-    /// committed Prune (DeletePrune) the five changed pages, Allocation and
+    /// committed Prune (DeletePrune, UpdatePrune) the five changed pages, Allocation and
     /// the proofs TableAnchor, CatalogLeaf and, when H exists, H's Undo. The
     /// live Row
     /// retirement (`retire`) prepares the same groups after the residency of
@@ -101,12 +105,18 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                 | row_semantic::Operation::TerminalFinish,
                 _,
             ) => self.prepare_row_recovery_n::<4>(owner, ordinal, operation, None, private),
-            (row_semantic::Operation::Prune | row_semantic::Operation::DeletePrune, None) => {
-                self.prepare_row_recovery_n::<8>(owner, ordinal, operation, None, private)
-            }
-            (row_semantic::Operation::Prune | row_semantic::Operation::DeletePrune, Some(h)) => {
-                self.prepare_row_recovery_n::<9>(owner, ordinal, operation, Some(h), private)
-            }
+            (
+                row_semantic::Operation::Prune
+                | row_semantic::Operation::DeletePrune
+                | row_semantic::Operation::UpdatePrune,
+                None,
+            ) => self.prepare_row_recovery_n::<8>(owner, ordinal, operation, None, private),
+            (
+                row_semantic::Operation::Prune
+                | row_semantic::Operation::DeletePrune
+                | row_semantic::Operation::UpdatePrune,
+                Some(h),
+            ) => self.prepare_row_recovery_n::<9>(owner, ordinal, operation, Some(h), private),
             _ => Err(unchanged(
                 RetentionPhase::Prepare,
                 RetentionCause::Unsupported,
@@ -115,7 +125,8 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     }
 
     /// The whole target set `prepare_row_recovery` selects for a Prune,
-    /// DeletePrune, ReleaseRole, RootFree or TerminalFinish of Job `ordinal`,
+    /// DeletePrune, UpdatePrune, ReleaseRole, RootFree or TerminalFinish of
+    /// Job `ordinal`,
     /// in selection
     /// order, and its length: the live residency set before the preparation.
     pub(super) fn row_cleanup_requests(
@@ -139,7 +150,9 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             | row_semantic::Operation::TerminalFinish => Ok(requests(
                 self.row_recovery_selection::<4>(ordinal, operation, None)?,
             )),
-            row_semantic::Operation::Prune | row_semantic::Operation::DeletePrune => {
+            row_semantic::Operation::Prune
+            | row_semantic::Operation::DeletePrune
+            | row_semantic::Operation::UpdatePrune => {
                 let namespace = self.storage.profile().spec().namespace;
                 match recovery_predecessor(self.control.jobs(), namespace, ordinal)
                     .map_err(|_| invalid())?
@@ -239,7 +252,9 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                     (status()?, STATUS),
                 ]);
             }
-            row_semantic::Operation::Prune | row_semantic::Operation::DeletePrune
+            row_semantic::Operation::Prune
+            | row_semantic::Operation::DeletePrune
+            | row_semantic::Operation::UpdatePrune
                 if N == 8 + usize::from(previous.is_some()) =>
             {
                 let handle = job.object().ok_or_else(invalid)?;
@@ -309,6 +324,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             row_semantic::Operation::Cancel => row_group::Change::Cancel { ordinal },
             row_semantic::Operation::Prune => row_group::Change::Prune { ordinal },
             row_semantic::Operation::DeletePrune => row_group::Change::DeletePrune { ordinal },
+            row_semantic::Operation::UpdatePrune => row_group::Change::UpdatePrune { ordinal },
             row_semantic::Operation::ReleaseRole => row_group::Change::ReleaseRole { ordinal },
             row_semantic::Operation::RootFree => row_group::Change::RootFree { ordinal },
             row_semantic::Operation::TerminalFinish => {
@@ -531,7 +547,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     RetentionWriter<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>
 {
     /// The closed recovered facade check of a retiring Row cleanup
-    /// (Prune and DeletePrune: its U and the actor's committed Q; RootFree:
+    /// (Prune, DeletePrune and UpdatePrune: its U and the actor's committed Q; RootFree:
     /// its U; TerminalFinish: its actor). Cancel and ReleaseRole retire
     /// nothing.
     fn check_closed_row_cleanup(
@@ -550,7 +566,9 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             row_semantic::Operation::Cancel | row_semantic::Operation::ReleaseRole => {
                 return Ok(());
             }
-            row_semantic::Operation::Prune | row_semantic::Operation::DeletePrune => {
+            row_semantic::Operation::Prune
+            | row_semantic::Operation::DeletePrune
+            | row_semantic::Operation::UpdatePrune => {
                 let source = job.source().ok_or_else(invalid)?;
                 let mut q = None;
                 for bytes in self.control.jobs() {
@@ -583,8 +601,8 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     }
 
     /// One recovered Row cleanup group (Cancel, Prune, DeletePrune,
-    /// ReleaseRole, RootFree, TerminalFinish) inside the one gate/progress
-    /// shell: RowWrite for the Cancel, Prune and DeletePrune write target
+    /// UpdatePrune, ReleaseRole, RootFree, TerminalFinish) inside the one
+    /// gate/progress shell: RowWrite for the Cancel and the three Prunes' write target
     /// sets, RowProgress for the four-target lifecycle cleanup. The closed
     /// facade check runs before the preparation and again just before the
     /// install.
@@ -599,7 +617,8 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         let class = match operation {
             row_semantic::Operation::Cancel
             | row_semantic::Operation::Prune
-            | row_semantic::Operation::DeletePrune => source::OperationClass::RowWrite,
+            | row_semantic::Operation::DeletePrune
+            | row_semantic::Operation::UpdatePrune => source::OperationClass::RowWrite,
             _ => source::OperationClass::RowProgress,
         };
         self.progress_lifecycle(owner, class, flusher, |writer, owner| {

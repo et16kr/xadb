@@ -1,0 +1,51 @@
+{
+  "schema": "xadb.row-update-native-inventory.v1",
+  "contract": "devdoc/contracts/dev3-row-update.md#implementation-4",
+  "worker": "row_join::retire::autocommit::update::native::rup_native_worker",
+  "history": "CREATE of T (one nullable Int64 column) publishes q 1. A's autocommit INSERT commits rows 100 and 101 (RowIds 1 and 2) at q 2 and the live cleanup drains them. Each case then runs the steps up to its cut over row 100, updating it to 200 (N01, N02: the same cell) or to NULL (N03..N06: the cell shrinks by 8 B), and exits the process with no flush or shutdown write.",
+  "new_value": 17,
+  "cases": {
+    "RUP-N01": {
+      "cut": "before UpdatePrune: A's autocommit UPDATE of 100 to 200 ACKed at q 3",
+      "last_step": "the autocommit UPDATE (RowReserve, UpdateForward and Commit)",
+      "produce": {"result": "acked", "q": 3, "rows": [1, 2]},
+      "recover": {"q_ready": 3, "clrs": 0, "values": [200, 101], "ack_q": 4},
+      "reenter": {"q_ready": 4, "clrs": 0, "values": [200, 101, 17]}
+    },
+    "RUP-N02": {
+      "cut": "after UpdatePrune: N01 and the first live cleanup step",
+      "last_step": "the live UpdatePrune group",
+      "produce": {"result": "acked", "q": 3, "rows": [1, 2]},
+      "recover": {"q_ready": 3, "clrs": 0, "values": [200, 101], "ack_q": 4},
+      "reenter": {"q_ready": 4, "clrs": 0, "values": [200, 101, 17]}
+    },
+    "RUP-N03": {
+      "cut": "before UpdateForward: an explicit Serializable transaction's preflight and RowReserve of 100 to NULL",
+      "last_step": "the RowReserve group",
+      "produce": {"result": "crashed", "q": 2, "rows": [1, 2]},
+      "recover": {"q_ready": 2, "clrs": 0, "values": [100, 101], "ack_q": 3},
+      "reenter": {"q_ready": 3, "clrs": 0, "values": [100, 101, 17]}
+    },
+    "RUP-N04": {
+      "cut": "after UpdateForward: the explicit transaction's UPDATE statement of 100 to NULL, the transaction Active",
+      "last_step": "the UPDATE statement: RowReserve and UpdateForward (its end writes no group)",
+      "produce": {"result": "crashed", "q": 2, "rows": [1, 2]},
+      "recover": {"q_ready": 2, "clrs": 1, "values": [100, 101], "ack_q": 3},
+      "reenter": {"q_ready": 3, "clrs": 0, "values": [100, 101, 17]}
+    },
+    "RUP-N05": {
+      "cut": "before UpdateClr: N04, then Y (another Status) INSERTs 102 and commits at q 3, A's Commit is refused (SerializationConflict) and A's full RollbackStart",
+      "last_step": "the RollbackStart group",
+      "produce": {"result": "crashed", "q": 3, "rows": [1, 2]},
+      "recover": {"q_ready": 3, "clrs": 1, "values": [100, 101, 102], "ack_q": 4},
+      "reenter": {"q_ready": 4, "clrs": 0, "values": [100, 101, 102, 17]}
+    },
+    "RUP-N06": {
+      "cut": "after UpdateClr: N05 and the rollback's first step, which grows row 100 back inside the leaf's reservation",
+      "last_step": "the UpdateClr group",
+      "produce": {"result": "crashed", "q": 3, "rows": [1, 2]},
+      "recover": {"q_ready": 3, "clrs": 0, "values": [100, 101, 102], "ack_q": 4},
+      "reenter": {"q_ready": 4, "clrs": 0, "values": [100, 101, 102, 17]}
+    }
+  }
+}

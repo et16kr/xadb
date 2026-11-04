@@ -79,6 +79,16 @@ const DELETE_INDEX: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/../../tests/fixtures/module-row-format/transition-delete/index.tsv"
 ));
+/// UPDATE literals (`module-row-format/transition-update/author.py`):
+/// history U from the end of D and its `R-U-*` variants.
+const UPDATE_BLOBS: &[u8] = include_bytes!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../../tests/fixtures/module-row-format/transition-update/blobs.bin"
+));
+const UPDATE_INDEX: &str = include_str!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../../tests/fixtures/module-row-format/transition-update/index.tsv"
+));
 const PROFILE: &[u8; 4096] = scope3!("profile3.bin");
 /// Every framing-valid variant and the exact refusal its base's observer must
 /// give: the recomputed canonical group differs from the candidate.
@@ -209,10 +219,13 @@ fn hex(bytes: &[u8]) -> String {
 }
 
 /// The literal set a name belongs to: history D and its `R-D-` variants are
-/// the DELETE author's, everything else the N1 author's.
+/// the DELETE author's, history U and its `R-U-` variants the UPDATE
+/// author's, everything else the N1 author's.
 fn literals(name: &str) -> (&'static str, &'static [u8]) {
     if name.starts_with("D-") || name.starts_with("R-D-") {
         (DELETE_INDEX, DELETE_BLOBS)
+    } else if name.starts_with("U-") || name.starts_with("R-U-") {
+        (UPDATE_INDEX, UPDATE_BLOBS)
     } else {
         (INDEX, BLOBS)
     }
@@ -555,8 +568,8 @@ struct World {
     transaction: Option<Descriptor>,
     aging: Option<Descriptor>,
     columns: [Column; 2],
-    /// Each produced INSERT RowReserve's RowId and sealed canonical value, for
-    /// leaf.rs's Forward observation.
+    /// Each produced INSERT or UPDATE RowReserve's RowId and sealed canonical
+    /// value, for leaf.rs's Forward observation.
     sealed: Vec<(RowId, Vec<u8>)>,
     /// Counts R- variants checked against the before state of their base.
     rejects: Option<Cell<usize>>,
@@ -694,11 +707,23 @@ impl World {
                 continue;
             }
             let bytes = blob(variant);
+            // A variant wire decode itself refuses (`update::FRAMING`).
+            if let Some((_, expected)) = update::FRAMING.iter().find(|(name, _)| *name == variant) {
+                assert_eq!(
+                    decode_layout(bytes, inputs.frame, inputs.profile).map(|_| ()),
+                    Err(*expected),
+                    "{variant} framing"
+                );
+                println!("N1_REJECT\t{variant}\tframing {expected:?}");
+                counter.set(counter.get() + 1);
+                continue;
+            }
             decode_layout(bytes, inputs.frame, inputs.profile)
                 .unwrap_or_else(|error| panic!("{variant} framing {error:?}"));
             let expected = REJECTS
                 .iter()
                 .chain(delete::REJECTS.iter())
+                .chain(update::REJECTS.iter())
                 .find(|(name, _)| *name == variant)
                 .unwrap_or_else(|| panic!("{variant} has no expected refusal"))
                 .1;
@@ -737,8 +762,14 @@ impl World {
             self.check_rejects(name, &inputs);
             observation
         };
-        if let (Change::Reserve(plan), Some(issued)) = (change, observation.issued) {
-            self.sealed.push((issued.row, plan.canonical.to_vec()));
+        match (change, observation.issued) {
+            (Change::Reserve(plan), Some(issued)) => {
+                self.sealed.push((issued.row, plan.canonical.to_vec()))
+            }
+            (Change::ReserveUpdate(plan), Some(_)) => {
+                self.sealed.push((plan.row, plan.canonical.to_vec()))
+            }
+            _ => {}
         }
         self.install(name, &observation, &after, expected);
         println!(
@@ -791,8 +822,9 @@ impl World {
     /// jobs.rs) over the same frame, before pages and computed afters, so the
     /// transition's rules and theirs cannot drift. leaf.rs reads the table's
     /// Catalog record, which `catalog_record` encodes from the World's
-    /// columns; its INSERT Forward needs the sealed value, so a Forward whose
-    /// RowReserve this World did not produce is not leaf-observed.
+    /// columns; its INSERT and UPDATE Forward need the sealed value, so a
+    /// Forward whose RowReserve this World did not produce is not
+    /// leaf-observed.
     fn cross_check(
         &self,
         name: &str,
@@ -805,8 +837,9 @@ impl World {
         let (Some(actor), Some(location)) = (observed.actor, observed.status) else {
             return;
         };
-        // Every observer sees every group, INSERT and DELETE alike
-        // (dev3-row-delete.md#implementation-2b3).
+        // Every observer sees every group, INSERT, DELETE and UPDATE alike
+        // (dev3-row-delete.md#implementation-2b3, dev3-row-update.md#stages
+        // stage 3).
         let layout = decode_layout(frame, expectation(self.lsn), profile()).unwrap();
         let op = observed.operation;
         let present =
@@ -820,10 +853,12 @@ impl World {
         let statement = match change {
             Change::Forward { statement, .. }
             | Change::DeleteForward { statement, .. }
+            | Change::UpdateForward { statement, .. }
             | Change::StatementFinish { statement, .. } => Some(statement),
             Change::RollbackStart { statement, .. }
             | Change::Clr { statement, .. }
-            | Change::DeleteClr { statement, .. } => statement,
+            | Change::DeleteClr { statement, .. }
+            | Change::UpdateClr { statement, .. } => statement,
             _ => None,
         };
         let status_before = self
@@ -878,6 +913,7 @@ impl World {
             let planned = match change {
                 Change::Reserve(plan) => Some(plan.statement),
                 Change::ReserveDelete(plan) => Some(plan.statement),
+                Change::ReserveUpdate(plan) => Some(plan.statement),
                 _ => None,
             };
             let source = match (planned, observed.issued) {
@@ -912,9 +948,10 @@ impl World {
             });
             undo::observe(layout, context, jobs, source, images, proof)
                 .unwrap_or_else(|error| panic!("{name}: undo.rs {error:?}"));
-            // The H proof over a delete predecessor reads its Live U through
-            // entry (b) against that root's Job
-            // (dev3-row-delete.md#previous-proof): the H page with the U's
+            // The H proof over a delete or update predecessor reads its Live
+            // U through entry (b) against that root's Job
+            // (dev3-row-delete.md#previous-proof, dev3-row-update.md
+            // #previous-proof): the H page with the U's
             // incoming count +1 (page digest resealed) is refused there. (An
             // edit of that Job's cell length or effect breaks its budget, so
             // the Job codec would refuse it before the proof.)
@@ -922,7 +959,7 @@ impl World {
                 self.bank.iter().any(|cell| {
                     row::decode_job(cell, namespace()).is_ok_and(|job| {
                         job.state().is_root()
-                            && job.effect() == row::RowEffect::Delete
+                            && job.effect() != row::RowEffect::Insert
                             && job.undo().is_some_and(|u| u.page().page_no == previous)
                     })
                 })
@@ -943,7 +980,7 @@ impl World {
                     Err(Error::IdentityMismatch),
                     "{name}: H incoming"
                 );
-                println!("N1_H_DELETE\t{name}\trefused=incoming");
+                println!("N1_H_VALUE\t{name}\trefused=incoming");
             }
         }
         let mut leaf_observed = false;
@@ -958,10 +995,11 @@ impl World {
             result.unwrap_or_else(|error| panic!("{name}: leaf.rs {error:?}"));
             leaf_observed = true;
             if op != op.role() {
-                // What only leaf.rs checks of a DELETE (#delete-undo): U's
-                // before logical, against the old row (DeleteForward's Live
-                // after) or against the before the Releasing after keeps
-                // (DeleteClr, DeletePrune). Entry (b) in undo.rs takes that
+                // What only leaf.rs checks of a DELETE or UPDATE
+                // (#delete-undo, dev3-row-update.md#update-undo): U's before
+                // logical, against the old row (Forward's Live after) or
+                // against the before the Releasing after keeps (Clr,
+                // Prune). Entry (b) in undo.rs takes that
                 // logical as present only, so it accepts the mutant. (A Job
                 // mutant does not reach leaf.rs: undo.rs binds the selected
                 // Job to the frame first.)
@@ -1001,11 +1039,11 @@ impl World {
                     Err(Error::IdentityMismatch),
                     "{name}: leaf.rs logical"
                 );
-                // DeleteClr's restored row against U's Live before: the
-                // leaf after's row with its logical mutation sequence +1
-                // (record @112, cell @124), and the core's after projection
-                // of that row to match.
-                let restored = op == Operation::DeleteClr;
+                // DeleteClr's and UpdateClr's restored row against U's Live
+                // before: the leaf after's row with its logical mutation
+                // sequence +1 (record @112, cell @124), and the core's after
+                // projection of that row to match.
+                let restored = matches!(op, Operation::DeleteClr | Operation::UpdateClr);
                 if restored {
                     let mut projection = None;
                     let (mut mutant, leaf_after) =
@@ -1035,7 +1073,7 @@ impl World {
                     );
                 }
                 println!(
-                    "N1_LEAF_DELETE\t{name}\trefused=logical{}",
+                    "N1_LEAF_VALUE\t{name}\trefused=logical{}",
                     if restored { ",restored logical" } else { "" }
                 );
             }
@@ -1059,6 +1097,7 @@ impl World {
                         projection: job[288..320].try_into().unwrap(),
                         predecessor: head_before.is_some(),
                         effect: row::RowEffect::Insert,
+                        new_cell: 0,
                     })
                 }
                 (Change::ReserveDelete(plan), Some(issued)) => {
@@ -1077,6 +1116,27 @@ impl World {
                         projection: job[288..320].try_into().unwrap(),
                         predecessor: head_before.is_some(),
                         effect: row::RowEffect::Delete,
+                        new_cell: 0,
+                    })
+                }
+                (Change::ReserveUpdate(plan), Some(issued)) => {
+                    let job = cell(&after[JOB], ordinal % 15);
+                    let leaf = self.leaf.as_ref().unwrap();
+                    Some(jobs::ReservePlan {
+                        undo: issued.undo,
+                        sequence: issued.sequence,
+                        table: plan.table,
+                        pair: [page_ref(12, 2), leaf_ref(leaf)],
+                        statement: plan.statement,
+                        mutation: issued.mutation,
+                        row: plan.row,
+                        // The old row's cell, from the leaf before image,
+                        // and the planned row's C'.
+                        cell_bytes: leaf_cell(leaf, plan.row).len() as u32,
+                        projection: job[288..320].try_into().unwrap(),
+                        predecessor: head_before.is_some(),
+                        effect: row::RowEffect::Update,
+                        new_cell: (180 + plan.canonical.len()) as u32,
                     })
                 }
                 _ => None,
@@ -1131,7 +1191,11 @@ impl World {
             Change::Clr { ordinal, statement } | Change::DeleteClr { ordinal, statement } => {
                 (ordinal, statement)
             }
-            Change::Prune { ordinal } | Change::DeletePrune { ordinal } => (ordinal, None),
+            Change::UpdateForward { ordinal, statement } => (ordinal, Some(statement)),
+            Change::UpdateClr { ordinal, statement } => (ordinal, statement),
+            Change::Prune { ordinal }
+            | Change::DeletePrune { ordinal }
+            | Change::UpdatePrune { ordinal } => (ordinal, None),
             _ => panic!("not a Row change"),
         };
         let job = row::decode_job(&self.bank[ordinal], namespace()).unwrap();
@@ -1146,9 +1210,18 @@ impl World {
                 TransactionStatusCell::Free(_) => panic!("free Status"),
             }
         });
-        let sealed = if layout.operation() == Operation::Forward {
+        let sealed = if matches!(
+            layout.operation(),
+            Operation::Forward | Operation::UpdateForward
+        ) {
             let row = job.row_id().unwrap();
-            let (_, value) = self.sealed.iter().find(|(sealed, _)| *sealed == row)?;
+            // The row's latest reservation: an UPDATE reserves a row an
+            // earlier INSERT (or a cancelled UPDATE) sealed before.
+            let (_, value) = self
+                .sealed
+                .iter()
+                .rev()
+                .find(|(sealed, _)| *sealed == row)?;
             Some(leaf::SealedValue {
                 length: value.len(),
                 digest: content_digest(value),
@@ -2253,6 +2326,9 @@ fn n1_producer_refusals_precede_output() {
 /// These sums check the counted `source` terms; they are not stack samples.
 #[path = "transition_delete_tests.rs"]
 pub(crate) mod delete;
+
+#[path = "transition_update_tests.rs"]
+pub(crate) mod update;
 
 mod measured {
     use super::super::source::returned;

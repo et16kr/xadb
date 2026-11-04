@@ -1,0 +1,16 @@
+case	RUP-N04
+phase	reenter
+pid	16005
+source	8516c91dd0c38253eeb9d87cdd63094d18cc7e456800d966e347553f47732cf0
+elf	bcb791f8e90fcbb39aaa3d03e361633fd137a61ebabfc93f54a781763aa4f173
+handles	0
+peak	3
+fd_peak	6
+mutations	440
+log_bytes	404085
+result	ready
+steps	11
+clrs	0
+rows	[(1, 100), (2, 101), (3, 17)]
+values	100,101,17
+q_ready	3

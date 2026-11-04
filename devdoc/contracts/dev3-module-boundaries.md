@@ -1314,7 +1314,7 @@ let applied = prepared.apply()?;            // 같은 proof/loan/gate/lease
 | `[376832,393216)` | 16384 | C scratch(C) | `produce_borrowed`·`observe_borrowed`의 `ROW_REPLAY_SCRATCH_BYTES` scratch(9076B, 나머지 미사용). 한 C 단계 안, 진입 때 0 |
 | `[393216,425984)` | 32768 | A scratch(A) | `producer_lane`이 발급한 lane borrow 동안만. 발급 전 C가 0으로 채운다 |
 
-- Row layout에서는 Forward frame(최대93660B)의 tail 4644B가 XOI page 16384B보다 작으므로 XOI를 frame tail에 두지 않는다. 2026-11-03부터 가장 큰 Row frame은 DeleteForward 95888B이고 tail 2416B로 더 작으므로 이 배치는 그대로다([row-delete](dev3-row-delete.md#delete-costs)). Catalog layout과 Row lifecycle의 기존 배치는 그대로다.
+- Row layout에서는 Forward frame(최대93660B)의 tail 4644B가 XOI page 16384B보다 작으므로 XOI를 frame tail에 두지 않는다. 2026-11-03부터 가장 큰 Row frame은 DeleteForward 95888B이고 tail 2416B로 더 작으므로 이 배치는 그대로다([row-delete](dev3-row-delete.md#delete-costs)). 2026-11-04부터는 UpdateForward 97936B이고 tail 368B이므로 역시 그대로다([row-update](dev3-row-update.md#update-costs)). Catalog layout과 Row lifecycle의 기존 배치는 그대로다.
 - frame 구간 `[0,98304)`(6page)은 preflight의 retention LOAD scratch가 먼저 쓰고, Reserve 이후의 frame 생산이 이어 쓴다. 두 사용은 시간상 겹치지 않으며 preflight 반환 뒤 그 bytes는 의미가 없다.
 - `RowProducerLane`에 `scratch: &'l mut [u8;32_768]`을 더하고 `parts(self)`는 이를 8번째 원소로 반환한다. 이 규칙은 `RowProducerLane`을 발급하는 모든 곳(§6.6 ReservedRow, §6.7 RowRollbackTask, 복구 task)에 같다.
 

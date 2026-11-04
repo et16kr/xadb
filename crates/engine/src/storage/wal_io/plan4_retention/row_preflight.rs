@@ -42,28 +42,31 @@ const ABSENT_ROLE: u64 = 0xF;
 pub(in super::super::super) enum RowPreflightOutcome {
     Ready(RowPreflightCut),
     FlushRequired(Plan4Target),
-    /// A DELETE whose target is no row under the statement snapshot
-    /// (dev3-row-delete.md#classification): the table read bit is
-    /// registered and nothing else happened.
+    /// A DELETE or UPDATE whose target is no row under the statement
+    /// snapshot (dev3-row-delete.md#classification,
+    /// dev3-row-update.md#classification): the table read bit is registered
+    /// and nothing else happened.
     NoRow,
 }
 
-/// What a DELETE target is under the statement snapshot
-/// (dev3-row-delete.md#classification). A source contradiction is
-/// `delete_class`'s Err cause instead, never one of these.
+/// What a DELETE or UPDATE target is under the statement snapshot
+/// (dev3-row-delete.md#classification, dev3-row-update.md#classification;
+/// one table for both). A source contradiction is `row_class`'s Err cause
+/// instead, never one of these.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(in super::super::super) enum DeleteClass {
+pub(in super::super::super) enum TargetClass {
     /// A committed, pruned inline row S sees, with no root Job holding its
-    /// RowId: the delete proceeds.
-    Delete,
+    /// RowId: the delete or update proceeds.
+    Proceed,
     /// No row S sees: the statement succeeds with zero rows.
     NoRow,
     /// A root Job holds the RowId, or another transaction's change of the
-    /// row is still in progress.
+    /// row is still in progress or not yet pruned.
     Busy,
-    /// The actor's own INSERT row, or an Overflow row.
+    /// The actor's own INSERT or UPDATE row, or an Overflow row.
     Unsupported,
-    /// A Serializable snapshot older than a committed delete of the row.
+    /// A Serializable snapshot older than a committed delete or update of
+    /// the row.
     SerializationConflict,
 }
 
@@ -402,17 +405,18 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     /// registration, cut. Every LOAD step is made from this frame, and the
     /// steps that select sources are calls of their own, so a LOAD holds
     /// none of their values; the observation is a call of its own too.
-    /// `delete` names a DELETE's target (dev3-row-delete.md#classification):
+    /// `target` names a DELETE's or UPDATE's target row and its effect
+    /// (dev3-row-delete.md#classification, dev3-row-update.md#classification):
     /// with its sources resident and before the Free Undo selection, it is
     /// classified under the statement snapshot, so a zero-row or refused
-    /// DELETE neither waits on Undo capacity nor runs the replay.
+    /// DELETE or UPDATE neither waits on Undo capacity nor runs the replay.
     pub(in super::super::super) fn row_preflight(
         &self,
         owner: &mut Owner<'c, 's>,
         statement: &RowStatementView<'_, '_, 'a, 'c, 's>,
         table: RowTableSource,
         private: &mut [u8; 425_984],
-        delete: Option<RowId>,
+        target: Option<(RowId, job3::RowEffect)>,
     ) -> Result<RowPreflightOutcome> {
         let storage = self.storage;
         let preparation = self.catalog_preparation();
@@ -446,11 +450,11 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         if let Some(target) = self.make_resident(owner, &mut sources, &mut cursor, lanes.scratch)? {
             return Ok(RowPreflightOutcome::FlushRequired(target));
         }
-        if let Some(row) = delete
-            && self.delete_target(owner, statement, &sources, table, (actor, row))?
-                == DeleteClass::NoRow
+        if let Some((row, _)) = target
+            && self.row_target(owner, statement, &sources, table, (actor, row))?
+                == TargetClass::NoRow
         {
-            return self.delete_no_row(statement, prefix, table);
+            return self.target_no_row(statement, prefix, table);
         }
         // The Free Undo: the first candidate in allocator order, made
         // resident, whose slot0 is the initial Free record.
@@ -484,32 +488,34 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             statement,
             prefix,
             &sources,
-            (slot0, root_job, table, delete),
+            (slot0, root_job, table, target),
             &mut lanes,
         )
         .map(RowPreflightOutcome::Ready)
     }
 
-    /// A DELETE's target under the statement snapshot
-    /// (dev3-row-delete.md#classification), with the Catalog leaf, the
+    /// A DELETE's or UPDATE's target under the statement snapshot
+    /// (dev3-row-delete.md#classification, dev3-row-update.md#classification:
+    /// one table for both), with the Catalog leaf, the
     /// RowLeaf and the Jobs bank's pages resident and the gate, admission and
     /// lease held: the snapshot first (an isolation leaf with no other guard
     /// held), then one typed read of the Catalog leaf and the RowLeaf and
     /// `target_class`: the table's schema from its record, an indexed table
-    /// Unsupported, then `delete_class` over the RowLeaf and the live Jobs.
-    /// Returns Delete or NoRow. A refusal (Busy, Unsupported,
+    /// Unsupported, then `row_class` over the RowLeaf and the live Jobs.
+    /// Returns Proceed or NoRow. A refusal (Busy, Unsupported,
     /// SerializationConflict) is Unchanged and registers nothing; a source
     /// contradiction is Fatal, never a refusal or zero rows. The RowLeaf
     /// image and the Jobs fold into the preflight commitment afterwards, so
-    /// `reserve_delete`'s recompute refuses any change since.
-    fn delete_target(
+    /// `reserve_delete`'s and `reserve_update`'s recompute refuses any
+    /// change since.
+    fn row_target(
         &self,
         owner: &mut Owner<'c, 's>,
         statement: &RowStatementView<'_, '_, 'a, 'c, 's>,
         sources: &RowSources,
         table: RowTableSource,
         target: (TxnRef, RowId),
-    ) -> Result<DeleteClass> {
+    ) -> Result<TargetClass> {
         let storage = self.storage;
         let namespace = storage.profile().spec().namespace;
         let census = |cause| fatal(storage, RetentionPhase::Census, cause);
@@ -551,23 +557,24 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 .map_err(|e| frame(RetentionPhase::Prepare, e)),
         )?;
         match class {
-            DeleteClass::Delete | DeleteClass::NoRow => Ok(class),
-            DeleteClass::Busy => Err(unchanged(RetentionPhase::Prepare, RetentionCause::Busy)),
-            DeleteClass::Unsupported => Err(unchanged(
+            TargetClass::Proceed | TargetClass::NoRow => Ok(class),
+            TargetClass::Busy => Err(unchanged(RetentionPhase::Prepare, RetentionCause::Busy)),
+            TargetClass::Unsupported => Err(unchanged(
                 RetentionPhase::Prepare,
                 RetentionCause::Unsupported,
             )),
-            DeleteClass::SerializationConflict => Err(unchanged(
+            TargetClass::SerializationConflict => Err(unchanged(
                 RetentionPhase::Prepare,
                 RetentionCause::SerializationConflict,
             )),
         }
     }
 
-    /// A zero-row DELETE (dev3-row-delete.md#classification): the WAL prefix
-    /// recheck of `row_observe_cut`, then the registration of the table read
-    /// bit with the catalog flag, which the statement keeps as its read set.
-    fn delete_no_row(
+    /// A zero-row DELETE or UPDATE (dev3-row-delete.md#classification): the
+    /// WAL prefix recheck of `row_observe_cut`, then the registration of the
+    /// table read bit with the catalog flag, which the statement keeps as its
+    /// read set.
+    fn target_no_row(
         &self,
         statement: &RowStatementView<'_, '_, 'a, 'c, 's>,
         prefix: WalPrefix,
@@ -654,7 +661,12 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         statement: &RowStatementView<'_, '_, 'a, 'c, 's>,
         prefix: WalPrefix,
         sources: &RowSources,
-        (slot0, root_job, table, delete): (Generation, u8, RowTableSource, Option<RowId>),
+        (slot0, root_job, table, target): (
+            Generation,
+            u8,
+            RowTableSource,
+            Option<(RowId, job3::RowEffect)>,
+        ),
         lanes: &mut PreflightLanes<'_>,
     ) -> Result<RowPreflightCut> {
         let storage = self.storage;
@@ -688,7 +700,8 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             roles: targets.roles,
             leaf_free: observed.leaf_free,
             root_job,
-            delete,
+            target: target.map(|(row, _)| row),
+            effect: target.map_or(job3::RowEffect::Insert, |(_, effect)| effect),
         })
     }
 
@@ -1191,11 +1204,12 @@ pub(super) fn table_value(
     Ok(value)
 }
 
-/// The DELETE target's class over the Catalog leaf and RowLeaf images
-/// (dev3-row-delete.md#classification): the issued table's schema, then an
+/// The DELETE or UPDATE target's class over the Catalog leaf and RowLeaf
+/// images (dev3-row-delete.md#classification,
+/// dev3-row-update.md#classification): the issued table's schema, then an
 /// indexed table (dev3-row-delete.md#scope) is Unsupported ahead of the
 /// target's class, by the complete census that gives INSERT's
-/// `RowPreflightContext::index_count`, then `delete_class`. A cause only,
+/// `RowPreflightContext::index_count`, then `row_class`. A cause only,
 /// as `table_value`.
 pub(in super::super::super) fn target_class(
     (catalog, catalog_identity): (&[u8; PAGE_BYTES], PageIdentity),
@@ -1204,12 +1218,12 @@ pub(in super::super::super) fn target_class(
     (jobs, namespace): (&[[u8; JOB_BYTES]; JOB_COUNT], crate::api::Namespace),
     target: (TxnRef, RowId),
     snapshot: (u64, bool),
-) -> std::result::Result<DeleteClass, RetentionCause> {
+) -> std::result::Result<TargetClass, RetentionCause> {
     let definition = table_definition(catalog, catalog_identity, table, namespace)?;
     if table_index_count(catalog, catalog_identity, table, namespace)? != 0 {
-        return Ok(DeleteClass::Unsupported);
+        return Ok(TargetClass::Unsupported);
     }
-    delete_class(
+    row_class(
         leaf,
         TreeExpectation {
             identity: leaf_identity,
@@ -1339,28 +1353,31 @@ fn terminal_state(
     found.ok_or(RetentionCause::Invariant)
 }
 
-/// The DELETE target `row` of `actor` in a RowLeaf image under the snapshot
-/// `(q, serializable)`, by the contract's table
-/// (dev3-row-delete.md#classification). A record that does not decode, a
-/// `Committed` tombstone, a `Committed` row with an undo, a `Transaction`
-/// row with no undo, and a row of another transaction whose terminal is
-/// missing or aborted are the sources' contradiction: the Err cause, which
-/// the caller makes Fatal and never lowers to Busy or zero rows.
-pub(in super::super::super) fn delete_class(
+/// The DELETE or UPDATE target `row` of `actor` in a RowLeaf image under
+/// the snapshot `(q, serializable)`, by the contracts' one table
+/// (dev3-row-delete.md#classification, dev3-row-update.md#classification).
+/// Another transaction's Inline row is an INSERT or an UPDATE row by the
+/// effect of the one root Job holding it (`holder_effect`). A record that
+/// does not decode, a `Committed` tombstone, a `Committed` row with an undo,
+/// a `Transaction` row with no undo, a row of another transaction whose
+/// terminal is missing or aborted, and an Inline row of another transaction
+/// that no single root binds are the sources' contradiction: the Err cause,
+/// which the caller makes Fatal and never lowers to Busy or zero rows.
+pub(in super::super::super) fn row_class(
     leaf: &[u8; PAGE_BYTES],
     expected: TreeExpectation,
     schema: RowSchemaInput<'_>,
     (jobs, namespace): (&[[u8; JOB_BYTES]; JOB_COUNT], crate::api::Namespace),
     (actor, row): (TxnRef, RowId),
     (snapshot, serializable): (u64, bool),
-) -> std::result::Result<DeleteClass, RetentionCause> {
+) -> std::result::Result<TargetClass, RetentionCause> {
     let corrupt = || RetentionCause::RowSemantic(crate::storage::semantic_row::Error::Corrupt);
     let view = tree_page::decode_tree_page(leaf, expected).map_err(RetentionCause::Tree)?;
     let position = view
         .lower_bound(&row.get().to_be_bytes())
         .map_err(RetentionCause::Tree)?;
     if !position.equal {
-        return Ok(DeleteClass::NoRow);
+        return Ok(TargetClass::NoRow);
     }
     // A non-Value entry is a leaf A does not write (`leaf_free_bytes`).
     let EntryPayload::Value(value) = view
@@ -1368,7 +1385,7 @@ pub(in super::super::super) fn delete_class(
         .map_err(RetentionCause::Tree)?
         .payload
     else {
-        return Ok(DeleteClass::Unsupported);
+        return Ok(TargetClass::Unsupported);
     };
     let record = row_record::decode_row_record_with_schema(
         value,
@@ -1386,10 +1403,10 @@ pub(in super::super::super) fn delete_class(
                 return Err(corrupt());
             }
             if overflow {
-                return Ok(DeleteClass::Unsupported);
+                return Ok(TargetClass::Unsupported);
             }
             if q.get() > snapshot {
-                return Ok(DeleteClass::NoRow);
+                return Ok(TargetClass::NoRow);
             }
             // RowId is unique among the root Jobs of every actor and state,
             // the actor's own included (a Releasing INSERT root before its
@@ -1397,10 +1414,10 @@ pub(in super::super::super) fn delete_class(
             for cell in jobs {
                 let job = job3::decode_job(cell, namespace).map_err(RetentionCause::Retention)?;
                 if job.state().is_root() && job.row_id() == Some(row) {
-                    return Ok(DeleteClass::Busy);
+                    return Ok(TargetClass::Busy);
                 }
             }
-            Ok(DeleteClass::Delete)
+            Ok(TargetClass::Proceed)
         }
         VersionStamp::Transaction(writer) => {
             if version.undo.is_none() {
@@ -1410,29 +1427,89 @@ pub(in super::super::super) fn delete_class(
                 // Already deleted by this transaction; its own INSERT row
                 // needs a version chain the first path does not have.
                 return Ok(if deleted {
-                    DeleteClass::NoRow
+                    TargetClass::NoRow
                 } else {
-                    DeleteClass::Unsupported
+                    TargetClass::Unsupported
                 });
             }
             let terminal = terminal_state(jobs, namespace, writer)?;
             if overflow {
-                return Ok(DeleteClass::Unsupported);
+                return Ok(TargetClass::Unsupported);
             }
-            Ok(match (deleted, terminal) {
-                (true, TerminalState::Leased) => DeleteClass::Busy,
-                (true, TerminalState::Committed(q)) if q <= snapshot => DeleteClass::NoRow,
-                (true, TerminalState::Committed(_)) if serializable => {
-                    DeleteClass::SerializationConflict
+            if deleted {
+                return Ok(match terminal {
+                    TerminalState::Leased => TargetClass::Busy,
+                    TerminalState::Committed(q) if q <= snapshot => TargetClass::NoRow,
+                    TerminalState::Committed(_) if serializable => {
+                        TargetClass::SerializationConflict
+                    }
+                    TerminalState::Committed(_) => TargetClass::NoRow,
+                });
+            }
+            let effect = holder_effect(jobs, (namespace, expected), (writer, row), version.undo)?;
+            Ok(match (effect, terminal) {
+                // An INSERT row S does not see.
+                (job3::RowEffect::Insert, TerminalState::Leased) => TargetClass::NoRow,
+                (job3::RowEffect::Insert, TerminalState::Committed(q)) if q > snapshot => {
+                    TargetClass::NoRow
                 }
-                (true, TerminalState::Committed(_)) => DeleteClass::NoRow,
-                (false, TerminalState::Leased) => DeleteClass::NoRow,
-                (false, TerminalState::Committed(q)) if q > snapshot => DeleteClass::NoRow,
                 // Committed and visible but not yet pruned.
-                (false, TerminalState::Committed(_)) => DeleteClass::Busy,
+                (job3::RowEffect::Insert, TerminalState::Committed(_)) => TargetClass::Busy,
+                // An UPDATE row: its old value is visible to S, so it is a
+                // write conflict, with no wait in the first path; an older
+                // Serializable snapshot fails as its commit validation would.
+                (job3::RowEffect::Update, TerminalState::Committed(q))
+                    if q > snapshot && serializable =>
+                {
+                    TargetClass::SerializationConflict
+                }
+                (job3::RowEffect::Update, _) => TargetClass::Busy,
+                // `holder_effect` binds only an INSERT or UPDATE root.
+                (job3::RowEffect::Delete, _) => return Err(corrupt()),
             })
         }
     }
+}
+
+/// The effect of the one root Job that holds another transaction's Inline
+/// row `row` (dev3-row-update.md#classification): an INSERT row (0) or an
+/// UPDATE row (2). Every root holding the RowId must be that root, bound by
+/// the base4 actor's Retained pair fields: Row scope, `RootRetained`, effect
+/// 0 or 2, source `writer` (id and Status generation), object and generation
+/// of the table `expected` names, and the row's undo. No such root, two of
+/// them or a root that fails a field is the sources' contradiction, so a
+/// corrupt bank cannot move the answer between zero rows, Busy and
+/// SerializationConflict.
+fn holder_effect(
+    jobs: &[[u8; JOB_BYTES]; JOB_COUNT],
+    (namespace, expected): (crate::api::Namespace, TreeExpectation),
+    (writer, row): (TxnRef, RowId),
+    undo: Option<UndoRef>,
+) -> std::result::Result<job3::RowEffect, RetentionCause> {
+    let corrupt = || RetentionCause::RowSemantic(crate::storage::semantic_row::Error::Corrupt);
+    let mut found = None;
+    for cell in jobs {
+        let job = job3::decode_job(cell, namespace).map_err(RetentionCause::Retention)?;
+        if !job.state().is_root() || job.row_id() != Some(row) {
+            continue;
+        }
+        let bound = job.scope() == Some(job3::JobScope::Row)
+            && job.state() == job3::JobState::RootRetained
+            && matches!(
+                job.effect(),
+                job3::RowEffect::Insert | job3::RowEffect::Update
+            )
+            && job.source() == Some(writer)
+            && job.object().is_some_and(|object| {
+                object.object == expected.identity.owner
+                    && object.generation == expected.identity.owner_generation
+            })
+            && job.undo() == undo;
+        if !bound || found.replace(job.effect()).is_some() {
+            return Err(corrupt());
+        }
+    }
+    found.ok_or_else(corrupt)
 }
 
 /// Source-bound inventory of the actual preflight, in the repository's
@@ -1469,10 +1546,11 @@ pub(in super::super::super) struct RowPreflightBody {
     /// The Free Undo steps other than its LOAD: the allocator copy, the Job
     /// scan, the candidate scan of the allocator copy and the slot0 read.
     pub(in super::super::super) undo_scan: usize,
-    /// A DELETE's classification (`delete_target`: the snapshot, the typed
-    /// read of the Catalog leaf and the RowLeaf, the table definition, the
-    /// index census and `delete_class`) or its zero-row end (`delete_no_row`: the prefix
-    /// recheck and the registration), one after the other.
+    /// A DELETE's or UPDATE's classification (`row_target`: the snapshot,
+    /// the typed read of the Catalog leaf and the RowLeaf, the table
+    /// definition, the index census and `row_class` with `holder_effect`)
+    /// or its zero-row end (`target_no_row`: the prefix recheck and the
+    /// registration), one after the other.
     pub(in super::super::super) delete: usize,
     /// `row_observe_cut`'s own values: T, the observation, the prefix
     /// recheck and the cut's Result.
@@ -1542,11 +1620,17 @@ pub(in super::super) fn row_preflight_body<W: WriterNamespace>(
         + 2 * size_of::<Result<Option<TargetRequest>>>()
         + size_of::<Generation>()
         + 2 * size_of::<Result<Option<Generation>>>()
-        + size_of::<(Generation, u8, RowTableSource, Option<RowId>)>()
+        + size_of::<(
+            Generation,
+            u8,
+            RowTableSource,
+            Option<(RowId, job3::RowEffect)>,
+        )>()
         + 2 * size_of::<Result<RowPreflightCut>>()
-        // The DELETE target, its classification and the zero-row end.
-        + size_of::<Option<RowId>>()
-        + 2 * size_of::<Result<DeleteClass>>()
+        // The DELETE or UPDATE target, its classification and the zero-row
+        // end.
+        + size_of::<Option<(RowId, job3::RowEffect)>>()
+        + 2 * size_of::<Result<TargetClass>>()
         + 2 * size_of::<Result<RowPreflightOutcome>>()
         + 4 * size_of::<RetentionError>()
         // Receiver, five arguments, storage and preparation.
@@ -1626,22 +1710,32 @@ pub(in super::super) fn row_preflight_body<W: WriterNamespace>(
             // jobs_request: the index and the source's Plan4Target.
             size_of::<u8>() + 2 * size_of::<Result<Plan4Target>>() + 2 * reference,
         );
-    // `delete_target`: the snapshot (a statement check, the isolation leaf
+    // `row_target`: the snapshot (a statement check, the isolation leaf
     // and the visibility row, as `register` counts the first two), then the
     // typed read of the Catalog leaf and the RowLeaf with `target_class`: the
     // table record's decode, the index census (`table_index_count`, as
-    // `row_write` counts it) and `delete_class` one after the other, the
-    // definition held across the last two. `delete_class` holds the
-    // tree view, the search position and the record view beside the RowLeaf
-    // search, the record decode or one Job decode at a time.
+    // `row_write` counts it) and `row_class` one after the other, the
+    // definition held across the last two. `row_class` holds the tree view,
+    // the search position and the record view beside the RowLeaf search,
+    // the record decode, one Job decode at a time or `holder_effect`, which
+    // holds its own Job view and answer beside one Job decode.
     let snapshot = register
         + 2 * size_of::<Result<(u64, bool)>>()
         + 2 * size_of::<visibility::VisibilityResult<bool>>()
         + 4 * reference;
+    let holder = size_of::<Option<job3::RowEffect>>()
+        + size_of::<job3::JobView<'_>>()
+        + 2 * size_of::<
+            std::result::Result<job3::JobView<'_>, crate::storage::retention_page::RetentionError>,
+        >()
+        + size_of::<bool>()
+        + 8 * reference
+        + job3::source_bytes();
     let class = size_of::<tree_page::TreePageView<'_>>()
         + size_of::<tree_page::SearchPosition>()
         + size_of::<row_record::RowRecordView<'_>>()
-        + 2 * size_of::<std::result::Result<DeleteClass, RetentionCause>>()
+        + 2 * size_of::<std::result::Result<TargetClass, RetentionCause>>()
+        + 2 * size_of::<std::result::Result<job3::RowEffect, RetentionCause>>()
         + 2 * size_of::<std::result::Result<TerminalState, RetentionCause>>()
         + 2 * size_of::<Option<TerminalState>>()
         + 2 * size_of::<job3::JobView<'_>>()
@@ -1652,14 +1746,15 @@ pub(in super::super) fn row_preflight_body<W: WriterNamespace>(
         + 12 * reference
         + row_group::tree_source_bytes()
             .max(row_group::row_record_source_bytes())
-            .max(job3::source_bytes());
+            .max(job3::source_bytes())
+            .max(holder);
     let classify = size_of::<[TargetRequest; 2]>()
         + 2 * size_of::<usize>()
         + size_of::<(u64, bool)>()
         + size_of::<TableDefinitionView<'_>>()
         + 2 * size_of::<std::result::Result<TableDefinitionView<'_>, RetentionCause>>()
         + 2 * size_of::<std::result::Result<u16, RetentionCause>>()
-        + 2 * size_of::<Result<DeleteClass>>()
+        + 2 * size_of::<Result<TargetClass>>()
         + 2 * size_of::<dirty_frame::Result<&[u8; PAGE_BYTES]>>()
         + 2 * size_of::<RetentionError>()
         + 8 * reference
@@ -1691,7 +1786,12 @@ pub(in super::super) fn row_preflight_body<W: WriterNamespace>(
         + 2 * size_of::<Result<Observed>>()
         + size_of::<WalPrefix>()
         + 2 * size_of::<std::result::Result<WalPrefix, crate::storage::wal_io::WalIoError>>()
-        + size_of::<(Generation, u8, RowTableSource, Option<RowId>)>()
+        + size_of::<(
+            Generation,
+            u8,
+            RowTableSource,
+            Option<(RowId, job3::RowEffect)>,
+        )>()
         + 4 * size_of::<RetentionError>()
         + 8 * reference;
     // RowTargets::new: the allocator, the rank-sorted list, its count and
@@ -1789,3 +1889,6 @@ pub(in super::super::super) mod rollback;
 #[cfg(test)]
 #[path = "row_delete_tests.rs"]
 mod delete_tests;
+#[cfg(test)]
+#[path = "row_update_tests.rs"]
+mod update_tests;

@@ -28,10 +28,14 @@ pub(crate) struct ReservePlan {
     pub(crate) cell_bytes: u32,
     pub(crate) projection: [u8; 32],
     pub(crate) predecessor: bool,
-    /// The root's effect (dev3-row-delete.md#job-effect): an INSERT root, or a
+    /// The root's effect (dev3-row-delete.md#job-effect): an INSERT root, a
     /// DELETE root whose `cell_bytes` is the old row's cell and whose
-    /// projection is the planned tombstone's.
+    /// projection is the planned tombstone's, or an UPDATE root whose
+    /// `cell_bytes` is the old row's cell, `new_cell` the planned row's C'
+    /// and projection the planned row's (dev3-row-update.md#job-effect).
     pub(crate) effect: row::RowEffect,
+    /// UPDATE's C'; 0 for INSERT and DELETE.
+    pub(crate) new_cell: u32,
 }
 #[derive(Clone, Copy)]
 pub(crate) struct JobImages<'a> {
@@ -73,9 +77,9 @@ impl JobObservation {
 /// the first free ordinal, issue high-water numbers, prove Root commitment,
 /// physical Status/U/Row, descriptor residuals, ownership, admission or replay.
 pub(crate) fn observe(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<JobObservation> {
-    let delete = layout.operation() != layout.operation().role();
-    // A DELETE root's Forward/Clr/Prune follow the INSERT role's Job rules;
-    // the root's effect byte must name the operation's effect.
+    // A DELETE or UPDATE root's Forward/Clr/Prune follow the INSERT role's
+    // Job rules; the root's effect byte must name the operation's effect.
+    let effect = super::undo::opcode_effect(layout.operation());
     let op = layout.operation().role();
     if matches!(
         op,
@@ -92,8 +96,9 @@ pub(crate) fn observe(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<JobOb
     if matches!(op, Operation::Forward | Operation::Clr | Operation::Prune) {
         require(
             before.cell_bytes() as usize == layout.shape().cell
+                && before.new_cell() == u32::from(layout.shape().new_cell)
                 && before.has_previous_transaction() == Some(layout.shape().predecessor)
-                && (before.effect() == row::RowEffect::Delete) == delete,
+                && before.effect() == effect,
         )?;
     }
     census(layout, input)?;
@@ -137,6 +142,7 @@ pub(crate) fn observe(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<JobOb
                     && after.mutation() == plan.mutation
                     && after.row_id() == Some(plan.row)
                     && after.cell_bytes() == plan.cell_bytes
+                    && after.new_cell() == plan.new_cell
                     && after.projection_digest() == &plan.projection
                     && after.has_previous_transaction() == Some(plan.predecessor)
                     && after.effect() == plan.effect,

@@ -27,15 +27,32 @@ fn origin<'c, 's, const T: usize>(prepared: &PreparedRowGroup<'_, 'c, 's, T>) ->
     }
 }
 
-/// The retirement scope of a retiring live Row cleanup operation. Cancel,
-/// ReleaseRole and every other Row group retire no reference target.
+/// The retirement scope of a retiring live Row cleanup operation. DeletePrune
+/// and UpdatePrune drop the old value U holds, so both need no snapshot
+/// that reads it (`ValuePrune`, dev3-row-update.md#retirement). Cancel,
+/// ReleaseRole and every other Row group retire no reference target. The
+/// match names every operation, so a new one cannot fall to no scope.
 fn scope(operation: Operation) -> Option<RetirementScope> {
     match operation {
         Operation::Prune => Some(RetirementScope::MissingPrune),
-        Operation::DeletePrune => Some(RetirementScope::ValuePrune),
+        Operation::DeletePrune | Operation::UpdatePrune => Some(RetirementScope::ValuePrune),
         Operation::RootFree => Some(RetirementScope::UndoFree),
         Operation::TerminalFinish => Some(RetirementScope::TerminalFree),
-        _ => None,
+        Operation::Begin
+        | Operation::Forward
+        | Operation::RollbackStart
+        | Operation::Clr
+        | Operation::StatementFinish
+        | Operation::Commit
+        | Operation::AbortEnd
+        | Operation::DeleteForward
+        | Operation::DeleteClr
+        | Operation::UpdateForward
+        | Operation::Reserve
+        | Operation::Cancel
+        | Operation::UpdateClr
+        | Operation::AgingStart
+        | Operation::ReleaseRole => None,
     }
 }
 
@@ -60,8 +77,8 @@ impl<'a, 'c, 's> BoundVisibility<'a, 'c, 's> {
     /// original target still carries its prepared stamp under the same
     /// version hold, the held Job names the group's actor, and the target
     /// comes from that Job (and, for Prune, the held Status's committed Q).
-    /// Prune names the head U (`MissingPrune`, its Q), DeletePrune the head
-    /// U (`ValuePrune`, its Q), RootFree U (`UndoFree`), TerminalFinish the
+    /// Prune names the head U (`MissingPrune`, its Q), DeletePrune and
+    /// UpdatePrune the head U (`ValuePrune`, its Q), RootFree U (`UndoFree`), TerminalFinish the
     /// actor (`TerminalFree`).
     pub(in super::super) fn verify_row_retirement<const T: usize, const N: usize>(
         &self,

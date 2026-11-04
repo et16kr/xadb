@@ -142,7 +142,14 @@ pub(super) fn history_d(rejects: bool) -> usize {
 }
 
 /// History D calling `probe` with the World after each named group.
-fn history_d_with(rejects: bool, mut probe: impl FnMut(&str, &World)) -> usize {
+fn history_d_with(rejects: bool, probe: impl FnMut(&str, &World)) -> usize {
+    let world = history_d_world(rejects, probe);
+    world.rejects.as_ref().map_or(0, Cell::get)
+}
+
+/// The World at the end of history D (history U's start,
+/// `transition_update_tests.rs`), `probe` called after each named group.
+pub(super) fn history_d_world(rejects: bool, mut probe: impl FnMut(&str, &World)) -> Box<World> {
     let mut world = history_h_world(false);
     world.rejects = rejects.then(|| Cell::new(0));
     World::replace(&mut world.status, 20, &page_of(blob("D-status20-0")));
@@ -405,7 +412,7 @@ fn history_d_with(rejects: bool, mut probe: impl FnMut(&str, &World)) -> usize {
         }
         world.produce(names[3], Change::RootFree { ordinal }, undo);
     }
-    world.rejects.map_or(0, Cell::into_inner)
+    world
 }
 
 /// A's five history D groups and the group after which their before state
@@ -557,8 +564,8 @@ fn retained_d(world: &World) -> usize {
         .sum()
 }
 
-/// `leaf` with committed filler rows (keys from 1000, the version of row 9
-/// or, while row 9 is a tombstone, of row 4, text values) added until
+/// `leaf` with committed filler rows (keys from 1000, the version of the
+/// first committed row of 9, 4, 11 and 12, text values) added until
 /// `TREE_ENTRY_CAPACITY - entry bytes == free`. Each entry costs its record,
 /// the 12-byte cell head and the 4-byte slot.
 pub(crate) fn padded_leaf(leaf: &Page, free: usize) -> Box<Page> {
@@ -586,13 +593,16 @@ pub(crate) fn padded_leaf(leaf: &Page, free: usize) -> Box<Page> {
             .sum::<usize>()
     };
     // The fillers copy a committed row's version: row 9, or row 4 while
-    // row 9 is a tombstone.
-    let version = [9u64, 4]
+    // row 9 is a tombstone, or (history U, where row 4 is gone and row 9 may
+    // be an UPDATE row) row 11 or 12.
+    let version = [9u64, 4, 11, 12]
         .into_iter()
         .find_map(|row| {
             let view = tree_page::decode_tree_page(leaf, expected).unwrap();
             let at = view.lower_bound(&row.to_be_bytes()).unwrap();
-            assert!(at.equal, "row {row}");
+            if !at.equal {
+                return None;
+            }
             let EntryPayload::Value(value) = view.entry(at.index).unwrap().payload else {
                 panic!("row {row}");
             };

@@ -467,8 +467,9 @@ fn wire_dialect_reports_unsupported_before_semantic_use() {
     for (name, at, value, width) in [
         ("op-2", 164, 1, 2),
         ("op-2", 170, 2, 2),
-        // 8 is DeleteForward since dev3-row-delete.md; 10 is still unknown.
-        ("op-2", 166, 10, 2),
+        // 8 is DeleteForward since dev3-row-delete.md and 10 UpdateForward
+        // since dev3-row-update.md; 14 is still unknown.
+        ("op-2", 166, 14, 2),
         ("op-2", 7, 2, 1),
         ("op-5", 7, 3, 1),
         ("op-2", 6, 4, 1),
@@ -523,14 +524,16 @@ fn wire_owner(system: bool) -> Vec<u8> {
     }
     b
 }
-/// DeleteForward/DeleteClr/DeletePrune core: the INSERT role's refs, plan,
-/// projection and cursors (author.py `core` for ops 2/4/20), its own opcode.
+/// DELETE's (8/9/23) and UPDATE's (10/13/24) Forward/Clr/Prune core: the
+/// INSERT role's refs, plan, projection and cursors (author.py `core` for ops
+/// 2/4/20), its own opcode.
 fn delete_core(op: u16, h: bool) -> Vec<u8> {
+    let prune = matches!(op, 23 | 24);
     let mut b = vec![0; 256];
     put(&mut b, 0, u64::from(op), 2);
     put(&mut b, 4, 256, 4);
     let mut flags = 1 | 24;
-    if op != 23 {
+    if !prune {
         put(&mut b, 8, 3, 8);
         put(&mut b, 16, 7, 8);
     }
@@ -542,7 +545,7 @@ fn delete_core(op: u16, h: bool) -> Vec<u8> {
     }
     b[176..208].copy_from_slice(&content_digest(b"WIRE_ONLY before"));
     b[208..240].copy_from_slice(&content_digest(b"WIRE_ONLY after"));
-    if op == 23 {
+    if prune {
         put(&mut b, 160, 62, 8);
         put(&mut b, 168, 63, 8);
     }
@@ -566,6 +569,11 @@ fn delete_sides(op: u16, role: &str, c: usize) -> (Option<usize>, Option<usize>)
     }
 }
 fn delete_bodies(op: u16, c: usize) -> (Vec<u8>, Vec<u8>, usize) {
+    row_bodies(|name| delete_sides(op, name, c))
+}
+/// The five Row natives and redo records with each role's (before, after)
+/// sizes from `sides`.
+fn row_bodies(sides: impl Fn(&str) -> (Option<usize>, Option<usize>)) -> (Vec<u8>, Vec<u8>, usize) {
     // name, page number, page kind, object, native kind, slot
     let roles = [
         ("root", 1, 12, 4, 8, 0),
@@ -576,7 +584,7 @@ fn delete_bodies(op: u16, c: usize) -> (Vec<u8>, Vec<u8>, usize) {
     ];
     let (mut natives, mut redos) = (Vec::new(), Vec::new());
     for (i, &(name, number, page_kind, object, kind, slot)) in roles.iter().enumerate() {
-        let (before, after) = delete_sides(op, name, c);
+        let (before, after) = sides(name);
         let before = before.map(|n| vec![64 + i as u8; n]);
         let after = after.map(|n| vec![96 + i as u8; n]);
         let mut b = vec![0; 128];
@@ -617,7 +625,12 @@ fn delete_bodies(op: u16, c: usize) -> (Vec<u8>, Vec<u8>, usize) {
 }
 /// One sealed scope3 DELETE frame (author.py `frame`, ops 8/9/23).
 fn delete_frame(op: u16, c: usize, h: bool) -> Vec<u8> {
-    let handoff = op != 23;
+    row_frame(op, h, delete_bodies(op, c))
+}
+/// One sealed scope3 Row value frame (DELETE 8/9/23, UPDATE 10/13/24) over
+/// its native and redo bodies.
+fn row_frame(op: u16, h: bool, bodies: (Vec<u8>, Vec<u8>, usize)) -> Vec<u8> {
+    let handoff = !matches!(op, 23 | 24);
     let mut g = vec![0; if handoff { 256 } else { 192 }];
     g[..4].copy_from_slice(if handoff { b"XHG1" } else { b"XSG1" });
     let header = g.len() as u64;
@@ -625,8 +638,8 @@ fn delete_frame(op: u16, c: usize, h: bool) -> Vec<u8> {
         put(&mut g, at, value, 2);
     }
     put(&mut g, 16, 101, 8);
-    let (native, redo, count) = delete_bodies(op, c);
-    let (e, k, i) = (3 + u64::from(h), 2, u64::from(op == 8));
+    let (native, redo, count) = bodies;
+    let (e, k, i) = (3 + u64::from(h), 2, u64::from(matches!(op, 8 | 10)));
     let mut descriptors = vec![209; 1536];
     if handoff {
         put(&mut g, 24, 100, 8);
@@ -692,8 +705,8 @@ fn delete_frame(op: u16, c: usize, h: bool) -> Vec<u8> {
     b[..4].copy_from_slice(b"XWF1");
     put(&mut b, 4, 1, 2);
     b[6] = match op {
-        8 => 2,
-        9 => 4,
+        8 | 10 => 2,
+        9 | 13 => 4,
         _ => 3,
     };
     b[7] = if handoff { 3 } else { 2 };
@@ -770,7 +783,8 @@ fn rdl_f01_delete_opcodes_decode_role_outer_handoff() {
     ] {
         assert_eq!(op.role(), op);
     }
-    for code in [0, 10, 13, 14, 15, 18, 19, 24, 65535] {
+    // 10, 13 and 24 are UPDATE's since dev3-row-update.md (RUP-F01).
+    for code in [0, 14, 15, 18, 19, 25, 65535] {
         assert_eq!(
             Operation::decode(code).err(),
             Some(Error::Unsupported),
@@ -998,4 +1012,350 @@ fn rdl_f04_delete_core_role_rules() {
         assert_eq!(run(op, true, target), Some(Error::OrderMismatch), "op {op}");
     }
     assert_eq!(run(9, true, target), None, "DeleteClr refs 7");
+}
+
+// ---- RUP-F: Row UPDATE first-path wire literals (dev3-row-update.md
+// #update-shape). The same independent packing as RDL-F; sizes are the
+// contract's integers, never `operation::native_sides` or `shape`. ----
+
+/// The contract's literal sides per role for UPDATE (#update-shape): leaf
+/// C→C' (Forward), C'→C (Clr), C'→C' (Prune); U 432↔432+L.
+fn update_sides(op: u16, role: &str, c: usize, n: usize) -> (Option<usize>, Option<usize>) {
+    let live = 432 + c - 180;
+    match (role, op) {
+        ("root", _) => (Some(512), Some(512)),
+        ("job", _) => (Some(1024), Some(1024)),
+        ("status", _) => (Some(224), Some(224)),
+        ("undo", 10) => (Some(432), Some(live)),
+        ("undo", _) => (Some(live), Some(432)),
+        ("row", 10) => (Some(c), Some(n)),
+        ("row", 13) => (Some(n), Some(c)),
+        ("row", _) => (Some(n), Some(n)),
+        _ => unreachable!(),
+    }
+}
+/// One sealed scope3 UPDATE frame of opcode `op`, old cell C and new cell C'.
+fn update_frame(op: u16, c: usize, n: usize, h: bool) -> Vec<u8> {
+    row_frame(op, h, row_bodies(|name| update_sides(op, name, c, n)))
+}
+const UPDATE_OPS: [(Operation, u16); 3] = [
+    (Operation::UpdateForward, 10),
+    (Operation::UpdateClr, 13),
+    (Operation::UpdatePrune, 24),
+];
+/// (C, C'): the four bound pairs, a growing, a shrinking and an equal one.
+const UPDATE_CELLS: [(usize, usize); 7] = [
+    (185, 185),
+    (185, 2228),
+    (2228, 185),
+    (2228, 2228),
+    (199, 230),
+    (230, 199),
+    (400, 400),
+];
+/// Each native record's start in a Row frame of opcode `op`.
+fn native_starts(b: &[u8], op: u16) -> Vec<usize> {
+    let prune = matches!(op, 23 | 24);
+    let mut at = 160 + if prune { 192 + 1536 } else { 256 + 3072 } + 256;
+    let mut out = Vec::new();
+    for _ in 0..5 {
+        out.push(at);
+        at += u32::from_le_bytes(b[at + 20..at + 24].try_into().unwrap()) as usize;
+    }
+    out
+}
+
+/// RUP-F01: 10/13/24 decode as UPDATE's three operations with the INSERT
+/// role's outer, handoff and native mask; only they name a new cell.
+#[test]
+fn rup_f01_update_opcodes_decode_role_outer_handoff() {
+    for (op, code, role, outer, handoff) in [
+        (
+            Operation::UpdateForward,
+            10,
+            Operation::Forward,
+            FrameKind::Update,
+            true,
+        ),
+        (
+            Operation::UpdateClr,
+            13,
+            Operation::Clr,
+            FrameKind::Clr,
+            true,
+        ),
+        (
+            Operation::UpdatePrune,
+            24,
+            Operation::Prune,
+            FrameKind::System,
+            false,
+        ),
+    ] {
+        assert_eq!(Operation::decode(code), Ok(op));
+        assert_eq!(op as u16, code);
+        assert_eq!(op.role(), role);
+        assert_eq!(op.outer(), outer);
+        assert_eq!(op.handoff(), handoff);
+        assert!(op.row() && op.update() && !op.status_patch());
+        assert_eq!(op.native_mask(), role.native_mask());
+    }
+    for code in [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 16, 17, 20, 21, 22, 23] {
+        assert!(!Operation::decode(code).unwrap().update(), "{code}");
+    }
+}
+
+/// RUP-F02: the closed UPDATE shapes and frames over (C, C') bounds, growing,
+/// shrinking and equal pairs and h 0/1; the largest Row frame 97936 B leaves
+/// 368 B of FRAME_BYTES; C' is required exactly for the UPDATE opcodes.
+#[test]
+fn rup_f02_update_shape_and_frame_equations() {
+    for (c, n) in UPDATE_CELLS {
+        for h in [false, true] {
+            let h128 = 128 * usize::from(h);
+            for (op, natives, frame, items) in [
+                (
+                    Operation::UpdateForward,
+                    4844 + 2 * c + n,
+                    91124 + 2 * c + n + h128,
+                    1,
+                ),
+                (
+                    Operation::UpdateClr,
+                    4844 + 2 * c + n,
+                    90916 + 2 * c + n + h128,
+                    0,
+                ),
+                (
+                    Operation::UpdatePrune,
+                    4844 + c + 2 * n,
+                    89316 + c + 2 * n + h128,
+                    0,
+                ),
+            ] {
+                let shape = op.shape_cells(c, n, h).unwrap();
+                assert_eq!(shape.native_count, 5);
+                assert_eq!(shape.native_bytes, natives, "{op:?} {c} {n}");
+                assert_eq!(shape.edges, 3 + u16::from(h));
+                assert_eq!(shape.counts, 2);
+                assert_eq!(shape.items, items);
+                assert_eq!(shape.redo_count, 5);
+                assert_eq!(shape.redo_bytes, 81720);
+                assert_eq!((shape.cell, usize::from(shape.new_cell)), (c, n));
+                assert_eq!(shape.predecessor, h);
+                assert_eq!(op.frame_bytes_cells(c, n, h).unwrap(), frame);
+                assert!(frame <= FRAME_BYTES);
+            }
+        }
+    }
+    let max = |op: Operation| op.frame_bytes_cells(2228, 2228, true).unwrap();
+    assert_eq!(max(Operation::UpdateForward), 97936);
+    assert_eq!(max(Operation::UpdateClr), 97728);
+    assert_eq!(max(Operation::UpdatePrune), 96128);
+    assert_eq!(FRAME_BYTES - 97936, 368);
+    for (op, _) in UPDATE_OPS {
+        for bad in [0, 180, 184, 2229, usize::MAX] {
+            assert!(op.shape_cells(185, bad, false).is_err(), "{op:?} C' {bad}");
+            assert!(op.shape_cells(bad, 185, false).is_err(), "{op:?} C {bad}");
+        }
+        // `shape` names no C', so it cannot shape an UPDATE.
+        assert!(op.shape(185, false).is_err());
+        assert!(op.frame_bytes(185, false).is_err());
+    }
+    for op in [
+        Operation::Forward,
+        Operation::DeleteForward,
+        Operation::DeletePrune,
+    ] {
+        assert!(op.shape_cells(185, 185, false).is_err(), "{op:?} with C'");
+        assert_eq!(
+            op.shape_cells(185, 0, false).unwrap(),
+            op.shape(185, false).unwrap()
+        );
+    }
+    assert!(Operation::Reserve.shape_cells(0, 185, false).is_err());
+}
+
+/// RUP-F03: independently packed UPDATE frames decode under every scope3
+/// profile with C' from the leaf record and C from the total, and each
+/// native carries the contract's sides.
+#[test]
+fn rup_f03_update_frames_decode_with_contract_native_sides() {
+    for (op, code) in UPDATE_OPS {
+        for (c, n) in UPDATE_CELLS {
+            for h in [false, true] {
+                let b = update_frame(code, c, n, h);
+                assert_eq!(b.len(), op.frame_bytes_cells(c, n, h).unwrap());
+                for id in 1..=3 {
+                    let p = profile(id);
+                    let v = decode_layout(&b, expected(p), p).unwrap();
+                    assert_eq!(v.operation(), op);
+                    assert_eq!(v.shape(), op.shape_cells(c, n, h).unwrap());
+                    assert_eq!(v.header().kind, op.outer());
+                    assert_eq!(v.core().operation(), op);
+                    assert_eq!(v.core().next().is_some(), h);
+                    let names = ["root", "job", "status", "undo", "row"];
+                    assert_eq!(v.native_records().count(), names.len());
+                    for (native, name) in v.native_records().zip(names) {
+                        let (before, after) = update_sides(code, name, c, n);
+                        assert_eq!(native.before().map(<[u8]>::len), before, "{op:?} {name}");
+                        assert_eq!(native.after().map(<[u8]>::len), after, "{op:?} {name}");
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// RUP-F04: the kind-1 pre-scan and C' derivation refuse, all as Corrupt
+/// (#update-shape): no or two leaf records, C' outside 185..=2228 with an
+/// in-range C, an odd Forward/Clr remainder, record lengths 0, 127 and past
+/// the section, bytes left after five records, a section past the frame.
+/// A native that disagrees with (C, C'), and INSERT/DELETE frames relabelled
+/// as UPDATE opcodes, are refused too.
+#[test]
+fn rup_f04_update_cell_derivation_refused() {
+    fn refuse(op: u16, c: usize, n: usize, change: impl FnOnce(&mut Vec<u8>)) {
+        let mut b = update_frame(op, c, n, false);
+        change(&mut b);
+        reseal(&mut b);
+        assert_eq!(
+            check(&b).err(),
+            Some(Error::Corrupt),
+            "op {op} C {c} C' {n}"
+        );
+    }
+    let total_at = |op: u16| 160 + if op == 24 { 136 } else { 228 };
+    let side = |op: u16| if op == 10 { 16 } else { 12 };
+    for (_, op) in UPDATE_OPS {
+        // No kind-1 record: the leaf record relabelled as kind 2.
+        refuse(op, 185, 230, |b| {
+            let at = native_starts(b, op)[4];
+            b[at] = 2;
+        });
+        // Two kind-1 records: the U record relabelled as kind 1.
+        refuse(op, 185, 230, |b| {
+            let at = native_starts(b, op)[3];
+            b[at] = 1;
+        });
+        // Record lengths 0 and 127 (the U record) and one past the section.
+        for length in [0, 127] {
+            refuse(op, 185, 230, |b| {
+                let at = native_starts(b, op)[3];
+                put(b, at + 20, length, 4);
+            });
+        }
+        refuse(op, 185, 230, |b| {
+            let at = native_starts(b, op)[4];
+            let length = u32::from_le_bytes(b[at + 20..at + 24].try_into().unwrap());
+            put(b, at + 20, u64::from(length) + 1, 4);
+        });
+        // 128 bytes left after the five records, and a section past the frame.
+        refuse(op, 185, 230, |b| {
+            let at = total_at(op);
+            let total = u32::from_le_bytes(b[at..at + 4].try_into().unwrap());
+            put(b, at, u64::from(total) + 128, 4);
+        });
+        refuse(op, 185, 230, |b| put(b, total_at(op), 0xffff_fff0, 4));
+        // The U's live size disagrees with the derived C.
+        refuse(op, 185, 230, |b| {
+            let at = native_starts(b, op)[3];
+            let field = if op == 10 { 16 } else { 12 };
+            put(b, at + field, 432 + 6, 4);
+        });
+    }
+    // C' out of range while the total still derives an in-range C: Forward
+    // and Clr with C=C'=185 read C' 183 (C 186) and with C=C'=2228 read
+    // C' 2230 (C 2227); Prune reads C' 183 (C 189) and 2230 (C 2224).
+    for (_, op) in UPDATE_OPS {
+        for (cells, header) in [(185, 183), (2228, 2230)] {
+            refuse(op, cells, cells, |b| {
+                let at = native_starts(b, op)[4];
+                put(b, at + side(op), header, 4);
+            });
+        }
+    }
+    // An odd Forward/Clr remainder: C 185, C' 186 read as C' 187.
+    for op in [10, 13] {
+        refuse(op, 185, 186, |b| {
+            let at = native_starts(b, op)[4];
+            put(b, at + side(op), 187, 4);
+        });
+    }
+    // The leaf's other side and presence: Forward's before is C, Prune's
+    // leaf is replaced (3), not removed (1).
+    refuse(10, 2228, 185, |b| {
+        let at = native_starts(b, 10)[4];
+        put(b, at + 12, 2227, 4);
+    });
+    refuse(24, 185, 230, |b| {
+        let at = native_starts(b, 24)[4];
+        b[at + 1] = 1;
+    });
+    // DELETE frames relabelled 8→10, 9→13, 23→24: their leaf names the
+    // 180-byte tombstone, which is no C'.
+    for (from, to) in [(8, 10), (9, 13), (23, 24)] {
+        for (c, h) in DELETE_CASES {
+            let mut b = delete_frame(from, c, h);
+            let core = if from == 23 {
+                160 + 192 + 1536
+            } else {
+                160 + 256 + 3072
+            };
+            put(&mut b, 166, to, 2);
+            put(&mut b, core, to, 2);
+            reseal(&mut b);
+            assert_eq!(check(&b).err(), Some(Error::Corrupt), "{from}→{to} C {c}");
+        }
+    }
+    // INSERT Forward/Clr/Prune frames relabelled as 10/13/24.
+    reject("op-2", |b| put(b, 166, 10, 2));
+    reject("op-4", |b| put(b, 166, 13, 2));
+    reject("op-20", |b| put(b, 166, 24, 2));
+}
+
+/// RUP-F08 (core): each UPDATE opcode keeps exactly its INSERT role's core
+/// rules (#update-shape): UpdateForward/UpdateClr are planned (statement and
+/// mutation, no cursors), UpdatePrune is not (no statement or mutation,
+/// cursors below 64), Forward/Prune refs are 1 or 3 and Clr's may also be 7.
+#[test]
+fn rup_f08_update_core_role_rules() {
+    fn run(op: u16, h: bool, change: impl FnOnce(&mut Vec<u8>, usize)) -> Option<Error> {
+        let mut b = update_frame(op, 185, 230, h);
+        let core = if op == 24 {
+            160 + 192 + 1536
+        } else {
+            160 + 256 + 3072
+        };
+        assert_eq!(u16_at(&b, core), op);
+        change(&mut b, core);
+        reseal(&mut b);
+        check(&b).map(|_| ()).err()
+    }
+    let target = |b: &mut Vec<u8>, core: usize| {
+        let flags = u16_at(b, core + 2) | 4;
+        put(b, core + 2, u64::from(flags), 2);
+        b[core + 112..core + 152].copy_from_slice(&wire_undo(12));
+    };
+    for op in [10, 13] {
+        for (field, value) in [(8, 0), (16, 0), (160, 1), (168, 1)] {
+            assert_eq!(
+                run(op, false, |b, at| put(b, at + field, value, 8)),
+                Some(Error::Corrupt),
+                "op {op} core+{field}={value}"
+            );
+        }
+    }
+    for (field, value) in [(8, 3), (16, 7), (160, 64), (168, 64)] {
+        assert_eq!(
+            run(24, false, |b, at| put(b, at + field, value, 8)),
+            Some(Error::Corrupt),
+            "op 24 core+{field}={value}"
+        );
+    }
+    assert_eq!(run(24, false, |b, at| put(b, at + 160, 63, 8)), None);
+    for op in [10, 24] {
+        assert_eq!(run(op, true, target), Some(Error::OrderMismatch), "op {op}");
+    }
+    assert_eq!(run(13, true, target), None, "UpdateClr refs 7");
 }

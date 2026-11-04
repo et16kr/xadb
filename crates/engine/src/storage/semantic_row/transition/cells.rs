@@ -176,11 +176,13 @@ pub(super) fn undo_cell(
     same(view.len() == 1 && view.cell_range(0) == Some(start..page::DIGEST_OFFSET))?;
     Ok(&bytes[start..page::DIGEST_OFFSET])
 }
-/// The U cell of a Retained root: 432 for INSERT, `432+(C-180)` for DELETE.
+/// The U cell of a Retained root: 432 for INSERT, `432+(C-180)` for DELETE
+/// and UPDATE, whose U holds the old row's value (dev3-row-update.md
+/// #update-undo).
 pub(super) fn live_undo_bytes(job: JobView<'_>) -> Result<usize> {
     Ok(match job.effect() {
         RowEffect::Insert => UNDO_RECORD_BYTES,
-        RowEffect::Delete => {
+        RowEffect::Delete | RowEffect::Update => {
             UNDO_RECORD_BYTES
                 + (job.cell_bytes() as usize)
                     .checked_sub(TOMBSTONE_CELL)
@@ -402,8 +404,9 @@ pub(super) fn check_material(
 }
 
 /// The Live U `actual` of a Retained root with transaction edge `edge` and
-/// its two incoming: INSERT's exact Missing material, or a delete U's outline
-/// through entry (b) (dev3-row-delete.md#previous-proof).
+/// its two incoming: INSERT's exact Missing material, or a delete or update
+/// U's outline through entry (b) (dev3-row-delete.md#previous-proof,
+/// dev3-row-update.md#previous-proof).
 pub(super) fn check_live(
     namespace: Namespace,
     job: JobView<'_>,
@@ -417,10 +420,14 @@ pub(super) fn check_live(
             UndoCell::Live(material(job, edge, 2, 0)?),
             actual,
         ),
-        RowEffect::Delete => check_outline(namespace, job, true, edge, 0, actual),
+        RowEffect::Delete | RowEffect::Update => {
+            check_outline(namespace, job, true, edge, 0, actual)
+        }
     }
 }
-/// A delete root's U through entry (b) (dev3-row-delete.md#previous-proof):
+/// A delete or update root's U through entry (b) (dev3-row-delete.md
+/// #previous-proof; an update U has the same form, dev3-row-update.md
+/// #update-undo):
 /// every field its Job holds, a RowValue before with a Committed stamp until
 /// cursor 3 and an old logical, and while Live the old value's length L. The
 /// stamp value, old logical and value are not in the Job and are not compared.
@@ -469,9 +476,10 @@ pub(super) fn check_outline(
             },
     )
 }
-/// A delete root's U record (dev3-row-delete.md#delete-undo): the Job's
-/// material with the RowValue before `stamp`, `logical` and `payload` (the old
-/// value while Live, none once Releasing).
+/// A delete or update root's U record (dev3-row-delete.md#delete-undo,
+/// dev3-row-update.md#update-undo): the Job's material with the RowValue
+/// before `stamp`, `logical` and `payload` (the old value while Live, none
+/// once Releasing).
 pub(super) fn delete_material<'a>(
     job: JobView<'_>,
     transaction: UndoEdge,
@@ -488,10 +496,11 @@ pub(super) fn delete_material<'a>(
     Ok(record)
 }
 
-/// D of the leaf reservation (dev3-row-delete.md#leaf-reservation): the bytes
-/// `C-180` that the Retained delete roots of `table`, of every actor, must
-/// be able to restore without a split.
-pub(super) fn delete_reservation(
+/// D of the leaf reservation (dev3-row-delete.md#leaf-reservation, widened
+/// by dev3-row-update.md#leaf-reservation): the bytes that the Retained roots
+/// of `table`, of every actor, must be able to restore without a split, each
+/// its `JobView::restore_bytes` (DELETE `C-180`, UPDATE `max(0, C-C')`).
+pub(super) fn leaf_reservation(
     jobs: &[[u8; JOB_BYTES]; JOB_COUNT],
     namespace: Namespace,
     table: ObjectHandle,
@@ -500,13 +509,12 @@ pub(super) fn delete_reservation(
     for cell in jobs {
         let job = row::decode_job(cell, namespace)?;
         if job.state() == JobState::RootRetained
-            && job.effect() == RowEffect::Delete
             && job.object().is_some_and(|object| {
                 object.object == table.object && object.generation == table.generation
             })
         {
-            total += (job.cell_bytes() as usize)
-                .checked_sub(TOMBSTONE_CELL)
+            total = total
+                .checked_add(job.restore_bytes())
                 .ok_or(Error::Corrupt)?;
         }
     }

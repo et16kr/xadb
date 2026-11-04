@@ -237,7 +237,13 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 complete_lsn: prefix.complete_lsn,
                 planned_mutation: job.mutation(),
                 roles: targets.roles,
-                input_len: u16::try_from(job.cell_bytes()).map_err(|_| bad())?,
+                // The current row's length: an UPDATE root's new row C'
+                // (dev3-row-update.md#api), every other root's cell C.
+                input_len: u16::try_from(match job.effect() {
+                    job3::RowEffect::Update => job.new_cell(),
+                    job3::RowEffect::Insert | job3::RowEffect::Delete => job.cell_bytes(),
+                })
+                .map_err(|_| bad())?,
                 operation: 1,
             },
             table,

@@ -407,7 +407,7 @@ fn typed() -> usize {
             .max(row_codec())
 }
 
-/// The leaf reservation D (`cells::delete_reservation`, each leaf step's
+/// The leaf reservation D (`cells::leaf_reservation`, each leaf step's
 /// first call), then every row of the RowLeaf typed (`typed_leaf`), then
 /// search/edit/record work of `prepare_leaf` (Forward/CLR/Prune) or
 /// `reserve_leaf`.
@@ -453,16 +453,18 @@ fn delete_material() -> usize {
         + job_material()
 }
 
-/// `delete_source`: the typed leaf, its search, the target's record and
-/// projection, the old row's before, over the typed leaf, the tree codec,
-/// the record codec or a projection.
-fn delete_source() -> usize {
+/// `value_source`: the typed leaf, its search, the target's record and
+/// projection, the row's triple (a Forward's old row or UPDATE's new one,
+/// with the effect/payload pair UPDATE's CLR and Prune match), over the typed
+/// leaf, the tree codec, the record codec or a projection.
+fn value_source() -> usize {
     type Old<'a> = Option<(VersionStamp, LogicalRowVersion, &'a [u8])>;
     size_of::<(&(), JobView<'_>, TxnRef, bool, usize)>()
         + size_of::<(LeafSource<'_>, ObjectHandle, RowId, [u8; 8])>()
         + size_of::<(TreePageView<'_>, SearchPosition, &[u8], RowRecordView<'_>)>()
-        + 2 * size_of::<RecordVersion>()
+        + 3 * size_of::<RecordVersion>()
         + size_of::<([u8; 32], Old<'_>, CanonicalRowView<'_>)>()
+        + size_of::<(row::RowEffect, RowPayload<'_>)>()
         + returned::<LeafSource<'_>, Error>()
         + returned::<TreePageView<'_>, TreeError>()
         + returned::<SearchPosition, TreeError>()
@@ -514,9 +516,29 @@ pub(super) fn delete_undo() -> usize {
     live.max(before).max(release) + undo_row_codec().max(delete_material())
 }
 
+/// UpdateForward's `update_value`: the candidate cell's framing, its record
+/// decoded with the table schema and its version against the Job's
+/// (`current_version`), over the record codec.
+fn update_value() -> usize {
+    size_of::<(
+        Namespace,
+        JobView<'_>,
+        TxnRef,
+        &RowSchemaInput<'_>,
+        Option<&[u8]>,
+    )>() + size_of::<(RowId, &[u8], RecordExpectation, RowRecordView<'_>)>()
+        + returned::<&[u8], Error>()
+        + returned::<RowRecordView<'_>, RowError>()
+        + returned::<RecordVersion, Error>()
+        + size_of::<(CanonicalRowView<'_>, RowPayload<'_>)>()
+        + row_codec()
+            .max(size_of::<(JobView<'_>, TxnRef)>() + returned::<LogicalRowVersion, PageError>())
+}
+
 /// `delete_leaf`: the edit scratch, the after record's version and payload,
 /// the record scratch call, the cell length and projection, over the tree
-/// codec, the record codec, a projection or the leaf edit.
+/// codec, the record codec, a projection or the leaf edit. `room` is the D
+/// after the step.
 fn delete_leaf() -> usize {
     size_of::<(
         Namespace,
@@ -524,6 +546,7 @@ fn delete_leaf() -> usize {
         JobView<'_>,
         &LeafSource<'_>,
         Option<(RecordVersion, Option<&[u8]>)>,
+        usize,
     )>() + size_of::<CodecResult<[u8; 32], Error>>()
         + size_of::<(ObjectHandle, RowId, [u8; 8], TreePageView<'_>)>()
         + size_of::<[&[u8]; ROW_EDIT_CELLS]>()
@@ -546,17 +569,34 @@ fn delete_leaf() -> usize {
             .max(leaf_edit())
 }
 
-/// The delete RowReserve's leaf proof (`reserve_delete`): the reservation D,
-/// the typed leaf,
-/// its search, the old row, the tombstone it encodes into the record scratch
-/// and its projection, over the typed leaf, the tree or record codec or a
-/// projection.
-fn reserve_delete() -> usize {
-    size_of::<(&(), TableSource<'_>, PageRef, RecordVersion, &mut ())>()
+/// The delete or update RowReserve's leaf proof (`reserve_target`): its
+/// arguments (effect, A's canonical view, the adopted Job, C'), the planned
+/// row it builds from them, the reservation D, the typed leaf, its search,
+/// the old row, the planned row (DELETE's tombstone, UPDATE's new row or
+/// replay's placeholder) it encodes
+/// into the record scratch and its projection, and UPDATE's fit: the planned
+/// cell, the edit scratch and its Replace plan. Over the typed leaf, the tree
+/// or record codec, a projection or the leaf edit.
+fn reserve_target() -> usize {
+    size_of::<(
+        &(),
+        TableSource<'_>,
+        PageRef,
+        RecordVersion,
+        (
+            row::RowEffect,
+            Option<&CanonicalRowView<'_>>,
+            Option<&[u8]>,
+            usize,
+        ),
+        &mut (),
+        &mut (),
+    )>() + size_of::<super::prepare::Planned<'_>>()
         + size_of::<(Namespace, RowId, LeafSource<'_>, TreePageView<'_>)>()
         + size_of::<([u8; 8], SearchPosition, &[u8], RecordExpectation)>()
-        + size_of::<(RowRecordView<'_>, usize)>()
-        + returned::<([u8; 32], usize), Error>()
+        + size_of::<(RowRecordView<'_>, usize, RowPayload<'_>, [u8; 32])>()
+        + size_of::<[&[u8]; ROW_EDIT_CELLS]>()
+        + returned::<(usize, [u8; 32]), Error>()
         + returned::<LeafSource<'_>, Error>()
         + returned::<TreePageView<'_>, TreeError>()
         + returned::<SearchPosition, TreeError>()
@@ -565,23 +605,42 @@ fn reserve_delete() -> usize {
         + returned::<usize, RowError>()
         + returned::<[u8; 32], Error>()
         + returned::<usize, Error>()
+        + returned::<&[u8], TreeError>()
+        + returned::<LeafEditPlan<'_, '_>, LeafEditError>()
         + reservation()
             .max(typed())
             .max(tree_codec())
             .max(row_codec())
             .max(projection())
+            .max(leaf_edit())
 }
 
-/// DELETE's prepare callees: `prepare_delete` (its arguments, the table and
-/// its reservation D, the leaf observation, the before triple, the after
-/// version and digest, over the reservation scan, `delete_source`, a DELETE U
-/// frame, `delete_leaf` or `current_version`) or
-/// the delete RowReserve's `reserve_delete`
-/// (dev3-row-delete.md#delete-states).
+/// DELETE's and UPDATE's prepare callees: `prepare_value` (its arguments, the
+/// table, its reservation D and the D after (`room`), the leaf observation,
+/// the before triple, the after version and digest, UpdatePrune's kept triple
+/// and commit sequence, over the reservation scan, `value_source`, a DELETE
+/// U frame, `update_value`, `delete_leaf` or `current_version`) or the delete
+/// or update RowReserve's `reserve_target` (dev3-row-delete.md#delete-states,
+/// dev3-row-update.md#update-states).
 pub(super) fn delete() -> usize {
     type Before<'a> = (VersionStamp, LogicalRowVersion, &'a [u8]);
-    let prepare = size_of::<(&(), &mut (), JobView<'_>, TxnRef, UndoEdge, &[u8])>()
-        + size_of::<(Operation, Namespace, ObjectHandle, &RowSchemaInput<'_>)>()
+    let prepare = size_of::<(
+        &(),
+        &mut (),
+        JobView<'_>,
+        TxnRef,
+        UndoEdge,
+        &[u8],
+        Option<&[u8]>,
+        u64,
+    )>() + size_of::<(
+        Operation,
+        bool,
+        Namespace,
+        ObjectHandle,
+        &RowSchemaInput<'_>,
+    )>() + size_of::<(usize, RowId, Before<'_>)>()
+        + returned::<CommitSeq, foundation::Error>()
         + returned::<usize, Error>()
         + returned::<([u8; 32], [u8; 32]), Error>()
         + size_of::<(LeafSource<'_>, u16, [u8; 32], Option<Before<'_>>)>()
@@ -592,16 +651,17 @@ pub(super) fn delete() -> usize {
         + returned::<[u8; 32], Error>()
         + size_of::<CodecResult<(), Error>>()
         + reservation()
-            .max(delete_source())
+            .max(value_source())
             .max(delete_undo())
+            .max(update_value())
             .max(delete_leaf())
             .max(
                 size_of::<(JobView<'_>, TxnRef)>() + size_of::<CodecResult<RecordVersion, Error>>(),
             );
-    prepare.max(reserve_delete())
+    prepare.max(reserve_target())
 }
 
-/// `cells::delete_reservation`: the Jobs it scans, the sum, one decoded Job,
+/// `cells::leaf_reservation`: the Jobs it scans, the sum, one decoded Job,
 /// over the Row census Job decode.
 fn reservation() -> usize {
     size_of::<(&[[u8; JOB_BYTES]; JOB_COUNT], Namespace, ObjectHandle)>()

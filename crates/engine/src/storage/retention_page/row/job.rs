@@ -48,46 +48,67 @@ pub(crate) enum JobScope {
     Row,
 }
 
-/// The Row root's effect byte `@284` (dev3-row-delete.md#job-effect): which
-/// cost recipe and Undo before kind the root carries. Reserved, Retained and
-/// Releasing keep it; Free, Terminal and Catalog roots are always Insert (0).
+/// The Row root's effect byte `@284` (dev3-row-delete.md#job-effect,
+/// dev3-row-update.md#job-effect): which cost recipe and Undo before kind the
+/// root carries. Reserved, Retained and Releasing keep it; Free, Terminal and
+/// Catalog roots are always Insert (0). An Update (2) Reserved/Retained root
+/// also carries its new cell C' in `[286,288)`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum RowEffect {
     Insert,
     Delete,
+    Update,
 }
 
 /// Fixed WAL terms of the Row cost recipes (contract row-shape, row-delete
-/// #delete-costs): the Forward, CLR and Prune frames without their C and h
-/// terms, and the four release steps after a Prune or CLR.
+/// #delete-costs, row-update#update-costs): the Forward, CLR and Prune frames
+/// without their cell and h terms, and the four release steps after a Prune
+/// or CLR.
 const FORWARD_FIXED: u64 = 91_304;
 const CLR_FIXED: u64 = 91_096;
 const PRUNE_FIXED: u64 = 89_496;
 const RELEASE_STEPS: u64 = 4 * RELEASE_BYTES;
 const _: () = assert!(PRUNE_FIXED + RELEASE_STEPS == 311_608);
+/// DELETE's 180-byte tombstone, whose place an UPDATE's new cell C' takes.
+const TOMBSTONE: u64 = 180;
+const _: () = assert!(FORWARD_FIXED - TOMBSTONE == 91_124);
+const _: () = assert!(CLR_FIXED - TOMBSTONE == 90_916);
+const _: () = assert!(PRUNE_FIXED + RELEASE_STEPS - TOMBSTONE == 311_428);
 
-/// Each recipe's C coefficient: INSERT's Forward and CLR carry the cell once
-/// and its Prune twice; DELETE's Forward and CLR carry both the old cell and
-/// its U payload, and its Prune the U payload with the removed tombstone.
-fn coefficients(effect: RowEffect) -> (u64, u64, u64) {
+/// Each recipe's cell term: INSERT's Forward and CLR carry the cell once and
+/// its Prune twice; DELETE's Forward and CLR carry both the old cell and its U
+/// payload, and its Prune the U payload with the removed tombstone. UPDATE is
+/// DELETE with the tombstone replaced by the new cell C' (`new_cell`, which
+/// only UPDATE reads): Forward/CLR `2C+C'−180`, Prune `C+2C'−180`.
+fn cell_terms(effect: RowEffect, cell: u32, new_cell: u32) -> (u64, u64, u64) {
+    let (c, n) = (u64::from(cell), u64::from(new_cell));
     match effect {
-        RowEffect::Insert => (1, 1, 2),
-        RowEffect::Delete => (2, 2, 1),
+        RowEffect::Insert => (c, c, 2 * c),
+        RowEffect::Delete => (2 * c, 2 * c, c),
+        RowEffect::Update => (2 * c + n, 2 * c + n, c + 2 * n),
+    }
+}
+/// The fixed part of a recipe after UPDATE takes back the tombstone term.
+fn fixed(effect: RowEffect, fixed: u64) -> u64 {
+    if effect == RowEffect::Update {
+        fixed - TOMBSTONE
+    } else {
+        fixed
     }
 }
 
-/// The exact Row root recipes of one effect, cell and h. Reserve's budget,
+/// The exact Row root recipes of one effect, cells and h. Reserve's budget,
 /// the ledger and the census all take these, never their own copies.
-pub(crate) fn row_forward_wal(effect: RowEffect, cell: u32, previous: bool) -> u64 {
-    FORWARD_FIXED + coefficients(effect).0 * u64::from(cell) + 128 * u64::from(previous)
+/// `new_cell` is an UPDATE root's C'; INSERT and DELETE ignore it.
+pub(crate) fn row_forward_wal(effect: RowEffect, cell: u32, new_cell: u32, previous: bool) -> u64 {
+    fixed(effect, FORWARD_FIXED) + cell_terms(effect, cell, new_cell).0 + 128 * u64::from(previous)
 }
-pub(crate) fn row_clr_wal(effect: RowEffect, cell: u32, previous: bool) -> u64 {
-    CLR_FIXED + coefficients(effect).1 * u64::from(cell) + 128 * u64::from(previous)
+pub(crate) fn row_clr_wal(effect: RowEffect, cell: u32, new_cell: u32, previous: bool) -> u64 {
+    fixed(effect, CLR_FIXED) + cell_terms(effect, cell, new_cell).1 + 128 * u64::from(previous)
 }
-pub(crate) fn row_cleanup_wal(effect: RowEffect, cell: u32, previous: bool) -> u64 {
-    PRUNE_FIXED
-        + RELEASE_STEPS
-        + coefficients(effect).2 * u64::from(cell)
+pub(crate) fn row_cleanup_wal(effect: RowEffect, cell: u32, new_cell: u32, previous: bool) -> u64 {
+    fixed(effect, PRUNE_FIXED + RELEASE_STEPS)
+        + cell_terms(effect, cell, new_cell).2
         + 128 * u64::from(previous)
 }
 
@@ -116,25 +137,52 @@ impl<'a> JobView<'a> {
     pub(crate) fn has_previous_transaction(self) -> Option<bool> {
         (self.scope == Some(JobScope::Row)
             && matches!(self.state, JobState::RootReserved | JobState::RootRetained))
-        .then(|| get(self.budget(), 400) == row_cleanup_wal(self.effect(), self.cell_bytes(), true))
+        .then(|| {
+            get(self.budget(), 400)
+                == row_cleanup_wal(self.effect(), self.cell_bytes(), self.new_cell(), true)
+        })
     }
     /// The root's effect byte; validated by `decode_job`.
     pub(crate) fn effect(self) -> RowEffect {
-        if self.bytes[284] == 1 {
-            RowEffect::Delete
-        } else {
-            RowEffect::Insert
+        match self.bytes[284] {
+            1 => RowEffect::Delete,
+            2 => RowEffect::Update,
+            _ => RowEffect::Insert,
+        }
+    }
+    /// An Update Reserved/Retained root's new row cell C' (`[286,288)`,
+    /// dev3-row-update.md#job-effect); 0 for every other Job and state.
+    pub(crate) fn new_cell(self) -> u32 {
+        u32::from(u16::from_le_bytes([self.bytes[286], self.bytes[287]]))
+    }
+    /// The leaf bytes this Reserved/Retained Row root needs to restore its
+    /// old row without a split once Retained: DELETE's `C−180` (the old row
+    /// over its tombstone), UPDATE's `max(0, C−C')`, INSERT's 0
+    /// (dev3-row-delete.md#leaf-reservation, dev3-row-update.md
+    /// #leaf-reservation). D of a leaf is the sum over its table's Retained
+    /// roots. 0 for every other Job; decode keeps a live Row C ≥ 185.
+    pub(crate) fn restore_bytes(self) -> usize {
+        if self.scope != Some(JobScope::Row)
+            || !matches!(self.state, JobState::RootReserved | JobState::RootRetained)
+        {
+            return 0;
+        }
+        let cell = self.cell_bytes() as usize;
+        match self.effect() {
+            RowEffect::Insert => 0,
+            RowEffect::Delete => cell.saturating_sub(TOMBSTONE as usize),
+            RowEffect::Update => cell.saturating_sub(self.new_cell() as usize),
         }
     }
     /// The Reserved root's remaining Forward and a live root's remaining CLR
     /// (ledger rows 1 and 0); `None` outside a Row Reserved/Retained root.
     pub(crate) fn forward_wal(self) -> Option<u64> {
         self.has_previous_transaction()
-            .map(|h| row_forward_wal(self.effect(), self.cell_bytes(), h))
+            .map(|h| row_forward_wal(self.effect(), self.cell_bytes(), self.new_cell(), h))
     }
     pub(crate) fn clr_wal(self) -> Option<u64> {
         self.has_previous_transaction()
-            .map(|h| row_clr_wal(self.effect(), self.cell_bytes(), h))
+            .map(|h| row_clr_wal(self.effect(), self.cell_bytes(), self.new_cell(), h))
     }
     pub(crate) fn generation(self) -> Generation {
         Generation::new(get(self.bytes, 8)).expect("validated Job generation")
@@ -218,6 +266,7 @@ impl<'a> JobView<'a> {
                 row_cleanup_wal(
                     self.effect(),
                     self.cell_bytes(),
+                    self.new_cell(),
                     self.has_previous_transaction().unwrap_or(false),
                 ),
             ),
@@ -326,11 +375,18 @@ pub(crate) fn decode_job(input: &[u8], namespace: Namespace) -> Result<JobView<'
     {
         return Err(RetentionError::OrderMismatch);
     }
-    // `@284` is the Row root effect byte (0 INSERT, 1 DELETE); every other
-    // Job keeps it zero, and `[285,288)` stays zero.
+    // `@284` is the Row root effect byte (0 INSERT, 1 DELETE, 2 UPDATE); every
+    // other Job keeps it zero, and `@285` stays zero. `[286,288)` is an
+    // UPDATE root's C' (checked by `validate_root`), zero everywhere else.
     if !zero(&bytes[122..128])
-        || bytes[284] > u8::from(bytes[7] == 3 && state.is_root())
-        || !zero(&bytes[285..288])
+        || bytes[284]
+            > if bytes[7] == 3 && state.is_root() {
+                2
+            } else {
+                0
+            }
+        || bytes[285] != 0
+        || (bytes[284] != 2 && !zero(&bytes[286..288]))
         || (bytes[7] != 3 && !zero(&bytes[320..328]))
         || !zero(&bytes[360..376])
     {
@@ -434,7 +490,14 @@ fn validate_root(job: JobView<'_>, status: StatusSlotRef) -> Result<()> {
             Some(JobScope::Row) => 185..=2228,
             _ => MIN_CATALOG_CELL..=MAX_CATALOG_CELL,
         };
+        // An UPDATE root names its new cell C' beside the old C.
+        let new_cell_ok = if job.effect() == RowEffect::Update {
+            (185..=2228).contains(&job.new_cell())
+        } else {
+            job.new_cell() == 0
+        };
         if !cell_range.contains(&job.cell_bytes())
+            || !new_cell_ok
             || job.release_cursor() != 0
             || job.release_start() != 0
             || job.commit_q() != 0

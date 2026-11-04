@@ -1,0 +1,74 @@
+{
+  "CURRENT": {
+    "bytes": 4096,
+    "sha256": "0d9cf23507a4ffc16205502a8a231dc083a889aa0332c9ea2323e1c2015d8f7c"
+  },
+  "DWB": {
+    "bytes": 4096,
+    "sha256": "549782e75a097343f767aca8b00ccfcb73824faa84e6db99d101e6bb24b38dab"
+  },
+  "FILEMAP": {
+    "bytes": 4096,
+    "sha256": "5938c6fac59aa7d816b2e8b358df8e15511e78c1f85934b1451fea92fc36dba0"
+  },
+  "LOCK": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "WRITER": {
+    "bytes": 4096,
+    "sha256": "2472748098379845e6ec28d0b158279b4f56b204e5ab0674cb3e696209763a72"
+  },
+  "d3-bootstrap": {
+    "bytes": 4096,
+    "sha256": "e748c4c73df39f04bf9b82bd4219ad4317d7556f6a2f081254fcdf1a9ddd2883"
+  },
+  "d3-data-0000000100000001": {
+    "bytes": 1048576,
+    "sha256": "79da068836d2ec61981eec2a32e381e901f977b8bd901448d321e8cc7d0240e3"
+  },
+  "d3-dwb-0": {
+    "bytes": 16384,
+    "sha256": "3816507268799972faf255e77ea255676c9dabc5035cc375ddc00015c75bb3d9"
+  },
+  "d3-dwb-1": {
+    "bytes": 16384,
+    "sha256": "67955b20d2356e42bb759cfbc2ecf1ce0ddcb204fb60e0abce3e2f9e2fd17861"
+  },
+  "d3-dwb-images": {
+    "bytes": 16711680,
+    "sha256": "bc50dd594ddd15a13de8a715c29f8c464fcf68930e912ad8ea3639e08d450369"
+  },
+  "d3-dwb-reserved": {
+    "bytes": 8192,
+    "sha256": "9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47"
+  },
+  "d3-dwb-stage": {
+    "bytes": 16384,
+    "sha256": "3816507268799972faf255e77ea255676c9dabc5035cc375ddc00015c75bb3d9"
+  },
+  "d3-filemap-0": {
+    "bytes": 2113536,
+    "sha256": "5c68a64618b99736aa8a0e10adece83318cc8996ef9039e0879dc0e5d0fb33d1"
+  },
+  "d3-filemap-1": {
+    "bytes": 2113536,
+    "sha256": "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199"
+  },
+  "d3-profile": {
+    "bytes": 4096,
+    "sha256": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e"
+  },
+  "d3-rebase-0": {
+    "bytes": 2097152,
+    "sha256": "b62d1a19726c9e05ec4dd0cdef49342c7db47e625f0a128f1184d73828282058"
+  },
+  "d3-rebase-1": {
+    "bytes": 2097152,
+    "sha256": "b62d1a19726c9e05ec4dd0cdef49342c7db47e625f0a128f1184d73828282058"
+  },
+  "d3-wal-00000002": {
+    "bytes": 970213,
+    "sha256": "8a35a3b06c9b97c1bb1c86da6be857fbc27092ec380f680ed0870cc0b0b14d4c"
+  }
+}
