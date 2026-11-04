@@ -4,6 +4,7 @@
 // Remove when a tree consumer connects this representation leaf.
 #![allow(dead_code)]
 
+pub(crate) mod audit;
 pub(crate) mod edit;
 pub(crate) mod search;
 pub(crate) mod structure;

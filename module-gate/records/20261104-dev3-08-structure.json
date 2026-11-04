@@ -191,6 +191,22 @@
         "devdoc/contracts/dev3-tree-format.md": "10c91f618da6ce51b16115a014c32d0d7cc1b68b"
       },
       "log": "module-gate/evidence/dev3-08-structure/review.md (sha256 54fdb24d67cc903250e7cf711eec8d9dbd840850848c969cdd13c259bae8516b); module-gate/evidence/dev3-08-search/review.md (sha256 fd577618f012ebf19d377c66362b033aa448026ef7b38ce58b843597701eeb8f); module-gate/evidence/dev3-08-row-selector/review.md (sha256 d912c602c63eb65c675c870a196c9dabfd1315d4889bbfc55db85a007a733b49)"
+    },
+    {
+      "id": "dev3-08-audit-shared-structure",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/tree_page.rs": "d642a8c5e7f1dd16dbdee8a171ff6f08ce241372",
+        "devdoc/contracts/dev3-tree-format.md": "c967552281c08b5b7608b84bb7c73640232d3d6e"
+      },
+      "log": "module-gate/evidence/dev3-08-audit/review.md (sha256 fa1aa51397fca3f7167318598ca39b124b728f9dbf47452ca0d3972ee016b7e9)"
     }
   ]
 }

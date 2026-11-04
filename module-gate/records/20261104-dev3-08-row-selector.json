@@ -623,6 +623,22 @@
         "devdoc/contracts/dev3-tree-smo.md": "ff4ceb7e0d0666e7f1dffdb9d3986f4935905499"
       },
       "log": "module-gate/evidence/dev3-08-row-selector/review.md (sha256 d912c602c63eb65c675c870a196c9dabfd1315d4889bbfc55db85a007a733b49)"
+    },
+    {
+      "id": "dev3-08-audit-shared-row-selector",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/tree_page.rs": "d642a8c5e7f1dd16dbdee8a171ff6f08ce241372",
+        "devdoc/contracts/dev3-tree-format.md": "c967552281c08b5b7608b84bb7c73640232d3d6e"
+      },
+      "log": "module-gate/evidence/dev3-08-audit/review.md (sha256 fa1aa51397fca3f7167318598ca39b124b728f9dbf47452ca0d3972ee016b7e9)"
     }
   ]
 }

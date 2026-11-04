@@ -20,6 +20,11 @@ RootSplit/ChildSplit의 Core/Layout·새 Structural 완료 descriptor·native/re
 선택 시험과 독립 D2/D1으로 검증했다. 실제 canonical split·INIT 권한·원 pool 설치·복구는
 미완료이며 이 WIRE_ONLY 결과를 live SMO 인수로 세지 않는다.
 
+[전체 불변 tree 관측](../evidence/dev3-tree-structure-20261104.md#tree-audit)은 새6개 선택 시험과
+독립 D2/D1을 통과했다. root-reachable 전 페이지의 identity·범위·전역 주소 중복을 검산한다.
+allocator-owned 집합 대조와 실제 SMO/base 연결은 후속 의무이며, 높이16 시험은16page
+순회 뒤 capacity 거절 경계만 확인한다. 일정08 적립은 여전히0이다.
+
 <a id="catalog-remaining"></a>
 2026-10-26 [Catalog CREATE 남은 메모리 사례](../evidence/dev3-catalog-remaining-20261026.md): 남은 9개를 모두 source별로 PASS했다. lookup이 Live CREATE Undo를 초기 Free page로만 검증해 fence하던 결함을 고쳤고 Writer 준비 분리를 포함했다. 같은 epoch 두 번째 CREATE의 pair victim 준비를 [D3-CATALOG-CREATE-002](../contracts/dev3-catalog-create.md#sequential-create)로 보완해 MT02가 r36에서 통과했다. [검토 후 수정](../evidence/dev3-catalog-review-fix-20261026.md)에서 Profile에 맞는 Root/Jobs decoder를 연결하고 신규8개와 변경 source 계산2개를 통과했다. 첫 Row INSERT·runtime F05·DEV3/S5는 미완료다.
 

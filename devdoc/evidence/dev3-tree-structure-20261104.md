@@ -127,6 +127,31 @@ fixture는 page1 allocator·opaque tree cells를 포함하는 WIRE_ONLY다. 실�
 full image digest를 비교한다. PATCH commitment를 바꿔도 형식 관측이 수락하는 사례를 두어
 후속 canonical 검증 의무를 숨기지 않았다. 전체08과 08-1 적립은 여전히0이다.
 
+<a id="tree-audit"></a>
+### 전체 root-reachable tree 관찰자
+
+`ddfc7682` 이후 `tree_page::audit`에 caller workspace를 사용하는16-frame DFS를 추가했다.
+각 page를 exact identity/family/level/arity와 상속 범위로 검산하고, 전체 visited의 물리 주소
+중복(새 incarnation 포함)을 callback 전에 거절한다. 성공은 pre-order expectation 목록이며
+오류 때 부분 workspace는 accepted tree가 아니다. 기존 selected-path 탐색·그 소비자의
+source census는 변경하지 않았다.
+
+[원 로그·hash](../../module-gate/evidence/dev3-08-audit/)의 r0 신규6개는6 PASS,
+build1분40초·runtime0.02초·기존2,214개 filtered다. Row/Catalog/Index 전체10page,
+Index2열 composite+RowId, off-path ancestor 범위/identity, 두 부모의 공유 child·ancestor
+incarnation alias, capacity0..10·callback 오류·garbage tail, 다른file의 같은page_no,
+unreachable page 한계를 확인했다. 별도 reviewer `/root/dev3_08_review`의 사전 D2와
+구현·원 실행 D1은 ACCEPT·필수0이다.
+
+engine all-targets/all-features Clippy-r0도1분20초에 PASS했다. 새 제품/시험 source는 첫
+runtime 이후 바뀌지 않았으며 기존 검색·범용 codec·scope4 시험은 반복하지 않았다.
+
+사전 검토에서 높이16의 전체 정상 tree는 최소65,535page라는 지적을 반영했다. 그 사례는
+16단계 leftmost path 뒤 다음 sibling을 읽기 전 NoSpace라는 경계 시험이며 최대높이 전체
+정상 인수가 아니다. metadata-only unary internal도 기존 codec대로 거절한다. allocator-owned
+집합과 반환 목록을 실제 같은 cut에서 비교하는 orphan/소유 검증, Row/Undo 의미, 실제 SMO·
+base adoption·F05는 아직 연결하지 않았다. 08 적립은0으로 유지한다.
+
 08 전체의 승인 범위는 유지한다. 다음 작업은 08-1의 실제 system owner·WAL·복구다.
 독립 사전 검토에서 새 사용자 판단이 필요한 제품 방향 충돌은 발견하지 않았다.
 

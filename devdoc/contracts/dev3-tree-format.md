@@ -303,3 +303,38 @@ F05 source census는 Catalog/anchor 관측과 검색의 visited16·기대값·�
 `s1g_row_reserve_refuses_without_effect`만 선택한다. INSERT/DELETE/UPDATE·CLR/Prune와
 Reserve가 변경된 `table_source`를 호출하므로 해당 연결의 검증이며, 하위 무변경 codec 시험은
 선택하지 않는다. build 포함180초·4 jobs, 실패는 원 결과 보존 뒤 영향 사례만 다시 검증한다.
+
+<a id="immutable-tree-audit"></a>
+### D3-TREE-AUDIT-001 — root에서 도달하는 전체 불변 tree 관찰
+
+일정08의 SMO·base 검산을 위한 순수 공급이다. `tree_page::audit::audit_tree_in_images`
+입력은 stabilized root expectation, caller의 `Option<TreeExpectation>` scratch slice,
+호출 중 불변 image callback이다. 성공은 pre-order의 exact expectation 목록 길이를 반환하고
+뒤의 scratch는None이다. 오류 때 scratch는 부분 prefix일 수 있으며 accepted tree가 아니다.
+root shape와 빈 workspace를 callback 전에 검사하고, 실제 읽기 횟수는 workspace 길이 이하,
+각 물리 주소는 최대1회다. callback 오류는 그대로 전달하고 추가 load를 하지 않는다.
+
+내부16 frame DFS와 전체 visited 목록을 사용해 각 page의 identity/incarnation/family/level/arity,
+정렬된 key extrema의 상속 범위 `[lower,upper)`, 정확 level−1 child, 전역 물리 중복을 검산한다.
+다른 incarnation으로 같은 주소를 다시 참조하거나 두 부모가 같은 child를 가리키면 재load 전에
+거절한다. root leaf·빈 leaf는 허용하고, internal은 기존 형식처럼 separator가1개 이상이어야 한다.
+root에서 도달하지 않는 page는 이 helper만으로 검출하지 못한다. 원 canonical owner는 반환
+집합과 allocator의 해당 tree owned 집합을 대조하여 orphan·외부 소유 page를 추가로 거절해야 한다.
+live pin/INIT/adoption 권한·실제 row/Undo grammar·rollback weight·F05 완료는 제공하지 않는다.
+
+기존 point-search와 그 소비자의 source census를 변경하지 않기 위해 짧은 extrema 검산을
+새 관찰자 안에 둔다. 공통 range 의미는 같은 정본을 따르며 추후 양쪽 의미가 바뀔 때 함께 검토한다.
+새 전체-tree 검산을 선택-path 검사로 대체하거나 결과를 live 권한으로 확대할 때 D2 재검토한다.
+
+사전 선택 시험6개는 새 helper만 대상으로 한다: 3family 전체10page·정확 preorder,
+off-path 범위/identity/level 손상, 다른 가지의 공유 child·조상/새inc alias,
+높이16의 leftmost16page 뒤 capacity 거절·empty root·unary 거절, capacity 경계/입력 전검사/callback 오류,
+orphan은 별도 owned 집합 대조 의무라는 관측 한계. 입력 page는 기존 codec으로 준비하되
+typed tree topology·기대 traversal/오류/호출 수는 시험에서 별도로 정한다. build 포함180초,
+4jobs·새6개만 실행하고 source별 로그/ELF hash를 보존한다. 기존 검색·codec 시험은 반복하지 않는다.
+독립 D2/D1과 실제 source별 실행 결과는 [08 증거](../evidence/dev3-tree-structure-20261104.md#tree-audit)에 기록한다.
+
+높이16 전체 정상 tree는 internal마다 최소2child여서 최소65,535page가 필요하다. 이번 작은
+시험은16단계 순회 뒤 다음 sibling의 callback 전 NoSpace를 확인하며 최대높이 전체 인수로
+표시하지 않는다. ancestor의 lower/upper 양방향 상속, lower equality 허용·upper equality 거절,
+같은page_no라도 다른file이면 다른주소라는 구분, 기존 garbage workspace의 성공 tail=None을 포함한다.
