@@ -81,3 +81,18 @@ WAL slot1MiB와 component64KiB는 metadata8MiB 안의 기존 배정이다. calle
 의미 설치 장벽의 opaque owner·물리 Idle과의 조합, Commit continuation의 자체 admission, 대기자의 turn/공유 workspace 반환·양도, 취소 시 pending bytes와 첫 byte certainty, 오류 뒤 fence를 F02/F05에 포함한다. 후속 그룹의 설치 순서와 공유 status page 반례는 [3.11-T11](dev3-task-11-commit.md#installation-barrier)의 계약과 함께 인수한다.
 
 일반 opcode별 native effect와 descriptor transition, API의 정확 오류 우선순위·guard 수명, owner inventory 인계, frame 분할 중간 상태와 F05를 구현 전에 동결한다. 현재 [wal_io.rs](../../crates/engine/src/storage/wal_io.rs), [semantic_group.rs](../../crates/engine/src/storage/semantic_group.rs), [obligation.rs](../../crates/engine/src/storage/obligation.rs)의 실제 지원 범위를 기준으로 확장한다. append/sync 공급 완료는 commit/rollback/recovery의 상위 인수를 대신하지 않는다.
+
+<a id="review-adoption-20261104"></a>
+## REVIEW-012 후속 — live authority·redo·durability의 별도 설계
+
+[A1–A3](../plans/dev3-implementation-plan.md#review-adoption-20261104)의 착수 입력이다. 현재 `history::replay_durable`의 prefix hash→재생→prefix hash, `history::row`의 native 의미 해석, 단일 물리 slot·그룹별 durable 대기를 기준으로 한다. 아래는 대안 선택의 의무이며 현 API·형식·검사 삭제나 새 cache의 채택이 아니다.
+
+| 설계 단위 | 반드시 결정할 상태·반례 | 완료 조건 |
+| --- | --- | --- |
+| A1 증분 live 검증 | 검증 상태의 원 owner와 DB/timeline/open·epoch/base·LSN/offset·generation 결속. complete/staged와 durable 상태를 구분하고 거절·취소·부분 I/O·UNKNOWN·fence·writer 교체·reopen·REBASE/truncation·외부 source 변경 때 무효화/재구성/거절을 각각 정의 | 현재 전 opcode와 terminal·CLR·회수를 포함한 전이표, state/page/ledger 대조 범위, 기존 prefix를 다시 읽지 않아도 되는 신뢰 근거와 손상 검출 책임, F05 수치. 검증되지 않은 상태로 권한을 발급할 수 없음 |
+| A2 redo 표현 | 현재 한 frame/page당 한 연속 patch와 다중 구간·연산형 대안. native before/after가 제공하는 effect/RowId/C′/projection을 어디서 복구하는지 대응 | canonical 순서·중복/겹침 거절·pageLSN·원자 적용·부분 실패·scratch와 frame 상한, independent replay 및 current-build 복구 입력 동결. 진단이라고 부르며 필수 의미를 삭제하지 않음 |
+| A3 stage/sync 분리 | Begin/Reserve/Forward/CLR/정리/Commit별 durable 요구와 실패 certainty. 현 단일 slot 대 bounded queue/batch, sync 전 dirty page flush, Commit@c 미설치 뒤 같은 Status page@c+1 flush 반례 | complete/synced/installed/published frontier·WAL-before-data·Commit 설치·batch prefix 검증·Q 공개·checkpoint의 같은-cut·취소/UNKNOWN·bounded 대기와 종료 예약을 하나의 상태도로 증명 |
+
+A1은 기존 전체 재생 유지·base 전환·증분 owner를 비교한다. touched-page 검증만으로 과거 prefix의 불변성이 입증된다고 가정하지 않는다. 독립 audit·복구의 전체 재구성 책임을 live 최적화와 분리하고, 기존 검출 범위를 바꿔야 하는 경우 그 범위·복구 가능성·운영 전제를 명시적으로 검토한다. 고정 snapshot에서의 projection·ledger·page 결과는 독립 이력과 대조한다. 반례가 남으면 현재 검증을 유지한다.
+
+각 후보의 전이·native fault·계수 비교는 [D3-ADOPT-01–03](../plans/dev3-test-plan.md#review-adoption-20261104)으로 공급한다. 새 구현을 검증할 입력을 먼저 정하고, 기존 M0 API read/hash byte를 장치 I/O·TPS 또는 새 실행의 결과로 옮겨 쓰지 않는다. A1은 먼저 상세 설계하며 A2/A3 전체 구현을 선행 조건으로 두지 않는다.

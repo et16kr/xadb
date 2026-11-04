@@ -123,6 +123,15 @@ r=64와 index8개·각K=64인 가득 찬 leaf 근사에서 `16384/65+8×16384/69
 
 PF09는 실제 allocated/reserved/retained bytes를 row·index·overflow·Undo·WAL·allocator/control별로 분리하고 이상적 leaf 산식과 차이를 설명한다. key가 변하지 않는 UPDATE의 index mutation 생략은 기존 계약을 유지한다. 압축·metadata 축소·형식 변경은 측정 후 별도 D2이며 이번에 채택하지 않는다.
 
+<a id="review-adoption-20261104"></a>
+## REVIEW-012 후속 — 표현과 구성 요소 상한의 비교
+
+[A2/A7](../plans/dev3-implementation-plan.md#review-adoption-20261104)은 byte census의 반복 수정 부담을 줄일 대안으로 구성 요소별 계약 상한과 합성 규칙을 검토한다. 실제 owned bytes·lifetime/동시 peak·검증 가능한 상한·checked 합산을 유지하고, RSS 감시나 임의 여유율로 admission/rollback 증명을 대체하지 않는다. 현재 한도를 바꾸는 안은 별도 수치·진행·호환 검토가 필요하다.
+
+현 Int64 한 열은 canonical13 B이므로 entry197 B·leaf82행이다. 사용자 의미값8 B, canonical13 B, row header168 B, slot/key를 포함한 실제 allocation을 나누어 보고한다. 위 r=5의85행은 Int64가 아니다. Undo 첫 profile의 root당 page와 일반 codec의 packing 능력도 구별한다. 짧은 참조·ITL·packing 후보는 generation/namespace·incoming edge·snapshot·rollback·transient pin·복구·재사용의 동일 보장을 먼저 증명한다.
+
+자원 벡터는 성공 경로뿐 아니라 거절·취소·rollback·cleanup·reopen까지 합성한다. private 합계64MiB에서8MiB를 모두 예약하는 최대 거래는8개 이하이며32개 거래 한도를 최대32개 동시 성공으로 해석하지 않는다. gate 축소/병렬 writer에서 새로 겹치는 reader와 writer 비용을 다시 합한다. 256 mutation·1MiB 논리 변경 한도는 유지하고, 한도 해제나 내부 분할 commit으로 큰 거래를 지원한 것처럼 처리하지 않는다. [D3-ADOPT-02/04/07](../plans/dev3-test-plan.md#review-adoption-20261104)의 경계 사례와 기존 F05를 구현 시 함께 동결한다.
+
 <a id="row-missing-module-budget"></a>
 ## 모듈 전환 — 첫 Row Missing의 자원 배정
 

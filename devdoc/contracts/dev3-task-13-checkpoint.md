@@ -183,6 +183,8 @@ recovery는 checkpoint 이전 owner 상태를 다시 analysis하여 terminal 거
 <a id="resources"></a>
 ## 7. 자원·bounded capture·PF09
 
+[REVIEW-012 A6](../plans/dev3-implementation-plan.md#review-adoption-20261104)은 기존 immutable capture의 안전성뿐 아니라 반복 I/O를 착수 시 동결한다. target 수 T, batch B, base inventory I, replay WAL W를 분리하고, partition마다 전체 base/prefix를 다시 읽는 안의 작업량 `ceil(T/B) × (I + W)`를 실제 단위별로 계산한다(I/W가 bytes면 read bytes, record 수면 방문 수). 고정 B와 증가하는 I/W에서 선형이라고 가정하지 않는다. 증분 inventory·bounded 외부 인덱스는 대안이며 별도 저장·scratch·pin·복구 비용까지 비교한다. [D3-ADOPT-06](../plans/dev3-test-plan.md#review-adoption-20261104)의 작은 계수 사례로 구현을 대조하고 S5에서 실제 지원 규모로 확대한다. 같은-cut ATT/DPT·current/previous 선택과 불명 선택의 합집합 보호는 유지한다.
+
 | 자원 | 현재 소유 계약의 입력 | 이 작업의 미완료 증명 |
 | --- | --- | --- |
 | 메모리 | metadata8MiB, system16MiB=flush4MiB+단일 maintenance12MiB | metadata 안의 turn 간 capture ATT/DPT·owner snapshot/continuation, maintenance 안의 partition·chunk/hash·WAL decode·중첩 local, selector staging의 각각 동시 peak. 무제한 DPT/전체 inventory 복제 금지 |

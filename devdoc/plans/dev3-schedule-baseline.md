@@ -1,5 +1,7 @@
 # DEV3 전체 예상 일정과 누적 진척률 기준선
 
+2026-11-04 리뷰 적용 계획의 일정 영향은 [범위 배정·재견적](#review-adoption-20261104)을 따른다. V1 적립33/86일=38.37%는 유지하며, 아래 날짜 예측은 리뷰 적용 전의 과거 예측이다. 현재 완료 ETA는 상세 설계의 범위·견적 확정 전까지 미갱신이다.
+
 2026-11-03 · **D3-SCHEDULE-001 / V1 · 사용자 요청에 따른 일정 가중치 기준선 · 초안 독립 D2 ACCEPT; 공급 단위 재배정 독립 D2 ACCEPT(r2, 필수 지적 0); 일정 항목 적립 독립 D2 ACCEPT(r2 필수 1건 반영) · PR #45 병합, 06 완료 반영(PR #47), 07 완료 반영(PR #49)**
 
 기준 source: main `7692631`(PR #45 병합)과 PR #47(DELETE 3단계)의 병합이다. 07-1–07-4 적립은 PR #49(UPDATE 계약, 2단계 C 형식·전이, 3단계 제품 경로, 4단계 native fault cut)의 병합이다. 그 앞 V1은 main `ab2537eb`(PR #46 병합) 기준이었다. PR 초안은 `cd41b174`(PR #43) 기준 58일·39.66%였다. 병합 전에 PR #44·#46(DELETE 2-b-2·2-b-3) 상태를 반영하고, 사용자 결정으로 01–19 전체를 [공급 단위](#units)로 다시 배정했다([개정 기록](#decision)). 실제 제품 인수 상태는 [단계 완료 정본](stage-completion.json)과 각 source별 증거가 소유한다. 이 문서는 DEV3 일정 보고의 분모·가중치·적립 규칙을 소유한다.
@@ -206,7 +208,7 @@ ID는 모두 `D3-SCH-` 접두어를 갖는다. 아래는 보고용 기본 배치
 | 07 | 배정 3일 | 11-04→11-04 / 0일(같은 날) | 3 | [계약](../contracts/dev3-row-update.md)·[2단계](../contracts/dev3-row-update.md#implementation-2)·[3단계](../contracts/dev3-row-update.md#implementation-3)·[4단계](../contracts/dev3-row-update.md#implementation-4) 구현 기록, PR #49; committed·Prune된 행 하나의 값을 바꾸는 첫 UPDATE 한정(형식·전이, A 실행기·생산자, C preflight·Reserve, B 옛 값 읽기, live·복구 UpdatePrune, replay, loser UpdateClr, base4, 메모리 시험, native fault cut) |
 | **합계** | **01–05 22–34일 / 28일, 06 2일, 07 3일** | **약 15일** | **33** | **33 / 86 = 38.37%** |
 
-06은 PR #41–44·#46이 병합됐고 PR #47의 병합으로 끝난다. [2-b-1 구현 기록](../contracts/dev3-row-delete.md#implementation-2b1)에 형식·전이층, [2-b-2 구현 기록](../contracts/dev3-row-delete.md#implementation-2b2)에 제품 진입점(A 자동커밋·명시 거래 DELETE, C preflight·Reserve)과 그 상태를 읽고 복구하는 경로(B tombstone 읽기, live DeletePrune, replay, loser DeleteClr, winner DeletePrune, base4)의 메모리 시험 공급이 있다. [2-b-3 구현 기록](../contracts/dev3-row-delete.md#implementation-2b3)에는 시험 전용 status·undo·leaf 관찰자의 DELETE 대조, N1 cross-check의 효과1·DELETE skip 제거, 넘겨받은 시험(다른 RowId, A frame의 leaf 예약 경계, RDL-B06, RDL-R07)이 있다. 06-1–06-5는 끝나 1.5일을 적립했다. [3단계 구현 기록](../contracts/dev3-row-delete.md#implementation-3)에는 06-6의 native fault cut(DeleteForward·DeleteClr·DeletePrune 앞뒤의 crash, 사례마다 produce·recover·reenter 세 process, RDL-N01..N06)과 남은 시험 RDL-J11(다른 거래가 쥔 행의 Busy·SerializationConflict)이 있다. 06-6은 06의 마지막 항목이라 §3의 행 조건(C/A/B·loser·replay/base4 연결, rollback·회수·native fault cut)을 모두 채워야 적립한다. 연결·rollback·회수는 2-b-2·2-b-3이, native fault cut은 3단계가 채웠으므로 PR #47의 병합으로 06-6의 0.5일을 적립하고 06은 **완료**다. 첫 DELETE 한정이며 일반 행 변경은 08, 여러 Status의 동시 거래 일반화는 11에 남는다. 07은 PR #49에 계약(07-1), C 형식·전이(07-2), 제품 경로와 메모리 시험(07-3), native fault cut(07-4)이 함께 있다. 07-4는 07의 마지막 항목이라 §3의 행 조건(C/A/B·loser·replay/base4 연결, rollback·회수·native fault cut)을 모두 채워야 적립한다. 연결·rollback·회수는 07-3이, native fault cut은 07-4가 채웠으므로 PR #49의 병합으로 3일을 적립하고 07은 **완료**다. 첫 UPDATE 한정이며 일반 행 변경은 08, 인덱스 동반 변경은 09, 여러 Status의 동시 거래 일반화는 11에 남는다. 07–19는 이 기준선에서 미완료이며 기존 부분 공급을 다시 개발하라는 뜻은 아니다. 착수 때 source별 기존 공급을 확인한다.
+06은 PR #41–44·#46이 병합됐고 PR #47의 병합으로 끝난다. [2-b-1 구현 기록](../contracts/dev3-row-delete.md#implementation-2b1)에 형식·전이층, [2-b-2 구현 기록](../contracts/dev3-row-delete.md#implementation-2b2)에 제품 진입점(A 자동커밋·명시 거래 DELETE, C preflight·Reserve)과 그 상태를 읽고 복구하는 경로(B tombstone 읽기, live DeletePrune, replay, loser DeleteClr, winner DeletePrune, base4)의 메모리 시험 공급이 있다. [2-b-3 구현 기록](../contracts/dev3-row-delete.md#implementation-2b3)에는 시험 전용 status·undo·leaf 관찰자의 DELETE 대조, N1 cross-check의 효과1·DELETE skip 제거, 넘겨받은 시험(다른 RowId, A frame의 leaf 예약 경계, RDL-B06, RDL-R07)이 있다. 06-1–06-5는 끝나 1.5일을 적립했다. [3단계 구현 기록](../contracts/dev3-row-delete.md#implementation-3)에는 06-6의 native fault cut(DeleteForward·DeleteClr·DeletePrune 앞뒤의 crash, 사례마다 produce·recover·reenter 세 process, RDL-N01..N06)과 남은 시험 RDL-J11(다른 거래가 쥔 행의 Busy·SerializationConflict)이 있다. 06-6은 06의 마지막 항목이라 §3의 행 조건(C/A/B·loser·replay/base4 연결, rollback·회수·native fault cut)을 모두 채워야 적립한다. 연결·rollback·회수는 2-b-2·2-b-3이, native fault cut은 3단계가 채웠으므로 PR #47의 병합으로 06-6의 0.5일을 적립하고 06은 **완료**다. 첫 DELETE 한정이며 일반 행 변경은 08, 여러 Status의 동시 거래 일반화는 11에 남는다. 07은 PR #49에 계약(07-1), C 형식·전이(07-2), 제품 경로와 메모리 시험(07-3), native fault cut(07-4)이 함께 있다. 07-4는 07의 마지막 항목이라 §3의 행 조건(C/A/B·loser·replay/base4 연결, rollback·회수·native fault cut)을 모두 채워야 적립한다. 연결·rollback·회수는 07-3이, native fault cut은 07-4가 채웠으므로 PR #49의 병합으로 3일을 적립하고 07은 **완료**다. 첫 UPDATE 한정이며 일반 행 변경은 08, 인덱스 동반 변경은 09, 여러 Status의 동시 거래 일반화는 11에 남는다. 08–19는 이 기준선에서 미완료이며 기존 부분 공급을 다시 개발하라는 뜻은 아니다. 착수 때 source별 기존 공급을 확인한다.
 
 01–05의 과거 비교는 `실제 14 / 사후 예상 28 = 0.500`이고, 중앙 견적보다 경과가 50% 짧다. 사후 견적이므로 AI 생산성 개선이나 미래 일정 단축의 실증값은 아니다. 앞선 대화의 약 30%는 실제 경과 14일과 미래 예상 기간을 혼합한 값이고, 약 40%와 PR 초안의 39.66%(23/58)는 잔여를 35일로 배정한 예상량끼리의 비교였다. V1은 **34.30%**에서 적립을 시작했고, PR #47의 병합으로 34.88%, PR #49(07)의 병합으로 38.37%가 된다.
 
@@ -251,6 +253,25 @@ ID는 모두 `D3-SCH-` 접두어를 갖는다. 아래는 보고용 기본 배치
 예: 06-6이 끝나면 `(29.5+0.5)/86 = 34.88%`(PR #47), 07까지 끝나면 `(30+3)/86 = 38.37%`다. 07-1만 먼저 끝나면 0.5일(+0.58%p)만 더한다. 표의 목표 누적률을 건너뛴 작업까지 실제 완료로 읽지 않는다.
 
 보고 형식: `DEV3 V1 / 기준일·commit / 적립 30/86일 = 34.88% / 이번 완료 06-6(+0.58%p) / 다음 07-1·08-1 / 잔여 ETA ○–○일`. %p 역시 원 배정일로 계산하며 표시 반올림의 차이는 최종 누적값을 우선한다.
+
+<a id="review-adoption-20261104"></a>
+## REVIEW-012 — 기존 일정에 대한 범위 배정과 재견적
+
+[리뷰 채택 계획 A0–A7](dev3-implementation-plan.md#review-adoption-20261104)의 산출물을 기존 공급과 구분한다. **이번 문서 계획의 적립은0이며 V1은33/86일=38.37%, 미적립53일 그대로다.** 신규 구현의 규모가 정해지기 전이므로53일을 새 범위의 잔여 ETA로 사용하지 않는다. §5의12-30 중앙 예측도 현재 납기로 재사용하지 않는다.
+
+| 작업 | 기존 항목과 관계 | 견적·적립 처리 |
+| --- | --- | --- |
+| A0 | 현재 의미 유지·차이 정리 | 계획 산출물, 제품 완료 추가 없음 |
+| A1(F6-b) | 기존18-3의 WAL 재검증 개선과 중복되는 범위를 먼저 설계 | 상세 설계만으로18-3 적립 불가. 기존1일은 M1 판정/조건부 개선의 원 배정이며 새 authority·복구·F05 작업이 모두 들어간다고 가정하지 않음 |
+| A2 | 기존08/09/12/14의 일반 형식·Undo·회수와 겹침 | 기존 필수 일반화와 새 최적화/형식 대체의 증분을 분리. 선택한 새 필수 범위는 V2 여부 판단 |
+| A3/A4 | 기존11/12의 동시성·다중 객체·복구 | 동시 거래 통합과 실제 병렬 writer/queue·sync 변경을 같은 완료로 세지 않음. 선택안의 추가 코드·fault·상한 비용을 재견적 |
+| A5 | 기존08–11의 일반 row/index/Catalog | own/repeated write·overflow·split·인덱스·DDL의 기존 의무. 이번 계획이 별도 점수를 추가하지 않음 |
+| A6 | 기존13/15/16의 checkpoint/audit/restore | 기존 인수에 비용 상한·계수 입력을 연결. 알고리즘 대체·신규 persistent inventory/spill을 택하면 증분 범위를 견적 |
+| A7 | 각 구현 항목의 F05·작은 계수,18의 대형/PF09 | 작은 검증은 해당 구현에 한 번, S5 확대는18에 한 번만 배정.64GiB 준비 의무를 새 작업으로 이중 적립하지 않음 |
+
+첫 후속 A1 상세 설계 PR에는 후보별 코드/계약/fixture 범위, 지원 opcode, 영향 item, 새 의무와 재사용 산출물, 공급 단위별 예상일·불확실성·선행을 포함한다. 최적화 후보를 선택하면 **영향받는 구현 PR을 열기 전에** §6에 따라 (a) 같은 행/범위 안의 재분할 또는 (b) 새 필수 범위/부족한 배정의 V2 개정을 반영해 병합한다. 이 문서 요청만으로 근거 없는 날짜나 예상일을 확정하지 않는다. 이후 A2–A7도 실제 채택된 범위별로 같은 절차를 적용하며 모든 후보 설계의 일괄 완료를 기다리지 않는다.
+
+V2가 필요하면 영향 ID·전후 예상일·분모·완료분 처리·전후 누적률·ETA·채택/보류 이유·독립 검토를 함께 남긴다. PR #49까지 완료한 제한 공급은 보존하고 새 일반화의 완료 점수를 사후 추가하지 않는다. §2/§2.2의18-3 및 §3의 M1 적립 조건은 V1 기록으로 유지한다. 설계를 앞당긴다는 이유로 M1을 실행하거나 그 조건을 면제하지 않으며, 재배정 때 A1로 중복되는 개선 범위와 남은 측정 판정을 명시적으로 분리한다.
 
 <a id="decision"></a>
 ## 7. 결정·검토·개정 기록
