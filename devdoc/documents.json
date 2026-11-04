@@ -183,6 +183,11 @@
       "role": "evidence",
       "title": "XADB 전체 방향성 점검 — README 취지 대비"
     },
+    "dev3-cross-dbms-design-review-20261104.md": {
+      "path": "evidence/dev3-cross-dbms-design-review-20261104.md",
+      "role": "evidence",
+      "title": "DEV3 구현과 잔여 설계의 Oracle Altibase PostgreSQL 비교 리뷰"
+    },
     "dev3-oracle-direction-review-20261103.md": {
       "path": "evidence/dev3-oracle-direction-review-20261103.md",
       "role": "evidence",
