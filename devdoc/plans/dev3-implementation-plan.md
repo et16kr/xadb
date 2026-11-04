@@ -1,5 +1,7 @@
 # DEV3 — 구현·병렬 개발·검증 계획
 
+2026-11-04 현재 후속 작업은 [DEV3-REVIEW-012 리뷰 채택과 일반화 준비](#review-adoption-20261104)다. PR #49의 제한 UPDATE와 PR #50의 재검토까지 수신했다. 아래 과거 결정·실행 기록은 보존하며, 이번 변경은 실행 순서·설계 산출물·인수 조건의 계획이다.
+
 2026-10-20 · **DEV3-DESIGN-003·REVIEW-004–008 ACCEPTED / 실제 disk path·전체 단계 모델·S1 NOT_RUN**
 
 2026-10-20 [첫 표현 leaf·부분 모델](../implementation/dev3-implementation.md#validation)을 구현·독립 검토하고 같은 소스의 하위 회귀·DEV2 복구 검사를 완료했다. 아래 전체 인수의 NOT_RUN과 page envelope·M02-P01의 제한된 로컬 검증을 구분한다.
@@ -576,3 +578,54 @@ DEV3-DESIGN-001/PARALLEL-001의 소스 조사·독립 검토와 당시 문서 �
 착수 순서는 [우선 실행 묶음](#work-priority)을 따른다. 독립 audit/history 준비·checkpoint/restore census·64GiB 회계는 consumer 선행 준비로 진행할 수 있지만, 최초 row 통합이 전체 index/DDL/normal checkpoint에 의존하도록 DAG를 바꾸지 않는다. REBASE는 정상 checkpoint 전체 완료를 기다리지 않는다. 각 미정 수치/형식은 해당 effect의 차단 조건으로 남으며 문서 채택으로 지원 flag를 올리지 않는다.
 
 성능 후보는 실제 durable 성공/충돌·원래 요청 latency·공간/IO 비용이 병목을 입증한 뒤 별도 D2로 평가한다. DEV3 PF09는 DP07 최소10쌍, S5는 확정된 DEV3 inventory 전수이며 COMM5+5와 DEV0/1/2 전수 반복은 적용하지 않는다.
+
+<a id="review-adoption-20261104"></a>
+## DEV3-REVIEW-012 — 두 리뷰의 채택과 일반화 준비
+
+2026-11-04 · **D2 ACCEPTED / 독립 검토 필수 지적0 / 제품 구현·시험 NOT_RUN**. 기준은 PR #50 병합 main `d331ed4d2fbb85646ca23c93b2543e78b7f82636`이며, 제품 코드는 PR #49의 `2397633015e7410bbc591c81095ba49f621073ca`와 같다. 사용자의 “클로드 리뷰 중 납득할 만한 것과 우리 리뷰 적용” 및 계획 반영 실행 요청을 수신한다. [Claude 리뷰(PR #48)](../evidence/dev3-oracle-direction-review-20261103.md)와 [비교 재검토(PR #50)](../evidence/dev3-cross-dbms-design-review-20261104.md)는 당시 근거로 보존한다. 실행 순서는 이 절, 의미·안전성은 [설계 정본](../contracts/disk-storage-design.md#task-review-012), 검증은 [구현 동반 인수](dev3-test-plan.md#review-adoption-20261104)가 소유한다.
+
+### 채택·대안 비교·유지·보정
+
+문제와 개선 목표의 채택은 특정 구현안의 채택과 구별한다. Oracle 지향의 사용성과 거래 동작도 비교 입력으로 다루고 Altibase 디스크 엔진·PostgreSQL과 대조한다. 이번 PR은 Oracle 호환 항목의 최종 채택/거절이나 [제품 방향](project-direction.md)의 변경을 결정하지 않는다. A0의 현재 계약 유지는 후속 결정 전 작업 기준이며 영구적인 호환성 결론이 아니다.
+
+| 리뷰 항목 | 판정과 적용 | 작업 |
+| --- | --- | --- |
+| Claude R1/R3·S1–S6, 재검토 거래 의미 | 현재 작업 기준은 기본 Serializable, RC 관측 불일치 전체 abort, 최대 TxnId deadlock victim 전체 rollback, own mutation 뒤 cursor 무효화, snapshot 강제 만료 금지. Oracle 대응 항목은 A0에서 호환/보장/구현 비용을 비교하고 별도 결정; 이번 PR에서 RC 기본·statement restart 등을 영구 거절하지 않음. SI를 같은 Serializable 보장의 최적화로 취급하지 않음 | A0·A4 |
+| R2 중 live replay | 반복 전체 재생의 구조 비용을 개선 과제로 채택. 전체 검사를 단순 삭제하지 않고 authoritative live 상태·증분 전이·무효화와 복구 재구성을 먼저 설계 | A1(F6-b) |
+| R2 중 로그·Undo·표현, R7 | redo 다중 구간/연산형, 짧은 참조·packing·거래별 정리와 ITL/CTS·column delta를 A2 비교 후보로 유지하며 필수 구현으로 확정하지 않음. commit 순서만의 Undo 회수는 수명 증명이 부족해 채택하지 않음. native before/after는 현재 replay 입력이므로 대체 증명 없이 제거하지 않음 | A2 |
+| R2/R6 중 공통 Root·설치 장벽, 재검토 그룹별 durable 대기·유일 writer·read gate | 로그량, sync 횟수, writer 소유, reader 차단을 별도 과제로 채택. group commit·Root 분할만으로 모두 해결됐다고 판정하지 않음. 현재 장벽은 대체 순서 증명 전 유지 | A3·A4 |
+| R4/R5·S7, 일반 row/index/Catalog 잔여 | 순차 RowId의 비대칭 split, bounded cursor batch, index 버전/공간, table 단위 build 잠금을 후보로 비교. stable RowId·논리 Undo·원자 row/index 유지. right-link·ITL·table 단위 build를 이번에 필수 형식으로 확정하지 않음 | A5 |
+| R6 중 행 잠금 위치 | bounded 메모리 row-lock 표, row의 TxnRef/ITL 기반 소유, 혼합형을 A4 비교 후보로 명시. VersionStamp만으로 X lock을 대체하지 않음. 영향받는 row 형식 동결 및 일정11 구현 전에 결정; DEV7 확장 비용을 함께 제출 | A2·A4 |
+| R6/R10·S8, census·거래 상한 | 구성 요소별 상한을 합성하는 회계를 검토하되 수치 벡터·예약 종료 증명을 유지. 임의 25% 여유/RSS 감시로 대체하거나 256 mutation·1 MiB 논리 변경 상한을 해제하지 않음 | A2·A7 |
+| R8, checkpoint/audit/restore | bounded 메모리와 재순회 I/O 비용을 함께 설계. 기존 typed namespace rewrite·retained credit·새 LSN high-water 유지. header/incarnation 교체만의 restore는 미채택 | A6 |
+| R9/R11, 비용 계측·64GiB | 변경 기능과 함께 작은 계수/경계 비교를 공급하고 대형 PF09는 S5. DWB 교체·성능 합격 수치 변경은 미채택. 비교 제품의 durability·isolation 조건을 맞춤 | A7 및 각 작업 |
+| R2/R3의 “UPDATE 전에”, 첫 profile 일반화·수치 주장 | UPDATE는 PR #49의 제한 경로로 완료. 이 기록을 되돌리지 않으며 일반화 전에 영향받는 계약을 검토. Int64 canonical 13 B의 현 leaf entry는197 B·82행;185 B/85행을 Int64로 사용하지 않음. 모든 연산이 Root/Job을 바꾼다는 일반화와 native 정보가 진단 전용이라는 주장도 제외 | 원 증거 보존·A2 |
+
+UNIQUE의 statement-final 검사와 “전체 NULL만 예외, 부분 NULL 충돌”도 유지한다. PostgreSQL의 기본 UNIQUE·`NULLS NOT DISTINCT`와 동등하다고 표기하지 않는다. A0의 결정 자료는 기본 격리·충돌/statement restart·cursor·deadlock·retention·Serializable 보장을 항목별로 비교하고, 변경할 API/상태/자원/인수와 권고안을 제시한다. 일반 동시성(일정11) 구현 전에, 앞선 A5 leaf의 의미/형식에 영향이 있으면 그 leaf 동결 전에 자료와 해당 결정을 닫는다. 제품 방향·호환 약속·필수 보장을 바꾸는 D3는 사용자 결정으로, 기존 위임 안의 내부 상세화는 D2로 처리한다. 현재 의미를 쓰는 독립 준비는 계속하며 D2 ACCEPT를 사용자 제품 방향 결정으로 표기하지 않는다.
+
+### 작업 순서·산출물·종료 조건
+
+A0–A7은 기존 3.01–3.16과 일정 08–19에 연결하는 작업 표식이며 새 완료 점수나 별도 단계가 아니다. A0의 현재 작업 기준과 호환 결정의 경계, 이 순서의 채택이 이번 계획 산출물이다. A1–A7의 상세 설계·구현·검증은 미완료다.
+
+| 작업·우선순위 | 입력·소유 계약 | 구체 산출물과 종료 조건 | 의존·일정 연결 |
+| --- | --- | --- | --- |
+| A0 · 현재 작업 기준·호환 결정 | 위 판정표, [동시성](../contracts/dev3-task-10-concurrency.md#review-adoption-20261104) | 현재 계약으로 개발하되 Oracle 대응 항목의 대안·보장·구현 비용·권고·결정 등급을 제출. 사용자 제품 방향 결정과 내부 D2를 구별 | 일정11 구현 전; 더 이른 A5 의미/형식에 영향이 있으면 해당 leaf 동결 전. 독립 준비 계속 |
+| A1 · 첫 후속 설계: live WAL 재검증 | M0·`history::validate_live`, [WAL 소유/증분 검증](../contracts/dev3-task-04-wal.md#review-adoption-20261104) | 전체 검증 유지·base 전환·증분 owner 세 안의 비용/신뢰 경계 비교. 상태 identity, 전이/무효화 표, reopen 재구성, touched-page 검증, F05, 작은 계수 비교와 fault 입력을 동결. [A1 비용 목표](../contracts/dev3-task-04-wal.md#a1-cost-target)를 만족할 안전한 후보를 선택. 없으면 목표 미달·미완료로 남기고 재설계/제한안/일정 영향을 제시; 현 방식 유지로 개선 완료 처리 금지 | F6-b를 18 전 설계로 이동. 독립된 첫 설계 PR→필요한 일정 재배정→해당 후보 구현 PR |
+| A2 · 형식·자원 설계 | 3.04/06/07/09/14, [표현·벡터](../contracts/dev3-resource-bounds.md#review-adoption-20261104) | redo/Undo/row/index별 현 bytes·대안 bytes·최악 입력·검산 비용표. 다중 patch/연산형 redo, ITL/CTS·짧은 참조/packing, 전체 before와 column delta, 현 형식 유지를 비교. canonical 형식·pageLSN·독립 replay·pin/edge·rollback·이관 범위까지 선택안 D2. 실제 바뀌는 형식별 작은 PR로 분할 | A1의 상태 authority와 합치. 일반 page/row/index 형식에 영향 주는 결정만 해당 A5 leaf 전에 닫음. 08/09/12/14 |
+| A3 · WAL stage·durability 설계 | 3.04/11/12, [WAL 경계](../contracts/dev3-task-04-wal.md#review-adoption-20261104) | 현재 그룹별 sync 요구를 추적하고 현 방식·bounded queue/batch를 비교. complete/synced/installed/published 경계·page별 순서·ACK/UNKNOWN·부분 I/O·취소·checkpoint·예약 증명. sync 절감은 로그 byte 절감과 따로 판정 | A1/A2에서 선택한 상태/형식 수신. A4의 실제 병렬 적용 전에 설치 순서 결정. 11/12 |
+| A4 · writer·reader·공유 metadata | 3.10/11 및 A0, [소유 경계](../contracts/dev3-task-10-concurrency.md#review-adoption-20261104) | 유일 `MutationPort`, read gate, Root/Job/Status, WAL slot, 설치 장벽 각각의 직렬 구간/보유 자원/대기 표. 준비 병렬화·gate 축소·metadata 분산·row 잠금 위치·현 방식의 비교. page 순서와 동시 자원 peak를 증명하고 실제 독립 writer·reader 진행 사례로 인수 | A1의 live 상태와 A3의 설치 순서 수신. 잠금 위치는 영향받는 A5 형식 동결 및11 구현 전 결정. 그 외 기존 단일 writer A5 공급의 일괄 선행은 아님. 11 |
+| A5 · 일반 row/index/Catalog 연결 | 기존 3.06/07/08/09/10/12 | own/repeated UPDATE·occupied before·overflow·split·다중 행·row/index 원자성·DROP/세대·복구를 기존 단위대로 공급. [DEV4 bounded 대상 물질화](../contracts/dev4-sql-design.md#execution)를 수신할 RowId/observation·snapshot 경계와 반복 변경을 닫음. SQL 실행기 개발은 DEV4에 유지 | 필요한 A2 형식만 먼저 수신; 기존 08→09→10, 동시성 통합은11. 첫 UPDATE 완료분 재개발 금지 |
+| A6 · checkpoint·audit·restore 비용 | 3.13/15, [기존 capture](../contracts/dev3-task-13-checkpoint.md#immutable-capture-source)·[namespace rewrite](../contracts/dev3-task-15-backup-integrity.md#namespace-rewrite) | checkpoint의 target T/batch B·base inventory I/WAL W, audit의 T/E/B로 pass·read bytes 상한과 자원/완료 예산 동결. 현 partition 재생·증분 inventory·외부 인덱스 후보를 비교; 새 spill이 필요하면 기존 금지 계약부터 별도 변경. restore 전체 audit 비용 포함 | census/산식 준비는 A1과 독립. 구현은 기존12→13/14→15/16 선행 유지 |
+| A7 · 회계·계측·대형 인수 준비 | 각 owner와3.16, [측정 조건](../contracts/dev3-task-16-qualification.md#review-adoption-20261104) | 각 변경과 함께 private/shared/page/pin/WAL/rollback의 수치 벡터·실제 계수 공급. 64GiB 지원 tuple·전체 공존 disk·실제 inventory fixture 준비. 동등 durability/isolation의 PF09 입력과 판정 동결 | 전 작업에 동반. 작은 검증은 각 leaf 비용에 포함, 확대 실행은18; 중복 적립 없음 |
+
+다음 구현 입력은 **A1 상세 설계**다. 이 계획만으로 새로운 WAL 형식이나 증분 authority가 동결됐다고 보지 않는다. 상세 설계는 현 경로와 대안을 같은 표에서 비교하고, 독립 D2와 owner 확인 후 필요한 codec/API/F05·fixture를 정확히 지정한다. 구현은 `상태/검증 → 실제 소비 경로 → 장애·재진입 → 계수 비교`처럼 검토 가능한 단위로 나눈다. 성능 개선 결론은 실제 관측 뒤에만 기록한다.
+
+### 이전 결정과 일정의 관계
+
+이 결정은 [REVIEW-011](#comparison-adoption)의 제품 의미·불변식·D3-COMP-01–10을 유지한다. 다만 “성능 후보는 병목 측정 뒤에만 검토”와 [F6-b](module-independence-followup-plan.md#wal-cost)의 조건부 설계 순서를 **A1의 M0 구조 비용을 근거로 상세 설계를 먼저 수행하는 범위에서만** 대체한다. A2–A4/A6의 대안 비교도 해당 일반화 설계에 앞당기되 최적화 구현의 자동 채택으로 확대하지 않는다. 기존 “M0만” 결과·M1 NOT_RUN은 유지한다. 이번 요청은 문서 계획 적용이며 시간 측정이나 제품 실행을 승인·실행한 기록이 아니다.
+
+일정은 [범위 배정과 재견적 경계](dev3-schedule-baseline.md#review-adoption-20261104)를 따른다. 이번 문서로 적립을 늘리지 않는다. 새 필수 구현을 기존 18-3의1일에 숨기지 않으며, 후보 선택 뒤 영향받는 적립 항목의 첫 산출물 PR(구현 또는 M1 등)을 열기 전에 재분할 또는 V2를 반영한다. A1 외 모든 설계가 끝날 때까지 DEV3를 멈추는 일괄 gate는 추가하지 않는다.
+
+초기안의 작업·계약·통합 담당 `/root`가 반영을 확인했다. 별도 실행 `/root/review_adoption_d2`가13개 문서의 실제 diff·source·owner 계약·두 리뷰를 대조해 **D2 ACCEPT, 열린 필수 지적0**으로 판정했다([독립 검토 기록](../../module-gate/evidence/dev3-review-adoption/review.md)). 계획의 채택과 제품의 구현·시험 완료는 각각 기록한다. 이번 제품·모델·성능 시험은 NOT_RUN이며 pre-push 정적 검사 결과는 PR에 남긴다.
+
+2026-11-04 PR #51 댓글 보강: A0 작업 기준과 최종 호환 결정을 분리하고, R6 잠금 위치·ITL/CTS/column delta 후보, A1 비용 목표·미달 처리, A1 비적립 설계 보고를 명시했다. 이전 검토는 원 blob의 증거로 보존하며 이 보강은 [댓글 보강 독립 검토](../../module-gate/evidence/dev3-review-adoption/review.md#comment-followup)에서 D2 ACCEPT, 필수 지적0으로 판정됐다.

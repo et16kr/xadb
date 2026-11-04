@@ -40,6 +40,8 @@ engine의 storage/transaction/durable/catalog가 자신이 소유한 invariant�
 
 ## 3. bounded full audit 알고리즘
 
+[REVIEW-012 A6](../plans/dev3-implementation-plan.md#review-adoption-20261104)은 아래 알고리즘의 target T·edge E·batch B와 `E × ceil(T/B)` 재방문 비용을 입력 크기에 따라 기록하도록 보강한다. fixed workspace만으로 대형 audit의 완료 시간이 보장됐다고 판정하지 않는다. [D3-ADOPT-06](../plans/dev3-test-plan.md#review-adoption-20261104)에서 실제 방문/읽기·시간 예산·중단 판정을 동결한다. source-WAL-free restore의 destination 전체 audit도 이 비용에 포함한다. 정상 open의 VERIFY_RECOVERY를 전 DB scan으로 넓히지 않는다. spill/sort 대안을 택하려면 이 계약의 추가 disk 사용 제한·quota·오류/cleanup·독립성을 먼저 별도 D2로 바꾼다. 기존 typed namespace rewrite와 retained credit·새 high-water·restore 뒤 새 ACK의 재장애 인수는 유지한다.
+
 audit 시작 전에 일관된 읽기 기준과 mutation 중지 소유를 확보한다. page에서 빌린 내용은 guard/latch 수명 안에서 검산하고 다음 읽기에 필요한 identity만 bounded cursor에 남긴다. 살아 있는 dirty frame을 검사하는 범위와 실제 home bytes를 검사하는 범위를 receipt에 구분한다. flush가 필요한 audit profile이면 기존3.05 경로에서 먼저 완료하고 audit가 임의 raw home write를 수행하지 않는다. restore의 source backup은 동결된 파일 bytes가 기준이다.
 
 | 순회 | 알고리즘과 판정 |
