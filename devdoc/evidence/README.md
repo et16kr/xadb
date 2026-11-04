@@ -1,6 +1,6 @@
 # XADB 조사·실행 증거
 
-2026-11-04 [DEV3 개선 계획 리뷰: 구조 목표·단일 노드 가용성·HA 연결](dev3-improved-plan-structural-review-20261104.md): PR #51 병합 main `8a4f8e4a`의 A0–A7을 Claude가 검토했다. 이전 지적과 PR #51 리뷰 의견의 반영을 확인했고, A2–A4의 구조 목표, buffer manager 확장, 단일 노드의 DB 전체 쓰기 정지 경로, A2와 DEV8 HA의 연결, 제품 목표의 사용자 결정을 권고한다. 같은 PR의 Codex 검토와 겹치지 않는 부분을 중심으로 적었다. D0 정적 리뷰 기록이며 계약·일정·제품 코드 변경과 제품 시험 새 실행은 없다.
+2026-11-04 [DEV3 개선 계획 리뷰: 구조 목표·단일 노드 가용성·HA 연결](dev3-improved-plan-structural-review-20261104.md): PR #51 병합 main `8a4f8e4a`의 A0–A7을 Claude가 검토했다. 이전 지적과 PR #51 리뷰 의견의 반영을 확인했고, A2–A4의 구조 목표, buffer manager 확장, 단일 노드의 DB 전체 쓰기 정지 경로, A2와 DEV8 HA의 연결, 제품 목표의 사용자 결정을 권고한다. 같은 PR의 Codex 검토와 겹치지 않는 부분을 중심으로 적었고, r2에서 이 문서에 달린 리뷰를 반영해 쓰기 정지 경로를 일곱으로 늘리고(checkpoint WAL 한도, offline backup, dirty backlog 압력 추가), A3·A4 목표의 적용 조건과 A2 판정 사례를 좁히고, A6 구조 목표를 더하고, 같은 PR 리뷰들의 사용자 결정을 목록 하나(U1–U6)로 묶었다. D0 정적 리뷰 기록이며 계약·일정·제품 코드 변경과 제품 시험 새 실행은 없다.
 
 2026-11-04 [DEV3 개선 계획의 대용량 고성능 고가용성 검토](dev3-scalability-ha-plan-review-20261104.md): PR #51 병합 main `8a4f8e4a`의 A0–A7과 DEV8 HA 계획을 대조했다. 개선 방향을 지지하며, 기본 Serializable의 table 충돌·A2–A4 성능 판단 기준·전체 서비스 중단 시간·제품 목표 용량·checkpoint/audit 비용의 후속 결정을 권고한다. [PR #52 댓글별 반영](dev3-scalability-ha-plan-review-20261104.md#comment-followup)은 고정 tuple·거래 크기, 지속 부하·WAL 압력·audit 쓰기 중단, strict 쓰기 복구·DEV9 연결과 D2/D3 경계를 보강하고 과도한 일반화를 제한한다. D0 정적 리뷰 기록이며 계약·일정·제품 코드 변경과 제품 시험 새 실행은 없다.
 
