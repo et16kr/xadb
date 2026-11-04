@@ -2,7 +2,7 @@
 //! The original owner supplies one stable canonical cut, including the Job
 //! and Structural banks. These checks grant no source, reservation or install
 //! authority and do not replace that owner's Root/Status/ATT/incoming census.
-use super::{Error, Operation, Result, weights};
+use super::{Error, Operation, Result, bank, weights};
 use crate::{
     api::Namespace,
     storage::{
@@ -10,7 +10,7 @@ use crate::{
         anchor::{self, AnchorRoot, TreeKind},
         catalog_record::{self, CatalogDefinitionView, CatalogExpectation},
         control::Profile,
-        obligation::{self, InventoryClaim, OwnerChain, OwnerState, RemainingBudget, WorkPhase},
+        obligation,
         page::{
             self, FileId, MAX_PAGE_SLOTS, PAGE_BYTES, PageHeader, PageIdentity, PageKind, PageLsn,
             PageRef,
@@ -131,36 +131,14 @@ fn previous(input: &Inputs<'_>) -> Result<[u8; 32]> {
         allocation_page::ReservationOwner::System(owner),
         profile_reference(input.profile),
     )?;
-    let OwnerState::System(progress) = spec.owner else {
-        return Err(Error::IdentityMismatch);
-    };
-    same(
-        progress.phase == WorkPhase::Finished
-            && progress.sequence == 1
-            && progress.cursor == 1
-            && progress.limit == 1
-            && spec.chain
-                == (OwnerChain {
-                    apply: owner.id(),
-                    previous: 0,
-                    birth: owner.id(),
-                    groups: 1,
-                }),
-    )?;
-    same(
-        spec.inventory
-            == (InventoryClaim {
-                change_lsn: owner.id(),
-                items: 0,
-                digest: content_digest(&[]),
-                growth_extents: 0,
-            })
-            && matches!(spec.consumed_wal, 84_744 | 84_640)
-            && spec.consumed_control == 0
-            && spec.remaining == [RemainingBudget::default(); 5]
-            && spec.minimum_wal_lsn == 0
-            && spec.last_mutation_sequence == 0,
-    )?;
+    bank::validate(
+        input.profile,
+        input.frame.previous_lsn,
+        input.frame.stream.writer_epoch,
+        input.previous_high_water,
+        &spec,
+    )
+    .map_err(|_| Error::IdentityMismatch)?;
     Ok(content_digest(bytes))
 }
 

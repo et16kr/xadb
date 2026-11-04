@@ -1,0 +1,84 @@
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 41s
+     Running unittests src/lib.rs (artifacts/dev3-08/target/debug/deps/engine-e4e141083d864921)
+
+running 19 tests
+ROW_BASE_BIRTH_SOURCE grammar=1934 grammar_bound=2252 groups=1315 group_bound=2668 certificate=1515 certificate_bound=1542
+ROW_BASE_SOURCE_CHAIN outer measured=4296 bound=7808
+ROW_BASE_SOURCE_CHAIN layout measured=11555 bound=20232
+ROW_BASE_SOURCE_CHAIN graph measured=8360 bound=9352
+ROW_BASE_SOURCE_CHAIN queue measured=7585 bound=8016
+ROW_BASE_SOURCE_CHAIN provenance measured=7658 bound=9768
+ROW_BASE_SOURCE_CHAIN actors measured=20794 bound=21398
+ROW_BASE_SOURCE_CHAIN row_ledger measured=14325 bound=14713
+ROW_BASE_SOURCE_CHAIN relations_job measured=8842 bound=19950
+ROW_BASE_SOURCE_CHAIN relations_terminal measured=16118 bound=19950
+ROW_BASE_SOURCE_CHAIN relations_root measured=16647 bound=19950
+ROW_BASE_SOURCE_CHAIN relations_catalog measured=15534 bound=19950
+ROW_BASE_SOURCE_CHAIN relations_payloads measured=15619 bound=19950
+ROW_BASE_SOURCE_CHAIN relations_allocation measured=9066 bound=19950
+ROW_BASE_SOURCE_CHAIN relations_reservation measured=7099 bound=19950
+ROW_BASE_SOURCE_CHAIN tables_direct measured=15249 bound=24896
+ROW_BASE_SOURCE_CHAIN tables_nested_rows measured=18525 bound=24896
+ROW_BASE_SOURCE_CHAIN tables_nested_commits measured=19785 bound=24896
+ROW_BASE_SOURCE_CHAIN tables_terminal measured=9440 bound=24896
+ROW_BASE_SOURCE_CHAIN tables_compensated measured=14184 bound=24896
+ROW_BASE_SOURCE_CHAIN ledger_rows measured=22021 bound=34565
+ROW_BASE_SOURCE_CHAIN ledger_reverse measured=18634 bound=34565
+ROW_BASE_SOURCE_CHAIN ledger_system_provenance measured=20135 bound=34565
+ROW_BASE_SOURCE_CHAIN ledger_structural_provenance measured=21490 bound=34565
+ROW_BASE_SOURCE_CHAIN ledger_system_allocation measured=14191 bound=34565
+ROW_BASE_SOURCE_CHAIN inventory_verify measured=48291 bound=51867
+ROW_BASE_SOURCE_CHAIN inventory_items measured=23802 bound=51867
+ROW_BASE_SOURCE_CHAIN inventory_row_item measured=22723 bound=51867
+ROW_BASE_CATALOG_HOOK hook=12480 profile3_transaction=11259 profile2_transaction=11259
+ROW_BASE_SOURCE peak=59675 outer=7808 layout=20232 graph=9352 queue=8016 provenance=9768 relations=19950 actors=21398 tables=24896 row_ledger=14713 ledger=34565 inventory=51867 measured_peak=52587 row_codec=6736 catalog_peak=45591 catalog_outer=7132 catalog_layout=19592 catalog_layout_census=19592
+ROW_BASE_SIZES row_census=72 row_base_view=248 inventory_observation=32 reserved_inventory=1 graph=664 layout_view=176 catalog_census=80
+test storage::plan4_recovery_base::row::graph::source::tests::base4_closure_source_bound_covers_measured_frames ... ok
+
+thread 'storage::plan4_recovery_base::row::graph::tests::structural_bank_tests::structural_bank_latest_claim_binds_operation_owner_and_monotonic_epoch' (28129) panicked at crates/engine/src/storage/plan4_recovery_base/row/graph/structural_bank_tests.rs:136:31:
+called `Result::unwrap()` on an `Err` value: ProvenanceMismatch
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test storage::plan4_recovery_base::row::graph::tests::structural_bank_tests::structural_bank_latest_claim_binds_operation_owner_and_monotonic_epoch ... FAILED
+test storage::semantic_row::structure::bank::tests::structural_bank_independent_finished_root_child_and_prior_epoch ... ok
+test storage::semantic_row::structure::bank::tests::structural_bank_raw_decoder_checks_reserved_bytes_and_binding ... ok
+test storage::semantic_row::structure::bank::tests::structural_bank_rejects_finished_semantic_debt_chain_and_inventory_changes ... ok
+test storage::semantic_row::structure::bank::tests::structural_bank_rejects_missing_future_or_wrong_profile_owner ... ok
+STRUCTURAL_BANK_SOURCE validation=2856 validation_bound=3376 raw=10239 raw_bound=12207
+test storage::semantic_row::structure::bank::tests::structural_bank_source_covers_typed_validation_and_raw_decode ... ok
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::structural_bank_tests::structural_bank_admission_checks_original_row_before_omitting_finished_debt ... ok
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::structural_bank_tests::structural_bank_allocation_initial_skips_two_structural_claims_with_same_id ... ok
+STRUCTURAL_BANK_SEED_SOURCE helper=16799 outer=480 bound=25439 ledger_bound=24831
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::structural_bank_tests::structural_bank_ram_source_covers_metadata_and_observer_frames ... ok
+
+thread 'storage::plan4_recovery_base::row::graph::tests::structural_bank_tests::structural_bank_does_not_open_unimplemented_structural_tree_closure' (28128) panicked at crates/engine/src/storage/plan4_recovery_base/row/graph/structural_bank_tests.rs:159:5:
+assertion failed: decode_layout(&*bytes, expected()).is_ok()
+test storage::plan4_recovery_base::row::graph::tests::structural_bank_tests::structural_bank_does_not_open_unimplemented_structural_tree_closure ... FAILED
+WRITABLE_SOURCE handles=(416, 408) wrapper=1226 row_wrapper=1226 helper=24447 lifecycle=43229 row_lifecycle=40881 retirement=44304 peak=64016
+WRITABLE_SOURCE handles=(416, 408) wrapper=1226 row_wrapper=1226 helper=24447 lifecycle=43229 row_lifecycle=40881 retirement=44304 peak=64024
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::transaction::writable::tests::writable_capsule_and_wrappers_stay_within_original_limits ... ok
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::analysis::structural_bank_tests::structural_bank_capture_and_remaining_reject_stale_cut_epoch_and_ram_metadata ... ok
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::structural_bank_tests::structural_bank_seed_maps_wire33_to_ram34_with_high_water_and_zero_metadata ... ok
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::analysis::structural_bank_tests::structural_bank_capture_packs_ram34_as_wire33_with_no_active_debt ... ok
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_source_memory' (28142) panicked at crates/engine/src/storage/wal_io/plan4_recovery/tests.rs:48:64:
+missing XADB_PLAN4_RECOVERY_SOURCE_SHA256
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_source_native' (28143) panicked at crates/engine/src/storage/wal_io/plan4_recovery/tests.rs:48:64:
+missing XADB_PLAN4_RECOVERY_SOURCE_SHA256
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_source_native ... FAILED
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_source_memory ... FAILED
+test storage::plan4_recovery_base::row::graph::tests::structural_bank_tests::structural_bank_base_rejects_missing_high_water_future_cut_and_wrong_epoch ... ok
+test storage::plan4_recovery_base::row::graph::tests::structural_bank_tests::structural_bank_base_accepts_retired_claims_without_active_inventory_owner ... ok
+
+failures:
+
+failures:
+    storage::plan4_recovery_base::row::graph::tests::structural_bank_tests::structural_bank_does_not_open_unimplemented_structural_tree_closure
+    storage::plan4_recovery_base::row::graph::tests::structural_bank_tests::structural_bank_latest_claim_binds_operation_owner_and_monotonic_epoch
+    storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_source_memory
+    storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_source_native
+
+test result: FAILED. 15 passed; 4 failed; 0 ignored; 0 measured; 2256 filtered out; finished in 0.05s
+
+error: test failed, to rerun pass `-p xadb-engine --lib`

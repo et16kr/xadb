@@ -1,9 +1,10 @@
 //! Canonical complete-prefix analysis. The actual home is used solely as a
 //! physical before-image to classify; it never seeds a semantic before state.
 use super::super::plan4_pages::{
-    observe_recovery_frame, retention_replay_bank, retention_replay_cells, retention_replay_digest,
-    retention_replay_image, retention_replay_losers, retention_replay_provenance,
-    retention_replay_row_scope, seed_recovery_replay,
+    observe_recovery_frame, observe_structural_bank_row, retention_replay_bank,
+    retention_replay_cells, retention_replay_digest, retention_replay_image,
+    retention_replay_losers, retention_replay_provenance, retention_replay_row_scope,
+    seed_recovery_replay,
 };
 use super::*;
 use crate::storage::{
@@ -23,6 +24,7 @@ const BANK_BYTES: usize = 65_536;
 const RAM_ROW: usize = 1664;
 const RAM_AGING: usize = 32;
 const RAM_ALLOCATION: usize = 33;
+const RAM_STRUCTURAL: usize = 34;
 
 pub(super) fn u64_at(bytes: &[u8], at: usize) -> u64 {
     u64::from_le_bytes(
@@ -648,8 +650,19 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
             &tail[TARGETS - REPLAY_END..TARGETS - REPLAY_END + 64 * TARGET_BYTES],
         )?;
         let bank = retention_replay_bank(replay);
-        let (remaining_wal, remaining_steps) =
-            remaining(profile, bank, retention_replay_image(replay, 1))?;
+        let epoch = self
+            .source
+            .as_ref()
+            .map(|source| source.epoch)
+            .or_else(|| inherited_facts.as_ref().map(|facts| facts.epoch))
+            .ok_or_else(|| error(p, Plan4RecoveryCause::Invariant))?;
+        let (remaining_wal, remaining_steps) = remaining(
+            profile,
+            bank,
+            retention_replay_image(replay, 1),
+            previous,
+            epoch,
+        )?;
         let state_digest = retention_replay_digest(replay);
         let mut status_mask = 0;
         for index in 9..64 {
@@ -764,7 +777,10 @@ fn remaining(
     profile: Profile,
     bank: &[u8; BANK_BYTES],
     root: &[u8; PAGE_BYTES],
+    cut: u64,
+    epoch: u32,
 ) -> Result<(u64, u64)> {
+    check_structural_bank(profile, bank, cut, epoch, Plan4RecoveryPhase::Analysis)?;
     let p = Plan4RecoveryPhase::Analysis;
     let mut wal = 0u64;
     let mut steps = 0u64;
@@ -807,7 +823,7 @@ fn decode_ram_descriptor(
             TxnRef::decode(&bank[slot * RAM_ROW + 1576..slot * RAM_ROW + 1624])
                 .map_err(|e| error(p, Plan4RecoveryCause::Page(e)))?,
         )
-    } else if slot == RAM_ALLOCATION {
+    } else if slot == RAM_ALLOCATION || (slot == RAM_STRUCTURAL && profile.format() == 3) {
         ReservationOwner::System(
             SystemWorkRef::decode(&raw[24..72])
                 .map_err(|_| error(p, Plan4RecoveryCause::Invariant))?,
@@ -821,6 +837,26 @@ fn decode_ram_descriptor(
     };
     obligation::decode_descriptor(raw, owner, reference)
         .map_err(|_| error(p, Plan4RecoveryCause::Invariant))
+}
+
+fn check_structural_bank(
+    profile: Profile,
+    bank: &[u8; BANK_BYTES],
+    cut: u64,
+    epoch: u32,
+    phase: Plan4RecoveryPhase,
+) -> Result<()> {
+    let row = &bank[RAM_STRUCTURAL * RAM_ROW..(RAM_STRUCTURAL + 1) * RAM_ROW];
+    if profile.format() != 3 {
+        return if row.iter().all(|byte| *byte == 0) {
+            Ok(())
+        } else {
+            Err(error(phase, Plan4RecoveryCause::Unsupported))
+        };
+    }
+    observe_structural_bank_row(profile, cut, epoch, row)
+        .map(|_| ())
+        .map_err(|cause| error(phase, Plan4RecoveryCause::Retention(cause)))
 }
 
 fn add_remaining(total: &mut [RemainingBudget; 5], next: &[RemainingBudget; 5]) -> Result<()> {
@@ -864,9 +900,12 @@ fn pack_bank(
     bank: &[u8; BANK_BYTES],
     out: &mut [u8; base::DESCRIPTOR_BYTES],
     root: &[u8; PAGE_BYTES],
+    cut: u64,
+    epoch: u32,
 ) -> Result<(u32, u32, [RemainingBudget; 5])> {
     use crate::storage::transaction_record::TxnRef;
     let p = Plan4RecoveryPhase::Rebase;
+    check_structural_bank(profile, bank, cut, epoch, p)?;
     out.fill(0);
     let mut used = 0u32;
     let mut transactions = 0u32;
@@ -902,7 +941,7 @@ fn pack_bank(
         transactions += 1;
     }
     let mut systems = 0u32;
-    for (ram, wire) in [(RAM_ALLOCATION, 32), (RAM_AGING, 34)] {
+    for (ram, wire) in [(RAM_ALLOCATION, 32), (RAM_STRUCTURAL, 33), (RAM_AGING, 34)] {
         let raw = &bank[ram * RAM_ROW..ram * RAM_ROW + 1536];
         if raw.iter().all(|v| *v == 0) {
             continue;
@@ -1062,8 +1101,14 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
         let packed: &mut [u8; base::DESCRIPTOR_BYTES] = (&mut pack[..base::DESCRIPTOR_BYTES])
             .try_into()
             .expect("packed bank");
-        let (transactions, systems, remaining) =
-            pack_bank(profile, bank, packed, retention_replay_image(replay, 1))?;
+        let (transactions, systems, remaining) = pack_bank(
+            profile,
+            bank,
+            packed,
+            retention_replay_image(replay, 1),
+            facts.lsn,
+            facts.epoch,
+        )?;
         let (_status, packing) = packing.split_at_mut(STATUS_END - STATUS_START);
         let (certs, packing) = packing.split_at_mut(CERT_END - CERT_START);
         let (inventory, _) = packing.split_at_mut(PAGE_BYTES);
@@ -1114,7 +1159,7 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
             source_local: facts.adopted_local,
             system_high_water: [
                 u64_at(bank, RAM_ALLOCATION * RAM_ROW + 1536),
-                0,
+                u64_at(bank, RAM_STRUCTURAL * RAM_ROW + 1536),
                 u64::from(root.aging().is_some()),
                 0,
             ],
@@ -1160,6 +1205,11 @@ pub(super) fn packing_source_bytes() -> usize {
             outer
                 + crate::storage::retention_obligation::row::source_bytes()
                     .max(queue::source_bytes())
+                    .max(super::super::plan4_pages::structural_bank_source_bytes())
                     .max(hash),
         )
 }
+
+#[cfg(test)]
+#[path = "analysis/structural_bank_tests.rs"]
+mod structural_bank_tests;

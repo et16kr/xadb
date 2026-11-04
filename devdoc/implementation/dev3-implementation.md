@@ -56,6 +56,13 @@ source 시험1개를 source별 검증했고 독립 D1/D2 ACCEPT·Clippy PASS다.
 [기록](../evidence/dev3-tree-structure-20261104.md#base-structural-claims)에 남긴다.
 raw layout 수락은 원 INIT 증명이나 복구 수락이 아니고, mint·ledger·전체 tree 연결은 남는다.
 
+후속 [Finished split bank 인계](../contracts/dev3-tree-smo.md#structural-bank)는 완료 descriptor의
+소유자·cut/epoch·부채0과 최신 birth의 operation/WAL 비용을 검산한다. 원 RAM34의 admission,
+복구 seed·remaining·pack을 같은 observer로 연결하고 wire33과 high-water를 보존한다.
+신규15개·영향받은 기존4개를 실제 source별로 검증했으며 독립 D1/D2는 한정 ACCEPT다.
+원 FAIL은 보존했고 runtime 성공 사례의 반복은 없다. 전체 tree closure·scope4 수락·INIT mint와
+원 pool 설치는 여전히 후속 의무다([원 증거](../evidence/dev3-tree-structure-20261104.md#structural-bank)).
+
 <a id="catalog-remaining"></a>
 2026-10-26 [Catalog CREATE 남은 메모리 사례](../evidence/dev3-catalog-remaining-20261026.md): 남은 9개를 모두 source별로 PASS했다. lookup이 Live CREATE Undo를 초기 Free page로만 검증해 fence하던 결함을 고쳤고 Writer 준비 분리를 포함했다. 같은 epoch 두 번째 CREATE의 pair victim 준비를 [D3-CATALOG-CREATE-002](../contracts/dev3-catalog-create.md#sequential-create)로 보완해 MT02가 r36에서 통과했다. [검토 후 수정](../evidence/dev3-catalog-review-fix-20261026.md)에서 Profile에 맞는 Root/Jobs decoder를 연결하고 신규8개와 변경 source 계산2개를 통과했다. 첫 Row INSERT·runtime F05·DEV3/S5는 미완료다.
 

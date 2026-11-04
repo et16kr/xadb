@@ -1,0 +1,12 @@
+{
+  "base": "ba0b9710f7606377a93aaac88d9845f458aed01d",
+  "reason": "New Structural bank validator and admission/seed/pack/ledger branches; changed nested source bounds. New bank cases plus only the four affected caller/source tests.",
+  "filters": [
+    "structural_bank",
+    "base4_closure_source_bound_covers_measured_frames",
+    "recovery_source_memory",
+    "recovery_source_native",
+    "writable_capsule_and_wrappers_stay_within_original_limits"
+  ],
+  "source_manifest_sha256": "45100fae0f7bb759919770b0f5de0f05027848072055db5819d1f28d2fc1e1c2"
+}

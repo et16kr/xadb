@@ -41,6 +41,13 @@ pub(super) fn check(
     if profile.format() != 3 || bank.pending.is_some() || bank.adopted_local > bank.issued_local {
         return Err(bad());
     }
+    observe_structural_bank_row(
+        profile,
+        prefix.complete_lsn,
+        prefix.stream.writer_epoch,
+        bank.row(STRUCTURAL_SLOT),
+    )
+    .map_err(|cause| unchanged(RetentionPhase::Census, cause))?;
     let mut wal = 0u64;
     let mut steps = 0u64;
     for i in 0..ATT_SLOTS {

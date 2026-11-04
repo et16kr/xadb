@@ -24,6 +24,7 @@ const CORE_AT: usize = 160 + 192 + 1536;
 const NATIVE_AT: usize = CORE_AT + 256;
 const REDO_AT: usize = NATIVE_AT + 5 * 128;
 
+pub(crate) mod bank;
 pub(crate) mod candidate;
 pub(crate) mod frame;
 pub(crate) mod weights;

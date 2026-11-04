@@ -750,7 +750,8 @@ pub(in crate::storage) fn source_census() -> SourceCensus {
             .max(descriptor)
             .max(terminal_frame() + job_chain())
             .max(home_chain())
-            .max(hook);
+            .max(hook)
+            .max(semantic_row::structure::bank::validation_source_bytes());
     let reverse = 2 * size_of::<(Option<DescriptorSpec>, Result<Option<DescriptorSpec>>)>()
         + 2 * size_of::<ReservationOwner>()
         + job

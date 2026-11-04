@@ -148,6 +148,15 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RecoverySourceC
     );
     let analysis = analysis_decode
         .max(owner + common + size_of::<VerifiedPlan4Base<'_>>() + live_census.recovered_seed)
+        // The final remaining scan validates the immutable Structural RAM row
+        // after replay, before skipping Finished debt. Replay's owned values
+        // conservatively dominate that scan's scalar/descriptor outer frame.
+        .max(
+            owner
+                + common
+                + replay_outer
+                + super::super::plan4_pages::structural_bank_source_bytes(),
+        )
         .max(owner + common + io + replay_outer + live_census.recovery_frame);
     let capture_outer = 3 * size_of::<base::Header>()
         + 3 * size_of::<base::Expected>()

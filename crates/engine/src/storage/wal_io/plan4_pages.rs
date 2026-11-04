@@ -61,10 +61,10 @@ pub(in crate::storage) use retention::{
     EmptyRetentionControlLoan, RetentionCause, RetentionFlushAuthority, RetentionFlushStep,
     RetentionFrameObservation, RetentionInitAuthority, RetentionInitCommit, RetentionInitCompleted,
     RetentionInitInstall, RetentionInstall, RetentionLoadPermit, RetentionRecoveryStep,
-    RetentionReplayCursor, VerifiedLookupLoad, observe_recovery_frame, retention_replay_bank,
-    retention_replay_cells, retention_replay_digest, retention_replay_image,
+    RetentionReplayCursor, VerifiedLookupLoad, observe_recovery_frame, observe_structural_bank_row,
+    retention_replay_bank, retention_replay_cells, retention_replay_digest, retention_replay_image,
     retention_replay_losers, retention_replay_provenance, retention_replay_row_scope,
-    seed_recovery_replay,
+    seed_recovery_replay, structural_bank_source_bytes,
 };
 
 #[cfg(test)]

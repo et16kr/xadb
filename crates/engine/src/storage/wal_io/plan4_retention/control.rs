@@ -17,6 +17,7 @@ pub(super) const SLOT_BYTES: usize = 1664;
 pub(super) const ATT_SLOTS: usize = 32;
 pub(super) const AGING_SLOT: usize = 32;
 pub(super) const ALLOCATION_SLOT: usize = 33;
+pub(super) const STRUCTURAL_SLOT: usize = 34;
 const BANK_END: usize = 65_536;
 const JOB_END: usize = 131_072;
 pub(super) const LOCATION: std::ops::Range<usize> = 1536..1576;
@@ -24,6 +25,55 @@ pub(super) const ACTOR: std::ops::Range<usize> = 1576..1624;
 pub(super) const PHASE: usize = 1624;
 pub(super) const STABLE: u8 = 1;
 pub(super) const STAGED: u8 = 2;
+
+/// One immutable original RAM row. This checks byte metadata and exact split
+/// debt before an admission/packing caller omits a Finished owner from totals.
+pub(in crate::storage) fn observe_structural_bank_row(
+    profile: crate::storage::control::Profile,
+    cut: u64,
+    epoch: u32,
+    row: &[u8],
+) -> std::result::Result<
+    Option<crate::storage::semantic_row::structure::bank::FinishedSplit>,
+    RetentionCause,
+> {
+    use crate::storage::semantic_row::structure::bank;
+    if row.len() != SLOT_BYTES {
+        return Err(RetentionCause::Invariant);
+    }
+    if row.iter().all(|byte| *byte == 0) {
+        return bank::observe(profile, cut, epoch, 0, None).map_err(RetentionCause::RowSemantic);
+    }
+    if row[PHASE] != STABLE
+        || row[1544..PHASE].iter().any(|byte| *byte != 0)
+        || row[PHASE + 1..].iter().any(|byte| *byte != 0)
+    {
+        return Err(RetentionCause::Invariant);
+    }
+    let high_water = u64::from_le_bytes(row[1536..1544].try_into().expect("fixed high water"));
+    bank::observe(
+        profile,
+        cut,
+        epoch,
+        high_water,
+        Some(row[..1536].try_into().expect("fixed descriptor")),
+    )
+    .map_err(RetentionCause::RowSemantic)
+}
+
+pub(in crate::storage) fn structural_bank_source_bytes() -> usize {
+    use std::mem::size_of;
+    2 * size_of::<(crate::storage::control::Profile, u64, u32, &[u8])>()
+        + size_of::<[u8; 8]>()
+        + 2 * size_of::<
+            std::result::Result<
+                Option<crate::storage::semantic_row::structure::bank::FinishedSplit>,
+                RetentionCause,
+            >,
+        >()
+        + 8 * size_of::<&[u8]>()
+        + crate::storage::semantic_row::structure::bank::source_bytes()
+}
 
 pub(super) struct RetentionLedger<'a, 'c, 's> {
     pub(super) bytes: &'a mut [u8; RETENTION_CONTROL_BYTES],

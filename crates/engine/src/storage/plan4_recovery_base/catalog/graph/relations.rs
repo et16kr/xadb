@@ -581,6 +581,19 @@ pub(in crate::storage::plan4_recovery_base) fn provenance<'a, G: Seam<'a>>(
         };
         match provenance.source() {
             ReservationOwner::System(source) => {
+                if G::ROWS
+                    && source.kind()
+                        == crate::storage::allocation_page::SystemWorkKind::StructuralChange
+                {
+                    if provenance.structural().is_none()
+                        || source.id() > header.system_high_water[1]
+                    {
+                        return Err(Error::ProvenanceMismatch);
+                    }
+                    // Nonempty birth is observed here; only the selected
+                    // predecessor/accepted-WAL owner proves its history.
+                    continue;
+                }
                 if source.id() > header.system_high_water[0] {
                     return Err(Error::ProvenanceMismatch);
                 }

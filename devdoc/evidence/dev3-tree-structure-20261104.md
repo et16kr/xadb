@@ -321,7 +321,45 @@ PASS다. 독립 D1/D2는 한정 ACCEPT·필수0이며 [검토 기록](../../modu
 연결하지 않았으며 일정08 적립은0이다. 원 실패와 source/ELF hash는 보존하고 성공한
 무변경 시험을 반복하지 않는다.
 
-08 전체의 승인 범위는 유지한다. 다음 작업은 08-1의 실제 system owner·WAL·복구다.
+<a id="structural-bank"></a>
+### Finished split bank와 복구 인계
+
+`ba0b9710` 뒤 [bank 계약](../contracts/dev3-tree-smo.md#structural-bank)을 연결했다.
+공통 순수 validator는 Profile3의 Finished Structural descriptor 전체 필드·high-water·실제
+cut/epoch와 Root/Child WAL 비용을 검산한다. 최신 생존 birth는 같은 owner 전체와 operation을
+요구하고 이전 birth는 같은 epoch를 허용하되 최신 id/epoch를 넘지 못한다. Allocation INIT
+선택에서 Structural을 분리한다. 원 RAM34 metadata도 admission-only·복구 remaining·pack에서
+같은 observer로 검사하며, wire33→RAM34 seed와 반대 pack은 high-water를 그대로 보존한다.
+seed의 byte 변환만 별도 helper로 분리했고 테스트용 VerifiedBase 생성자는 추가하지 않았다.
+
+[원 로그·source/ELF hash](../../module-gate/evidence/dev3-08-bank/)의 r0는 새 테스트의
+private SelectedControl import 때문에 compile FAIL(사례 미실행)이다. 원 타입의 공개 경로로
+수정한 r1은 신규15개와 영향받은 기존 source/caller4개, 총19개를 선택했다. build1분41초·
+runtime0.05초,15 PASS/4 FAIL·기존2,256개 filtered다. graph2개는 기존 CREATE leaf의 birth를
+덮어써 원 pair 검증에서 먼저 거절된 시험 입력 오류다. 독립 검토도 같은 오류를 발견했다.
+원 CREATE10/11을 보존하고 별도63의 leaf·allocator·certificate·claim을 함께 추가하도록 고쳤다.
+같은 id에 서로 다른 epoch/generation인 owner의 거절도 해당 사례에 보강했다.
+
+나머지2개는 recovery source 시험의 증거 환경값 누락으로 census 본문에 들어가지 못했다.
+r2 build31.14초 뒤 실제 source/ELF/input SHA 환경에서 이4개만 실행해4 PASS(runtime0.05초,
+기존2,271개 filtered)다. 앞선 성공15개는 반복하지 않았다. 실제 full-closure 정상 baseline과
+raw layout·ledger 성공을 먼저 확인한 뒤, 아직 연결하지 않은 Structural tree의 명시적 거절을
+검증했다. 독립 XOD와 XRB fixture는 제품 encoder를 쓰지 않으며 기존 정상 genesis/live에
+bank·capture/XOI cut·checksum만 더했다. raw 관측은 원 split의 역사 증명이 아니다.
+
+source 검산은 validation2,856≤3,376, raw10,239≤12,207, seed helper16,799+outer480≤25,439B다.
+Base4 ledger Structural21,490≤34,565, 전체 peak59,675B다. actual memory/native recovery의
+peak65,392/65,400, metadata104,152/104,160, whole169,688/169,696B이며, retained live의
+peak64,016/64,024, metadata187,024/187,032, whole252,560/252,568B다. 원65,536/196,608/
+262,144B 한도를 늘리지 않았다. 이는 해당 관측·인계의 source 상한이며 전체 live SMO F05는 아니다.
+
+독립 D1/D2는 source-r2·원 로그·literal SHA를 대조해 한정 ACCEPT·필수0이다.
+Clippy-r0의 `8 * size_of::<u64>()` manual_bits 지적은 바이트 배열 크기인
+`size_of::<[u64;8]>()`로 동등하게 바꾼다. runtime body와 계산값은 같아 완료 시험을 반복하지 않는다.
+Clippy 최종 결과와 독립 동등성 확인은 같은 [검토 기록](../../module-gate/evidence/dev3-08-bank/review.md)에 남긴다.
+
+사용자의 현재 완료 요청은 **08-1 전체**다. 다음 작업은 전체 current tree closure와 실제
+system owner·WAL·복구, 원 pool 설치·retirement·fault/F05다. 08-2–08-4는 별도 후속이다.
 독립 사전 검토에서 새 사용자 판단이 필요한 제품 방향 충돌은 발견하지 않았다.
 
 1. 원 writer/pool에서 structural group·새 page 예약/INIT·anchor revision·retirement를 연결한다.

@@ -179,6 +179,7 @@ pub(in crate::storage) use visibility::{
 
 #[path = "plan4_retention/control.rs"]
 mod control;
+pub(in crate::storage) use control::{observe_structural_bank_row, structural_bank_source_bytes};
 #[path = "plan4_retention/flush.rs"]
 mod flush;
 #[path = "plan4_retention/history.rs"]

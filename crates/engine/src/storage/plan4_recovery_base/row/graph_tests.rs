@@ -21,6 +21,8 @@ macro_rules! fixture {
         ))
     };
 }
+#[path = "graph/structural_bank_tests.rs"]
+mod structural_bank_tests;
 const GENESIS: &[u8; BASE_BYTES] = fixture!("base4-closure/genesis.xrb");
 const AGING: &[u8; BASE_BYTES] = fixture!("base4-closure/aging.xrb");
 const LIVE: &[u8; BASE_BYTES] = fixture!("base4-closure/live.xrb");

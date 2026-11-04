@@ -882,7 +882,8 @@ fn active_measured() -> usize {
         + descriptor_measured()
 }
 /// The shared ATT/System pass: rows, reverse, System provenance/allocation.
-fn ledger_measured() -> [(&'static str, usize); 4] {
+fn ledger_measured() -> [(&'static str, usize); 5] {
+    use crate::storage::semantic_row::structure::bank;
     let rows = size_of::<(&Graph<'_>, Header, usize, usize)>()
         + layout_copies()
         + size_of::<Option<(u32, u64, u64)>>()
@@ -934,6 +935,34 @@ fn ledger_measured() -> [(&'static str, usize); 4] {
         + size_of::<(Profile, u64, u8)>()
         + size_of::<Native<(), crate::storage::wal_io::CatalogAllocationError>>()
         + size_of::<BaseResult<()>>();
+    let structural = size_of::<(&Graph<'_>, Header, Range<usize>, usize)>()
+        + layout_copies()
+        + size_of::<(Option<DescriptorSpec>, BaseResult<Option<DescriptorSpec>>)>()
+        + size_of::<(
+            Option<bank::FinishedSplit>,
+            Native<Option<bank::FinishedSplit>, semantic_row::Error>,
+        )>()
+        + size_of::<(
+            &DescriptorSpec,
+            Native<bank::FinishedSplit, semantic_row::Error>,
+        )>()
+        + size_of::<(InitProvenance<'_>, BaseResult<Option<InitProvenance<'_>>>)>()
+        + size_of::<(
+            crate::storage::plan4_recovery_base::StructuralInit<'_>,
+            Option<crate::storage::plan4_recovery_base::StructuralInit<'_>>,
+        )>()
+        + size_of::<(bank::FinishedSplit, SystemWorkRef, ReservationOwner)>()
+        + size_of::<(
+            semantic_row::structure::Operation,
+            crate::storage::plan4_recovery_base::StructuralOperation,
+        )>()
+        + size_of::<BaseResult<()>>()
+        + header_chain()
+            .max(descriptor_measured())
+            .max(provenance_read())
+            .max(source_owner_decode())
+            .max(birth_accessors())
+            .max(bank::validation_source_bytes());
     [
         (
             "ledger_rows",
@@ -942,6 +971,10 @@ fn ledger_measured() -> [(&'static str, usize); 4] {
                 .max(terminal_measured())
                 .max(home_measured())
                 .max(hook)
+                .max(
+                    bank::validation_source_bytes()
+                        + size_of::<Native<bank::FinishedSplit, semantic_row::Error>>(),
+                )
                 .max(budget),
         ),
         (
@@ -956,6 +989,7 @@ fn ledger_measured() -> [(&'static str, usize); 4] {
                     .max(certificate_chain())
                     .max(provenance_read()),
         ),
+        ("ledger_structural_provenance", allocation + structural),
         (
             "ledger_system_allocation",
             allocation

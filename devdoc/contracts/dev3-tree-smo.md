@@ -492,11 +492,49 @@ historical source/peer의 현재 할당도 요구하지 않는다. 정확한 pee
 순수 공급에서 아직 바꾸지 않으며 실제 unlink/retirement 연결 때 따로 일반화한다.
 
 raw layout은 임의 initial digest의 역사적 진실성을 보증하지 않는다. mint는 앞 절의 accepted
-canonical frame·exact INIT 비교 뒤 원 history owner만 수행한다. 아직 System ledger·bank·
-현재 전체 tree closure·replay dispatch를 확장하지 않았으므로 raw 수락을 복구 수락으로
+canonical frame·exact INIT 비교 뒤 원 history owner만 수행한다. 이 birth 관측 공급 당시에는
+System ledger·bank·현재 전체 tree closure·replay dispatch를 확장하지 않았으므로 raw 수락을 복구 수락으로
 승격하지 않는다. 기존 Allocation System 소비자에 새 claims를 그대로 넘기는 우회도 금지한다.
 
 source bound는 shared provenance grammar·borrowed accessor의 실제 typed carriers와 결과를
 명시해 Base3/Base4 layout에 더하고, Base4 group loop의 views·ranges 및 certificate의 새
 scalar branch를 별도로 센다. caller의2MiB/page loan은 기존 소유자가 계산하며 이 관측층
 계산만으로 SMO F05나 live admission이 충족됐다고 판정하지 않는다.
+
+<a id="structural-bank"></a>
+## Finished split bank와 복구 인계
+
+`structure::bank`는 앞의 RootSplit/ChildSplit Finished descriptor 전 필드를 관측하는 순수
+validator다. Profile3, 같은 namespace의 Structural owner, id=high-water≤실제 cut,
+generation≤실제 writer epoch를 요구한다. phase=Finished, sequence/cursor/limit=1,
+chain apply=birth=id·previous0·groups1, empty inventory의 change=id, WAL은 Root84,744 또는
+Child84,640B, control·remaining·minimum WAL·last mutation은0이다. typed validator는
+decoded DescriptorSpec를 빌리고 raw observer는 원 descriptor decoder로 reserved bytes까지
+검산한다. high-water0은 descriptor 없음과 동치다. 관측 결과는 원 split 발생이나 권한의
+증명이 아니다. candidate의 previous는 기존 owner 선행검사·generic decode와 오류 경계를 유지한다.
+
+Base4/Profile3만 header의 Structural high-water를 허용하고 bank wire slot33에 그 마지막
+descriptor를 보존한다. Finished를 active owner·remaining·XOI에서 빼기 **전에** 위 조건을
+검사한다. Allocation의 wire32·Aging의 wire34와 그 기존 의미는 유지한다. 살아 있는 최신
+Structural claim은 owner 전체와 operation–WAL 비용까지 마지막 descriptor와 같아야 한다.
+이전 claim은 id<latest.id, epoch≤latest.epoch다. 같은 epoch의 여러 split은 허용하며,
+역사 claims가 모두 퇴역했어도 마지막 Finished descriptor는 유지할 수 있다. System INIT
+관측은 kind별로 분리하고 Allocation 한 개 INIT 선택에 Structural claims를 섞지 않는다.
+
+원 RAM bank에서는 Structural slot34, Allocation33, Aging32다. Structural row1664B는
+descriptor1536B, high-water1536..1544, STABLE byte1624이며 그 외 metadata는0이다.
+empty row는 전부0이다. admission-only `control/catalog::check`도 같은 원 row observer를
+호출하여 high-water·완료 상태·부채0·prefix cut/epoch와 metadata를 검사해야 한다.
+`history::validate_live`를 먼저 호출하는 다른 입구만을 근거로 이 검사를 생략하지 않는다.
+
+verified base seed는 wire33을 RAM34로, capture pack은 RAM34를 wire33으로 정확하게
+인계하며 high-water도 원 값 그대로 복사한다. immutable bank의 remaining/pack 순회 앞에서
+같은 RAM observer를 실제 selected-source cut/epoch로 호출한다. 그 관측이 반환된 뒤 같은
+immutable bytes를 순회하므로 두 owned descriptor bank를 만들지 않는다. observer가 끝나기
+전후의 실제 typed carrier·source bound를 별도 검산하고 기존 F05 한도를 늘리지 않는다.
+
+이 bank 공급에서도 scope4 replay dispatch와 INIT mint는 아직 열지 않는다. 현재 tree의 ownership·
+전체 도달성·Row/Undo 검산이 완성될 때까지 Structural tree가 포함된 full closure를 실제로
+거절하는 경계(RowLeaf의 CREATE pair 검사·RowInternal Unsupported 또는 동등한 명시 gate)를
+유지한다. nonempty INIT의 raw provenance 관측만으로 selected predecessor의 역사 신뢰를
+새로 획득했다고 표현하지 않는다.
