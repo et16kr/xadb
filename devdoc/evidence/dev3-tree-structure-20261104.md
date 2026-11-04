@@ -377,3 +377,57 @@ system owner·WAL·복구, 원 pool 설치·retirement·fault/F05다. 08-2–08-
 적립하지 않아 현재 누적38.37%와 적립33/86을 유지한다. 이후 각 일정 항목의
 완료·검토·병합 조건을 채울 때 해당 배정분을 적립한다. main 병합은 AGENTS의 기존 사용자 지시에 따라
 사람이 수행한다.
+
+
+<a id="current-tree-closure"></a>
+### 같은 Base4의 현재 Row tree 전체 검산
+
+`1fa86020` 뒤 [현재 tree 계약](../contracts/dev3-tree-smo.md#current-tree-closure)을 연결했다.
+Catalog ordinal만 받는 borrowed 관찰자가 같은 LayoutView의 schema·anchor·root를 선택한다.
+전체 tree의 range/identity/incarnation/alias와 allocator 역소유를 검산하며 Structural birth의
+object·anchor·revision·LSN도 결합한다. actor와 전체 graph는 현재 RowId 경로를 찾고 모든
+leaf를 역검사한다. CREATE leaf hint는 생성 이력으로 보존한다. Retained에만 현재 leaf
+LSN≥Job.last_step을 요구하고, DELETE/UPDATE D는 실제 typed Undo 증명 뒤 해당 leaf에 적립한다.
+
+[원 source/ELF hash와 로그](../../module-gate/evidence/dev3-08-current-tree/)는 단위별 원 결과다.
+새10개, 변경 기존 source census/bank 기대2개와 실제 memory/native caller2개가 각각의 source에서
+PASS했다. 동일 코드의 완료 시험을 전체 suite로 반복하지 않았다. r0 source/bank PASS 후 제품
+수정은 미사용 import3개 제거뿐이고 독립 역치환 SHA 대조로 동등성을 확인했다.
+
+| 실행 | 실제 범위와 결과 | 실패 원인/다음 수정 |
+| --- | --- | --- |
+| r0 | build117초;5개 중2 PASS/3 FAIL | 독립 fixture의 frame/initial digest 위치가 반대여서 raw birth group에서 거절됨 |
+| r1 | build40.15초;8개 중5 PASS/3 FAIL | 추가 MIXED fixture의 RowId 상한만 높이고 issuer 산술을 누락함 |
+| r2 | 준비 실패;동일3개 FAIL | author IndentationError 뒤 shell이 잘못 계속 실행함. 새 입력 검증 증거가 아닌 무효 준비 시도이며 이후 set -e로 차단 |
+| r3 | build22.35초;실패한 MIXED3개 PASS | issuer/완료/취소/Undo sequence를 함께 정합화;runtime0.12초 |
+| r4 | build42.72초;새 상태 행렬1개 FAIL | Ready terminal의 Header active count를 누락함 |
+| r5 | build36.40초;실패 행렬+새 level2 두 개 FAIL | compensated release_start가 Commit보다 늦음;internal fixture가 최소2child 조건을 위반함 |
+| r6 | build20.00초;위2개 PASS | CLR59<Commit60<Release71, leaf70;internal당2child·이전 leaf birth75/76을 관측;runtime0.14초 |
+| callers | 실제 ELF/source/input 결속2개 PASS | 변경된 중첩 source 상한을 실제 memory/native 타입까지 연결;I/O 수행 시험은 아님 |
+
+정상 full closure는 leaf RootSplit/ChildSplit·높이2 internal RootSplit·이동 Retained INSERT와
+DELETE/UPDATE를 포함한다. 같은 table의 서로 다른 leaf에 D1009/D1300을 배분하고 여유 공간이
+정확히 D인 두 입력은 수락, D보다1B 적은 입력은 거절했다. schema/실제 Undo body 불일치,
+잘못된 child/range/incarnation·orphan·전역 logical 중복·Retained stale LSN·anchor 역사 관계와
+HW=u64::MAX에서 revision 비교를 확인했다. 정상 Reserved/Ready/compensated INSERT 부모도
+분할 뒤 full closure의 census를 유지한다.
+
+DELETE/UPDATE의 Reserved/ReleasingCommitted/ReleasingCompensated는 **actor-only** 원바이트
+관측6개와 각각의 반대 존재/부재6개로 검증한다. Root census·Status·Undo·current tree를 실제
+actor::observe로 검산하며 ATT/inventory 전체 closure 수락으로 확대하지 않는다. 원 hint11의
+행40은 현재 leaf16에 있고, 각 정상 입력의 leaf LSN70은 Job.last_step71보다 낮다.
+DELETE committed는 부재, UPDATE committed는 원 logical·Committed(q)·undoNone, compensated는
+U before logical/stamp의 복원 행이다. raw split/current bytes는 selected WAL 역사나 권한이 아니다.
+
+source 독립 inventory는 current tree23,817≤28,696B, actor41,748≤42,352, table 최대35,345≤45,152B다.
+DFS16/visited64와 point search의 private carrier는 별도 정적 검토했고, caller census에서는 그
+production helper를 호출한다(그 하위까지 독립 runtime 측정했다고 주장하지 않는다).
+기존 inventory51,867B가 지배하여 Base4 peak59,675B는 유지한다. 실제 recovery memory/native
+peak65,392/65,400, metadata104,152/104,160, whole169,688/169,696B와 retained live
+peak64,016/64,024, metadata187,024/187,032, whole252,560/252,568B도 원 한도 안이다.
+이는 전체 SMO F05 완료가 아니다. Clippy/최종 독립 인수는 같은 디렉터리의 review 기록을 따른다.
+
+사용자의 완료 목표는 여전히08-1 전체다. scope4 canonical replay와 실제 INIT mint, 원 pool
+claim/stage/install/durability 수명, empty-leaf unlink·unary repair·root shrink·retirement와
+fault/F05는 후속 필수다. 08-2 cursor·08-3 overflow·08-4 반복/own write는 별도 일정이며,
+이번 관측 단위에는 일정 적립을 하지 않는다.

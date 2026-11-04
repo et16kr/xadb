@@ -1,0 +1,1 @@
+Only new actor-only DELETE/UPDATE Reserved/Releasing matrix test: six positive moved-row states with leaf LSN70 < Job last71 and six inverse-presence negatives. Existing completed cases unchanged and omitted.

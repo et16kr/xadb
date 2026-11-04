@@ -1,0 +1,59 @@
+
+running 5 tests
+ROW_BASE_BIRTH_SOURCE grammar=1934 grammar_bound=2252 groups=1315 group_bound=2668 certificate=1515 certificate_bound=1542
+ROW_BASE_CURRENT_TREE_SOURCE measured=23817 bound=28696
+ROW_BASE_SOURCE_CHAIN outer measured=4296 bound=7808
+ROW_BASE_SOURCE_CHAIN layout measured=11555 bound=20232
+ROW_BASE_SOURCE_CHAIN graph measured=8360 bound=9352
+ROW_BASE_SOURCE_CHAIN queue measured=7585 bound=8016
+ROW_BASE_SOURCE_CHAIN provenance measured=7658 bound=9768
+ROW_BASE_SOURCE_CHAIN actors measured=41748 bound=42352
+ROW_BASE_SOURCE_CHAIN row_ledger measured=14325 bound=14713
+ROW_BASE_SOURCE_CHAIN relations_job measured=8842 bound=19950
+ROW_BASE_SOURCE_CHAIN relations_terminal measured=16118 bound=19950
+ROW_BASE_SOURCE_CHAIN relations_root measured=16647 bound=19950
+ROW_BASE_SOURCE_CHAIN relations_catalog measured=15534 bound=19950
+ROW_BASE_SOURCE_CHAIN relations_payloads measured=15619 bound=19950
+ROW_BASE_SOURCE_CHAIN relations_allocation measured=9066 bound=19950
+ROW_BASE_SOURCE_CHAIN relations_reservation measured=7099 bound=19950
+ROW_BASE_SOURCE_CHAIN tables_direct measured=28905 bound=45152
+ROW_BASE_SOURCE_CHAIN tables_nested_rows measured=34085 bound=45152
+ROW_BASE_SOURCE_CHAIN tables_nested_commits measured=35345 bound=45152
+ROW_BASE_SOURCE_CHAIN tables_terminal measured=10392 bound=45152
+ROW_BASE_SOURCE_CHAIN tables_compensated measured=15136 bound=45152
+ROW_BASE_SOURCE_CHAIN ledger_rows measured=22021 bound=34565
+ROW_BASE_SOURCE_CHAIN ledger_reverse measured=18634 bound=34565
+ROW_BASE_SOURCE_CHAIN ledger_system_provenance measured=20135 bound=34565
+ROW_BASE_SOURCE_CHAIN ledger_structural_provenance measured=21490 bound=34565
+ROW_BASE_SOURCE_CHAIN ledger_system_allocation measured=14191 bound=34565
+ROW_BASE_SOURCE_CHAIN inventory_verify measured=48291 bound=51867
+ROW_BASE_SOURCE_CHAIN inventory_items measured=23802 bound=51867
+ROW_BASE_SOURCE_CHAIN inventory_row_item measured=22723 bound=51867
+ROW_BASE_CATALOG_HOOK hook=12480 profile3_transaction=11259 profile2_transaction=11259
+ROW_BASE_SOURCE peak=59675 outer=7808 layout=20232 graph=9352 queue=8016 provenance=9768 relations=19950 actors=42352 tables=45152 row_ledger=14713 ledger=34565 inventory=51867 measured_peak=52587 row_codec=6736 catalog_peak=45591 catalog_outer=7132 catalog_layout=19592 catalog_layout_census=19592
+ROW_BASE_SIZES row_census=72 row_base_view=248 inventory_observation=32 reserved_inventory=1 graph=664 layout_view=176 catalog_census=80
+test storage::plan4_recovery_base::row::graph::source::tests::base4_closure_source_bound_covers_measured_frames ... ok
+
+thread 'storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_retained_current_leaf_cannot_precede_job_step' (30810) panicked at crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs:146:5:
+assertion failed: decode(&*bytes, expected(), &mut scratch()).is_ok()
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_retained_current_leaf_cannot_precede_job_step ... FAILED
+
+thread 'storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_rejects_alias_range_identity_and_anchor_history' (30809) panicked at crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs:123:9:
+layout 0
+test storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_rejects_alias_range_identity_and_anchor_history ... FAILED
+
+thread 'storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_accepts_root_child_split_with_moved_retained_rows' (30808) panicked at crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs:56:62:
+called `Result::unwrap()` on an `Err` value: Base(ProvenanceMismatch)
+test storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_accepts_root_child_split_with_moved_retained_rows ... FAILED
+test storage::plan4_recovery_base::row::graph::tests::structural_bank_tests::structural_bank_alone_does_not_validate_inconsistent_current_tree ... ok
+
+failures:
+
+failures:
+    storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_accepts_root_child_split_with_moved_retained_rows
+    storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_rejects_alias_range_identity_and_anchor_history
+    storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_retained_current_leaf_cannot_precede_job_step
+
+test result: FAILED. 2 passed; 3 failed; 0 ignored; 0 measured; 2273 filtered out; finished in 0.04s
+

@@ -79,6 +79,21 @@
         "devdoc/contracts/dev3-tree-format.md": "c967552281c08b5b7608b84bb7c73640232d3d6e"
       },
       "log": "module-gate/evidence/dev3-08-audit/review.md (sha256 fa1aa51397fca3f7167318598ca39b124b728f9dbf47452ca0d3972ee016b7e9)"
+    },
+    {
+      "id": "dev3-08-current-tree-followup-20261104-dev3-08-audit",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/tree_page/audit.rs": "d3fa98d7c24d15c1f5c1eda03ed3473dc128402e"
+      },
+      "log": "module-gate/evidence/dev3-08-current-tree/review.md (sha256 37f27a651decb9fcf50c93d055c324f3dc7ca10355ce443914789f9349d920d2)"
     }
   ]
 }

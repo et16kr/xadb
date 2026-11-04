@@ -2203,6 +2203,24 @@
         "tests/fixtures/module-row-format/transition-update/input-plan.json": "876760e4138dbb89e65d43ffc6da7be7b908e10b",
         "tests/fixtures/module-row-update/native-inventory.json": "7e05cf4ef69320aee4b413830cc39693189e68e1"
       }
+    },
+    {
+      "id": "dev3-08-current-tree-followup-20261104-row-update",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/plan4_recovery_base/row/actor.rs": "2fc1bdc42b743e1aab79bc422abe801b75e1cfc4",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph.rs": "c6a75d82589c1c46e67dba1cc5cd243d29565b3c",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph/source_tests.rs": "8e35a0d8e8e2708eddf59391167b7cd6f3e03445",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs": "07f851a077bd8f2a8d6b67f38d2931b5fbcc6d5e"
+      },
+      "log": "module-gate/evidence/dev3-08-current-tree/review.md (sha256 37f27a651decb9fcf50c93d055c324f3dc7ca10355ce443914789f9349d920d2)"
     }
   ]
 }

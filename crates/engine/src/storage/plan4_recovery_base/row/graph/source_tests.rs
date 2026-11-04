@@ -8,7 +8,7 @@ use super::*;
 use crate::storage::{
     allocation_page::{AllocationError, AllocationPage, ExtentAddress, SystemWorkRef},
     anchor::TreeAnchor,
-    catalog_record::{CatalogRecordView, TableDefinitionView},
+    catalog_record::CatalogRecordView,
     control::{ControlRef, Profile},
     obligation::{RemainingBudget, SystemProgress},
     ownership::InventoryExpected,
@@ -378,7 +378,7 @@ fn record_for_measured() -> usize {
 }
 /// Graph::row.
 fn row_measured() -> usize {
-    size_of::<(&Graph<'_>, &Table<'_>, usize)>()
+    size_of::<(&Graph<'_>, &Table<'_>, &TreePageView<'_>, usize)>()
         + size_of::<(TreeEntry<'_>, Native<TreeEntry<'_>, TreeError>)>()
         + key()
         + row_result()
@@ -393,27 +393,97 @@ fn row_measured() -> usize {
         + size_of::<(RecordVersion, Result<RecordVersion>)>()
         + record_codec()
 }
-/// Graph::table: its record, the anchor's pair and the RowLeaf decoder.
+/// Graph::table wrapper; the nested observer has its own source inventory.
 fn table_measured() -> usize {
-    let frame = size_of::<(&Graph<'_>, usize)>()
-        + size_of::<(Record<'_>, Result<Record<'_>>)>()
-        + size_of::<(CatalogDefinitionView<'_>, TableDefinitionView<'_>, PageRef)>()
-        + size_of::<Native<usize, TryFromIntError>>()
-        + size_of::<BaseResult<Option<InitProvenance<'_>>>>()
+    size_of::<(&Graph<'_>, usize)>()
+        + size_of::<(Table<'_>, BaseResult<Table<'_>>, Result<Table<'_>>)>()
+        + current_tree_measured()
+}
+fn leaf_reservation_measured() -> usize {
+    size_of::<(&Graph<'_>, &Table<'_>, &TreePageView<'_>, ObjectHandle)>()
+        + 2 * size_of::<(usize, Range<usize>, usize)>()
         + size_of::<(
-            Option<InitProvenance<'_>>,
-            Option<[PageRef; 2]>,
-            [PageRef; 2],
+            TreeEntry<'_>,
+            Native<TreeEntry<'_>, TreeError>,
+            EntryPayload<'_>,
         )>()
-        + size_of::<(Pages<'_>, Result<Pages<'_>>)>()
-        + size_of::<TreeExpectation>()
+        + size_of::<(JobView<'_>, BaseResult<JobView<'_>>)>()
+        + size_of::<(Option<RowId>, RowId, [u8; 8], SearchPosition)>()
+        + size_of::<Native<SearchPosition, TreeError>>()
+        + size_of::<(row::RowEffect, usize, Result<()>)>()
+        + job_measured().max(record_codec())
+}
+/// Inventory from current_tree::observe, with read, DFS, search and codec
+/// phases. The external traversal helpers separately charge their private
+/// stack and checked-key values, never the caller's visited or closure.
+fn current_tree_measured() -> usize {
+    let read = size_of::<(LayoutView<'_>, TreeExpectation, PageRef)>()
+        + size_of::<(
+            Option<Certificate>,
+            Certificate,
+            BaseResult<Option<Certificate>>,
+        )>()
+        + size_of::<BaseResult<&[u8; PAGE_BYTES]>>()
+        + certificate_chain();
+    let frame = size_of::<(LayoutView<'_>, usize, Expected, Namespace)>()
         + size_of::<(TreePageView<'_>, Native<TreePageView<'_>, TreeError>)>()
-        + size_of::<Result<Table<'_>>>();
+        + size_of::<(
+            TreeEntry<'_>,
+            Native<TreeEntry<'_>, TreeError>,
+            EntryPayload<'_>,
+        )>()
+        + key()
+        + object_result()
+        + size_of::<(
+            ObjectId,
+            CatalogExpectation,
+            CatalogRecordView<'_>,
+            CatalogHeader,
+        )>()
+        + size_of::<Native<CatalogRecordView<'_>, CatalogError>>()
+        + size_of::<(
+            TreeExpectation,
+            &[u8; PAGE_BYTES],
+            BaseResult<&[u8; PAGE_BYTES]>,
+        )>()
+        + size_of::<(
+            TreeAnchor,
+            Native<TreeAnchor, PageError>,
+            crate::storage::anchor::AnchorRoot,
+        )>()
+        + size_of::<(u64, Header, u128, Option<Certificate>, Certificate)>()
+        + size_of::<BaseResult<Option<Certificate>>>()
+        + size_of::<TreeExpectation>()
+        + size_of::<[Option<TreeExpectation>; 64]>()
+        + size_of::<(usize, Native<usize, TreeError>, u64, u64)>()
+        + size_of::<(LayoutView<'_>, TreeExpectation, Native<&[u8], TreeError>)>()
+        + size_of::<(
+            AllocationPage<'_>,
+            Native<AllocationPage<'_>, AllocationError>,
+        )>()
+        + size_of::<(
+            u64,
+            Range<usize>,
+            usize,
+            AllocationEntry,
+            Native<AllocationEntry, AllocationError>,
+        )>()
+        + size_of::<(ObjectId, Generation, PageKind, Generation)>()
+        + size_of::<(InitProvenance<'_>, BaseResult<Option<InitProvenance<'_>>>)>()
+        + size_of::<(
+            Option<crate::storage::plan4_recovery_base::StructuralInit<'_>>,
+            crate::storage::plan4_recovery_base::StructuralInit<'_>,
+        )>()
+        + size_of::<(Table<'_>, BaseResult<Table<'_>>)>()
+        + 8 * size_of::<BaseResult<()>>();
+    let nested = crate::storage::tree_page::audit::frame_source_bytes()
+        .max(crate::storage::tree_page::search::frame_source_bytes())
+        + read.max(record_codec());
     frame
-        + record_measured()
+        + nested
+            .max(header_chain())
+            .max(allocation_decode())
             .max(provenance_read())
-            .max(page_measured())
-            .max(record_codec())
 }
 /// Graph::each_row with a visitor of `captures` bytes running `inner`.
 fn each_row_measured(captures: usize, inner: usize) -> usize {
@@ -421,6 +491,12 @@ fn each_row_measured(captures: usize, inner: usize) -> usize {
         + captures
         + size_of::<(Range<usize>, usize)>()
         + size_of::<(TreePageView<'_>, BaseResult<TreePageView<'_>>)>()
+        + size_of::<(
+            Range<usize>,
+            usize,
+            TreePageView<'_>,
+            BaseResult<TreePageView<'_>>,
+        )>()
         + size_of::<(Table<'_>, Result<Table<'_>>)>()
         + size_of::<(Range<usize>, usize)>()
         + size_of::<(RecordVersion, Result<RecordVersion>)>()
@@ -496,6 +572,12 @@ fn tables_measured() -> [(&'static str, usize); 5] {
         + size_of::<(CatalogHeader, TxnId, Range<usize>)>()
         + size_of::<(JobView<'_>, BaseResult<JobView<'_>>, Option<TxnRef>)>()
         + size_of::<(Table<'_>, Result<Table<'_>>)>()
+        + size_of::<(
+            Range<usize>,
+            usize,
+            TreePageView<'_>,
+            BaseResult<TreePageView<'_>>,
+        )>()
         + size_of::<u32>()
         + refs(3)
         + refs(1)
@@ -542,6 +624,7 @@ fn tables_measured() -> [(&'static str, usize); 5] {
             .max(catalog_measured())
             .max(record_measured())
             .max(table_measured())
+            .max(leaf_reservation_measured())
             .max(job_measured());
     [
         ("tables_direct", direct),
@@ -1088,6 +1171,13 @@ fn base4_closure_source_bound_covers_measured_frames() {
     assert!(birth_grammar <= birth_bound);
     assert!(birth_groups <= group_bound);
     assert!(certificate_chain() <= certificate_read());
+    println!(
+        "ROW_BASE_CURRENT_TREE_SOURCE measured={} bound={}",
+        current_tree_measured(),
+        current_tree::source_bytes()
+    );
+    assert!(current_tree_measured() <= current_tree::source_bytes());
+    assert!(leaf_reservation_measured() <= leaf_reservation_chain());
     let outer = decode_frame().max(encode_frame()) + validate_frame();
     let graph = new_frame() + row_codec();
     let mut chains = vec![

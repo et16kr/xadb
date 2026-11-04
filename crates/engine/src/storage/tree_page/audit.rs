@@ -10,6 +10,22 @@ struct Frame<'images> {
     next_child: usize,
 }
 
+/// Traversal-owned source values, excluding the caller's visited workspace,
+/// image callback captures and nested page decoder/callback closure.
+pub(crate) fn frame_source_bytes() -> usize {
+    use std::mem::size_of;
+    size_of::<[Option<Frame<'_>>; 16]>()
+        + 4 * size_of::<Frame<'_>>()
+        + 4 * size_of::<Result<Frame<'_>, TreeError>>()
+        + 6 * size_of::<TreeExpectation>()
+        + 6 * size_of::<Option<&[u8]>>()
+        + 4 * size_of::<CheckedKey<'_>>()
+        + 4 * size_of::<Result<CheckedKey<'_>, TreeError>>()
+        + 4 * size_of::<TreeEntry<'_>>()
+        + 4 * size_of::<Result<TreeEntry<'_>, TreeError>>()
+        + 32 * size_of::<usize>()
+}
+
 fn frame<'images>(
     expected: TreeExpectation,
     lower: Option<&'images [u8]>,

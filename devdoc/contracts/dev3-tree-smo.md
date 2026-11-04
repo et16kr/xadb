@@ -538,3 +538,59 @@ immutable bytes를 순회하므로 두 owned descriptor bank를 만들지 않는
 거절하는 경계(RowLeaf의 CREATE pair 검사·RowInternal Unsupported 또는 동등한 명시 gate)를
 유지한다. nonempty INIT의 raw provenance 관측만으로 selected predecessor의 역사 신뢰를
 새로 획득했다고 표현하지 않는다.
+
+<a id="current-tree-closure"></a>
+## Base4의 현재 Row tree 전체 검산
+
+이 단위는 current tree의 관측과 full Base4 closure를 연결한다. 구현·선택 실행은
+[원 증거](../evidence/dev3-tree-structure-20261104.md#current-tree-closure)를 따른다.
+Profile3/Base4에 한정하고 Base3의 단일 CREATE leaf 규칙은 유지한다.
+
+현재 table의 기준은 Catalog record가 지목하는 안정 anchor와 그 anchor의 현재 root다.
+CREATE pair[1]은 생성 이력이며 현재 root 또는 현재 행 위치가 아니다. CREATE의 기존 두
+claim 결합은 이 split 연결 단위에서 유지한다. 최초 leaf 자체의 retirement와 그때의 역사
+pair 승계는 뒤의 retirement 단위에서 별도로 검증한다.
+
+공통 borrowed tree 관찰자는 LayoutView와 Catalog ordinal을 받아 그 view의 Catalog bytes에서
+record·schema를 직접 선택한다. 다른 cut의 CatalogRecord나 schema를 인자로 받지 않는다.
+같은 immutable LayoutView에서 anchor·root를 읽고, 현재 tree의
+모든 page를 bounded audit로 방문한다. 첫 file의 동적 ordinal9..63, 실제 certificate의
+전체 identity/kind/level, owner/generation, 엄격한 key 범위와 전역 physical alias 부재를
+검산한다. 도달한 집합은 allocator가 해당 object에 할당한 RowLeaf/RowInternal 집합과 정확히
+같아야 한다. 다른 object의 child, 고아 leaf/internal, 잘못된 incarnation, 중복 child는
+거절한다. anchor와 같은 object의 다른 종류 page 또는 추가 anchor도 허용하지 않는다.
+최대64개의 기대값과 깊이16의 불변 audit scratch는 호출 안에서 끝나고, 반환에는 borrowed
+schema·anchor/root와 검산한 leaf mask만 남긴다. 이는 live 권한이나 선택 이력의 증명이 아니다.
+
+Structural role5/6 page의 object와 역사 anchor는 현재 Catalog identity/anchor와 같아야 한다.
+birth의 after revision은 현재 anchor revision 이하이고 init LSN은 anchor의 현재 page LSN
+이하다. anchor의 revision1 초과는 Structural high-water가 있는 경우에만 허용하며 revision은
+1+그 high-water 이내다(u128 비교로 HW=u64::MAX도 overflow 없이 처리; LSN을 이용한 보수적
+상한이며 실제 split 횟수 증명이 아님). 원 CREATE
+anchor/leaf의 provenance bytes는 바꾸지 않는다. allocation incarnation의 보수적 역사 상한은
+기존 Allocation/CREATE 항에 Structural high-water를 u128로 더해 overflow 없이 계산한다.
+
+Row actor 관찰자와 전체 graph는 같은 현재 tree를 쓴다. 각 Job은 안정 anchor만 결합하고
+RowId를 현재 root에서 찾아 존재/부재·상태·projection·Undo·Status를 검사한다.
+Retained 행의 현재 leaf LSN≥Job.last_step도 확인한다. Reserved/Releasing에는 Undo release만
+진행된 정상 상태가 있으므로 이 조건을 일괄 적용하지 않는다. 역방향 검사는
+검산한 모든 leaf의 실제 행을 훑어 누락 Job과 전역 RowId/logical identity 중복을 거절한다.
+leaf 열거의 physical ordinal과 cell 위치는 이 immutable 호출 안에서만 식별자로 쓰며 cursor
+계약이 아니다. 두 번의 열거 사이에 페이지가 바뀌는 live 입력은 허용하지 않는다.
+
+복원 공간은 각 leaf에 실제 존재하는 Retained RowId의 DELETE/UPDATE 분량만 적립한다.
+그 전에 모든 Row actor의 실제 typed Undo before와 Job cell 길이·현재 행·projection 결합이
+완료돼야 한다. 따라서 같은 table의 다른 leaf 분량을 중복 청구하지 않으며, Job의 길이만
+믿고 typed Undo 검산을 생략하지 않는다. Reserved·Releasing·terminal·전역 incoming/Undo
+검산은 기존 그대로 유지한다. 구조 변경 직전의 Reserved 금지는 별도 SMO 후보의 전제다.
+
+full closure 수락 시험은 독립적으로 쓴 split 이후의 leaf/internal/root·allocator·anchor·
+birth·bank를 정상 이력 fixture와 결합한다. 실제 이동한 Retained INSERT/DELETE/UPDATE와
+이전 leaf hint, 다른 leaf의 복원 공간, orphan/alias/wrong range/owner/incarnation 및
+Root/Status/Undo 변조를 구별한다. 다중 leaf에서도 Reserved/Releasing INSERT/DELETE/UPDATE의
+기존 present/absent 규칙(DELETE/UPDATE 상태 행렬은 실제 actor 관찰자 한정), 이동 leaf의 stale LSN, 다른 schema 혼입과 두 leaf 각각의 D 경계를
+검증한다. 중첩 each_row/unique_row에서 살아 있는 table/leaf 반환값도 source census에 포함한다. 앞의 leaf별 D는
+[DELETE](dev3-row-delete.md#leaf-reservation)·[UPDATE](dev3-row-update.md#leaf-reservation)의
+단일-leaf 합산식을 일반화한 같은 불변식이다. raw digest를 재계산한 것만으로 selected CURRENT/WAL
+역사 검증을 통과했다고 주장하지 않는다. 모든 새 nested audit/lookup와 실제 caller census를
+독립 계산하고 원 cap을 유지한다. scope4 replay·INIT mint·원 pool 설치는 그다음 연결이다.

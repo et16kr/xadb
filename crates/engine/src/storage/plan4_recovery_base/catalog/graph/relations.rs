@@ -237,20 +237,25 @@ fn catalog<'a, G: Seam<'a>>(graph: &G) -> Result<()> {
         let actual_anchor = anchor::decode_anchor(anchor_bytes, anchor_header.identity)?;
         let root = actual_anchor.root();
         if root.tree != TreeKind::Row
-            || root.page != pair[1]
-            || root.level != 0
-            || root.revision != 1
+            || (!G::ROWS && (root.page != pair[1] || root.level != 0 || root.revision != 1))
         {
             return Err(Error::IdentityMismatch);
         }
-        let (row_bytes, row_header) = graph.page(pair[1], PageKind::RowLeaf, object.get())?;
+        // Base4's actor/table pass closes the whole allocator-owned current
+        // tree. CREATE pair[1] remains its historical first leaf only.
+        let kind = if root.level == 0 {
+            PageKind::RowLeaf
+        } else {
+            PageKind::RowInternal
+        };
+        let (row_bytes, row_header) = graph.page(root.page, kind, object.get())?;
         actual_anchor.decode_root(row_bytes)?;
         let row = tree_page::decode_tree_page(
             row_bytes,
             TreeExpectation {
                 identity: row_header.identity,
-                kind: PageKind::RowLeaf,
-                level: 0,
+                kind,
+                level: root.level,
                 arity: 0,
             },
         )?;
@@ -436,9 +441,25 @@ fn payloads<'a, G: Seam<'a>>(graph: &G, begins: u64) -> Result<()> {
                     return Err(Error::IdentityMismatch);
                 }
             }
-            PageKind::TreeAnchor | PageKind::RowLeaf => {
+            PageKind::TreeAnchor | PageKind::RowLeaf | PageKind::RowInternal => {
                 let object = cert.header.identity.owner;
                 let (record, _) = graph.record(object)?.ok_or(Error::IdentityMismatch)?;
+                if let Some(birth) = provenance.structural() {
+                    if !G::ROWS
+                        || !matches!(cert.header.kind, PageKind::RowLeaf | PageKind::RowInternal)
+                    {
+                        return Err(Error::Unsupported);
+                    }
+                    if provenance.object() != Some(record.header().identity)
+                        || birth.anchor() != record.header().anchor
+                    {
+                        return Err(Error::IdentityMismatch);
+                    }
+                    continue;
+                }
+                if cert.header.kind == PageKind::RowInternal {
+                    return Err(Error::Unsupported);
+                }
                 let pair = provenance.pair().ok_or(Error::ProvenanceMismatch)?;
                 if provenance.object() != Some(record.header().identity)
                     || record.header().anchor != pair[0]
@@ -498,8 +519,13 @@ pub(in crate::storage::plan4_recovery_base) fn validate<'a, G: Seam<'a>>(
     )?;
     let mut system = 0;
     let mut tx = 0;
-    let generations =
-        u128::from(graph.layout().header().system_high_water[0]) + u128::from(creates);
+    let generations = u128::from(graph.layout().header().system_high_water[0])
+        + u128::from(creates)
+        + if G::ROWS {
+            u128::from(graph.layout().header().system_high_water[1])
+        } else {
+            0
+        };
     for ordinal in 9..64 {
         let entry = allocation.entry(ordinal)?;
         if u128::from(entry.incarnation().get() - 1) > generations {

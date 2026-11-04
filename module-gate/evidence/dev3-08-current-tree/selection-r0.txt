@@ -1,0 +1,1 @@
+Changed current_tree observer, actor row traversal, graph per-leaf closure and source census; bank old closure expectation follows changed error path. Only new 3 + changed source census 1 + changed bank expectation 1. No unchanged suites.

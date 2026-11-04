@@ -63,6 +63,15 @@ raw layout 수락은 원 INIT 증명이나 복구 수락이 아니고, mint·led
 원 FAIL은 보존했고 runtime 성공 사례의 반복은 없다. 전체 tree closure·scope4 수락·INIT mint와
 원 pool 설치는 여전히 후속 의무다([원 증거](../evidence/dev3-tree-structure-20261104.md#structural-bank)).
 
+후속 [현재 Row tree closure](../contracts/dev3-tree-smo.md#current-tree-closure)는 같은 Base4의
+Catalog ordinal→anchor→전체 tree를 검산하고, allocator 소유 집합과 도달 집합을 일치시킨다.
+RowId로 현재 leaf를 찾아 이전 Job hint의 이동을 허용하며 leaf별 DELETE/UPDATE 복원 공간을
+실제 typed Undo 검산 뒤 적립한다. 신규10개와 변경된 기존 source/bank2개, 실제 caller2개를
+source별 선택 검증했다. 원 실패·actor-only 상태 행렬의 범위·독립 인수는
+[기록](../evidence/dev3-tree-structure-20261104.md#current-tree-closure)을 따른다.
+전체 Base4 상한59,675B와 실제 recovery 한도를 유지한다. scope4 replay·INIT mint·원 pool의
+실제 SMO 및 retirement는 다음 연결이며 일정08-1 전체 완료를 뜻하지 않는다.
+
 <a id="catalog-remaining"></a>
 2026-10-26 [Catalog CREATE 남은 메모리 사례](../evidence/dev3-catalog-remaining-20261026.md): 남은 9개를 모두 source별로 PASS했다. lookup이 Live CREATE Undo를 초기 Free page로만 검증해 fence하던 결함을 고쳤고 Writer 준비 분리를 포함했다. 같은 epoch 두 번째 CREATE의 pair victim 준비를 [D3-CATALOG-CREATE-002](../contracts/dev3-catalog-create.md#sequential-create)로 보완해 MT02가 r36에서 통과했다. [검토 후 수정](../evidence/dev3-catalog-review-fix-20261026.md)에서 Profile에 맞는 Root/Jobs decoder를 연결하고 신규8개와 변경 source 계산2개를 통과했다. 첫 Row INSERT·runtime F05·DEV3/S5는 미완료다.
 

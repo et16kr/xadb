@@ -158,6 +158,11 @@ UpdateForward·UpdateClr·UpdatePrune의 edge·count multiset은 INSERT의 Forwa
 
 > 각 RowLeaf에서 `TREE_ENTRY_CAPACITY − entry_bytes ≥ D`. D는 같은 table의 **Retained** root 전체(모든 actor)에 대해, 효과1이면 `C_j−180`, 효과2면 `max(0, C_j−C'_j)`의 합이다.
 
+DEV3 08-1의 [현재 tree 일반화](dev3-tree-smo.md#current-tree-closure)에서는 위 table 전체를
+**현재 RowId가 해당 leaf에 존재하는 Retained root**로 좁힌다. 첫 단일-leaf profile에서는
+같은 값이다. actual typed Undo before와 Job의 C, 현재 행과 C'·projection의 결합을 선행
+검증하며, split은 행과 이 복원 의무를 함께 옮긴다. 다른 leaf의 의무는 중복 청구하지 않는다.
+
 | 단계 | entries 변화 | D 변화 | 검산 |
 | --- | --- | --- | --- |
 | UPDATE Reserve | 0 | 0 | `entries + max(0, C'−C) + D ≤ 16188`. 아니면 첫 효과 전 Capacity(C preflight·reserve), 생산자에서는 OrderMismatch |

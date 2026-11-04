@@ -177,6 +177,23 @@
         "crates/engine/src/storage/plan4_recovery_base/row/graph/source_tests.rs": "9f35007f1d0109a404dbb62d9c7d042201d0e1b8"
       },
       "log": "module-gate/evidence/dev3-08-bank/review.md (sha256 f0f76ca9ea646d2f9c41aade4ef6c019587d94d4e46ecc3c1b621131c287ad7a)"
+    },
+    {
+      "id": "dev3-08-current-tree-followup-20261104-dev3-08-base-claims",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/plan4_recovery_base/row.rs": "2acad43c56f163d3a271cce8f8cac626dd728a81",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph/source.rs": "0d2da1ad11973613c9586ae37d9522283c7e8cb0",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph/source_tests.rs": "8e35a0d8e8e2708eddf59391167b7cd6f3e03445"
+      },
+      "log": "module-gate/evidence/dev3-08-current-tree/review.md (sha256 37f27a651decb9fcf50c93d055c324f3dc7ca10355ce443914789f9349d920d2)"
     }
   ]
 }

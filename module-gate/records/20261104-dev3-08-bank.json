@@ -167,7 +167,7 @@
         },
         {
           "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/structural_bank_tests.rs",
-          "case": "storage::plan4_recovery_base::row::graph::tests::structural_bank_tests::structural_bank_does_not_open_unimplemented_structural_tree_closure",
+          "case": "storage::plan4_recovery_base::row::graph::tests::structural_bank_tests::structural_bank_alone_does_not_validate_inconsistent_current_tree",
           "sources": [
             "head"
           ],
@@ -406,6 +406,25 @@
         "tests/fixtures/module-row-format/structural-bank/root.xrb": "5be3685267239bf34edafc24b74f0f2476ba1ec6"
       },
       "log": "module-gate/evidence/dev3-08-bank/review.md (sha256 f0f76ca9ea646d2f9c41aade4ef6c019587d94d4e46ecc3c1b621131c287ad7a)"
+    },
+    {
+      "id": "dev3-08-current-tree-followup-20261104-dev3-08-bank",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/plan4_recovery_base/catalog/graph/relations.rs": "93d631ef9a92482342e91044557cfe93f4cc4235",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph/source.rs": "0d2da1ad11973613c9586ae37d9522283c7e8cb0",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph/source_tests.rs": "8e35a0d8e8e2708eddf59391167b7cd6f3e03445",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph/structural_bank_tests.rs": "147280647ce578a4942315175e17d08fb31ff529",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs": "07f851a077bd8f2a8d6b67f38d2931b5fbcc6d5e"
+      },
+      "log": "module-gate/evidence/dev3-08-current-tree/review.md (sha256 37f27a651decb9fcf50c93d055c324f3dc7ca10355ce443914789f9349d920d2)"
     }
   ]
 }

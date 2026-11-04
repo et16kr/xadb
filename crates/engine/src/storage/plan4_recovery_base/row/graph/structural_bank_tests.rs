@@ -172,7 +172,7 @@ fn structural_bank_latest_claim_binds_operation_owner_and_monotonic_epoch() {
 }
 
 #[test]
-fn structural_bank_does_not_open_unimplemented_structural_tree_closure() {
+fn structural_bank_alone_does_not_validate_inconsistent_current_tree() {
     assert!(decode(LIVE_CHILD, expected(), &mut scratch()).is_ok());
     let mut bytes = backing(LIVE_CHILD);
     structural_claim(&mut bytes, 70, 1);
@@ -180,6 +180,8 @@ fn structural_bank_does_not_open_unimplemented_structural_tree_closure() {
     assert!(ledger(&bytes).is_ok());
     assert_eq!(
         decode(&*bytes, expected(), &mut scratch()).err(),
-        Some(RowBaseError::Base(BaseError::ProvenanceMismatch))
+        Some(RowBaseError::Actor(actor::Error::Base(
+            BaseError::ProvenanceMismatch
+        )))
     );
 }

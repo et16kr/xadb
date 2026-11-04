@@ -14,6 +14,8 @@ use crate::storage::retention_page::row;
 
 #[path = "row/actor.rs"]
 pub(in crate::storage) mod actor;
+#[path = "row/current_tree.rs"]
+mod current_tree;
 #[path = "row/graph.rs"]
 mod graph;
 pub(in crate::storage) use graph::{

@@ -186,7 +186,8 @@ pub(in crate::storage) fn actor_observe() -> usize {
         + 2 * size_of::<JobView<'_>>()
         + size_of::<(PageView<'_>, PageHeader, Certificate)>()
         + 32 * size_of::<u64>();
-    let rows = 3 * size_of::<TreePageView<'_>>()
+    let rows = 2 * size_of::<(Table<'_>, Result<Table<'_>>)>()
+        + 3 * size_of::<TreePageView<'_>>()
         + 2 * size_of::<TreeAnchor>()
         + 2 * size_of::<CatalogRecordView<'_>>()
         + 2 * size_of::<RowRecordView<'_>>()
@@ -201,6 +202,7 @@ pub(in crate::storage) fn actor_observe() -> usize {
             .max(transaction_ledger())
             .max(undo + record_codec() + certificate_read())
             .max(2 * rows + record_codec() + digest() + certificate_read())
+            .max(2 * rows + current_tree::source_bytes())
 }
 
 /// Seam::job through row::decode_job.
@@ -300,7 +302,7 @@ pub(in crate::storage) fn record_for_chain() -> usize {
 }
 /// Graph::row through the RowLeaf entry and Row record decoders.
 pub(in crate::storage) fn row_chain() -> usize {
-    size_of::<(&Graph<'_>, &Table<'_>, usize)>()
+    size_of::<(&Graph<'_>, &Table<'_>, &TreePageView<'_>, usize)>()
         + size_of::<TreeEntry<'_>>()
         + size_of::<std::result::Result<TreeEntry<'_>, TreeError>>()
         + size_of::<Option<RowId>>()
@@ -312,36 +314,35 @@ pub(in crate::storage) fn row_chain() -> usize {
         + slack()
         + record_codec()
 }
-/// Graph::table with its record, provenance, page and RowLeaf callees.
+/// Graph::table delegates whole-tree and same-cut Catalog/schema observation.
 pub(in crate::storage) fn table_chain() -> usize {
-    size_of::<(&Graph<'_>, usize, u64)>()
-        + size_of::<Record<'_>>()
-        + size_of::<Result<Record<'_>>>()
-        + size_of::<CatalogDefinitionView<'_>>()
-        + size_of::<TableDefinitionView<'_>>()
-        + size_of::<InitProvenance<'_>>()
-        + 2 * size_of::<Result<Option<InitProvenance<'_>>>>()
-        + 2 * size_of::<Option<[PageRef; 2]>>()
-        + size_of::<Pages<'_>>()
-        + size_of::<Result<Pages<'_>>>()
-        + size_of::<TreePageView<'_>>()
-        + size_of::<std::result::Result<TreePageView<'_>, TreeError>>()
-        + size_of::<TreeExpectation>()
-        + size_of::<Table<'_>>()
-        + size_of::<Result<Table<'_>>>()
+    size_of::<(&Graph<'_>, usize)>()
+        + 2 * size_of::<Table<'_>>()
+        + 2 * size_of::<Result<Table<'_>>>()
         + slack()
-        + record_chain().max(page_chain()).max(record_codec())
+        + current_tree::source_bytes()
+}
+/// Graph::leaf_reservation after typed Undo and row closure have succeeded.
+pub(in crate::storage) fn leaf_reservation_chain() -> usize {
+    size_of::<(&Graph<'_>, &Table<'_>, &TreePageView<'_>)>()
+        + size_of::<ObjectHandle>()
+        + 2 * size_of::<TreeEntry<'_>>()
+        + 2 * size_of::<JobView<'_>>()
+        + 2 * size_of::<Result<JobView<'_>>>()
+        + size_of::<SearchPosition>()
+        + 2 * slack()
+        + job_chain().max(record_codec())
 }
 /// Graph::each_row running `inner` as its visitor.
 pub(in crate::storage) fn each_row_chain(inner: usize) -> usize {
     4 * size_of::<&[u8]>()
-        + size_of::<TreePageView<'_>>()
-        + size_of::<Result<TreePageView<'_>>>()
+        + 2 * size_of::<TreePageView<'_>>()
+        + 2 * size_of::<Result<TreePageView<'_>>>()
         + size_of::<Table<'_>>()
         + size_of::<Result<Table<'_>>>()
         + size_of::<RecordVersion>()
         + size_of::<Result<RecordVersion>>()
-        + 2 * size_of::<std::ops::Range<usize>>()
+        + 3 * size_of::<std::ops::Range<usize>>()
         + slack()
         + catalog_chain()
             .max(table_chain())
@@ -701,12 +702,14 @@ pub(in crate::storage) fn source_census() -> SourceCensus {
         + size_of::<Header>()
         + job
         + size_of::<(Table<'_>, Result<Table<'_>>)>()
+        + 2 * size_of::<(TreePageView<'_>, Result<TreePageView<'_>>)>()
         + scalar
         + header_read()
             .max(record_codec())
             .max(catalog_chain())
             .max(record_chain())
             .max(table_chain())
+            .max(leaf_reservation_chain())
             .max(job_chain())
             .max(rows)
             .max(commits)

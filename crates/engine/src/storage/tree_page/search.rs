@@ -5,6 +5,23 @@
 //! this function does not turn arbitrary borrowed pages into live authority.
 use super::*;
 
+/// Search-owned source values, excluding callback captures and its nested
+/// image/decoder closure. Includes the full sixteen-level address history.
+pub(crate) fn frame_source_bytes() -> usize {
+    use std::mem::size_of;
+    size_of::<[Option<PageRef>; 16]>()
+        + 4 * size_of::<TreeExpectation>()
+        + 4 * size_of::<Option<&[u8]>>()
+        + 4 * size_of::<TreePageView<'_>>()
+        + 4 * size_of::<Result<TreePageView<'_>, TreeError>>()
+        + 4 * size_of::<CheckedKey<'_>>()
+        + 4 * size_of::<Result<CheckedKey<'_>, TreeError>>()
+        + 4 * size_of::<TreeEntry<'_>>()
+        + 4 * size_of::<Result<TreeEntry<'_>, TreeError>>()
+        + 2 * size_of::<SearchPosition>()
+        + 32 * size_of::<usize>()
+}
+
 /// Follow the selected root to the leaf for `query`, checking each exact
 /// owner/incarnation/family/level/arity and inherited key range before using
 /// its child edge. Only the selected path is checked; this is not full audit.

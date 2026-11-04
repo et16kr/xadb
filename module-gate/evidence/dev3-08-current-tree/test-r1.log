@@ -1,0 +1,36 @@
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 40.15s
+     Running unittests src/lib.rs (artifacts/dev3-08/target/debug/deps/engine-e4e141083d864921)
+
+running 8 tests
+
+thread 'storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_delete_update_distribute_typed_undo_reservations_by_leaf' (31308) panicked at crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs:162:62:
+called `Result::unwrap()` on an `Err` value: Base(OrderMismatch)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_delete_update_distribute_typed_undo_reservations_by_leaf ... FAILED
+
+thread 'storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_rejects_orphan_and_global_logical_duplicate' (31311) panicked at crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs:305:5:
+assertion `left == right` failed
+  left: Some(Base(OrderMismatch))
+ right: Some(Identity)
+test storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_rejects_orphan_and_global_logical_duplicate ... FAILED
+test storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_retained_current_leaf_cannot_precede_job_step ... ok
+test storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_rejects_alias_range_identity_and_anchor_history ... ok
+
+thread 'storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_typed_undo_and_same_catalog_schema_are_required' (31314) panicked at crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs:200:51:
+called `Result::unwrap()` on an `Err` value: Base(OrderMismatch)
+test storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_typed_undo_and_same_catalog_schema_are_required ... FAILED
+test storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_revision_bound_accepts_maximum_high_water_without_wrap ... ok
+test storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_accepts_root_child_split_with_moved_retained_rows ... ok
+test storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_preserves_reserved_absence_and_ready_releasing_states ... ok
+
+failures:
+
+failures:
+    storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_delete_update_distribute_typed_undo_reservations_by_leaf
+    storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_rejects_orphan_and_global_logical_duplicate
+    storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_typed_undo_and_same_catalog_schema_are_required
+
+test result: FAILED. 5 passed; 3 failed; 0 ignored; 0 measured; 2275 filtered out; finished in 0.26s
+
+error: test failed, to rerun pass `-p xadb-engine --lib`
