@@ -152,6 +152,12 @@ runtime 이후 바뀌지 않았으며 기존 검색·범용 codec·scope4 시험
 집합과 반환 목록을 실제 같은 cut에서 비교하는 orphan/소유 검증, Row/Undo 의미, 실제 SMO·
 base adoption·F05는 아직 연결하지 않았다. 08 적립은0으로 유지한다.
 
+[원 pool 수명 설계](../contracts/dev3-tree-smo.md#pool-lifetime)도 별도 D2 ACCEPT·필수0으로
+구체화했다. 신규1/2개·전체target5개 claim, selected-DWB 증거, generation tombstone,
+stage 전 취소 경계와 guard0 durable 대기, installed frontier와 후속 provenance replay를
+구분한다. 실제 타입 크기·F05·fault inventory·효과 구현은 아직 미완료다. 이 문서 변경으로
+제품 시험을 실행하지 않았으며 앞선 PASS를 새 source의 실행으로 바꾸지 않았다.
+
 08 전체의 승인 범위는 유지한다. 다음 작업은 08-1의 실제 system owner·WAL·복구다.
 독립 사전 검토에서 새 사용자 판단이 필요한 제품 방향 충돌은 발견하지 않았다.
 

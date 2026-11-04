@@ -1,0 +1,22 @@
+{
+  "schema": "XADB_MODULE_GATE_RECORD_V1",
+  "change": "DEV3 08: independently reviewed original-pool Structural claim lifetime; design only, actual F05/effects remain open",
+  "rust_tests": [],
+  "reviews": [
+    {
+      "id": "dev3-08-smo-lifetime-d2",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "devdoc/contracts/dev3-tree-smo.md": "95663cdd8bbf6573c7d76d3478437e53d3d99841"
+      },
+      "log": "module-gate/evidence/dev3-08-smo-lifetime/review.md (sha256 03135b59fb27234f977ed6ccfab3a5d619a207bc32ac402833d7a663241e5f70)"
+    }
+  ]
+}

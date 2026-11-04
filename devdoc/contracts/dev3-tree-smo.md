@@ -1,6 +1,6 @@
 # DEV3 tree SMO — 완결 structural group 연결 설계
 
-2026-11-04 · **D3-TREE-SMO-001 / scope4 wire·owner·provenance 설계 D2 ACCEPT / 구현·F02·F05·fault 인수 미완료**.
+2026-11-04 · **D3-TREE-SMO-001 / scope4 wire·owner·provenance 및 원 pool 수명 설계 D2 ACCEPT / 실제 타입·F05·효과·fault 인수 미완료**.
 
 사용자의 일정08 전체 구현 요청과 기존 D2 위임에 따른 내부 설계다. 계약·구현 담당은
 `/root`, 독립 검토자는 `/root/dev3_08_review`다. 비교 대안과 권한 경로의 정적 사전 검토는
@@ -228,3 +228,93 @@ scope4 parser를 기대값 생성에 쓰지 않는다. profile은 기존 독립 
 encoder는 입력 준비에만 쓴다. 실제 split 정답 시험으로 확대하지 않는다. 새 시험만
 선택하며 실행별 build 포함180초·4 jobs, source/ELF hash와 최초 실패를 보존한다.
 실제 source별 실행·독립 D1 결과는 [08 증거](../evidence/dev3-tree-structure-20261104.md#wire-observer)에 기록한다.
+
+<a id="pool-lifetime"></a>
+## F02 구체안 — 원 pool의 Structural claim 수명
+
+상태는 **D2 ACCEPT / 실제 타입 F05·effect/fault 인수 미완료**다. 앞의 scope4 bytes와
+별도로 원 `dirty_init::InitClaimIdentity`, `RegistrationDirectory`, plan4 writer/flush/control
+owner를 연결하는 수명을 정한다. `TxPair`를 Structural로 가장하거나 두 번째 pool을 만들지 않는다.
+
+### claim과 등록
+
+- `InitClaimIdentity::Structural`을 추가한다. record는 최대2 신규 TargetRequest,
+  Structural SystemWorkRef, birth LSN, pool generations/indices 각2개, init_count1|2,
+  정확5 target mask를 가진다. RootSplit은 신규2개, ChildSplit은1개다. 비활성 두 번째
+  원소는 첫 원소의 동일 값과 generation/index0으로 정규화하며 모든 주소/pin 검사는
+  `[..init_count]`만 사용한다. 비활성 칸이 별도 frame/target 권한을 갖지 않는다.
+- 필드 산술은 기존 최대 record 안에 들 것으로 예상하지만 증거가 아니다. 새 record뿐 아니라
+  `InitClaimIdentity`, `Option<InitClaimSlot>`, `PoolRegistry`의 전후 실제 크기와 그 소비
+  census를 비교해야 한다. 기존256B fits 상한만 통과해 registry 증액0으로 표시하지 않는다.
+- RootSplit은 기존 `closed_pair`, ChildSplit은 `closed_index`를 사용한다. single finish는
+  등록을 보존하고 closed 표지만 해제하는 전용 경로다. 등록까지 지우는 `retire_retention`을
+  완료 경로로 쓰지 않는다. System INIT의 published closed_index와 미완료 unpublished
+  claim을 구분하고 다른 claim과의 동시 소유를 거절한다.
+- `accepts_retention_payload`는 dynamic RowInternal의 level1..15를 좁게 추가한다. 기존
+  고정 page/Status/Undo/TreeAnchor/RowLeaf의 level0 규칙, System INIT의 Status/Undo 한정,
+  TxPair의 TreeAnchor+RowLeaf shape는 유지한다. 원 loader/base certificate도 해당 새
+  RowInternal identity를 검산할 수 있어야 하며 한 곳의 허용만으로 live 공급을 끝내지 않는다.
+
+### 첫 효과 전 준비
+
+원 C의 private factory만 authority를 만든다. 같은 canonical cut의 Catalog handle/schema,
+anchor revision/root, allocator, 전체 tree 도달성/소유/고아, 실제 Undo rollback weights,
+Reserved 배제와 capacity를 확인한다. decoded frame/Free entry/TargetRequest 자체가 권한이 아니다.
+준비 중 canonical before에서 전체 split을 재계산하고 exact INIT image를 비교한다.
+5개 target·3또는4개의 latched before stamp·신규1또는2개를 정확히 결합하고, mask의5bit만으로
+target 권한을 추정하지 않는다. allocator의 lowest Free9..63과 incarnation+1은 원 공급대로다.
+
+원 pool의 clean victim 선택은 기존 대상5개와 겹치지 않아야 한다. 선택 당시 frame stamp와
+pool generation을 claim 설치 시 재검산한다. claim/closed 표지와 소비한 pool generation은
+동일 registry guard 아래 설치한다. 원 version/tree exclusion과 physical target 순서의
+content latch, content→registry 순서를 유지한다. 실패 반환은 latch 역순→version→pin이다.
+
+RAM의 pin/claim0만으로 I/O quiescence를 증명하지 않는다. 원 selected-DWB/flush owner의
+borrowed 증거로 신규 물리 주소의 과거 incarnation에 남은 selected/진행 중 I/O를 해결했음을
+확인한다. 원 mutable bound와 Structural ordinary gate로 claim 설치부터 반환까지 새 capture를
+배제한다. 취소 permit도 이 원 I/O 경로와 allocator before stamp를 다시 결합한다.
+
+### stage·설치·취소·완료
+
+1. authority와 전체 quota·WAL capacity/prefix/frame을 준비하고 RAM claim을 얻는다. authentic
+   WalRequirement는 준비 값이 아니라 실제 complete stage만 발급한다. Structural은
+   claim 중 ordinary pin/load/capture를 TxPair처럼 차단한다. 아직 persistent Reserved나
+   allocator incarnation 변경은 없다. prepare/claim 실패는 정의한 무효과 오류로 반환한다.
+2. 전체5 target을 순서대로 latch하고 before stamp·실제 image를 재검산한다. `enter_stage`가
+   첫 WAL 호출 **직전** 일반 취소를 폐쇄한다. 성공 반환을 기다렸다가 폐쇄하지 않는다.
+3. 원 stage의 authentic `Effect::Unchanged` rejection만 sealed proof로 prestage 상태를
+   복원할 수 있다. stage 진입 뒤 불명 오류·panic·미해결 Drop은 fence하며 성공처럼 취소하지 않는다.
+4. complete stage의 원 receipt와 sealed install permit으로5 after/control/DPT를 설치한다.
+   `birth == Structural owner.id == complete group LSN`이며 TxPair의 `lsn>reserve` 규칙을
+   복사하지 않는다. 부분 설치·control/history/provenance 불일치·오류는 기존 fatal fence다.
+5. 원 `RuntimeHistory::installed`는 accepted requirement의 **installed frontier**를 전진시킨다.
+   현재 함수는 canonical arena/provenance를 갱신하지 않는다. canonical 재계산·INIT 비교는
+   준비 단계의 의무이고, INIT provenance claim 생성은 durability 확인 뒤 guard0에서 수행하는
+   후속 canonical replay의 의무다. live 경로에 별도 in-memory 채택 owner를 만들지 않는다.
+   설치 완료 token은 durable 완료 token이 아니다. single publish가 즉시 resolve 가능해도
+   ordinary gate는 installed frontier와 아래 durable 처리가 끝날 때까지 유지한다.
+6. 성공 경로에서도 `release_checked`로 latch 역순→version→pin을 반환하여 guard0을 확인한다.
+   RAM claim·ordinary gate·pending만 유지한 채 **원 `wait_durable`을 기다린 뒤 finish한다.**
+   authentic WalRequirement와 원 pending
+   소유권을 유지하고,5개 DPT는 해당 durability 확인 전 DWB/home으로 진행하지 않는다.
+   durable 성공 뒤 완료 token·등록·DPT receipt를 확인해 등록을 보존한 채 claim/closed를
+   해제하고 마지막에 pending을 비운다. 실패는 fence, 완료 SMO는 사용자 abort로 취소하지 않는다.
+
+prestage 취소는 unpublished 등록과 claim을 함께 반환하되 이미 소비한 **pool-slot generation은
+tombstone으로 남긴다**. clean victim의 옛 등록을 복원할 의무는 없다. allocator의 영속
+incarnation은 아직 바뀌지 않았으므로 되감는 쓰기도 없다. 취소한 key는 재사용할 수 없다.
+
+대안은 install 뒤 ordinary gate를 먼저 열고 pending/WAL 보호를 비동기로 유지하는 방식이다.
+첫 구현은 기존 CREATE의 원 durable 대기를 재사용하여 완료 수명·오류 경계를 줄인다.
+비용은 구조 그룹당 sync1회이며 성능 개선으로 주장하지 않는다. 비동기 완료는 실제 병목
+근거와 pending 교체/Drop/DWB 경쟁 증거를 갖춘 별도 D2에서 검토한다.
+
+후속 효과 시험의 필수 반례는 enter_stage 뒤 불명 실패, single publication 뒤 history 실패,
+과거 selected DWB 잔존, victim 재선택으로 stamp/generation 변경, ChildSplit 비활성 칸의
+alias 오용, 취소 후 stale key, Root/Child 부분 설치, wait_durable 오류와 finish 이전 Drop이다.
+정확 fault point 목록·독립 fixture·source-value census는 effect 활성화 전에 추가로 동결한다.
+
+2026-11-04 `/root/dev3_08_review`가 새절을 읽기 전용으로 검토했다. guard0 대기,
+authentic requirement 발급 시점, installed frontier와 provenance의 구분을 수정한 뒤
+문서 범위 D2 ACCEPT·필수0이다. [검토 기록](../../module-gate/evidence/dev3-08-smo-lifetime/review.md)을
+따르며 실제 타입·F05·fault/effect 실행을 승인 또는 PASS로 표시하지 않는다.
