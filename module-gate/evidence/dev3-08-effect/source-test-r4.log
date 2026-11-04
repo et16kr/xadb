@@ -1,0 +1,8 @@
+
+running 1 test
+STRUCTURAL_EFFECT_SOURCE MEMORY SourceCensus { entry: 2392, prepared: 37380, jobs: 10772, selection: 19992, installation: 37550, replay: 37044, returning: 3594, peak: 37550 } replay_floor=32820 pool=12151 charge=44304 caller_peak=64016 metadata=187024 whole=252560
+STRUCTURAL_EFFECT_SOURCE NATIVE_TYPE SourceCensus { entry: 2392, prepared: 37380, jobs: 10772, selection: 19992, installation: 37550, replay: 37044, returning: 3594, peak: 37550 } replay_floor=32820 pool=12151 charge=44304 caller_peak=64024 metadata=187032 whole=252568
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::structural::effect::tests::structural_effect_source_phases_fit_original_admission_and_callers ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2315 filtered out; finished in 0.00s
+

@@ -1,0 +1,9 @@
+{
+  "scope": "Only new E02 original clean victim last-active stamp Root/Child and E08 write Before/PartialError Root/Child; no completed cases repeated",
+  "source": "aac94d796de47e956914aa3a100b87140face2994c9de36bc03a4821e2ebfeca",
+  "filters": [
+    "structural_effect_original_clean_victim_stamp_change_rejects_before_claim",
+    "structural_effect_durable_write_failure_keeps_pending_and_fences"
+  ],
+  "build_seconds": 300
+}

@@ -654,3 +654,68 @@ ELF는 `160a10fb820a727ad8e7ee8fe3973651fe9b9485704ee22cd8222b52540fda9e`다. �
 Clippy/gate는 같은 증거 디렉터리의 review 기록에 결속한다. 실제 claim·stage·설치·durable finish,
 fault/reopen·다단계 행 변경·unlink/root shrink/retirement와 전체 F05는 계속08-1의 필수 잔여다.
 일정08 적립0·누적38.37%를 유지한다.
+
+
+<a id="structural-effect"></a>
+### 원 RootSplit/ChildSplit의 실제 효과와 복구
+
+최신 사용자 요청은 진행 중이던 수정을 마무리하여 commit·push하는 것이다. 이 단위는
+`e0098155`에서 남아 있던 clean Row leaf split 효과이며,08 전체나 다단계 Row CRUD를
+이어 구현하는 요청으로 확대하지 않는다. 담당 `/root`, 독립 검토자 `/root/dev3_08_review`다.
+[효과 계약](../contracts/dev3-tree-smo.md#structural-effect)의 D2/common 방향을 수용하고,
+원 source/pool/read gate/flush lease를 유지한 claim→stage→5page·bank34·XOI·DPT 설치→
+guard0 durable→same canonical replay/INIT→checked finish를 구현한다. 대상 table의 모든
+non-Free Job은 거절하며 다른 table의 부채를 보존한다. prestage 취소는 generation tombstone을
+보존하고 재진입한다. stage 이후 오류는 fence하며 pending/claim을 먼저 지우지 않는다.
+
+새 효과의 source peak는37,550B, pool branch12,151B, 원 charge44,304B다. 원 memory/native
+caller의 peak64,016/64,024·metadata187,024/187,032·whole252,560/252,568B는 기존
+65,536/196,608/262,144B 안이다. source-value 회계이며 compiler stack/RSS나 전체 F05 인수가
+아니다. fatal 뒤 source 반환은 원 fenced policy 때문에44,304B charge를 유지하지만, gate·
+version/content/pin과 replay loan은 반환을 시도한다. 이를 정상 source0 반환과 구분한다.
+
+[원 실행·실패·source/ELF·입력 지문](../../module-gate/evidence/dev3-08-effect/)은 source별로
+보존한다. 완료한 무변경 시험은 반복하지 않았으며 whole-workspace 시험을 실행하지 않았다.
+
+| 구간 | 실제 선택 결과 |
+| --- | --- |
+| source r4 / caller r9 | 새 effect census1, 원 memory/native caller2 PASS; 타입 관측의 I/O 효과0 |
+| E01 r5 | 원 CREATE 정리·4행 Commit/Prune 뒤 RootSplit→ChildSplit, 행/payload·5image·INIT·bank/XOI/DPT·등록·대상 부채 거절 PASS |
+| E04 r7 | Root/Child 원 stage Capacity의 checked cancel·불변 WAL/control·세대 tombstone·재진입2 variants PASS |
+| E02/03/05–09 r9 | 새6 selector,58 variants PASS: unwind30, replay 반환2, sync 실패4, selection/before6, flush admission/cancel8, 실제 stage/history/replay 오류8 |
+| E08-write r12 | Root/Child×BeforeError/PrefixErrorBytes96의4 variants PASS. 실제 WAL 증가0/96과 기존 durable prefix·다른 file 보존 검산 |
+| E02-clean | r13 Root variant1 PASS(전체 selector는 Child 실패로 exit101 보존); r15 별도 Child selector1 PASS. 새 level 범위 시험1 PASS |
+| E10 | 고정10 histories의 produce/recover/reenter30 성공 process 완료. 아래 source별 실행과 원 실패를 구분 |
+
+E10의 입력은 `tests/fixtures/dev3-08-effect/native-inventory.tsv`다. Root/Child 각각
+stage 직전·RAM stage 완료·설치/guard 반환·durable·정상 finish의5지점에서 실제 process를
+종료한다. 물리 stage는 RAM-only라 앞3지점은 split 전, 뒤2지점은 split 후로 복구한다.
+독립 입력의 RowId1..4·값7..10, before payload 전체, 분포4→2,2→1,1,2, anchor revision,
+separators/reachability·orphan 없음, allocator lowest-Free9..63 및 generation, 원64 INIT
+claim의 보존과 신규 role5/6·birth/work.id·owner/epoch·target, bank34 high-water/STABLE을
+검산한다. READY 후 빈 Row 거래를 실제 Commit해 Q2→Q3를 확인하고 세 번째 process가 Q3와
+같은 tree/provenance를 다시 검산한다. 이는 B cursor 또는 multi-level Row CRUD 인수가 아니다.
+
+NR1–NR3은 r11 source로 완료했다. NR4의 r11 producer는 보존하고 실패한 recovery의 입력
+사본에서 r13으로 recovery/reenter만 재개했다. NR5·NC1–NC5는 r13으로 각각3process를
+완료했다. NR4의 producer/recovery ELF는 서로 다르며 같은 ELF30process 성공이라고 쓰지
+않는다. 이는 완료한 무변경 producer 반복 금지에 따른 source별 수정 경로 검증이다.
+controller는 각 phase의 source/ELF, compiled-input hash·child/cut, 고유PID 및 file hashes를
+결속하고 원 DB와 실패 직전 input-db를 보존한다. 실제 DB/image는 로컬 artifacts에 두고
+commit에는 원 로그·receipt와 binary hash inventory를 남긴다.
+
+| 보존한 실패 | 원인과 처리 |
+| --- | --- |
+| build r0/r1/r3, E01 r4/r4b | 타입/진단 getter 및 harness 환경 누락, 정리되지 않은 CREATE Job fixture. 시험만 수정한 r5 E01 성공 |
+| build r6/r8/r10 | unwrap_err의 Debug bound, cfg(test) import/field, native tree API 이름 오류. 각각 수정 후 compile |
+| r7 fault3 | fatal에서도 source0으로 기대한 시험 오류. 원 fenced charge44,304B 규칙을 적용; 제품 반환 규칙 완화 없음 |
+| native r11 첫 controller | 마지막 sync 뒤 정상 canonical read/metadata를 금지한 oracle 오류. per-file write→sync 검산은 유지하고 원 producer를 재사용 |
+| native r11 NR4 recovery | epoch seed의 level0 root 제한. 같은 replay의 전체 canonical 검산 뒤 실제 root level/kind를 확인하도록 수정; r13 같은 입력의 recovery/reenter PASS |
+| E02-clean r12 | 원 genesis LSN0/counter0에서 counter만 증가시켜 유효 stamp 전에 invariant 위반. 실제 INIT/flush로 양수 LSN/counter clean victim을 준비 |
+| E02-clean r13 Child | 새 RowInternal root가 원 live flush의 kind/level 제한에 걸림. Retention/Profile3/level1..15의4개 검산 지점만 연결; Allocator/Status 제한 유지 |
+| Clippy r0 | macro의 literal0 range8건. 같은 입력을 지역변수로 받아 동등 실행을 유지 |
+
+최종 source의 선택 결과·독립 D1/D2·Clippy·gate는 같은 증거 디렉터리의 review/receipt로
+결속한다. scope는 clean Row leaf의 실제 RootSplit/ChildSplit·flush·재시작이다. 다단계
+INSERT/DELETE/UPDATE와 Active/CLR/Prune 일반화, internal split의 실제 소비, unlink·unary
+repair·root shrink·retirement 및 전체 F05/08-1은 후속이다. 일정08 적립0·누적38.37%를 유지한다.

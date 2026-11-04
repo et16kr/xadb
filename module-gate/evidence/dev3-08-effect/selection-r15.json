@@ -1,0 +1,9 @@
+{
+  "scope": "Four original flush gates now admit canonical Profile3 RowInternal1..15, preserving Allocator/Status0. New shape negative test + failed Child clean-victim variant only; r14 compile-only, no failed predecessor or completed Root repetition",
+  "source": "28c2e1f2cea2098c2984269ed1c98f70c697665497af774dfe8b516059d0a27c",
+  "filters": [
+    "retention_internal_flush_levels_are_bounded_and_profile_specific",
+    "structural_effect_original_clean_victim_stamp_change_child"
+  ],
+  "build_seconds": 300
+}

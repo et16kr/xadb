@@ -11,6 +11,10 @@ use std::sync::LockResult;
 #[path = "dirty_init/structural.rs"]
 mod structural;
 pub(super) use structural::source_observation as structural_source_observation;
+pub(in crate::storage) use structural::structural_effect_pool_source_bytes;
+pub(in crate::storage) use structural::{
+    CompletedStructural, StructuralClaimKey, StructuralWriteTargets,
+};
 
 #[path = "dirty_init/tx_pair.rs"]
 mod tx_pair;
@@ -1087,12 +1091,33 @@ pub(in crate::storage) mod test_support {
         PairFirstRegistered,
         PairBothRegisteredBeforeGate,
         PairGatePublished,
+        StructuralSelected,
+        StructuralClaimed,
+        StructuralStageEntered,
+        StructuralStaged,
+        StructuralFirstImage,
+        StructuralImages,
+        StructuralControl,
+        StructuralDpt,
+        StructuralPublished,
+        StructuralHistoryInstalling,
+        StructuralHistoryInstalled,
+        StructuralReleased,
+        StructuralDurable,
+        StructuralReplayReturning,
+        StructuralReplayChecked,
+        StructuralFinishChecked,
+        StructuralCancelChecking,
         LoadResidentObserved,
         LoadCleanSelected,
         LoadFlushSelected,
     }
     pub(in crate::storage) fn stage_owned(pool: &SharedPool<'_, '_, '_, '_>) {
         hit(pool, InitPoint::StageOwned);
+    }
+    /// Deterministic observation/panic hook only; no authority is created.
+    pub(in crate::storage) fn structural_hit(pool: &SharedPool<'_, '_, '_, '_>, point: InitPoint) {
+        hit(pool, point);
     }
     pub(in crate::storage) fn install_init_pause(
         pool: &SharedPool<'_, '_, '_, '_>,
@@ -1471,6 +1496,44 @@ pub(in crate::storage) mod test_support {
             .lock()
             .unwrap_or_else(|error| error.into_inner());
         (pins.init_claim.is_some(), pins.total)
+    }
+    /// Read the original directory's generation tombstones, including slots
+    /// whose cancelled INIT never became a published registration.
+    pub(in crate::storage) fn retention_generations(
+        pool: &SharedPool<'_, '_, '_, '_>,
+    ) -> [Option<u64>; MAX_FRAMES] {
+        let registry = pool.registry.lock().unwrap_or_else(|e| e.into_inner());
+        std::array::from_fn(|at| registry.directory.next_retention_generation(at))
+    }
+    /// Deliberately advance one original unused victim's generation after its
+    /// observation. No claim, registration, page, or authority is fabricated.
+    pub(in crate::storage) fn advance_selected_tombstone(
+        pool: &SharedPool<'_, '_, '_, '_>,
+        selected: &super::super::StructuralCandidates<'_, '_, '_>,
+    ) {
+        let at = selected.slots[0].index;
+        let mut state = pool.registry.lock().unwrap();
+        assert!(state.directory.resolve(pool.frames, at).is_none());
+        let next = state.directory.next_retention_generation(at).unwrap();
+        state.directory.prepare_retention_slot(at, next);
+        state.directory.retire_retention(at);
+    }
+    /// Damage the last active original clean resident after selection. The
+    /// directory generation and content bytes remain unchanged.
+    pub(in crate::storage) fn advance_selected_clean_counter(
+        pool: &SharedPool<'_, '_, '_, '_>,
+        selected: &super::super::StructuralCandidates<'_, '_, '_>,
+    ) {
+        let victim = selected.slots[usize::from(selected.count) - 1];
+        let expected = victim.frame.expect("actual resident victim");
+        assert!(
+            expected.page_lsn.0 > 0 && expected.modification_counter > 0,
+            "original flushed resident"
+        );
+        let mut content = pool.frames[victim.index].content.write().unwrap();
+        assert!(!content.dirty);
+        assert_eq!(content.modification_counter, expected.modification_counter);
+        content.modification_counter += 1;
     }
     pub(in crate::storage) fn init_layout() -> [(&'static str, usize); 15] {
         use std::mem::size_of;

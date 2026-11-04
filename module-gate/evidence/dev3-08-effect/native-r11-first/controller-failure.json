@@ -1,0 +1,9 @@
+{
+  "result": "FAIL",
+  "phase": "controller producer validation",
+  "producer_exit": 0,
+  "reason": "post-sync tail check incorrectly rejected read/metadata made by original canonical preparation; raw trace ends with read and metadata, all file writes had sync",
+  "correction": "Permit read/metadata; preserve original per-file last-write-before-sync assertion. Resume verified original produced DB without rerunning producer.",
+  "resumed": "native-r11-resume",
+  "producer_repeated": false
+}

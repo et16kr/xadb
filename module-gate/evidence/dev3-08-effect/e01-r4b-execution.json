@@ -1,0 +1,10 @@
+{
+  "identities": {
+    "XADB_CATALOG_SOURCE_SHA256": "93cf137084a014b547a5d92f509903d15490616327026b32cb69c15afd4da59d",
+    "XADB_CATALOG_ELF_SHA256": "6a97ec19ebf731da0c23b2af7aa8763c386c53cdd17799b44b04bc2175fddd30",
+    "XADB_CATALOG_INPUT_SHA256": "9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611"
+  },
+  "filter": "structural_effect_original_root_then_child_and_target_debt_refusal",
+  "reason": "r4 runtime failed before case begin: missing harness identity env; identical source/ELF, no completed effect execution",
+  "timeout_seconds": 200
+}

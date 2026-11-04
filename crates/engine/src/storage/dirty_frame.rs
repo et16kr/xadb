@@ -88,6 +88,10 @@ mod flush;
 pub(in crate::storage) use flush::{CapturedPage, FinalizedPage};
 #[path = "dirty_init.rs"]
 mod init;
+pub(in crate::storage) use init::structural_effect_pool_source_bytes;
+pub(in crate::storage) use init::{
+    CompletedStructural, StructuralClaimKey, StructuralWriteTargets,
+};
 #[allow(unused_imports)]
 pub(in crate::storage) use init::{
     CompletedTxPair, TxPairClaimKey, TxPairWriteTargets, tx_pair_source_census,

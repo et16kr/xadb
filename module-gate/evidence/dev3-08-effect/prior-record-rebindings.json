@@ -1,0 +1,124 @@
+[
+  {
+    "record": "module-gate/records/20261104-dev3-08-admission.json",
+    "files": [
+      "crates/engine/src/storage/dirty_frame.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/structural_prepare.rs",
+      "devdoc/contracts/dev3-tree-smo.md",
+      "devdoc/evidence/dev3-tree-structure-20261104.md",
+      "devdoc/implementation/dev3-implementation.md"
+    ],
+    "method": "append new effect review; all original reviews byte-equivalent as JSON values"
+  },
+  {
+    "record": "module-gate/records/20261104-dev3-08-bank.json",
+    "files": [
+      "crates/engine/src/storage/wal_io/plan4_apply.rs",
+      "crates/engine/src/storage/wal_io/plan4_pages.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/recovery.rs",
+      "devdoc/contracts/dev3-tree-smo.md",
+      "devdoc/evidence/dev3-tree-structure-20261104.md",
+      "devdoc/implementation/dev3-implementation.md"
+    ],
+    "method": "append new effect review; all original reviews byte-equivalent as JSON values"
+  },
+  {
+    "record": "module-gate/records/20261104-dev3-08-base-claims.json",
+    "files": [
+      "devdoc/contracts/dev3-tree-smo.md"
+    ],
+    "method": "append new effect review; all original reviews byte-equivalent as JSON values"
+  },
+  {
+    "record": "module-gate/records/20261104-dev3-08-candidate.json",
+    "files": [
+      "devdoc/contracts/dev3-tree-smo.md"
+    ],
+    "method": "append new effect review; all original reviews byte-equivalent as JSON values"
+  },
+  {
+    "record": "module-gate/records/20261104-dev3-08-claim.json",
+    "files": [
+      "crates/engine/src/storage/dirty_init.rs",
+      "crates/engine/src/storage/dirty_init/structural.rs",
+      "devdoc/contracts/dev3-tree-smo.md"
+    ],
+    "method": "append new effect review; all original reviews byte-equivalent as JSON values"
+  },
+  {
+    "record": "module-gate/records/20261104-dev3-08-current-tree.json",
+    "files": [
+      "devdoc/contracts/dev3-tree-smo.md",
+      "devdoc/evidence/dev3-tree-structure-20261104.md",
+      "devdoc/implementation/dev3-implementation.md"
+    ],
+    "method": "append new effect review; all original reviews byte-equivalent as JSON values"
+  },
+  {
+    "record": "module-gate/records/20261104-dev3-08-frame.json",
+    "files": [
+      "devdoc/contracts/dev3-tree-smo.md"
+    ],
+    "method": "append new effect review; all original reviews byte-equivalent as JSON values"
+  },
+  {
+    "record": "module-gate/records/20261104-dev3-08-live-prepare.json",
+    "files": [
+      "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/driver.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/history/runtime.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/resources.rs",
+      "crates/engine/src/storage/wal_io/plan4_retention/structural_prepare.rs",
+      "devdoc/contracts/dev3-tree-smo.md",
+      "devdoc/evidence/dev3-tree-structure-20261104.md",
+      "devdoc/implementation/dev3-implementation.md"
+    ],
+    "method": "append new effect review; all original reviews byte-equivalent as JSON values"
+  },
+  {
+    "record": "module-gate/records/20261104-dev3-08-row-selector.json",
+    "files": [
+      "devdoc/contracts/dev3-tree-smo.md"
+    ],
+    "method": "append new effect review; all original reviews byte-equivalent as JSON values"
+  },
+  {
+    "record": "module-gate/records/20261104-dev3-08-scope4-replay.json",
+    "files": [
+      "crates/engine/src/storage/wal_io/plan4_retention/recovery.rs",
+      "devdoc/contracts/dev3-tree-smo.md",
+      "devdoc/evidence/dev3-tree-structure-20261104.md",
+      "devdoc/implementation/dev3-implementation.md"
+    ],
+    "method": "append new effect review; all original reviews byte-equivalent as JSON values"
+  },
+  {
+    "record": "module-gate/records/20261104-dev3-08-smo-lifetime.json",
+    "files": [
+      "devdoc/contracts/dev3-tree-smo.md"
+    ],
+    "method": "append new effect review; all original reviews byte-equivalent as JSON values"
+  },
+  {
+    "record": "module-gate/records/20261104-dev3-08-split-source.json",
+    "files": [
+      "devdoc/contracts/dev3-tree-smo.md",
+      "devdoc/evidence/dev3-tree-structure-20261104.md",
+      "devdoc/implementation/dev3-implementation.md"
+    ],
+    "method": "append new effect review; all original reviews byte-equivalent as JSON values"
+  },
+  {
+    "record": "module-gate/records/20261104-dev3-08-weights.json",
+    "files": [
+      "devdoc/contracts/dev3-tree-smo.md"
+    ],
+    "method": "append new effect review; all original reviews byte-equivalent as JSON values"
+  },
+  {
+    "record": "module-gate/records/20261104-dev3-08-wire.json",
+    "files": [
+      "devdoc/contracts/dev3-tree-smo.md"
+    ],
+    "method": "append new effect review; all original reviews byte-equivalent as JSON values"
+  }
+]

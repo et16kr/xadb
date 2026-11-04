@@ -483,8 +483,9 @@ pub(in crate::storage) use retention::{
     AppliedRetirement, BoundVisibility, CapturedCatalogRefs, CatalogLookupLoan, CatalogSource,
     EPOCH_BYTES, HorizonObservation, InstalledFrontier, ReferenceLease, RetirementIntent,
     RetirementReject, RetirementScope, RollbackSource, SnapshotGuard, SnapshotReservation,
-    SourceFrontier, StagedRetirement, TxPairAuthority, TxPairCancelKind, TxPairCancelPermit,
-    TxPairControlCommit, TxPairInstallPermit, TxPairRetirePermit, TxPairStageRejection, TxnPin,
-    UndoPin, VISIBILITY_BYTES, VerifiedRetirement, VisibilityCause, VisibilityError,
-    VisibilityLoan, VisibilityResult,
+    SourceFrontier, StagedRetirement, StructuralAuthority, StructuralCancelPermit,
+    StructuralControlCommit, StructuralInstallPermit, StructuralStageRejection, TxPairAuthority,
+    TxPairCancelKind, TxPairCancelPermit, TxPairControlCommit, TxPairInstallPermit,
+    TxPairRetirePermit, TxPairStageRejection, TxnPin, UndoPin, VISIBILITY_BYTES,
+    VerifiedRetirement, VisibilityCause, VisibilityError, VisibilityLoan, VisibilityResult,
 };

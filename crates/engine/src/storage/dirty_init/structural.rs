@@ -1,6 +1,13 @@
 //! Metadata for the original pool's atomic Row-tree structural group.
-//! No constructor, semantic authority, WAL stage or image installer is exposed.
+//! Semantic authority remains sealed by the original writer.
 use super::*;
+
+#[path = "structural/live.rs"]
+mod live;
+pub(in crate::storage) use live::source_bytes as structural_effect_pool_source_bytes;
+pub(in crate::storage) use live::{
+    CompletedStructural, StructuralClaimKey, StructuralWriteTargets,
+};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) struct StructuralClaimRecord {

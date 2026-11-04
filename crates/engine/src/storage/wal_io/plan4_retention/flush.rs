@@ -166,6 +166,7 @@ impl<'s, 'c, W: WriterNamespace> RetentionFlusher<'_, 's, 'c, '_, '_, '_, '_, W>
                 | crate::storage::page::PageKind::CatalogLeaf
                 | crate::storage::page::PageKind::TreeAnchor
                 | crate::storage::page::PageKind::RowLeaf
+                | crate::storage::page::PageKind::RowInternal
         ) {
             return Err(unchanged(RetentionPhase::Flush, RetentionCause::Membership));
         }

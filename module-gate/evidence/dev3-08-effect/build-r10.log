@@ -1,0 +1,53 @@
+   Compiling version_check v0.9.5
+   Compiling typenum v1.20.1
+   Compiling autocfg v1.5.1
+   Compiling cfg-if v1.0.5
+   Compiling cfg_aliases v0.2.2
+   Compiling libc v0.2.191
+   Compiling generic-array v0.14.7
+   Compiling memoffset v0.9.1
+   Compiling nix v0.30.1
+   Compiling cpufeatures v0.2.17
+   Compiling bitflags v2.13.2
+   Compiling block-buffer v0.10.4
+   Compiling crypto-common v0.1.7
+   Compiling digest v0.10.7
+   Compiling sha2 v0.10.9
+   Compiling xadb-foundation v0.1.0 (/workspace/xadb/crates/foundation)
+   Compiling xadb-platform v0.1.0 (/workspace/xadb/crates/platform)
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+error[E0599]: no variant or associated item named `Row` found for enum `storage::tree_page::EntryPayload<'a>` in the current scope
+   --> crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_effect/native.rs:144:39
+    |
+144 |                     let EntryPayload::Row(value) = e.payload else {
+    |                                       ^^^ variant or associated item not found in `storage::tree_page::EntryPayload<'_>`
+    |
+   ::: crates/engine/src/storage/tree_page.rs:57:1
+    |
+ 57 | pub(crate) enum EntryPayload<'a> {
+    | -------------------------------- variant or associated item `Row` not found for this enum
+
+error[E0599]: no method named `leftmost` found for struct `storage::tree_page::TreePageView<'a>` in the current scope
+   --> crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_effect/native.rs:154:42
+    |
+154 |             let mut children = vec![view.leftmost().unwrap()];
+    |                                          ^^^^^^^^ private field, not a method
+    |
+   ::: crates/engine/src/storage/tree_page.rs:85:1
+    |
+ 85 | pub(crate) struct TreePageView<'a> {
+    | ---------------------------------- method `leftmost` not found for this struct
+
+error[E0599]: no variant or associated item named `Child` found for enum `storage::tree_page::EntryPayload<'a>` in the current scope
+   --> crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_effect/native.rs:158:35
+    |
+158 |                 let EntryPayload::Child(child) = e.payload else {
+    |                                   ^^^^^ variant or associated item not found in `storage::tree_page::EntryPayload<'_>`
+    |
+   ::: crates/engine/src/storage/tree_page.rs:57:1
+    |
+ 57 | pub(crate) enum EntryPayload<'a> {
+    | -------------------------------- variant or associated item `Child` not found for this enum
+
+For more information about this error, try `rustc --explain E0599`.
+error: could not compile `xadb-engine` (lib test) due to 3 previous errors

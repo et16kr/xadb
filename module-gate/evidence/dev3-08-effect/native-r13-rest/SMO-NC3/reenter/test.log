@@ -1,0 +1,10 @@
+
+running 1 test
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::native::structural_effect_native_worker ... CATALOG_MEMORY_CONTEXT	SMO-NC3-reenter	c1d892f917631e1547506cd85ba89f9342de1c66c229d728b47e253533d02358	38706753dd4265d18c156a725c5bc699508c503d6d2782aafaebb6ec1731a45c	6fdc98d39ba23ad745048bdd2d54d334ceb4b4dda67e486b83465e67982536c1	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	SMO-NC3-reenter
+CATALOG_MEMORY_PASS	SMO-NC3-reenter
+SMO_NATIVE SMO-NC3 reenter result	ready q_ready	3 partitions	2,2 high_water	57 rows	1,2,3,4 values	7,8,9,10 
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2325 filtered out; finished in 0.51s
+

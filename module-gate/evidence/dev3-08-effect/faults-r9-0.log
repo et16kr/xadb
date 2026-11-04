@@ -1,0 +1,217 @@
+
+running 1 test
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_unwind_at_install_publication_and_finish_boundaries ... CATALOG_MEMORY_CONTEXT	SMO-E05-E09-false-StructuralClaimed	dc89cbbad6fa569056fbd3c56c4e548dffcf70bbb7525e9a08b00b636a2d6096	5b5deec7c127a715d34154c3902398b12062aeed159bcfc0c5394cc6fe3bb3c1	9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	SMO-E05-E09-false-StructuralClaimed
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_unwind_at_install_publication_and_finish_boundaries' (57194) panicked at crates/engine/src/storage/dirty_init.rs:1156:62:
+requested INIT unwind
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+SMO_FAULT child=false point=StructuralClaimed fenced; claim/source charge retained, guards/pins returned
+CATALOG_MEMORY_PASS	SMO-E05-E09-false-StructuralClaimed
+CATALOG_MEMORY_CONTEXT	SMO-E05-E09-false-StructuralStageEntered	dc89cbbad6fa569056fbd3c56c4e548dffcf70bbb7525e9a08b00b636a2d6096	5b5deec7c127a715d34154c3902398b12062aeed159bcfc0c5394cc6fe3bb3c1	9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	SMO-E05-E09-false-StructuralStageEntered
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_unwind_at_install_publication_and_finish_boundaries' (57194) panicked at crates/engine/src/storage/dirty_init.rs:1156:62:
+requested INIT unwind
+SMO_FAULT child=false point=StructuralStageEntered fenced; claim/source charge retained, guards/pins returned
+CATALOG_MEMORY_PASS	SMO-E05-E09-false-StructuralStageEntered
+CATALOG_MEMORY_CONTEXT	SMO-E05-E09-false-StructuralStaged	dc89cbbad6fa569056fbd3c56c4e548dffcf70bbb7525e9a08b00b636a2d6096	5b5deec7c127a715d34154c3902398b12062aeed159bcfc0c5394cc6fe3bb3c1	9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	SMO-E05-E09-false-StructuralStaged
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_unwind_at_install_publication_and_finish_boundaries' (57194) panicked at crates/engine/src/storage/dirty_init.rs:1156:62:
+requested INIT unwind
+SMO_FAULT child=false point=StructuralStaged fenced; claim/source charge retained, guards/pins returned
+CATALOG_MEMORY_PASS	SMO-E05-E09-false-StructuralStaged
+CATALOG_MEMORY_CONTEXT	SMO-E05-E09-false-StructuralFirstImage	dc89cbbad6fa569056fbd3c56c4e548dffcf70bbb7525e9a08b00b636a2d6096	5b5deec7c127a715d34154c3902398b12062aeed159bcfc0c5394cc6fe3bb3c1	9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	SMO-E05-E09-false-StructuralFirstImage
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_unwind_at_install_publication_and_finish_boundaries' (57194) panicked at crates/engine/src/storage/dirty_init.rs:1156:62:
+requested INIT unwind
+SMO_FAULT child=false point=StructuralFirstImage fenced; claim/source charge retained, guards/pins returned
+CATALOG_MEMORY_PASS	SMO-E05-E09-false-StructuralFirstImage
+CATALOG_MEMORY_CONTEXT	SMO-E05-E09-false-StructuralImages	dc89cbbad6fa569056fbd3c56c4e548dffcf70bbb7525e9a08b00b636a2d6096	5b5deec7c127a715d34154c3902398b12062aeed159bcfc0c5394cc6fe3bb3c1	9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	SMO-E05-E09-false-StructuralImages
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_unwind_at_install_publication_and_finish_boundaries' (57194) panicked at crates/engine/src/storage/dirty_init.rs:1156:62:
+requested INIT unwind
+SMO_FAULT child=false point=StructuralImages fenced; claim/source charge retained, guards/pins returned
+CATALOG_MEMORY_PASS	SMO-E05-E09-false-StructuralImages
+CATALOG_MEMORY_CONTEXT	SMO-E05-E09-false-StructuralControl	dc89cbbad6fa569056fbd3c56c4e548dffcf70bbb7525e9a08b00b636a2d6096	5b5deec7c127a715d34154c3902398b12062aeed159bcfc0c5394cc6fe3bb3c1	9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	SMO-E05-E09-false-StructuralControl
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_unwind_at_install_publication_and_finish_boundaries' (57194) panicked at crates/engine/src/storage/dirty_init.rs:1156:62:
+requested INIT unwind
+SMO_FAULT child=false point=StructuralControl fenced; claim/source charge retained, guards/pins returned
+CATALOG_MEMORY_PASS	SMO-E05-E09-false-StructuralControl
+CATALOG_MEMORY_CONTEXT	SMO-E05-E09-false-StructuralDpt	dc89cbbad6fa569056fbd3c56c4e548dffcf70bbb7525e9a08b00b636a2d6096	5b5deec7c127a715d34154c3902398b12062aeed159bcfc0c5394cc6fe3bb3c1	9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	SMO-E05-E09-false-StructuralDpt
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_unwind_at_install_publication_and_finish_boundaries' (57194) panicked at crates/engine/src/storage/dirty_init.rs:1156:62:
+requested INIT unwind
+SMO_FAULT child=false point=StructuralDpt fenced; claim/source charge retained, guards/pins returned
+CATALOG_MEMORY_PASS	SMO-E05-E09-false-StructuralDpt
+CATALOG_MEMORY_CONTEXT	SMO-E05-E09-false-StructuralPublished	dc89cbbad6fa569056fbd3c56c4e548dffcf70bbb7525e9a08b00b636a2d6096	5b5deec7c127a715d34154c3902398b12062aeed159bcfc0c5394cc6fe3bb3c1	9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	SMO-E05-E09-false-StructuralPublished
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_unwind_at_install_publication_and_finish_boundaries' (57194) panicked at crates/engine/src/storage/dirty_init.rs:1156:62:
+requested INIT unwind
+SMO_FAULT child=false point=StructuralPublished fenced; claim/source charge retained, guards/pins returned
+CATALOG_MEMORY_PASS	SMO-E05-E09-false-StructuralPublished
+CATALOG_MEMORY_CONTEXT	SMO-E05-E09-false-StructuralHistoryInstalled	dc89cbbad6fa569056fbd3c56c4e548dffcf70bbb7525e9a08b00b636a2d6096	5b5deec7c127a715d34154c3902398b12062aeed159bcfc0c5394cc6fe3bb3c1	9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	SMO-E05-E09-false-StructuralHistoryInstalled
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_unwind_at_install_publication_and_finish_boundaries' (57194) panicked at crates/engine/src/storage/dirty_init.rs:1156:62:
+requested INIT unwind
+SMO_FAULT child=false point=StructuralHistoryInstalled fenced; claim/source charge retained, guards/pins returned
+CATALOG_MEMORY_PASS	SMO-E05-E09-false-StructuralHistoryInstalled
+CATALOG_MEMORY_CONTEXT	SMO-E05-E09-false-StructuralReleased	dc89cbbad6fa569056fbd3c56c4e548dffcf70bbb7525e9a08b00b636a2d6096	5b5deec7c127a715d34154c3902398b12062aeed159bcfc0c5394cc6fe3bb3c1	9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	SMO-E05-E09-false-StructuralReleased
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_unwind_at_install_publication_and_finish_boundaries' (57194) panicked at crates/engine/src/storage/dirty_init.rs:1156:62:
+requested INIT unwind
+SMO_FAULT child=false point=StructuralReleased fenced; claim/source charge retained, guards/pins returned
+CATALOG_MEMORY_PASS	SMO-E05-E09-false-StructuralReleased
+CATALOG_MEMORY_CONTEXT	SMO-E05-E09-false-StructuralDurable	dc89cbbad6fa569056fbd3c56c4e548dffcf70bbb7525e9a08b00b636a2d6096	5b5deec7c127a715d34154c3902398b12062aeed159bcfc0c5394cc6fe3bb3c1	9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	SMO-E05-E09-false-StructuralDurable
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_unwind_at_install_publication_and_finish_boundaries' (57194) panicked at crates/engine/src/storage/dirty_init.rs:1156:62:
+requested INIT unwind
+SMO_FAULT child=false point=StructuralDurable fenced; claim/source charge retained, guards/pins returned
+CATALOG_MEMORY_PASS	SMO-E05-E09-false-StructuralDurable
+CATALOG_MEMORY_CONTEXT	SMO-E05-E09-false-StructuralReplayReturning	dc89cbbad6fa569056fbd3c56c4e548dffcf70bbb7525e9a08b00b636a2d6096	5b5deec7c127a715d34154c3902398b12062aeed159bcfc0c5394cc6fe3bb3c1	9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	SMO-E05-E09-false-StructuralReplayReturning
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_unwind_at_install_publication_and_finish_boundaries' (57194) panicked at crates/engine/src/storage/dirty_init.rs:1156:62:
+requested INIT unwind
+SMO_FAULT child=false point=StructuralReplayReturning fenced; claim/source charge retained, guards/pins returned
+CATALOG_MEMORY_PASS	SMO-E05-E09-false-StructuralReplayReturning
+CATALOG_MEMORY_CONTEXT	SMO-E05-E09-false-StructuralReplayChecked	dc89cbbad6fa569056fbd3c56c4e548dffcf70bbb7525e9a08b00b636a2d6096	5b5deec7c127a715d34154c3902398b12062aeed159bcfc0c5394cc6fe3bb3c1	9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	SMO-E05-E09-false-StructuralReplayChecked
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_unwind_at_install_publication_and_finish_boundaries' (57194) panicked at crates/engine/src/storage/dirty_init.rs:1156:62:
+requested INIT unwind
+SMO_FAULT child=false point=StructuralReplayChecked fenced; claim/source charge retained, guards/pins returned
+CATALOG_MEMORY_PASS	SMO-E05-E09-false-StructuralReplayChecked
+CATALOG_MEMORY_CONTEXT	SMO-E05-E09-false-StructuralFinishChecked	dc89cbbad6fa569056fbd3c56c4e548dffcf70bbb7525e9a08b00b636a2d6096	5b5deec7c127a715d34154c3902398b12062aeed159bcfc0c5394cc6fe3bb3c1	9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	SMO-E05-E09-false-StructuralFinishChecked
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_unwind_at_install_publication_and_finish_boundaries' (57194) panicked at crates/engine/src/storage/dirty_init.rs:1156:62:
+requested INIT unwind
+SMO_FAULT child=false point=StructuralFinishChecked fenced; claim/source charge retained, guards/pins returned
+CATALOG_MEMORY_PASS	SMO-E05-E09-false-StructuralFinishChecked
+CATALOG_MEMORY_CONTEXT	SMO-E05-E09-false-PairFirstRegistered	dc89cbbad6fa569056fbd3c56c4e548dffcf70bbb7525e9a08b00b636a2d6096	5b5deec7c127a715d34154c3902398b12062aeed159bcfc0c5394cc6fe3bb3c1	9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	SMO-E05-E09-false-PairFirstRegistered
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_unwind_at_install_publication_and_finish_boundaries' (57194) panicked at crates/engine/src/storage/dirty_init.rs:1156:62:
+requested INIT unwind
+SMO_FAULT child=false point=PairFirstRegistered fenced; claim/source charge retained, guards/pins returned
+CATALOG_MEMORY_PASS	SMO-E05-E09-false-PairFirstRegistered
+CATALOG_MEMORY_CONTEXT	SMO-E05-E09-false-PairBothRegisteredBeforeGate	dc89cbbad6fa569056fbd3c56c4e548dffcf70bbb7525e9a08b00b636a2d6096	5b5deec7c127a715d34154c3902398b12062aeed159bcfc0c5394cc6fe3bb3c1	9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	SMO-E05-E09-false-PairBothRegisteredBeforeGate
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_unwind_at_install_publication_and_finish_boundaries' (57194) panicked at crates/engine/src/storage/dirty_init.rs:1156:62:
+requested INIT unwind
+SMO_FAULT child=false point=PairBothRegisteredBeforeGate fenced; claim/source charge retained, guards/pins returned
+CATALOG_MEMORY_PASS	SMO-E05-E09-false-PairBothRegisteredBeforeGate
+CATALOG_MEMORY_CONTEXT	SMO-E05-E09-true-StructuralClaimed	dc89cbbad6fa569056fbd3c56c4e548dffcf70bbb7525e9a08b00b636a2d6096	5b5deec7c127a715d34154c3902398b12062aeed159bcfc0c5394cc6fe3bb3c1	9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	SMO-E05-E09-true-StructuralClaimed
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_unwind_at_install_publication_and_finish_boundaries' (57194) panicked at crates/engine/src/storage/dirty_init.rs:1156:62:
+requested INIT unwind
+SMO_FAULT child=true point=StructuralClaimed fenced; claim/source charge retained, guards/pins returned
+CATALOG_MEMORY_PASS	SMO-E05-E09-true-StructuralClaimed
+CATALOG_MEMORY_CONTEXT	SMO-E05-E09-true-StructuralStageEntered	dc89cbbad6fa569056fbd3c56c4e548dffcf70bbb7525e9a08b00b636a2d6096	5b5deec7c127a715d34154c3902398b12062aeed159bcfc0c5394cc6fe3bb3c1	9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	SMO-E05-E09-true-StructuralStageEntered
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_unwind_at_install_publication_and_finish_boundaries' (57194) panicked at crates/engine/src/storage/dirty_init.rs:1156:62:
+requested INIT unwind
+SMO_FAULT child=true point=StructuralStageEntered fenced; claim/source charge retained, guards/pins returned
+CATALOG_MEMORY_PASS	SMO-E05-E09-true-StructuralStageEntered
+CATALOG_MEMORY_CONTEXT	SMO-E05-E09-true-StructuralStaged	dc89cbbad6fa569056fbd3c56c4e548dffcf70bbb7525e9a08b00b636a2d6096	5b5deec7c127a715d34154c3902398b12062aeed159bcfc0c5394cc6fe3bb3c1	9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	SMO-E05-E09-true-StructuralStaged
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_unwind_at_install_publication_and_finish_boundaries' (57194) panicked at crates/engine/src/storage/dirty_init.rs:1156:62:
+requested INIT unwind
+SMO_FAULT child=true point=StructuralStaged fenced; claim/source charge retained, guards/pins returned
+CATALOG_MEMORY_PASS	SMO-E05-E09-true-StructuralStaged
+CATALOG_MEMORY_CONTEXT	SMO-E05-E09-true-StructuralFirstImage	dc89cbbad6fa569056fbd3c56c4e548dffcf70bbb7525e9a08b00b636a2d6096	5b5deec7c127a715d34154c3902398b12062aeed159bcfc0c5394cc6fe3bb3c1	9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	SMO-E05-E09-true-StructuralFirstImage
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_unwind_at_install_publication_and_finish_boundaries' (57194) panicked at crates/engine/src/storage/dirty_init.rs:1156:62:
+requested INIT unwind
+SMO_FAULT child=true point=StructuralFirstImage fenced; claim/source charge retained, guards/pins returned
+CATALOG_MEMORY_PASS	SMO-E05-E09-true-StructuralFirstImage
+CATALOG_MEMORY_CONTEXT	SMO-E05-E09-true-StructuralImages	dc89cbbad6fa569056fbd3c56c4e548dffcf70bbb7525e9a08b00b636a2d6096	5b5deec7c127a715d34154c3902398b12062aeed159bcfc0c5394cc6fe3bb3c1	9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	SMO-E05-E09-true-StructuralImages
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_unwind_at_install_publication_and_finish_boundaries' (57194) panicked at crates/engine/src/storage/dirty_init.rs:1156:62:
+requested INIT unwind
+SMO_FAULT child=true point=StructuralImages fenced; claim/source charge retained, guards/pins returned
+CATALOG_MEMORY_PASS	SMO-E05-E09-true-StructuralImages
+CATALOG_MEMORY_CONTEXT	SMO-E05-E09-true-StructuralControl	dc89cbbad6fa569056fbd3c56c4e548dffcf70bbb7525e9a08b00b636a2d6096	5b5deec7c127a715d34154c3902398b12062aeed159bcfc0c5394cc6fe3bb3c1	9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	SMO-E05-E09-true-StructuralControl
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_unwind_at_install_publication_and_finish_boundaries' (57194) panicked at crates/engine/src/storage/dirty_init.rs:1156:62:
+requested INIT unwind
+SMO_FAULT child=true point=StructuralControl fenced; claim/source charge retained, guards/pins returned
+CATALOG_MEMORY_PASS	SMO-E05-E09-true-StructuralControl
+CATALOG_MEMORY_CONTEXT	SMO-E05-E09-true-StructuralDpt	dc89cbbad6fa569056fbd3c56c4e548dffcf70bbb7525e9a08b00b636a2d6096	5b5deec7c127a715d34154c3902398b12062aeed159bcfc0c5394cc6fe3bb3c1	9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	SMO-E05-E09-true-StructuralDpt
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_unwind_at_install_publication_and_finish_boundaries' (57194) panicked at crates/engine/src/storage/dirty_init.rs:1156:62:
+requested INIT unwind
+SMO_FAULT child=true point=StructuralDpt fenced; claim/source charge retained, guards/pins returned
+CATALOG_MEMORY_PASS	SMO-E05-E09-true-StructuralDpt
+CATALOG_MEMORY_CONTEXT	SMO-E05-E09-true-StructuralPublished	dc89cbbad6fa569056fbd3c56c4e548dffcf70bbb7525e9a08b00b636a2d6096	5b5deec7c127a715d34154c3902398b12062aeed159bcfc0c5394cc6fe3bb3c1	9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	SMO-E05-E09-true-StructuralPublished
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_unwind_at_install_publication_and_finish_boundaries' (57194) panicked at crates/engine/src/storage/dirty_init.rs:1156:62:
+requested INIT unwind
+SMO_FAULT child=true point=StructuralPublished fenced; claim/source charge retained, guards/pins returned
+CATALOG_MEMORY_PASS	SMO-E05-E09-true-StructuralPublished
+CATALOG_MEMORY_CONTEXT	SMO-E05-E09-true-StructuralHistoryInstalled	dc89cbbad6fa569056fbd3c56c4e548dffcf70bbb7525e9a08b00b636a2d6096	5b5deec7c127a715d34154c3902398b12062aeed159bcfc0c5394cc6fe3bb3c1	9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	SMO-E05-E09-true-StructuralHistoryInstalled
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_unwind_at_install_publication_and_finish_boundaries' (57194) panicked at crates/engine/src/storage/dirty_init.rs:1156:62:
+requested INIT unwind
+SMO_FAULT child=true point=StructuralHistoryInstalled fenced; claim/source charge retained, guards/pins returned
+CATALOG_MEMORY_PASS	SMO-E05-E09-true-StructuralHistoryInstalled
+CATALOG_MEMORY_CONTEXT	SMO-E05-E09-true-StructuralReleased	dc89cbbad6fa569056fbd3c56c4e548dffcf70bbb7525e9a08b00b636a2d6096	5b5deec7c127a715d34154c3902398b12062aeed159bcfc0c5394cc6fe3bb3c1	9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	SMO-E05-E09-true-StructuralReleased
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_unwind_at_install_publication_and_finish_boundaries' (57194) panicked at crates/engine/src/storage/dirty_init.rs:1156:62:
+requested INIT unwind
+SMO_FAULT child=true point=StructuralReleased fenced; claim/source charge retained, guards/pins returned
+CATALOG_MEMORY_PASS	SMO-E05-E09-true-StructuralReleased
+CATALOG_MEMORY_CONTEXT	SMO-E05-E09-true-StructuralDurable	dc89cbbad6fa569056fbd3c56c4e548dffcf70bbb7525e9a08b00b636a2d6096	5b5deec7c127a715d34154c3902398b12062aeed159bcfc0c5394cc6fe3bb3c1	9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	SMO-E05-E09-true-StructuralDurable
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_unwind_at_install_publication_and_finish_boundaries' (57194) panicked at crates/engine/src/storage/dirty_init.rs:1156:62:
+requested INIT unwind
+SMO_FAULT child=true point=StructuralDurable fenced; claim/source charge retained, guards/pins returned
+CATALOG_MEMORY_PASS	SMO-E05-E09-true-StructuralDurable
+CATALOG_MEMORY_CONTEXT	SMO-E05-E09-true-StructuralReplayReturning	dc89cbbad6fa569056fbd3c56c4e548dffcf70bbb7525e9a08b00b636a2d6096	5b5deec7c127a715d34154c3902398b12062aeed159bcfc0c5394cc6fe3bb3c1	9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	SMO-E05-E09-true-StructuralReplayReturning
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_unwind_at_install_publication_and_finish_boundaries' (57194) panicked at crates/engine/src/storage/dirty_init.rs:1156:62:
+requested INIT unwind
+SMO_FAULT child=true point=StructuralReplayReturning fenced; claim/source charge retained, guards/pins returned
+CATALOG_MEMORY_PASS	SMO-E05-E09-true-StructuralReplayReturning
+CATALOG_MEMORY_CONTEXT	SMO-E05-E09-true-StructuralReplayChecked	dc89cbbad6fa569056fbd3c56c4e548dffcf70bbb7525e9a08b00b636a2d6096	5b5deec7c127a715d34154c3902398b12062aeed159bcfc0c5394cc6fe3bb3c1	9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	SMO-E05-E09-true-StructuralReplayChecked
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_unwind_at_install_publication_and_finish_boundaries' (57194) panicked at crates/engine/src/storage/dirty_init.rs:1156:62:
+requested INIT unwind
+SMO_FAULT child=true point=StructuralReplayChecked fenced; claim/source charge retained, guards/pins returned
+CATALOG_MEMORY_PASS	SMO-E05-E09-true-StructuralReplayChecked
+CATALOG_MEMORY_CONTEXT	SMO-E05-E09-true-StructuralFinishChecked	dc89cbbad6fa569056fbd3c56c4e548dffcf70bbb7525e9a08b00b636a2d6096	5b5deec7c127a715d34154c3902398b12062aeed159bcfc0c5394cc6fe3bb3c1	9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	SMO-E05-E09-true-StructuralFinishChecked
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_unwind_at_install_publication_and_finish_boundaries' (57194) panicked at crates/engine/src/storage/dirty_init.rs:1156:62:
+requested INIT unwind
+SMO_FAULT child=true point=StructuralFinishChecked fenced; claim/source charge retained, guards/pins returned
+CATALOG_MEMORY_PASS	SMO-E05-E09-true-StructuralFinishChecked
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2322 filtered out; finished in 291.93s
+

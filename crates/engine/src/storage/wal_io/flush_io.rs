@@ -675,6 +675,7 @@ impl<'s, 'w> FlushIo<'s, 'w> {
                             | PageKind::CatalogLeaf
                             | PageKind::TreeAnchor
                             | PageKind::RowLeaf
+                            | PageKind::RowInternal
                     ),
                 }
                 && prepared.selections[2] == retired.selected
@@ -718,7 +719,12 @@ fn validate_capture<W: WriterNamespace>(
             .rec_lsn
             .is_none_or(|lsn| lsn.0 == 0 || lsn.0 > stamp.page_lsn.0)
         || request.identity != stamp.identity
-        || request.level != 0
+        || match policy {
+            PolicyRef::Retention(_) => {
+                !retention_level(storage.profile().format(), request.kind, request.level)
+            }
+            _ => request.level != 0,
+        }
         || stamp.identity.database != storage.profile().spec().namespace.database
         || capture.requirement().location().lsn != stamp.page_lsn.0
     {
@@ -739,6 +745,35 @@ fn validate_capture<W: WriterNamespace>(
             Err(Cause::IdentityMismatch)
         }
         _ => Ok(()),
+    }
+}
+
+/// Internal Row pages require the canonical Profile3 retention authority.
+/// Allocator and Status policy paths retain their separate level-zero check.
+fn retention_level(format: u16, kind: PageKind, level: u8) -> bool {
+    if kind == PageKind::RowInternal {
+        format == 3 && (1..=15).contains(&level)
+    } else {
+        level == 0
+    }
+}
+
+#[test]
+fn retention_internal_flush_levels_are_bounded_and_profile_specific() {
+    for level in 1..=15 {
+        assert!(retention_level(3, PageKind::RowInternal, level));
+        assert!(!retention_level(1, PageKind::RowInternal, level));
+        for kind in [
+            PageKind::Allocation,
+            PageKind::TransactionStatus,
+            PageKind::RowLeaf,
+        ] {
+            assert!(!retention_level(3, kind, level));
+            assert!(retention_level(3, kind, 0));
+        }
+    }
+    for level in [0, 16, u8::MAX] {
+        assert!(!retention_level(3, PageKind::RowInternal, level));
     }
 }
 
@@ -1020,7 +1055,7 @@ fn validate_mapping<W: WriterNamespace>(
             let request = authority.request();
             let allocator = authority.allocator();
             if !authority.matching(capture)
-                || request.level != 0
+                || !retention_level(storage.profile().format(), request.kind, request.level)
                 || request.identity.page.page_no >= 64
                 || allocator.page.page_no != 0
                 || request.identity.database != allocator.database

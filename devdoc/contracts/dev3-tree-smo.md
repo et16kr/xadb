@@ -776,3 +776,95 @@ claim 시 재검산한다. published System closed_index 자체는 새 일괄 �
 미완료 claim·pin·load·flush의 기존 독점 규칙을 유지한다. 선택의 content guard는 개별
 선언으로 registry→둘째→첫째 반환 순서를 보장한다. 실제 공급 결과는
 [08 증거](../evidence/dev3-tree-structure-20261104.md#structural-admission)에 기록한다.
+
+<a id="structural-effect"></a>
+### 실제 RootSplit/ChildSplit 효과와 fault inventory
+
+상태는 **2026-11-04 독립 D2 ACCEPT / clean Row leaf의 실제 effect 구현**이다.
+선택 실행·실패·최종 검토는 [원 증거](../evidence/dev3-tree-structure-20261104.md#structural-effect)에 결속한다. 원 MutationPort의 private split 진입점은
+이미 검증한 prepare와 StructuralCandidates를 소비한다. 원 MaintenancePort의 storage/pool
+origin을 대조하고, Ready·잔존 capture/authority/durable/retired 없음·selected DWB의 idle
+preflight를 확인한 mutable flush lease를 claim 전부터 finish/cancel까지 연속 보유한다.
+이 검사는 신규1/2 physical request 및 selected generation에 결속한다. dirty 후보는 무효과
+Busy로 반환하며 원 호출자가 flush 후 다시 준비한다. 새 별도 I/O owner나 fake TxPair는 없다.
+
+진입의 guardless health·pool/storage/flusher origin 확인 뒤 원 owner의
+`close_reads_for_retirement`와 원 isolation의 `OperationSourceAdmission::catalog_progress`를
+얻어 deep prepare부터 전체 effect 반환까지 보유한다. source admission 실패도 gate를 checked
+reopen한다. 실제 새 effect phase의 최대가 기존 `CatalogProgressCharge` 안인지 계산하고
+검사하며, 필요하면 원 charge 계산의 별도 branch로 넣어 실제 caller 전체 cap을 다시 확인한다.
+종료는 성공/거절/fatal 모두 source의 `finish_checked`와 gate의 `reopen_checked`를 각각 시도해
+오류를 합친다. source 반환 오류를 이유로 gate 반환을 건너뛰지 않는다. 별도 source owner나
+standalone 수치만으로 concurrent ReadPort의 예산을 예약한 것으로 표시하지 않는다.
+
+첫 effect의 private admission은 대상 table의 object/generation과 같은 **모든 non-Free Job**을
+거절한다. Row의 Active/RootRetained뿐 아니라 Commit 뒤 Prune·release가 남은 상태와 관련
+Catalog Job도 포함한다. same-cut canonical 검산과 Job 부재에서 대상 행이 Committed·Undo 없음임을
+확인한다. 현재 `semantic_row/leaf`·`transition/prepare`·`row_preflight`의 level0 제한 때문에
+준비의 active debt 허용을 실제 effect 허용으로 그대로 확대하지 않는다. 다른 table의 원 부채는
+위 credit 계산대로 보존한다. 이 한정은 첫 연결의 임시 경계이며08-1 완료 조건을 줄이지 않는다.
+최종08-1에서는 current-leaf 소비자를 일반화하고 이 한정을 제거한 뒤 Active INSERT/DELETE/UPDATE의
+split→Commit/Abort/CLR/Prune와 후속 다단계 행 변경을 검증한다. SMO-P03의 무효과 active 준비는 유지한다.
+
+private StructuralAuthority가 같은 owner/core/binding/fence·prefix/control·frame digest와
+exact5 request/기존3또는4stamp/신규1또는2를 묶는다. pool은 선택의 active stamp·next generation을
+content→registry 순서에서 다시 검사한 뒤 closed slot/pair와 Structural claim을 한 번에 둔다.
+claim key는 exact5 request를 별도로 결속하며 mask만으로 다른 target을 승인하지 않는다.
+선택과 claim 사이 변경은 무효과 Stale/Busy이고, 세대를 소비한 prestage cancel은 세대
+tombstone을 보존한다. key의 미해결 Drop은 fence한다.
+
+whole5 전용 pin/write continuation은 sorted target content를 잠그고 before stamp와 immutable
+before bytes를 다시 대조한다. `enter_stage`를 첫 WAL 호출 직전에 실행하고 원 stage의 authentic
+Unchanged만 취소를 다시 연다. complete requirement를 원 pending에 둔 뒤 private permit으로
+5 after·Structural bank34(완료 descriptor/high-water/STABLE)·XOI·DPT와 신규 등록을 설치한다.
+`birth == work.id == requirement.lsn`이며 모든 새 page의 counter는1이다. pair 또는 single 등록
+공개 뒤에도 Structural ordinary gate는 유지한다. `RuntimeHistory::installed` 후 모든 guard를
+반환하고 원 `wait_durable`을 guard0에서 기다린다.
+
+`wait_durable`의 authentic 결과가 원 requirement를 confirms한 뒤 `control.durable`에 반영하고,
+새 complete prefix의 LSN/end가 원 requirement와 같은지 확인한다. 그 뒤에도 claim/pending과
+flush lease를 유지한 채 원 `validate_live`를 다시 실행한다.
+원 replay가 scope4를 재계산하고 INIT provenance를 만들며 bank/Jobs/XOI를 대조한다. replay loan의
+checked return 후 authentic DurableWal·완료 token·등록/DPT를 함께 확인하여 claim/closed만
+해제한다. 등록과 소비한 generation은 보존하고 pending은 마지막에 비운다. 이미 완료된 SMO는
+사용자 rollback 대상이 아니다. complete stage 뒤 checkout Busy 등 본래 Unchanged인 오류도
+일반 취소로 되돌리지 않고 fence/CallerMustResolve로 승격한다. 단계 중 불명 결과·부분 설치·
+panic·실패한 반환은 fence한다.
+
+첫 effect 실행 전에 실제 타입의 source census를 준비한다. 별도 선택 상한12,464B와 prepare
+상한33,372B를 단순 max만 하여 전체 F05라고 쓰지 않는다. 준비·선택/claim·whole write/stage/install·
+guard0 durable/replay·finish/cancel 각 phase에서 Prepared, lease, key, 배열, Result와 깊은
+decoder/registry/대기 호출이 함께 살아 있는 값을 계산하고 원 memory/native caller cap을 유지한다.
+
+| ID | 고정 경계와 판정 |
+| --- | --- |
+| SMO-E01 | 실제 원 writer에서 committed/pruned4행의 RootSplit, 이어2행 leaf의 ChildSplit. 각5page와1/2 INIT·bank/XOI·DPT·등록·두 leaf 행 분포를 검산하고 후속 canonical replay 수락. 대상 table의 Active·Commit 후 미정리 Job은 effect 전 무효과 거절 |
+| SMO-E02 | 선택 victim stamp/generation 변경은 claim 전 무효과 거절. 기존 대상 before stamp/bytes는 whole5 close 뒤 재검산하며 그때 처음 발견한 차이는 checked release→prestage cancel로 반환. 실제 cancel은 generation tombstone을 보존하고 stale key 재사용을 거절 |
+| SMO-E03 | 원 flush의 진행 중 capture/selected DWB 또는 다른 binding·generation: claim 전 거절. RAM pin0만으로 lease를 발급하지 않음 |
+| SMO-E04 | enter_stage 직후 원 WAL Unchanged Capacity: stage rejection proof·checked release·cancel, WAL/control 불변 및 후속 재진입 성공 |
+| SMO-E05 | enter_stage 뒤 불명 WAL 오류·panic/Drop: fence, 일반 cancel 또는 성공 없음 |
+| SMO-E06 | Root/Child 각각 첫 image, 전체 image, control, DPT 설치 뒤 fault: fence 및 역순 guard 반환. 부분 결과를 완료 token으로 쓰지 않음 |
+| SMO-E07 | Root 첫 등록/두 등록 전후, Child single 공개 직후 fault 및 history installed 실패: ordinary gate 유지·fence, 신규 등록을 일반 읽기에 조기 공개하지 않음 |
+| SMO-E08 | installed 후 guard0 durable 대기 중 일반 pin/load/capture 거절, 원 wait_durable 실패: fence. 성공 token만으로 finish 불가 |
+| SMO-E09 | durable 후 canonical replay/INIT 대조·checked return 실패, finish 전 Drop: fence, pending을 먼저 지우지 않음 |
+| SMO-E10 | 실제 WAL의 Root/Child complete stage 전후·설치 전후·durable/finish 경계에서 재시작. 독립 before/after 행 집합·트리/allocator/INIT·bank 검산, 새 동작 후 두 번째 재진입 |
+
+이 ID는 실행 분모를 사후 줄이는 목록이 아니다. deterministic memory fault를 먼저 구현하고,
+SMO-E10의 native cut/프로세스 입력과 독립 기대값은 native 실행 전에 별도 고정한다. 아직
+없는 fault seam 또는 미도달한 cut은 NOT_RUN으로 남긴다. 실제 type census·효과 fixture를
+검토하기 전에는 이 설계 채택만으로 F05나08-1을 완료로 표시하지 않는다.
+
+
+실제 native 검증에서 복구 후 epoch 활성화가 `root.level == 0`을 요구하여 완료된
+RootSplit의 READY 진입을 막는 것을 확인했다. 원 `history::validate_live`가 같은 replay의
+전체 tree closure를 검산한 뒤, epoch seed는 Row tree·allocator의 owner/generation/kind와
+실제 root level에 따른 RowLeaf/RowInternal decoder expectation을 확인한다. 새 traversal이나
+별도 authority는 추가하지 않는다. 이 수정은 복구된 split의 READY 인계이며 다단계 Row CRUD
+공급은 아니다. 기존 scalar packet 안에서 root kind를 보관하므로 source cap은 유지한다.
+
+
+원 live flush도 새 RowInternal을 소비한다. RetentionFlusher의 kind 선택, 원 FlushIo의
+capture/mapping 검산과 retirement 인계에서 Profile3·RowInternal level1..15를 허용한다.
+원 canonical Retention authority·capture·kind/level/stamp/attempt 결속과 실제 DWB/홈 write는
+유지한다. Allocator/Status 정책의 level0 조건은 바뀌지 않는다. 새 root의 dirty→Complete→clean
+관측은 Child의 clean-victim 시험에 포함하며 다단계 Row 변경 지원으로 확대하지 않는다.

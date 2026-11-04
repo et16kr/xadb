@@ -1,0 +1,4087 @@
+[
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-first/SMO-NR1/db/DWB",
+    "bytes": 4096,
+    "sha256": "d486bfa3bbec8e2d27073bd8e1aa39a6bd43e1d7e9ddc09fc1c18a885ae776ad"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-first/SMO-NR1/db/FILEMAP",
+    "bytes": 4096,
+    "sha256": "5938c6fac59aa7d816b2e8b358df8e15511e78c1f85934b1451fea92fc36dba0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-first/SMO-NR1/db/LOCK",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-first/SMO-NR1/db/WRITER",
+    "bytes": 4096,
+    "sha256": "82a9e17a80dcb5d9a06c343f90cc4c325deede22362d9c2e82ba8d04b2acd899"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-first/SMO-NR1/db/d3-bootstrap",
+    "bytes": 4096,
+    "sha256": "e748c4c73df39f04bf9b82bd4219ad4317d7556f6a2f081254fcdf1a9ddd2883"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-first/SMO-NR1/db/d3-data-0000000100000001",
+    "bytes": 1048576,
+    "sha256": "51089a061ddc825966580bfe86a7046aa482c68ec35439ad36b5640f3b541476"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-first/SMO-NR1/db/d3-dwb-0",
+    "bytes": 16384,
+    "sha256": "9cc33556e5bf91bacd7f7604916172217988eaebc4d42ac0fb12dde08de9b912"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-first/SMO-NR1/db/d3-dwb-1",
+    "bytes": 16384,
+    "sha256": "4fe7b59af6de3b665b67788cc2f99892ab827efae3a467342b3bb4e3bc8e5bfe"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-first/SMO-NR1/db/d3-dwb-images",
+    "bytes": 16711680,
+    "sha256": "6c5e5b0f07ad132df7a8fbe84a1e6a18e99afdcb24d68409c1f98abc8f27f3c4"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-first/SMO-NR1/db/d3-dwb-reserved",
+    "bytes": 8192,
+    "sha256": "9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-first/SMO-NR1/db/d3-dwb-stage",
+    "bytes": 16384,
+    "sha256": "2f55b2245100ab1380a48bb9168c3276ace2d1aa7c4b1832cdc34856752ccf94"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-first/SMO-NR1/db/d3-filemap-0",
+    "bytes": 2113536,
+    "sha256": "5c68a64618b99736aa8a0e10adece83318cc8996ef9039e0879dc0e5d0fb33d1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-first/SMO-NR1/db/d3-filemap-1",
+    "bytes": 2113536,
+    "sha256": "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-first/SMO-NR1/db/d3-profile",
+    "bytes": 4096,
+    "sha256": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-first/SMO-NR1/db/d3-wal-00000001",
+    "bytes": 3173206,
+    "sha256": "9518797791aac36a1ca5c4741ffcce8e3355dce157b70f4a7b1a8de1138e341c"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-first/SMO-NR1/produce/before-arena.bin",
+    "bytes": 1048576,
+    "sha256": "945c7ae44ce4ac79d9ee8e16e2d1a2ce751f55f9a8499811d23efe06b7796380"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-first/SMO-NR1/produce/before-claims.bin",
+    "bytes": 22528,
+    "sha256": "90a561c4bbfe3b7c1b12e999fb3ae638361d001e550ad1cd7f9be53c71628233"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-first/SMO-NR1/produce/before.tsv",
+    "bytes": 122,
+    "sha256": "8bc969283c50f2a92f2ded49eb954565a1262f313c484a71afece65c24ed172a"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-first/SMO-NR1/produce/effects.tsv",
+    "bytes": 898130,
+    "sha256": "69ae5c4dcf19b333351292d28d38d2176f463dbf1e6078a1a8220c3bfb584a41"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-first/SMO-NR1/produce/entropy.tsv",
+    "bytes": 41,
+    "sha256": "2c2d056ab9a75a50f375b0a1cccdf340853e2fc7f60fde5b83fe0fd806bf4399"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-first/SMO-NR1/produce/files.json",
+    "bytes": 1875,
+    "sha256": "fee3e6f873cd7dd840e4ee965b1ab5a164b1f66c16076dd0751eab972a9fe5a1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-first/SMO-NR1/produce/receipt.tsv",
+    "bytes": 383,
+    "sha256": "10d5b71fa24d09e79194d496104dbf5edf27d4f8b20c97421bc0dd72636984a3"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-first/SMO-NR1/produce/test.log",
+    "bytes": 678,
+    "sha256": "f3feb6a75f18bdfd985ec58e0903424e207e2706578925c882021e77ebb5d2a8"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-first/controller-failure.json",
+    "bytes": 496,
+    "sha256": "f4a563134d6ce83eb92f18df6444d0ada3540a583b7e75a435208b4b8c8d862f"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-first/execution-plan.json",
+    "bytes": 891,
+    "sha256": "2cd35601664cfdb48ff8419c8309ffb51abda97725ac6c2f814142cc24d75560"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-first/results.json",
+    "bytes": 95,
+    "sha256": "4d6aa5ffa0864d9609eda562eec81964d49557049bb53f965d7e9eb291ac0448"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-first/source-files.sha256",
+    "bytes": 1263109,
+    "sha256": "d7d1273823abe7d764f09146ae212ccc5054af0b2b093077bd1cb7b43880e2a7"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/db/CURRENT",
+    "bytes": 4096,
+    "sha256": "42583772229ebd6590f3c1917b65fd1a69cc86cddba908313872e9f5e496cf5d"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/db/DWB",
+    "bytes": 4096,
+    "sha256": "445641d7592ece1ea066a0df3548705e3294d8d18954605d2a189d462f24ea4e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/db/FILEMAP",
+    "bytes": 4096,
+    "sha256": "5938c6fac59aa7d816b2e8b358df8e15511e78c1f85934b1451fea92fc36dba0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/db/LOCK",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/db/WRITER",
+    "bytes": 4096,
+    "sha256": "0bff37b5937a5b063cee9241373c4d6c42cddc8981c02eca26a2a2af23f0afa6"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/db/d3-bootstrap",
+    "bytes": 4096,
+    "sha256": "e748c4c73df39f04bf9b82bd4219ad4317d7556f6a2f081254fcdf1a9ddd2883"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/db/d3-data-0000000100000001",
+    "bytes": 1048576,
+    "sha256": "ef92baa9e77ae025827e0a8348f9c5d0e0e9c54c68c0ba61c09ce4312e15c64f"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/db/d3-dwb-0",
+    "bytes": 16384,
+    "sha256": "ada529c7cd223080c5e4d9f82961e35534124420aae5201e9661c8a9059ffaa6"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/db/d3-dwb-1",
+    "bytes": 16384,
+    "sha256": "39eacb9be8babef9aa0a84aae2ad7fe7c935cf2a1d7c1a3219b515042c166d23"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/db/d3-dwb-images",
+    "bytes": 16711680,
+    "sha256": "7e1969be216115f770b06bdb06268e5e6c89c21ddd5f910dac0d9255efb3cb54"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/db/d3-dwb-reserved",
+    "bytes": 8192,
+    "sha256": "9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/db/d3-dwb-stage",
+    "bytes": 16384,
+    "sha256": "ada529c7cd223080c5e4d9f82961e35534124420aae5201e9661c8a9059ffaa6"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/db/d3-filemap-0",
+    "bytes": 2113536,
+    "sha256": "5c68a64618b99736aa8a0e10adece83318cc8996ef9039e0879dc0e5d0fb33d1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/db/d3-filemap-1",
+    "bytes": 2113536,
+    "sha256": "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/db/d3-profile",
+    "bytes": 4096,
+    "sha256": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/db/d3-rebase-0",
+    "bytes": 2097152,
+    "sha256": "8187e9f1d1ccd0bd60b83ee5f31ccbf50f64148e290f1e898e124ea289ba4298"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/db/d3-rebase-1",
+    "bytes": 2097152,
+    "sha256": "8187e9f1d1ccd0bd60b83ee5f31ccbf50f64148e290f1e898e124ea289ba4298"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/db/d3-wal-00000003",
+    "bytes": 4096,
+    "sha256": "916904562d2af91d19b0f92b0d31c3c7c9930acd95010f7b607a23ad5f1397e6"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/produce/before-arena.bin",
+    "bytes": 1048576,
+    "sha256": "945c7ae44ce4ac79d9ee8e16e2d1a2ce751f55f9a8499811d23efe06b7796380"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/produce/before-claims.bin",
+    "bytes": 22528,
+    "sha256": "90a561c4bbfe3b7c1b12e999fb3ae638361d001e550ad1cd7f9be53c71628233"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/produce/before.tsv",
+    "bytes": 122,
+    "sha256": "8bc969283c50f2a92f2ded49eb954565a1262f313c484a71afece65c24ed172a"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/produce/effects.tsv",
+    "bytes": 898130,
+    "sha256": "ab9097bd8db9b2ae979588df54a1a5bd0216394060a7012f1ae8b6355ce55a57"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/produce/entropy.tsv",
+    "bytes": 41,
+    "sha256": "4952a131e33623a418394289e64e835248247a0d910e8c7faabf7652cf82c7df"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/produce/files.json",
+    "bytes": 1875,
+    "sha256": "fee3e6f873cd7dd840e4ee965b1ab5a164b1f66c16076dd0751eab972a9fe5a1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/produce/receipt.tsv",
+    "bytes": 377,
+    "sha256": "af9a71f3a930e05a6d326fd5477b7eb27d91e7a3733001f33544cb7fd76787fd"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/produce/test.log",
+    "bytes": 672,
+    "sha256": "22354e001fdb58954a0576a9096bf14ac69f1c9b96604c42687d8677436c0cf6"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/recover/effects.tsv",
+    "bytes": 368408,
+    "sha256": "b21b71020ee8bee9bc7f70e7423b33a7e2c44542a48c8d256364b77a7bcd5b4b"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/recover/entropy.tsv",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/recover/files.json",
+    "bytes": 2248,
+    "sha256": "a7279e2db64567df4a2a8115ca90e73ed0cbc1a9a9a2883d751435a4286fbb40"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/recover/input-db/DWB",
+    "bytes": 4096,
+    "sha256": "d486bfa3bbec8e2d27073bd8e1aa39a6bd43e1d7e9ddc09fc1c18a885ae776ad"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/recover/input-db/FILEMAP",
+    "bytes": 4096,
+    "sha256": "5938c6fac59aa7d816b2e8b358df8e15511e78c1f85934b1451fea92fc36dba0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/recover/input-db/LOCK",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/recover/input-db/WRITER",
+    "bytes": 4096,
+    "sha256": "82a9e17a80dcb5d9a06c343f90cc4c325deede22362d9c2e82ba8d04b2acd899"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/recover/input-db/d3-bootstrap",
+    "bytes": 4096,
+    "sha256": "e748c4c73df39f04bf9b82bd4219ad4317d7556f6a2f081254fcdf1a9ddd2883"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/recover/input-db/d3-data-0000000100000001",
+    "bytes": 1048576,
+    "sha256": "51089a061ddc825966580bfe86a7046aa482c68ec35439ad36b5640f3b541476"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/recover/input-db/d3-dwb-0",
+    "bytes": 16384,
+    "sha256": "9cc33556e5bf91bacd7f7604916172217988eaebc4d42ac0fb12dde08de9b912"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/recover/input-db/d3-dwb-1",
+    "bytes": 16384,
+    "sha256": "4fe7b59af6de3b665b67788cc2f99892ab827efae3a467342b3bb4e3bc8e5bfe"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/recover/input-db/d3-dwb-images",
+    "bytes": 16711680,
+    "sha256": "6c5e5b0f07ad132df7a8fbe84a1e6a18e99afdcb24d68409c1f98abc8f27f3c4"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/recover/input-db/d3-dwb-reserved",
+    "bytes": 8192,
+    "sha256": "9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/recover/input-db/d3-dwb-stage",
+    "bytes": 16384,
+    "sha256": "2f55b2245100ab1380a48bb9168c3276ace2d1aa7c4b1832cdc34856752ccf94"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/recover/input-db/d3-filemap-0",
+    "bytes": 2113536,
+    "sha256": "5c68a64618b99736aa8a0e10adece83318cc8996ef9039e0879dc0e5d0fb33d1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/recover/input-db/d3-filemap-1",
+    "bytes": 2113536,
+    "sha256": "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/recover/input-db/d3-profile",
+    "bytes": 4096,
+    "sha256": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/recover/input-db/d3-wal-00000001",
+    "bytes": 3173206,
+    "sha256": "9518797791aac36a1ca5c4741ffcce8e3355dce157b70f4a7b1a8de1138e341c"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/recover/receipt.tsv",
+    "bytes": 364,
+    "sha256": "afef826ad2cb8db886dd55e712c62251502f3fd4b4a3ea4da4dd85959ccb277d"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/recover/test.log",
+    "bytes": 868,
+    "sha256": "5116ce6727cb77d5e6406074a65de0905ff8f86124dbd88a5deefb7122e08ff1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/recover-arena.bin",
+    "bytes": 1048576,
+    "sha256": "945c7ae44ce4ac79d9ee8e16e2d1a2ce751f55f9a8499811d23efe06b7796380"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/recover-claims.bin",
+    "bytes": 22528,
+    "sha256": "90a561c4bbfe3b7c1b12e999fb3ae638361d001e550ad1cd7f9be53c71628233"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/reenter/effects.tsv",
+    "bytes": 188668,
+    "sha256": "78400db8b2659dd2ef90b46c35baf1017512a7e8d01d88d513c584e4a985b896"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/reenter/entropy.tsv",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/reenter/files.json",
+    "bytes": 2246,
+    "sha256": "c97b16c9fdb00f1f87bcb3a1b1c4caa4363e0b80d3e13fd10ba242c7ffeb0863"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/reenter/input-db/CURRENT",
+    "bytes": 4096,
+    "sha256": "f37189645a68576e3d38587a195a064ff4cbb3bb599422257e2c592fb5d51cde"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/reenter/input-db/DWB",
+    "bytes": 4096,
+    "sha256": "b1dc4e856b7c1829952b964e16d9b2c76a436bae5665c4515a82b5262d33908a"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/reenter/input-db/FILEMAP",
+    "bytes": 4096,
+    "sha256": "5938c6fac59aa7d816b2e8b358df8e15511e78c1f85934b1451fea92fc36dba0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/reenter/input-db/LOCK",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/reenter/input-db/WRITER",
+    "bytes": 4096,
+    "sha256": "f9ec0df74410f21ccfafca5cfa8aff638e2c39fa75064308f07c0ea520bf7ed6"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/reenter/input-db/d3-bootstrap",
+    "bytes": 4096,
+    "sha256": "e748c4c73df39f04bf9b82bd4219ad4317d7556f6a2f081254fcdf1a9ddd2883"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/reenter/input-db/d3-data-0000000100000001",
+    "bytes": 1048576,
+    "sha256": "945c7ae44ce4ac79d9ee8e16e2d1a2ce751f55f9a8499811d23efe06b7796380"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/reenter/input-db/d3-dwb-0",
+    "bytes": 16384,
+    "sha256": "631588a0cf357e92be609f0940bad861ce1b6b2ead2dba0163387707185632f9"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/reenter/input-db/d3-dwb-1",
+    "bytes": 16384,
+    "sha256": "ff6f2e34f57f1fed811deb12527dc55214d29ff57d448f962ebd7cd509a392c4"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/reenter/input-db/d3-dwb-images",
+    "bytes": 16711680,
+    "sha256": "7b39526aeb5b90ca89c337da81f1a936f70fd4c32a914ae0cfa2af270c0f096d"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/reenter/input-db/d3-dwb-reserved",
+    "bytes": 8192,
+    "sha256": "9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/reenter/input-db/d3-dwb-stage",
+    "bytes": 16384,
+    "sha256": "ff6f2e34f57f1fed811deb12527dc55214d29ff57d448f962ebd7cd509a392c4"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/reenter/input-db/d3-filemap-0",
+    "bytes": 2113536,
+    "sha256": "5c68a64618b99736aa8a0e10adece83318cc8996ef9039e0879dc0e5d0fb33d1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/reenter/input-db/d3-filemap-1",
+    "bytes": 2113536,
+    "sha256": "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/reenter/input-db/d3-profile",
+    "bytes": 4096,
+    "sha256": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/reenter/input-db/d3-rebase-0",
+    "bytes": 2097152,
+    "sha256": "b4e2bba1d02a21b72f352e6d16df2b6fed9c62ea50fa03ec020f00965a5e9c74"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/reenter/input-db/d3-rebase-1",
+    "bytes": 2097152,
+    "sha256": "b4e2bba1d02a21b72f352e6d16df2b6fed9c62ea50fa03ec020f00965a5e9c74"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/reenter/input-db/d3-wal-00000002",
+    "bytes": 172632,
+    "sha256": "e4e3cc8bfc8c196c4324664c10db6d81b5bd02ff09f4e0542de85d51a2930180"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/reenter/receipt.tsv",
+    "bytes": 356,
+    "sha256": "f62c29fe27b2559fb77cfb00b38f0a3c91e3e1e9560b4dec010400a0dec68e62"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/reenter/test.log",
+    "bytes": 860,
+    "sha256": "79d16aaac0c0736cf5655560c81840daf0f98900955c1e86f4316c2dd1b09755"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/reenter-arena.bin",
+    "bytes": 1048576,
+    "sha256": "ef92baa9e77ae025827e0a8348f9c5d0e0e9c54c68c0ba61c09ce4312e15c64f"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR2/reenter-claims.bin",
+    "bytes": 22528,
+    "sha256": "90a561c4bbfe3b7c1b12e999fb3ae638361d001e550ad1cd7f9be53c71628233"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/db/CURRENT",
+    "bytes": 4096,
+    "sha256": "42583772229ebd6590f3c1917b65fd1a69cc86cddba908313872e9f5e496cf5d"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/db/DWB",
+    "bytes": 4096,
+    "sha256": "445641d7592ece1ea066a0df3548705e3294d8d18954605d2a189d462f24ea4e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/db/FILEMAP",
+    "bytes": 4096,
+    "sha256": "5938c6fac59aa7d816b2e8b358df8e15511e78c1f85934b1451fea92fc36dba0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/db/LOCK",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/db/WRITER",
+    "bytes": 4096,
+    "sha256": "0bff37b5937a5b063cee9241373c4d6c42cddc8981c02eca26a2a2af23f0afa6"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/db/d3-bootstrap",
+    "bytes": 4096,
+    "sha256": "e748c4c73df39f04bf9b82bd4219ad4317d7556f6a2f081254fcdf1a9ddd2883"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/db/d3-data-0000000100000001",
+    "bytes": 1048576,
+    "sha256": "ef92baa9e77ae025827e0a8348f9c5d0e0e9c54c68c0ba61c09ce4312e15c64f"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/db/d3-dwb-0",
+    "bytes": 16384,
+    "sha256": "ada529c7cd223080c5e4d9f82961e35534124420aae5201e9661c8a9059ffaa6"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/db/d3-dwb-1",
+    "bytes": 16384,
+    "sha256": "39eacb9be8babef9aa0a84aae2ad7fe7c935cf2a1d7c1a3219b515042c166d23"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/db/d3-dwb-images",
+    "bytes": 16711680,
+    "sha256": "7e1969be216115f770b06bdb06268e5e6c89c21ddd5f910dac0d9255efb3cb54"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/db/d3-dwb-reserved",
+    "bytes": 8192,
+    "sha256": "9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/db/d3-dwb-stage",
+    "bytes": 16384,
+    "sha256": "ada529c7cd223080c5e4d9f82961e35534124420aae5201e9661c8a9059ffaa6"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/db/d3-filemap-0",
+    "bytes": 2113536,
+    "sha256": "5c68a64618b99736aa8a0e10adece83318cc8996ef9039e0879dc0e5d0fb33d1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/db/d3-filemap-1",
+    "bytes": 2113536,
+    "sha256": "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/db/d3-profile",
+    "bytes": 4096,
+    "sha256": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/db/d3-rebase-0",
+    "bytes": 2097152,
+    "sha256": "8187e9f1d1ccd0bd60b83ee5f31ccbf50f64148e290f1e898e124ea289ba4298"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/db/d3-rebase-1",
+    "bytes": 2097152,
+    "sha256": "8187e9f1d1ccd0bd60b83ee5f31ccbf50f64148e290f1e898e124ea289ba4298"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/db/d3-wal-00000003",
+    "bytes": 4096,
+    "sha256": "916904562d2af91d19b0f92b0d31c3c7c9930acd95010f7b607a23ad5f1397e6"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/produce/before-arena.bin",
+    "bytes": 1048576,
+    "sha256": "945c7ae44ce4ac79d9ee8e16e2d1a2ce751f55f9a8499811d23efe06b7796380"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/produce/before-claims.bin",
+    "bytes": 22528,
+    "sha256": "90a561c4bbfe3b7c1b12e999fb3ae638361d001e550ad1cd7f9be53c71628233"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/produce/before.tsv",
+    "bytes": 122,
+    "sha256": "8bc969283c50f2a92f2ded49eb954565a1262f313c484a71afece65c24ed172a"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/produce/effects.tsv",
+    "bytes": 898130,
+    "sha256": "782fbd16fa89aaf55816e1bccd3ce1db4db6abfbfbf7ad3c6dc7a54ac32fc35d"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/produce/entropy.tsv",
+    "bytes": 41,
+    "sha256": "d77322bb68be8d9f7de812ada495dc45900320d0e3363571d629fef5aeae3fe0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/produce/files.json",
+    "bytes": 1875,
+    "sha256": "fee3e6f873cd7dd840e4ee965b1ab5a164b1f66c16076dd0751eab972a9fe5a1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/produce/receipt.tsv",
+    "bytes": 380,
+    "sha256": "aaef724a5a715ed20e1fddc05369c552110bcad3bb5ab1d6724e4c040acec194"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/produce/test.log",
+    "bytes": 675,
+    "sha256": "4cf38411dc3bae4f28c0ca3356f2ef3a4c39aa8031c798bf994a5f6c66bcb19a"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/recover/effects.tsv",
+    "bytes": 368408,
+    "sha256": "28cad7646799472128a99face718d35bd7a9b3b58fdab59341c01f852a26d329"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/recover/entropy.tsv",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/recover/files.json",
+    "bytes": 2248,
+    "sha256": "a7279e2db64567df4a2a8115ca90e73ed0cbc1a9a9a2883d751435a4286fbb40"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/recover/input-db/DWB",
+    "bytes": 4096,
+    "sha256": "d486bfa3bbec8e2d27073bd8e1aa39a6bd43e1d7e9ddc09fc1c18a885ae776ad"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/recover/input-db/FILEMAP",
+    "bytes": 4096,
+    "sha256": "5938c6fac59aa7d816b2e8b358df8e15511e78c1f85934b1451fea92fc36dba0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/recover/input-db/LOCK",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/recover/input-db/WRITER",
+    "bytes": 4096,
+    "sha256": "82a9e17a80dcb5d9a06c343f90cc4c325deede22362d9c2e82ba8d04b2acd899"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/recover/input-db/d3-bootstrap",
+    "bytes": 4096,
+    "sha256": "e748c4c73df39f04bf9b82bd4219ad4317d7556f6a2f081254fcdf1a9ddd2883"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/recover/input-db/d3-data-0000000100000001",
+    "bytes": 1048576,
+    "sha256": "51089a061ddc825966580bfe86a7046aa482c68ec35439ad36b5640f3b541476"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/recover/input-db/d3-dwb-0",
+    "bytes": 16384,
+    "sha256": "9cc33556e5bf91bacd7f7604916172217988eaebc4d42ac0fb12dde08de9b912"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/recover/input-db/d3-dwb-1",
+    "bytes": 16384,
+    "sha256": "4fe7b59af6de3b665b67788cc2f99892ab827efae3a467342b3bb4e3bc8e5bfe"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/recover/input-db/d3-dwb-images",
+    "bytes": 16711680,
+    "sha256": "6c5e5b0f07ad132df7a8fbe84a1e6a18e99afdcb24d68409c1f98abc8f27f3c4"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/recover/input-db/d3-dwb-reserved",
+    "bytes": 8192,
+    "sha256": "9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/recover/input-db/d3-dwb-stage",
+    "bytes": 16384,
+    "sha256": "2f55b2245100ab1380a48bb9168c3276ace2d1aa7c4b1832cdc34856752ccf94"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/recover/input-db/d3-filemap-0",
+    "bytes": 2113536,
+    "sha256": "5c68a64618b99736aa8a0e10adece83318cc8996ef9039e0879dc0e5d0fb33d1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/recover/input-db/d3-filemap-1",
+    "bytes": 2113536,
+    "sha256": "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/recover/input-db/d3-profile",
+    "bytes": 4096,
+    "sha256": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/recover/input-db/d3-wal-00000001",
+    "bytes": 3173206,
+    "sha256": "9518797791aac36a1ca5c4741ffcce8e3355dce157b70f4a7b1a8de1138e341c"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/recover/receipt.tsv",
+    "bytes": 367,
+    "sha256": "4e69aab3a3b245004e7b2b4f8c9a8eec6c814dd41dcc66141aa45e5dfd1d77f0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/recover/test.log",
+    "bytes": 868,
+    "sha256": "508ab78c0958be0f81e9ed319da36ab0dea06328cd11dd5e9d82ae2588f9405e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/recover-arena.bin",
+    "bytes": 1048576,
+    "sha256": "945c7ae44ce4ac79d9ee8e16e2d1a2ce751f55f9a8499811d23efe06b7796380"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/recover-claims.bin",
+    "bytes": 22528,
+    "sha256": "90a561c4bbfe3b7c1b12e999fb3ae638361d001e550ad1cd7f9be53c71628233"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/reenter/effects.tsv",
+    "bytes": 188668,
+    "sha256": "1f37096fd0a6d1e44cc2badeebf105087a28ffee6ab644f4db34d629a47fe6b8"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/reenter/entropy.tsv",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/reenter/files.json",
+    "bytes": 2246,
+    "sha256": "c97b16c9fdb00f1f87bcb3a1b1c4caa4363e0b80d3e13fd10ba242c7ffeb0863"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/reenter/input-db/CURRENT",
+    "bytes": 4096,
+    "sha256": "f37189645a68576e3d38587a195a064ff4cbb3bb599422257e2c592fb5d51cde"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/reenter/input-db/DWB",
+    "bytes": 4096,
+    "sha256": "b1dc4e856b7c1829952b964e16d9b2c76a436bae5665c4515a82b5262d33908a"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/reenter/input-db/FILEMAP",
+    "bytes": 4096,
+    "sha256": "5938c6fac59aa7d816b2e8b358df8e15511e78c1f85934b1451fea92fc36dba0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/reenter/input-db/LOCK",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/reenter/input-db/WRITER",
+    "bytes": 4096,
+    "sha256": "f9ec0df74410f21ccfafca5cfa8aff638e2c39fa75064308f07c0ea520bf7ed6"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/reenter/input-db/d3-bootstrap",
+    "bytes": 4096,
+    "sha256": "e748c4c73df39f04bf9b82bd4219ad4317d7556f6a2f081254fcdf1a9ddd2883"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/reenter/input-db/d3-data-0000000100000001",
+    "bytes": 1048576,
+    "sha256": "945c7ae44ce4ac79d9ee8e16e2d1a2ce751f55f9a8499811d23efe06b7796380"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/reenter/input-db/d3-dwb-0",
+    "bytes": 16384,
+    "sha256": "631588a0cf357e92be609f0940bad861ce1b6b2ead2dba0163387707185632f9"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/reenter/input-db/d3-dwb-1",
+    "bytes": 16384,
+    "sha256": "ff6f2e34f57f1fed811deb12527dc55214d29ff57d448f962ebd7cd509a392c4"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/reenter/input-db/d3-dwb-images",
+    "bytes": 16711680,
+    "sha256": "7b39526aeb5b90ca89c337da81f1a936f70fd4c32a914ae0cfa2af270c0f096d"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/reenter/input-db/d3-dwb-reserved",
+    "bytes": 8192,
+    "sha256": "9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/reenter/input-db/d3-dwb-stage",
+    "bytes": 16384,
+    "sha256": "ff6f2e34f57f1fed811deb12527dc55214d29ff57d448f962ebd7cd509a392c4"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/reenter/input-db/d3-filemap-0",
+    "bytes": 2113536,
+    "sha256": "5c68a64618b99736aa8a0e10adece83318cc8996ef9039e0879dc0e5d0fb33d1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/reenter/input-db/d3-filemap-1",
+    "bytes": 2113536,
+    "sha256": "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/reenter/input-db/d3-profile",
+    "bytes": 4096,
+    "sha256": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/reenter/input-db/d3-rebase-0",
+    "bytes": 2097152,
+    "sha256": "b4e2bba1d02a21b72f352e6d16df2b6fed9c62ea50fa03ec020f00965a5e9c74"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/reenter/input-db/d3-rebase-1",
+    "bytes": 2097152,
+    "sha256": "b4e2bba1d02a21b72f352e6d16df2b6fed9c62ea50fa03ec020f00965a5e9c74"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/reenter/input-db/d3-wal-00000002",
+    "bytes": 172632,
+    "sha256": "e4e3cc8bfc8c196c4324664c10db6d81b5bd02ff09f4e0542de85d51a2930180"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/reenter/receipt.tsv",
+    "bytes": 359,
+    "sha256": "286922334e2dd9c72180f32ab21d780d282c4a5e7b722553aa357245837aaa98"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/reenter/test.log",
+    "bytes": 860,
+    "sha256": "cf7ff78333a7a820317e35e703f04477c86f78cad591ea3656ad6b67c005f8e4"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/reenter-arena.bin",
+    "bytes": 1048576,
+    "sha256": "ef92baa9e77ae025827e0a8348f9c5d0e0e9c54c68c0ba61c09ce4312e15c64f"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR3/reenter-claims.bin",
+    "bytes": 22528,
+    "sha256": "90a561c4bbfe3b7c1b12e999fb3ae638361d001e550ad1cd7f9be53c71628233"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/db/CURRENT",
+    "bytes": 4096,
+    "sha256": "23685ded37981226c4fe66a65d789b22e4a2e01e42a65362d570f95cafe7faed"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/db/DWB",
+    "bytes": 4096,
+    "sha256": "eaa7e6a352dc2f2401ddc404d688c8ff9d4370f235699518028edd382e333c41"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/db/FILEMAP",
+    "bytes": 4096,
+    "sha256": "5938c6fac59aa7d816b2e8b358df8e15511e78c1f85934b1451fea92fc36dba0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/db/LOCK",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/db/WRITER",
+    "bytes": 4096,
+    "sha256": "6a5943517803e761e1a24971f1b6baa5a5d52c432fab3cd55cc49372c365d00b"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/db/d3-bootstrap",
+    "bytes": 4096,
+    "sha256": "e748c4c73df39f04bf9b82bd4219ad4317d7556f6a2f081254fcdf1a9ddd2883"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/db/d3-data-0000000100000001",
+    "bytes": 1048576,
+    "sha256": "fd00b0a435e6f7bb92896d5680740e5da995d0c97d42c93e85761ddb65782b9b"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/db/d3-dwb-0",
+    "bytes": 16384,
+    "sha256": "1af61eede44ac54511cd4a65c590f1b4e3bc63ca663ba886388df9e9fba456db"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/db/d3-dwb-1",
+    "bytes": 16384,
+    "sha256": "e1774763b23373e5d5d9635f6aa9201788be2578ad7e5bc5368de6566288bfb0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/db/d3-dwb-images",
+    "bytes": 16711680,
+    "sha256": "f5b49a91261837074308b7f1ca84971191a5c4f3360678dbd41e19a97703c882"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/db/d3-dwb-reserved",
+    "bytes": 8192,
+    "sha256": "9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/db/d3-dwb-stage",
+    "bytes": 16384,
+    "sha256": "e1774763b23373e5d5d9635f6aa9201788be2578ad7e5bc5368de6566288bfb0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/db/d3-filemap-0",
+    "bytes": 2113536,
+    "sha256": "5c68a64618b99736aa8a0e10adece83318cc8996ef9039e0879dc0e5d0fb33d1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/db/d3-filemap-1",
+    "bytes": 2113536,
+    "sha256": "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/db/d3-profile",
+    "bytes": 4096,
+    "sha256": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/db/d3-rebase-0",
+    "bytes": 2097152,
+    "sha256": "5e949a090ee8ccadb7f94dac86c37bdc79ee46d4538fa201321a757ac04d2d74"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/db/d3-rebase-1",
+    "bytes": 2097152,
+    "sha256": "5e949a090ee8ccadb7f94dac86c37bdc79ee46d4538fa201321a757ac04d2d74"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/db/d3-wal-00000002",
+    "bytes": 4096,
+    "sha256": "563cef08b92080b048c14a2865ca6d276c9cae80843df68d7a4b92d9cbd120cb"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/produce/before-arena.bin",
+    "bytes": 1048576,
+    "sha256": "945c7ae44ce4ac79d9ee8e16e2d1a2ce751f55f9a8499811d23efe06b7796380"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/produce/before-claims.bin",
+    "bytes": 22528,
+    "sha256": "90a561c4bbfe3b7c1b12e999fb3ae638361d001e550ad1cd7f9be53c71628233"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/produce/before.tsv",
+    "bytes": 122,
+    "sha256": "8bc969283c50f2a92f2ded49eb954565a1262f313c484a71afece65c24ed172a"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/produce/effects.tsv",
+    "bytes": 898373,
+    "sha256": "61def7f512b6528976a6d12a6e111678d4280227f63138ac61324a06de1fbca4"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/produce/entropy.tsv",
+    "bytes": 41,
+    "sha256": "b074f881717a3ced576277a5f5b1cfbd11c431e9f796a74587380782a6bfbe8f"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/produce/files.json",
+    "bytes": 1875,
+    "sha256": "5c588f464d8cc0d78da1c8e9811fe44fa191942d605cc16324c75c08840f8679"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/produce/receipt.tsv",
+    "bytes": 378,
+    "sha256": "0f52df77b3314cbda12cfa70093b69b9f81d0d8bbadf1eb2c1a8b30f883580c3"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/produce/test.log",
+    "bytes": 673,
+    "sha256": "c86916536b0f000f6debcbee6e945d2013a58016feef1f187583cff8e8830e2f"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/recover/effects.tsv",
+    "bytes": 373956,
+    "sha256": "449d8d89cd646ce4c7569212dadd7667d91416d1438f40c5193abb4ea24e8727"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/recover/entropy.tsv",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/recover/input-db/DWB",
+    "bytes": 4096,
+    "sha256": "d486bfa3bbec8e2d27073bd8e1aa39a6bd43e1d7e9ddc09fc1c18a885ae776ad"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/recover/input-db/FILEMAP",
+    "bytes": 4096,
+    "sha256": "5938c6fac59aa7d816b2e8b358df8e15511e78c1f85934b1451fea92fc36dba0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/recover/input-db/LOCK",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/recover/input-db/WRITER",
+    "bytes": 4096,
+    "sha256": "82a9e17a80dcb5d9a06c343f90cc4c325deede22362d9c2e82ba8d04b2acd899"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/recover/input-db/d3-bootstrap",
+    "bytes": 4096,
+    "sha256": "e748c4c73df39f04bf9b82bd4219ad4317d7556f6a2f081254fcdf1a9ddd2883"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/recover/input-db/d3-data-0000000100000001",
+    "bytes": 1048576,
+    "sha256": "51089a061ddc825966580bfe86a7046aa482c68ec35439ad36b5640f3b541476"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/recover/input-db/d3-dwb-0",
+    "bytes": 16384,
+    "sha256": "9cc33556e5bf91bacd7f7604916172217988eaebc4d42ac0fb12dde08de9b912"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/recover/input-db/d3-dwb-1",
+    "bytes": 16384,
+    "sha256": "4fe7b59af6de3b665b67788cc2f99892ab827efae3a467342b3bb4e3bc8e5bfe"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/recover/input-db/d3-dwb-images",
+    "bytes": 16711680,
+    "sha256": "6c5e5b0f07ad132df7a8fbe84a1e6a18e99afdcb24d68409c1f98abc8f27f3c4"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/recover/input-db/d3-dwb-reserved",
+    "bytes": 8192,
+    "sha256": "9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/recover/input-db/d3-dwb-stage",
+    "bytes": 16384,
+    "sha256": "2f55b2245100ab1380a48bb9168c3276ace2d1aa7c4b1832cdc34856752ccf94"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/recover/input-db/d3-filemap-0",
+    "bytes": 2113536,
+    "sha256": "5c68a64618b99736aa8a0e10adece83318cc8996ef9039e0879dc0e5d0fb33d1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/recover/input-db/d3-filemap-1",
+    "bytes": 2113536,
+    "sha256": "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/recover/input-db/d3-profile",
+    "bytes": 4096,
+    "sha256": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/recover/input-db/d3-wal-00000001",
+    "bytes": 3257950,
+    "sha256": "574e871f99f57085f3e20bc291857df020c4055f4630bef1200d7c7a607639c5"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/SMO-NR4/recover/test.log",
+    "bytes": 1565,
+    "sha256": "5bf0167c7230abbb1daa7fdf47ddc9cbeefa6b830d8a58bfef2b802d29034f31"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/complete.json",
+    "bytes": 540,
+    "sha256": "19f5ca5ade8e27609e75f62a80be572aaca4a0b7711d42f1e948417a1e779189"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/execution-plan.json",
+    "bytes": 2309,
+    "sha256": "2c70e99702e7e582817714917698451f3a6c65df7e61a00dbe90a8f6758067ed"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/results.json",
+    "bytes": 735,
+    "sha256": "6c0aa865f57f20646238bbbffdd8bdbff94bc7c83b7e8adb88adbf05fc75de53"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-rest/source-files.sha256",
+    "bytes": 1263109,
+    "sha256": "d7d1273823abe7d764f09146ae212ccc5054af0b2b093077bd1cb7b43880e2a7"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/db/CURRENT",
+    "bytes": 4096,
+    "sha256": "42583772229ebd6590f3c1917b65fd1a69cc86cddba908313872e9f5e496cf5d"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/db/DWB",
+    "bytes": 4096,
+    "sha256": "445641d7592ece1ea066a0df3548705e3294d8d18954605d2a189d462f24ea4e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/db/FILEMAP",
+    "bytes": 4096,
+    "sha256": "5938c6fac59aa7d816b2e8b358df8e15511e78c1f85934b1451fea92fc36dba0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/db/LOCK",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/db/WRITER",
+    "bytes": 4096,
+    "sha256": "0bff37b5937a5b063cee9241373c4d6c42cddc8981c02eca26a2a2af23f0afa6"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/db/d3-bootstrap",
+    "bytes": 4096,
+    "sha256": "e748c4c73df39f04bf9b82bd4219ad4317d7556f6a2f081254fcdf1a9ddd2883"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/db/d3-data-0000000100000001",
+    "bytes": 1048576,
+    "sha256": "ef92baa9e77ae025827e0a8348f9c5d0e0e9c54c68c0ba61c09ce4312e15c64f"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/db/d3-dwb-0",
+    "bytes": 16384,
+    "sha256": "ada529c7cd223080c5e4d9f82961e35534124420aae5201e9661c8a9059ffaa6"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/db/d3-dwb-1",
+    "bytes": 16384,
+    "sha256": "39eacb9be8babef9aa0a84aae2ad7fe7c935cf2a1d7c1a3219b515042c166d23"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/db/d3-dwb-images",
+    "bytes": 16711680,
+    "sha256": "7e1969be216115f770b06bdb06268e5e6c89c21ddd5f910dac0d9255efb3cb54"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/db/d3-dwb-reserved",
+    "bytes": 8192,
+    "sha256": "9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/db/d3-dwb-stage",
+    "bytes": 16384,
+    "sha256": "ada529c7cd223080c5e4d9f82961e35534124420aae5201e9661c8a9059ffaa6"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/db/d3-filemap-0",
+    "bytes": 2113536,
+    "sha256": "5c68a64618b99736aa8a0e10adece83318cc8996ef9039e0879dc0e5d0fb33d1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/db/d3-filemap-1",
+    "bytes": 2113536,
+    "sha256": "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/db/d3-profile",
+    "bytes": 4096,
+    "sha256": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/db/d3-rebase-0",
+    "bytes": 2097152,
+    "sha256": "8187e9f1d1ccd0bd60b83ee5f31ccbf50f64148e290f1e898e124ea289ba4298"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/db/d3-rebase-1",
+    "bytes": 2097152,
+    "sha256": "8187e9f1d1ccd0bd60b83ee5f31ccbf50f64148e290f1e898e124ea289ba4298"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/db/d3-wal-00000003",
+    "bytes": 4096,
+    "sha256": "916904562d2af91d19b0f92b0d31c3c7c9930acd95010f7b607a23ad5f1397e6"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/produce/before-arena.bin",
+    "bytes": 1048576,
+    "sha256": "945c7ae44ce4ac79d9ee8e16e2d1a2ce751f55f9a8499811d23efe06b7796380"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/produce/before-claims.bin",
+    "bytes": 22528,
+    "sha256": "90a561c4bbfe3b7c1b12e999fb3ae638361d001e550ad1cd7f9be53c71628233"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/produce/before.tsv",
+    "bytes": 122,
+    "sha256": "8bc969283c50f2a92f2ded49eb954565a1262f313c484a71afece65c24ed172a"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/produce/effects.tsv",
+    "bytes": 898130,
+    "sha256": "69ae5c4dcf19b333351292d28d38d2176f463dbf1e6078a1a8220c3bfb584a41"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/produce/entropy.tsv",
+    "bytes": 41,
+    "sha256": "2c2d056ab9a75a50f375b0a1cccdf340853e2fc7f60fde5b83fe0fd806bf4399"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/produce/files.json",
+    "bytes": 1875,
+    "sha256": "fee3e6f873cd7dd840e4ee965b1ab5a164b1f66c16076dd0751eab972a9fe5a1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/produce/receipt.tsv",
+    "bytes": 383,
+    "sha256": "10d5b71fa24d09e79194d496104dbf5edf27d4f8b20c97421bc0dd72636984a3"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/produce/test.log",
+    "bytes": 678,
+    "sha256": "f3feb6a75f18bdfd985ec58e0903424e207e2706578925c882021e77ebb5d2a8"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/recover/effects.tsv",
+    "bytes": 368408,
+    "sha256": "d314809f5f361685b2e04f3ebb2656315fde0192c919405187234124ec812b6d"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/recover/entropy.tsv",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/recover/files.json",
+    "bytes": 2248,
+    "sha256": "a7279e2db64567df4a2a8115ca90e73ed0cbc1a9a9a2883d751435a4286fbb40"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/recover/input-db/DWB",
+    "bytes": 4096,
+    "sha256": "d486bfa3bbec8e2d27073bd8e1aa39a6bd43e1d7e9ddc09fc1c18a885ae776ad"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/recover/input-db/FILEMAP",
+    "bytes": 4096,
+    "sha256": "5938c6fac59aa7d816b2e8b358df8e15511e78c1f85934b1451fea92fc36dba0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/recover/input-db/LOCK",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/recover/input-db/WRITER",
+    "bytes": 4096,
+    "sha256": "82a9e17a80dcb5d9a06c343f90cc4c325deede22362d9c2e82ba8d04b2acd899"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/recover/input-db/d3-bootstrap",
+    "bytes": 4096,
+    "sha256": "e748c4c73df39f04bf9b82bd4219ad4317d7556f6a2f081254fcdf1a9ddd2883"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/recover/input-db/d3-data-0000000100000001",
+    "bytes": 1048576,
+    "sha256": "51089a061ddc825966580bfe86a7046aa482c68ec35439ad36b5640f3b541476"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/recover/input-db/d3-dwb-0",
+    "bytes": 16384,
+    "sha256": "9cc33556e5bf91bacd7f7604916172217988eaebc4d42ac0fb12dde08de9b912"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/recover/input-db/d3-dwb-1",
+    "bytes": 16384,
+    "sha256": "4fe7b59af6de3b665b67788cc2f99892ab827efae3a467342b3bb4e3bc8e5bfe"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/recover/input-db/d3-dwb-images",
+    "bytes": 16711680,
+    "sha256": "6c5e5b0f07ad132df7a8fbe84a1e6a18e99afdcb24d68409c1f98abc8f27f3c4"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/recover/input-db/d3-dwb-reserved",
+    "bytes": 8192,
+    "sha256": "9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/recover/input-db/d3-dwb-stage",
+    "bytes": 16384,
+    "sha256": "2f55b2245100ab1380a48bb9168c3276ace2d1aa7c4b1832cdc34856752ccf94"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/recover/input-db/d3-filemap-0",
+    "bytes": 2113536,
+    "sha256": "5c68a64618b99736aa8a0e10adece83318cc8996ef9039e0879dc0e5d0fb33d1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/recover/input-db/d3-filemap-1",
+    "bytes": 2113536,
+    "sha256": "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/recover/input-db/d3-profile",
+    "bytes": 4096,
+    "sha256": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/recover/input-db/d3-wal-00000001",
+    "bytes": 3173206,
+    "sha256": "9518797791aac36a1ca5c4741ffcce8e3355dce157b70f4a7b1a8de1138e341c"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/recover/receipt.tsv",
+    "bytes": 370,
+    "sha256": "53d85a9e75da375a6241743a8a79e9b2e450735380571211d3a0c9297b02d534"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/recover/test.log",
+    "bytes": 868,
+    "sha256": "1374ff146384f46353fac48f825625fbb6c0564c980e7214aa95bda899730d2d"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/recover-arena.bin",
+    "bytes": 1048576,
+    "sha256": "945c7ae44ce4ac79d9ee8e16e2d1a2ce751f55f9a8499811d23efe06b7796380"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/recover-claims.bin",
+    "bytes": 22528,
+    "sha256": "90a561c4bbfe3b7c1b12e999fb3ae638361d001e550ad1cd7f9be53c71628233"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/reenter/effects.tsv",
+    "bytes": 188668,
+    "sha256": "ca429f2c81172643c898bf91cde207e2087314f77fab9484b917d1b5b2042022"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/reenter/entropy.tsv",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/reenter/files.json",
+    "bytes": 2246,
+    "sha256": "c97b16c9fdb00f1f87bcb3a1b1c4caa4363e0b80d3e13fd10ba242c7ffeb0863"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/reenter/input-db/CURRENT",
+    "bytes": 4096,
+    "sha256": "f37189645a68576e3d38587a195a064ff4cbb3bb599422257e2c592fb5d51cde"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/reenter/input-db/DWB",
+    "bytes": 4096,
+    "sha256": "b1dc4e856b7c1829952b964e16d9b2c76a436bae5665c4515a82b5262d33908a"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/reenter/input-db/FILEMAP",
+    "bytes": 4096,
+    "sha256": "5938c6fac59aa7d816b2e8b358df8e15511e78c1f85934b1451fea92fc36dba0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/reenter/input-db/LOCK",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/reenter/input-db/WRITER",
+    "bytes": 4096,
+    "sha256": "f9ec0df74410f21ccfafca5cfa8aff638e2c39fa75064308f07c0ea520bf7ed6"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/reenter/input-db/d3-bootstrap",
+    "bytes": 4096,
+    "sha256": "e748c4c73df39f04bf9b82bd4219ad4317d7556f6a2f081254fcdf1a9ddd2883"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/reenter/input-db/d3-data-0000000100000001",
+    "bytes": 1048576,
+    "sha256": "945c7ae44ce4ac79d9ee8e16e2d1a2ce751f55f9a8499811d23efe06b7796380"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/reenter/input-db/d3-dwb-0",
+    "bytes": 16384,
+    "sha256": "631588a0cf357e92be609f0940bad861ce1b6b2ead2dba0163387707185632f9"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/reenter/input-db/d3-dwb-1",
+    "bytes": 16384,
+    "sha256": "ff6f2e34f57f1fed811deb12527dc55214d29ff57d448f962ebd7cd509a392c4"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/reenter/input-db/d3-dwb-images",
+    "bytes": 16711680,
+    "sha256": "7b39526aeb5b90ca89c337da81f1a936f70fd4c32a914ae0cfa2af270c0f096d"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/reenter/input-db/d3-dwb-reserved",
+    "bytes": 8192,
+    "sha256": "9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/reenter/input-db/d3-dwb-stage",
+    "bytes": 16384,
+    "sha256": "ff6f2e34f57f1fed811deb12527dc55214d29ff57d448f962ebd7cd509a392c4"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/reenter/input-db/d3-filemap-0",
+    "bytes": 2113536,
+    "sha256": "5c68a64618b99736aa8a0e10adece83318cc8996ef9039e0879dc0e5d0fb33d1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/reenter/input-db/d3-filemap-1",
+    "bytes": 2113536,
+    "sha256": "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/reenter/input-db/d3-profile",
+    "bytes": 4096,
+    "sha256": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/reenter/input-db/d3-rebase-0",
+    "bytes": 2097152,
+    "sha256": "b4e2bba1d02a21b72f352e6d16df2b6fed9c62ea50fa03ec020f00965a5e9c74"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/reenter/input-db/d3-rebase-1",
+    "bytes": 2097152,
+    "sha256": "b4e2bba1d02a21b72f352e6d16df2b6fed9c62ea50fa03ec020f00965a5e9c74"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/reenter/input-db/d3-wal-00000002",
+    "bytes": 172632,
+    "sha256": "e4e3cc8bfc8c196c4324664c10db6d81b5bd02ff09f4e0542de85d51a2930180"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/reenter/receipt.tsv",
+    "bytes": 362,
+    "sha256": "af610fb859a72b80e9737a5b6796d9caa4cfb7b2068120c22bc581a5a5ae9f55"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/reenter/test.log",
+    "bytes": 860,
+    "sha256": "1efc0eeb47ccfa6a4253cd43a97ae6f5c0333a517cd52ce540554d6514ba5152"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/reenter-arena.bin",
+    "bytes": 1048576,
+    "sha256": "ef92baa9e77ae025827e0a8348f9c5d0e0e9c54c68c0ba61c09ce4312e15c64f"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/SMO-NR1/reenter-claims.bin",
+    "bytes": 22528,
+    "sha256": "90a561c4bbfe3b7c1b12e999fb3ae638361d001e550ad1cd7f9be53c71628233"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/complete.json",
+    "bytes": 276,
+    "sha256": "5515cda5ff1e7468ae442c668302f05287d9eb51bdf8274600f8bfa8bea167de"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/execution-plan.json",
+    "bytes": 1038,
+    "sha256": "152f52096f79bc65e744cf65676ddb16be0fe98c4e247e408f80d366772d78e6"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/results.json",
+    "bytes": 319,
+    "sha256": "962fa307282d710286c108bd6cf65fd5ff48a7beb45dfcfcc49a6e7894fb4849"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r11-resume/source-files.sha256",
+    "bytes": 1263109,
+    "sha256": "d7d1273823abe7d764f09146ae212ccc5054af0b2b093077bd1cb7b43880e2a7"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/db/CURRENT",
+    "bytes": 4096,
+    "sha256": "e1cb98ffb150cd750f689bdc2ccf555296137a66b2bf325902d5d75b36e40000"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/db/DWB",
+    "bytes": 4096,
+    "sha256": "549782e75a097343f767aca8b00ccfcb73824faa84e6db99d101e6bb24b38dab"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/db/FILEMAP",
+    "bytes": 4096,
+    "sha256": "5938c6fac59aa7d816b2e8b358df8e15511e78c1f85934b1451fea92fc36dba0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/db/LOCK",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/db/WRITER",
+    "bytes": 4096,
+    "sha256": "5bffc1ae884d957503ba56e960936089b8ce2ec7c6303a138787f1971af8c871"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/db/d3-bootstrap",
+    "bytes": 4096,
+    "sha256": "e748c4c73df39f04bf9b82bd4219ad4317d7556f6a2f081254fcdf1a9ddd2883"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/db/d3-data-0000000100000001",
+    "bytes": 1048576,
+    "sha256": "e7dcdce5799528013257bdef82fc1294fa1ab2c82ebded60377c74013c84342e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/db/d3-dwb-0",
+    "bytes": 16384,
+    "sha256": "3816507268799972faf255e77ea255676c9dabc5035cc375ddc00015c75bb3d9"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/db/d3-dwb-1",
+    "bytes": 16384,
+    "sha256": "29d849ff7fc1ef17a5e26bdf270f0895edbb4994456ae1cd29c76920ff2584cd"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/db/d3-dwb-images",
+    "bytes": 16711680,
+    "sha256": "c689ac146763d24b433c4ecb0494d627a755fe2e4baf283821df7c7f1e381b28"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/db/d3-dwb-reserved",
+    "bytes": 8192,
+    "sha256": "9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/db/d3-dwb-stage",
+    "bytes": 16384,
+    "sha256": "3816507268799972faf255e77ea255676c9dabc5035cc375ddc00015c75bb3d9"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/db/d3-filemap-0",
+    "bytes": 2113536,
+    "sha256": "5c68a64618b99736aa8a0e10adece83318cc8996ef9039e0879dc0e5d0fb33d1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/db/d3-filemap-1",
+    "bytes": 2113536,
+    "sha256": "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/db/d3-profile",
+    "bytes": 4096,
+    "sha256": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/db/d3-rebase-0",
+    "bytes": 2097152,
+    "sha256": "8b2c7acf24bac4d18d7a12e4924d504470c22c243dc814d60f48c9dcc201a71c"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/db/d3-rebase-1",
+    "bytes": 2097152,
+    "sha256": "8b2c7acf24bac4d18d7a12e4924d504470c22c243dc814d60f48c9dcc201a71c"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/db/d3-wal-00000003",
+    "bytes": 4096,
+    "sha256": "1f2309394ece893a50959ae04094d0efaec8aa80e982d566051cda8b01c00a97"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/produce/before-arena.bin",
+    "bytes": 1048576,
+    "sha256": "fd00b0a435e6f7bb92896d5680740e5da995d0c97d42c93e85761ddb65782b9b"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/produce/before-claims.bin",
+    "bytes": 22528,
+    "sha256": "b5e7c10822698b50ca7cbdbf84fcff4ea98f5b3d3999bdc40896a5da37c93878"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/produce/before.tsv",
+    "bytes": 123,
+    "sha256": "bbc24a9308b0afeeb0f47dc830211625632cd08d5ed5c47408c7fb781316cc8b"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/produce/effects.tsv",
+    "bytes": 949309,
+    "sha256": "1ef4b38d638daf9e9443ae05f5025f8fc075845255ee4c421a56377106e370d6"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/produce/entropy.tsv",
+    "bytes": 41,
+    "sha256": "48339d76cda0152ba2a88dece5ec7030d981f43abcf89e5cc42f26439174f00e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/produce/files.json",
+    "bytes": 1875,
+    "sha256": "5c588f464d8cc0d78da1c8e9811fe44fa191942d605cc16324c75c08840f8679"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/produce/receipt.tsv",
+    "bytes": 383,
+    "sha256": "4193de724a7cec3d4a6fe3845c003247d3d8c8350c99bd93247129b19163b063"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/produce/test.log",
+    "bytes": 678,
+    "sha256": "c14913cde07adf4fda47538febc215c7df7627a5b8f0dc5dc911f1caf7677cf0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/recover/effects.tsv",
+    "bytes": 398722,
+    "sha256": "b17a97a24d1fc80a60f33cf641b90a36b578ce770a139de9855047a98dfc6c47"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/recover/entropy.tsv",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/recover/files.json",
+    "bytes": 2248,
+    "sha256": "39808c227c0833677df983105f961385a9b0ef2ebd7fbc929d055c293c3963f2"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/recover/input-db/DWB",
+    "bytes": 4096,
+    "sha256": "d486bfa3bbec8e2d27073bd8e1aa39a6bd43e1d7e9ddc09fc1c18a885ae776ad"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/recover/input-db/FILEMAP",
+    "bytes": 4096,
+    "sha256": "5938c6fac59aa7d816b2e8b358df8e15511e78c1f85934b1451fea92fc36dba0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/recover/input-db/LOCK",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/recover/input-db/WRITER",
+    "bytes": 4096,
+    "sha256": "82a9e17a80dcb5d9a06c343f90cc4c325deede22362d9c2e82ba8d04b2acd899"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/recover/input-db/d3-bootstrap",
+    "bytes": 4096,
+    "sha256": "e748c4c73df39f04bf9b82bd4219ad4317d7556f6a2f081254fcdf1a9ddd2883"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/recover/input-db/d3-data-0000000100000001",
+    "bytes": 1048576,
+    "sha256": "51089a061ddc825966580bfe86a7046aa482c68ec35439ad36b5640f3b541476"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/recover/input-db/d3-dwb-0",
+    "bytes": 16384,
+    "sha256": "9cc33556e5bf91bacd7f7604916172217988eaebc4d42ac0fb12dde08de9b912"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/recover/input-db/d3-dwb-1",
+    "bytes": 16384,
+    "sha256": "4fe7b59af6de3b665b67788cc2f99892ab827efae3a467342b3bb4e3bc8e5bfe"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/recover/input-db/d3-dwb-images",
+    "bytes": 16711680,
+    "sha256": "6c5e5b0f07ad132df7a8fbe84a1e6a18e99afdcb24d68409c1f98abc8f27f3c4"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/recover/input-db/d3-dwb-reserved",
+    "bytes": 8192,
+    "sha256": "9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/recover/input-db/d3-dwb-stage",
+    "bytes": 16384,
+    "sha256": "2f55b2245100ab1380a48bb9168c3276ace2d1aa7c4b1832cdc34856752ccf94"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/recover/input-db/d3-filemap-0",
+    "bytes": 2113536,
+    "sha256": "5c68a64618b99736aa8a0e10adece83318cc8996ef9039e0879dc0e5d0fb33d1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/recover/input-db/d3-filemap-1",
+    "bytes": 2113536,
+    "sha256": "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/recover/input-db/d3-profile",
+    "bytes": 4096,
+    "sha256": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/recover/input-db/d3-wal-00000001",
+    "bytes": 3257950,
+    "sha256": "574e871f99f57085f3e20bc291857df020c4055f4630bef1200d7c7a607639c5"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/recover/receipt.tsv",
+    "bytes": 373,
+    "sha256": "5934010cf157d2a9c713634892b08d65d8f3b8d699548abe11dfb1166e637409"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/recover/test.log",
+    "bytes": 871,
+    "sha256": "12167a2a82df3716d7e80e648a450164ea91d313f62234f442300aa9918fd6cb"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/recover-arena.bin",
+    "bytes": 1048576,
+    "sha256": "fd00b0a435e6f7bb92896d5680740e5da995d0c97d42c93e85761ddb65782b9b"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/recover-claims.bin",
+    "bytes": 22528,
+    "sha256": "b5e7c10822698b50ca7cbdbf84fcff4ea98f5b3d3999bdc40896a5da37c93878"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/reenter/effects.tsv",
+    "bytes": 194258,
+    "sha256": "1ff794282761a8b54bb77e2b24fee312df05f26d1b27c77a096a666f71bacbcf"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/reenter/entropy.tsv",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/reenter/files.json",
+    "bytes": 2246,
+    "sha256": "31b3df3b3b17a72835e69fe24309a2d16fcf7c2c1cbcbcc912e9c987677d0556"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/reenter/input-db/CURRENT",
+    "bytes": 4096,
+    "sha256": "23685ded37981226c4fe66a65d789b22e4a2e01e42a65362d570f95cafe7faed"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/reenter/input-db/DWB",
+    "bytes": 4096,
+    "sha256": "eaa7e6a352dc2f2401ddc404d688c8ff9d4370f235699518028edd382e333c41"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/reenter/input-db/FILEMAP",
+    "bytes": 4096,
+    "sha256": "5938c6fac59aa7d816b2e8b358df8e15511e78c1f85934b1451fea92fc36dba0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/reenter/input-db/LOCK",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/reenter/input-db/WRITER",
+    "bytes": 4096,
+    "sha256": "6a5943517803e761e1a24971f1b6baa5a5d52c432fab3cd55cc49372c365d00b"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/reenter/input-db/d3-bootstrap",
+    "bytes": 4096,
+    "sha256": "e748c4c73df39f04bf9b82bd4219ad4317d7556f6a2f081254fcdf1a9ddd2883"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/reenter/input-db/d3-data-0000000100000001",
+    "bytes": 1048576,
+    "sha256": "fd00b0a435e6f7bb92896d5680740e5da995d0c97d42c93e85761ddb65782b9b"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/reenter/input-db/d3-dwb-0",
+    "bytes": 16384,
+    "sha256": "1af61eede44ac54511cd4a65c590f1b4e3bc63ca663ba886388df9e9fba456db"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/reenter/input-db/d3-dwb-1",
+    "bytes": 16384,
+    "sha256": "e1774763b23373e5d5d9635f6aa9201788be2578ad7e5bc5368de6566288bfb0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/reenter/input-db/d3-dwb-images",
+    "bytes": 16711680,
+    "sha256": "f5b49a91261837074308b7f1ca84971191a5c4f3360678dbd41e19a97703c882"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/reenter/input-db/d3-dwb-reserved",
+    "bytes": 8192,
+    "sha256": "9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/reenter/input-db/d3-dwb-stage",
+    "bytes": 16384,
+    "sha256": "e1774763b23373e5d5d9635f6aa9201788be2578ad7e5bc5368de6566288bfb0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/reenter/input-db/d3-filemap-0",
+    "bytes": 2113536,
+    "sha256": "5c68a64618b99736aa8a0e10adece83318cc8996ef9039e0879dc0e5d0fb33d1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/reenter/input-db/d3-filemap-1",
+    "bytes": 2113536,
+    "sha256": "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/reenter/input-db/d3-profile",
+    "bytes": 4096,
+    "sha256": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/reenter/input-db/d3-rebase-0",
+    "bytes": 2097152,
+    "sha256": "5e949a090ee8ccadb7f94dac86c37bdc79ee46d4538fa201321a757ac04d2d74"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/reenter/input-db/d3-rebase-1",
+    "bytes": 2097152,
+    "sha256": "5e949a090ee8ccadb7f94dac86c37bdc79ee46d4538fa201321a757ac04d2d74"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/reenter/input-db/d3-wal-00000002",
+    "bytes": 172632,
+    "sha256": "48f5842fa137be41fccb0c31259e9e8c93797568becbbac19a17565f5feb094c"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/reenter/receipt.tsv",
+    "bytes": 365,
+    "sha256": "cb8f53ad2587a180b0f33a9231e09edb5dbc72116518fa11e25b8a82db5439f1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/reenter/test.log",
+    "bytes": 863,
+    "sha256": "88bd888713498c1f965dd6676f3bf457ba06bdd6a897975d56c8811ed349aee9"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/reenter-arena.bin",
+    "bytes": 1048576,
+    "sha256": "e7dcdce5799528013257bdef82fc1294fa1ab2c82ebded60377c74013c84342e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC1/reenter-claims.bin",
+    "bytes": 22528,
+    "sha256": "b5e7c10822698b50ca7cbdbf84fcff4ea98f5b3d3999bdc40896a5da37c93878"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/db/CURRENT",
+    "bytes": 4096,
+    "sha256": "e1cb98ffb150cd750f689bdc2ccf555296137a66b2bf325902d5d75b36e40000"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/db/DWB",
+    "bytes": 4096,
+    "sha256": "549782e75a097343f767aca8b00ccfcb73824faa84e6db99d101e6bb24b38dab"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/db/FILEMAP",
+    "bytes": 4096,
+    "sha256": "5938c6fac59aa7d816b2e8b358df8e15511e78c1f85934b1451fea92fc36dba0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/db/LOCK",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/db/WRITER",
+    "bytes": 4096,
+    "sha256": "5bffc1ae884d957503ba56e960936089b8ce2ec7c6303a138787f1971af8c871"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/db/d3-bootstrap",
+    "bytes": 4096,
+    "sha256": "e748c4c73df39f04bf9b82bd4219ad4317d7556f6a2f081254fcdf1a9ddd2883"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/db/d3-data-0000000100000001",
+    "bytes": 1048576,
+    "sha256": "e7dcdce5799528013257bdef82fc1294fa1ab2c82ebded60377c74013c84342e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/db/d3-dwb-0",
+    "bytes": 16384,
+    "sha256": "3816507268799972faf255e77ea255676c9dabc5035cc375ddc00015c75bb3d9"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/db/d3-dwb-1",
+    "bytes": 16384,
+    "sha256": "29d849ff7fc1ef17a5e26bdf270f0895edbb4994456ae1cd29c76920ff2584cd"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/db/d3-dwb-images",
+    "bytes": 16711680,
+    "sha256": "c689ac146763d24b433c4ecb0494d627a755fe2e4baf283821df7c7f1e381b28"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/db/d3-dwb-reserved",
+    "bytes": 8192,
+    "sha256": "9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/db/d3-dwb-stage",
+    "bytes": 16384,
+    "sha256": "3816507268799972faf255e77ea255676c9dabc5035cc375ddc00015c75bb3d9"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/db/d3-filemap-0",
+    "bytes": 2113536,
+    "sha256": "5c68a64618b99736aa8a0e10adece83318cc8996ef9039e0879dc0e5d0fb33d1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/db/d3-filemap-1",
+    "bytes": 2113536,
+    "sha256": "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/db/d3-profile",
+    "bytes": 4096,
+    "sha256": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/db/d3-rebase-0",
+    "bytes": 2097152,
+    "sha256": "8b2c7acf24bac4d18d7a12e4924d504470c22c243dc814d60f48c9dcc201a71c"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/db/d3-rebase-1",
+    "bytes": 2097152,
+    "sha256": "8b2c7acf24bac4d18d7a12e4924d504470c22c243dc814d60f48c9dcc201a71c"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/db/d3-wal-00000003",
+    "bytes": 4096,
+    "sha256": "1f2309394ece893a50959ae04094d0efaec8aa80e982d566051cda8b01c00a97"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/produce/before-arena.bin",
+    "bytes": 1048576,
+    "sha256": "fd00b0a435e6f7bb92896d5680740e5da995d0c97d42c93e85761ddb65782b9b"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/produce/before-claims.bin",
+    "bytes": 22528,
+    "sha256": "b5e7c10822698b50ca7cbdbf84fcff4ea98f5b3d3999bdc40896a5da37c93878"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/produce/before.tsv",
+    "bytes": 123,
+    "sha256": "bbc24a9308b0afeeb0f47dc830211625632cd08d5ed5c47408c7fb781316cc8b"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/produce/effects.tsv",
+    "bytes": 949309,
+    "sha256": "eacbf890624fed098cf87cd285f6b37e916176cdac0f67e91d6c88fe92b24393"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/produce/entropy.tsv",
+    "bytes": 41,
+    "sha256": "aa27e82a21003046f8b4ca0213011ec35baaf3be8c49e59779b2fb835d55a0cd"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/produce/files.json",
+    "bytes": 1875,
+    "sha256": "5c588f464d8cc0d78da1c8e9811fe44fa191942d605cc16324c75c08840f8679"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/produce/receipt.tsv",
+    "bytes": 377,
+    "sha256": "24a5265daf6136b71df58b0c0cde44f316cca40969faddab9dd15219809d2996"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/produce/test.log",
+    "bytes": 672,
+    "sha256": "85baf42d2d19ef47eeced051f5d4a650a83312b1d990e6833a668931b668c97e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/recover/effects.tsv",
+    "bytes": 398722,
+    "sha256": "dc6e9e530e3267c1a22f6cbeaaa7d39ca7fd865c116f11c981212f35cefd5607"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/recover/entropy.tsv",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/recover/files.json",
+    "bytes": 2248,
+    "sha256": "39808c227c0833677df983105f961385a9b0ef2ebd7fbc929d055c293c3963f2"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/recover/input-db/DWB",
+    "bytes": 4096,
+    "sha256": "d486bfa3bbec8e2d27073bd8e1aa39a6bd43e1d7e9ddc09fc1c18a885ae776ad"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/recover/input-db/FILEMAP",
+    "bytes": 4096,
+    "sha256": "5938c6fac59aa7d816b2e8b358df8e15511e78c1f85934b1451fea92fc36dba0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/recover/input-db/LOCK",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/recover/input-db/WRITER",
+    "bytes": 4096,
+    "sha256": "82a9e17a80dcb5d9a06c343f90cc4c325deede22362d9c2e82ba8d04b2acd899"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/recover/input-db/d3-bootstrap",
+    "bytes": 4096,
+    "sha256": "e748c4c73df39f04bf9b82bd4219ad4317d7556f6a2f081254fcdf1a9ddd2883"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/recover/input-db/d3-data-0000000100000001",
+    "bytes": 1048576,
+    "sha256": "51089a061ddc825966580bfe86a7046aa482c68ec35439ad36b5640f3b541476"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/recover/input-db/d3-dwb-0",
+    "bytes": 16384,
+    "sha256": "9cc33556e5bf91bacd7f7604916172217988eaebc4d42ac0fb12dde08de9b912"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/recover/input-db/d3-dwb-1",
+    "bytes": 16384,
+    "sha256": "4fe7b59af6de3b665b67788cc2f99892ab827efae3a467342b3bb4e3bc8e5bfe"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/recover/input-db/d3-dwb-images",
+    "bytes": 16711680,
+    "sha256": "6c5e5b0f07ad132df7a8fbe84a1e6a18e99afdcb24d68409c1f98abc8f27f3c4"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/recover/input-db/d3-dwb-reserved",
+    "bytes": 8192,
+    "sha256": "9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/recover/input-db/d3-dwb-stage",
+    "bytes": 16384,
+    "sha256": "2f55b2245100ab1380a48bb9168c3276ace2d1aa7c4b1832cdc34856752ccf94"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/recover/input-db/d3-filemap-0",
+    "bytes": 2113536,
+    "sha256": "5c68a64618b99736aa8a0e10adece83318cc8996ef9039e0879dc0e5d0fb33d1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/recover/input-db/d3-filemap-1",
+    "bytes": 2113536,
+    "sha256": "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/recover/input-db/d3-profile",
+    "bytes": 4096,
+    "sha256": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/recover/input-db/d3-wal-00000001",
+    "bytes": 3257950,
+    "sha256": "574e871f99f57085f3e20bc291857df020c4055f4630bef1200d7c7a607639c5"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/recover/receipt.tsv",
+    "bytes": 367,
+    "sha256": "0371a6506e92509534797b3e719b9bf9c5fdf5c9e358591017fd13372419a5ef"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/recover/test.log",
+    "bytes": 871,
+    "sha256": "263aa8f26957f876db1e1b9c1eb288eb146fa6814dc913f05375507c435d1f5b"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/recover-arena.bin",
+    "bytes": 1048576,
+    "sha256": "fd00b0a435e6f7bb92896d5680740e5da995d0c97d42c93e85761ddb65782b9b"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/recover-claims.bin",
+    "bytes": 22528,
+    "sha256": "b5e7c10822698b50ca7cbdbf84fcff4ea98f5b3d3999bdc40896a5da37c93878"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/reenter/effects.tsv",
+    "bytes": 194258,
+    "sha256": "35f26a789ba5ee1d59f4a610f2935a67374da1e292deffae52891d363e943ad2"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/reenter/entropy.tsv",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/reenter/files.json",
+    "bytes": 2246,
+    "sha256": "31b3df3b3b17a72835e69fe24309a2d16fcf7c2c1cbcbcc912e9c987677d0556"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/reenter/input-db/CURRENT",
+    "bytes": 4096,
+    "sha256": "23685ded37981226c4fe66a65d789b22e4a2e01e42a65362d570f95cafe7faed"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/reenter/input-db/DWB",
+    "bytes": 4096,
+    "sha256": "eaa7e6a352dc2f2401ddc404d688c8ff9d4370f235699518028edd382e333c41"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/reenter/input-db/FILEMAP",
+    "bytes": 4096,
+    "sha256": "5938c6fac59aa7d816b2e8b358df8e15511e78c1f85934b1451fea92fc36dba0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/reenter/input-db/LOCK",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/reenter/input-db/WRITER",
+    "bytes": 4096,
+    "sha256": "6a5943517803e761e1a24971f1b6baa5a5d52c432fab3cd55cc49372c365d00b"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/reenter/input-db/d3-bootstrap",
+    "bytes": 4096,
+    "sha256": "e748c4c73df39f04bf9b82bd4219ad4317d7556f6a2f081254fcdf1a9ddd2883"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/reenter/input-db/d3-data-0000000100000001",
+    "bytes": 1048576,
+    "sha256": "fd00b0a435e6f7bb92896d5680740e5da995d0c97d42c93e85761ddb65782b9b"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/reenter/input-db/d3-dwb-0",
+    "bytes": 16384,
+    "sha256": "1af61eede44ac54511cd4a65c590f1b4e3bc63ca663ba886388df9e9fba456db"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/reenter/input-db/d3-dwb-1",
+    "bytes": 16384,
+    "sha256": "e1774763b23373e5d5d9635f6aa9201788be2578ad7e5bc5368de6566288bfb0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/reenter/input-db/d3-dwb-images",
+    "bytes": 16711680,
+    "sha256": "f5b49a91261837074308b7f1ca84971191a5c4f3360678dbd41e19a97703c882"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/reenter/input-db/d3-dwb-reserved",
+    "bytes": 8192,
+    "sha256": "9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/reenter/input-db/d3-dwb-stage",
+    "bytes": 16384,
+    "sha256": "e1774763b23373e5d5d9635f6aa9201788be2578ad7e5bc5368de6566288bfb0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/reenter/input-db/d3-filemap-0",
+    "bytes": 2113536,
+    "sha256": "5c68a64618b99736aa8a0e10adece83318cc8996ef9039e0879dc0e5d0fb33d1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/reenter/input-db/d3-filemap-1",
+    "bytes": 2113536,
+    "sha256": "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/reenter/input-db/d3-profile",
+    "bytes": 4096,
+    "sha256": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/reenter/input-db/d3-rebase-0",
+    "bytes": 2097152,
+    "sha256": "5e949a090ee8ccadb7f94dac86c37bdc79ee46d4538fa201321a757ac04d2d74"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/reenter/input-db/d3-rebase-1",
+    "bytes": 2097152,
+    "sha256": "5e949a090ee8ccadb7f94dac86c37bdc79ee46d4538fa201321a757ac04d2d74"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/reenter/input-db/d3-wal-00000002",
+    "bytes": 172632,
+    "sha256": "48f5842fa137be41fccb0c31259e9e8c93797568becbbac19a17565f5feb094c"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/reenter/receipt.tsv",
+    "bytes": 359,
+    "sha256": "bf77e80ab45f8a920f6244f6e9afa15b7d89ae179e891245afa1f83710cf743e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/reenter/test.log",
+    "bytes": 863,
+    "sha256": "b8a349b3fe2d1906c90e7334e9f54a239bf8903b1027c2aacea31e4f348741ee"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/reenter-arena.bin",
+    "bytes": 1048576,
+    "sha256": "e7dcdce5799528013257bdef82fc1294fa1ab2c82ebded60377c74013c84342e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC2/reenter-claims.bin",
+    "bytes": 22528,
+    "sha256": "b5e7c10822698b50ca7cbdbf84fcff4ea98f5b3d3999bdc40896a5da37c93878"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/db/CURRENT",
+    "bytes": 4096,
+    "sha256": "e1cb98ffb150cd750f689bdc2ccf555296137a66b2bf325902d5d75b36e40000"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/db/DWB",
+    "bytes": 4096,
+    "sha256": "549782e75a097343f767aca8b00ccfcb73824faa84e6db99d101e6bb24b38dab"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/db/FILEMAP",
+    "bytes": 4096,
+    "sha256": "5938c6fac59aa7d816b2e8b358df8e15511e78c1f85934b1451fea92fc36dba0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/db/LOCK",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/db/WRITER",
+    "bytes": 4096,
+    "sha256": "5bffc1ae884d957503ba56e960936089b8ce2ec7c6303a138787f1971af8c871"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/db/d3-bootstrap",
+    "bytes": 4096,
+    "sha256": "e748c4c73df39f04bf9b82bd4219ad4317d7556f6a2f081254fcdf1a9ddd2883"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/db/d3-data-0000000100000001",
+    "bytes": 1048576,
+    "sha256": "e7dcdce5799528013257bdef82fc1294fa1ab2c82ebded60377c74013c84342e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/db/d3-dwb-0",
+    "bytes": 16384,
+    "sha256": "3816507268799972faf255e77ea255676c9dabc5035cc375ddc00015c75bb3d9"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/db/d3-dwb-1",
+    "bytes": 16384,
+    "sha256": "29d849ff7fc1ef17a5e26bdf270f0895edbb4994456ae1cd29c76920ff2584cd"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/db/d3-dwb-images",
+    "bytes": 16711680,
+    "sha256": "c689ac146763d24b433c4ecb0494d627a755fe2e4baf283821df7c7f1e381b28"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/db/d3-dwb-reserved",
+    "bytes": 8192,
+    "sha256": "9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/db/d3-dwb-stage",
+    "bytes": 16384,
+    "sha256": "3816507268799972faf255e77ea255676c9dabc5035cc375ddc00015c75bb3d9"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/db/d3-filemap-0",
+    "bytes": 2113536,
+    "sha256": "5c68a64618b99736aa8a0e10adece83318cc8996ef9039e0879dc0e5d0fb33d1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/db/d3-filemap-1",
+    "bytes": 2113536,
+    "sha256": "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/db/d3-profile",
+    "bytes": 4096,
+    "sha256": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/db/d3-rebase-0",
+    "bytes": 2097152,
+    "sha256": "8b2c7acf24bac4d18d7a12e4924d504470c22c243dc814d60f48c9dcc201a71c"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/db/d3-rebase-1",
+    "bytes": 2097152,
+    "sha256": "8b2c7acf24bac4d18d7a12e4924d504470c22c243dc814d60f48c9dcc201a71c"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/db/d3-wal-00000003",
+    "bytes": 4096,
+    "sha256": "1f2309394ece893a50959ae04094d0efaec8aa80e982d566051cda8b01c00a97"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/produce/before-arena.bin",
+    "bytes": 1048576,
+    "sha256": "fd00b0a435e6f7bb92896d5680740e5da995d0c97d42c93e85761ddb65782b9b"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/produce/before-claims.bin",
+    "bytes": 22528,
+    "sha256": "b5e7c10822698b50ca7cbdbf84fcff4ea98f5b3d3999bdc40896a5da37c93878"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/produce/before.tsv",
+    "bytes": 123,
+    "sha256": "bbc24a9308b0afeeb0f47dc830211625632cd08d5ed5c47408c7fb781316cc8b"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/produce/effects.tsv",
+    "bytes": 949309,
+    "sha256": "98018ab655a4b5649d53fa1b7827e1d776099933fd7225dfb1a639e4c366c318"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/produce/entropy.tsv",
+    "bytes": 41,
+    "sha256": "5fefbab879ad447346282e8a3ebb379c63b75d12e2ee36e73a0f8ea4b0e0df1c"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/produce/files.json",
+    "bytes": 1875,
+    "sha256": "5c588f464d8cc0d78da1c8e9811fe44fa191942d605cc16324c75c08840f8679"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/produce/receipt.tsv",
+    "bytes": 380,
+    "sha256": "732f1d1c02a21ba0bbe49cad81fc2bf02f81cde9d4b4a6065612edaf438a2163"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/produce/test.log",
+    "bytes": 675,
+    "sha256": "c763c585c3b6cc72786ffc614ff420df67995fec7bb01d6e6d5556d1c22e8e05"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/recover/effects.tsv",
+    "bytes": 398722,
+    "sha256": "9b67aa7b6cb491e41128db557f5ec271ee660c626903f8adde71e96fc3a20377"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/recover/entropy.tsv",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/recover/files.json",
+    "bytes": 2248,
+    "sha256": "39808c227c0833677df983105f961385a9b0ef2ebd7fbc929d055c293c3963f2"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/recover/input-db/DWB",
+    "bytes": 4096,
+    "sha256": "d486bfa3bbec8e2d27073bd8e1aa39a6bd43e1d7e9ddc09fc1c18a885ae776ad"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/recover/input-db/FILEMAP",
+    "bytes": 4096,
+    "sha256": "5938c6fac59aa7d816b2e8b358df8e15511e78c1f85934b1451fea92fc36dba0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/recover/input-db/LOCK",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/recover/input-db/WRITER",
+    "bytes": 4096,
+    "sha256": "82a9e17a80dcb5d9a06c343f90cc4c325deede22362d9c2e82ba8d04b2acd899"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/recover/input-db/d3-bootstrap",
+    "bytes": 4096,
+    "sha256": "e748c4c73df39f04bf9b82bd4219ad4317d7556f6a2f081254fcdf1a9ddd2883"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/recover/input-db/d3-data-0000000100000001",
+    "bytes": 1048576,
+    "sha256": "51089a061ddc825966580bfe86a7046aa482c68ec35439ad36b5640f3b541476"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/recover/input-db/d3-dwb-0",
+    "bytes": 16384,
+    "sha256": "9cc33556e5bf91bacd7f7604916172217988eaebc4d42ac0fb12dde08de9b912"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/recover/input-db/d3-dwb-1",
+    "bytes": 16384,
+    "sha256": "4fe7b59af6de3b665b67788cc2f99892ab827efae3a467342b3bb4e3bc8e5bfe"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/recover/input-db/d3-dwb-images",
+    "bytes": 16711680,
+    "sha256": "6c5e5b0f07ad132df7a8fbe84a1e6a18e99afdcb24d68409c1f98abc8f27f3c4"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/recover/input-db/d3-dwb-reserved",
+    "bytes": 8192,
+    "sha256": "9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/recover/input-db/d3-dwb-stage",
+    "bytes": 16384,
+    "sha256": "2f55b2245100ab1380a48bb9168c3276ace2d1aa7c4b1832cdc34856752ccf94"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/recover/input-db/d3-filemap-0",
+    "bytes": 2113536,
+    "sha256": "5c68a64618b99736aa8a0e10adece83318cc8996ef9039e0879dc0e5d0fb33d1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/recover/input-db/d3-filemap-1",
+    "bytes": 2113536,
+    "sha256": "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/recover/input-db/d3-profile",
+    "bytes": 4096,
+    "sha256": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/recover/input-db/d3-wal-00000001",
+    "bytes": 3257950,
+    "sha256": "574e871f99f57085f3e20bc291857df020c4055f4630bef1200d7c7a607639c5"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/recover/receipt.tsv",
+    "bytes": 370,
+    "sha256": "b87abef8399be316347abaad61027308dce5865eeddbb46a0c1b66f3a5ee43bd"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/recover/test.log",
+    "bytes": 871,
+    "sha256": "c5cf8ac5512372d8b7491e9e3443d0f464f942a7c4a1c7bf8d25490fc47f2687"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/recover-arena.bin",
+    "bytes": 1048576,
+    "sha256": "fd00b0a435e6f7bb92896d5680740e5da995d0c97d42c93e85761ddb65782b9b"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/recover-claims.bin",
+    "bytes": 22528,
+    "sha256": "b5e7c10822698b50ca7cbdbf84fcff4ea98f5b3d3999bdc40896a5da37c93878"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/reenter/effects.tsv",
+    "bytes": 194258,
+    "sha256": "9a7209b48eed8b3c73c0cc883785da5f7d0ed294a29f6fec7c54f4806414f8fc"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/reenter/entropy.tsv",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/reenter/files.json",
+    "bytes": 2246,
+    "sha256": "31b3df3b3b17a72835e69fe24309a2d16fcf7c2c1cbcbcc912e9c987677d0556"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/reenter/input-db/CURRENT",
+    "bytes": 4096,
+    "sha256": "23685ded37981226c4fe66a65d789b22e4a2e01e42a65362d570f95cafe7faed"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/reenter/input-db/DWB",
+    "bytes": 4096,
+    "sha256": "eaa7e6a352dc2f2401ddc404d688c8ff9d4370f235699518028edd382e333c41"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/reenter/input-db/FILEMAP",
+    "bytes": 4096,
+    "sha256": "5938c6fac59aa7d816b2e8b358df8e15511e78c1f85934b1451fea92fc36dba0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/reenter/input-db/LOCK",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/reenter/input-db/WRITER",
+    "bytes": 4096,
+    "sha256": "6a5943517803e761e1a24971f1b6baa5a5d52c432fab3cd55cc49372c365d00b"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/reenter/input-db/d3-bootstrap",
+    "bytes": 4096,
+    "sha256": "e748c4c73df39f04bf9b82bd4219ad4317d7556f6a2f081254fcdf1a9ddd2883"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/reenter/input-db/d3-data-0000000100000001",
+    "bytes": 1048576,
+    "sha256": "fd00b0a435e6f7bb92896d5680740e5da995d0c97d42c93e85761ddb65782b9b"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/reenter/input-db/d3-dwb-0",
+    "bytes": 16384,
+    "sha256": "1af61eede44ac54511cd4a65c590f1b4e3bc63ca663ba886388df9e9fba456db"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/reenter/input-db/d3-dwb-1",
+    "bytes": 16384,
+    "sha256": "e1774763b23373e5d5d9635f6aa9201788be2578ad7e5bc5368de6566288bfb0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/reenter/input-db/d3-dwb-images",
+    "bytes": 16711680,
+    "sha256": "f5b49a91261837074308b7f1ca84971191a5c4f3360678dbd41e19a97703c882"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/reenter/input-db/d3-dwb-reserved",
+    "bytes": 8192,
+    "sha256": "9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/reenter/input-db/d3-dwb-stage",
+    "bytes": 16384,
+    "sha256": "e1774763b23373e5d5d9635f6aa9201788be2578ad7e5bc5368de6566288bfb0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/reenter/input-db/d3-filemap-0",
+    "bytes": 2113536,
+    "sha256": "5c68a64618b99736aa8a0e10adece83318cc8996ef9039e0879dc0e5d0fb33d1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/reenter/input-db/d3-filemap-1",
+    "bytes": 2113536,
+    "sha256": "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/reenter/input-db/d3-profile",
+    "bytes": 4096,
+    "sha256": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/reenter/input-db/d3-rebase-0",
+    "bytes": 2097152,
+    "sha256": "5e949a090ee8ccadb7f94dac86c37bdc79ee46d4538fa201321a757ac04d2d74"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/reenter/input-db/d3-rebase-1",
+    "bytes": 2097152,
+    "sha256": "5e949a090ee8ccadb7f94dac86c37bdc79ee46d4538fa201321a757ac04d2d74"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/reenter/input-db/d3-wal-00000002",
+    "bytes": 172632,
+    "sha256": "48f5842fa137be41fccb0c31259e9e8c93797568becbbac19a17565f5feb094c"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/reenter/receipt.tsv",
+    "bytes": 362,
+    "sha256": "2020ee09286b3defa3e48fe00223d3e7c77c1309c12fb7d6d8d22d7bb9125041"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/reenter/test.log",
+    "bytes": 863,
+    "sha256": "26801e3241dd4da41bef608680fb71dc81cc11c67171df95a36eb30ce4f6a265"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/reenter-arena.bin",
+    "bytes": 1048576,
+    "sha256": "e7dcdce5799528013257bdef82fc1294fa1ab2c82ebded60377c74013c84342e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC3/reenter-claims.bin",
+    "bytes": 22528,
+    "sha256": "b5e7c10822698b50ca7cbdbf84fcff4ea98f5b3d3999bdc40896a5da37c93878"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/db/CURRENT",
+    "bytes": 4096,
+    "sha256": "da1ae9b3fbb70caf1403754741b2e9a9753d2811eec8ad0fd14801da7c96c167"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/db/DWB",
+    "bytes": 4096,
+    "sha256": "c19ee9dfe18aa803ead1db0de0379e8bf8843bcef710bbef59bc4d1323e5b364"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/db/FILEMAP",
+    "bytes": 4096,
+    "sha256": "5938c6fac59aa7d816b2e8b358df8e15511e78c1f85934b1451fea92fc36dba0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/db/LOCK",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/db/WRITER",
+    "bytes": 4096,
+    "sha256": "991a7578773bf79c111927cc77783bc668ef29919899e3d6fed12beba85060b1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/db/d3-bootstrap",
+    "bytes": 4096,
+    "sha256": "e748c4c73df39f04bf9b82bd4219ad4317d7556f6a2f081254fcdf1a9ddd2883"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/db/d3-data-0000000100000001",
+    "bytes": 1048576,
+    "sha256": "6bcdb3804e64c7184616d5341c277749b3af8cf6eb23ddcb083f467da36021fe"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/db/d3-dwb-0",
+    "bytes": 16384,
+    "sha256": "f9ea826927b57d3148b7ccd4e7e523a51d361ffcbf4662c6bad875720fcc59e4"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/db/d3-dwb-1",
+    "bytes": 16384,
+    "sha256": "d41e90be6604e53a18131b42c8bc1089827fdb8d403ed23bd646e7a4ae1181ae"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/db/d3-dwb-images",
+    "bytes": 16711680,
+    "sha256": "30c419d5c8a9671a3099fb5727e33e4ee8606bc81662807bd57cb5a1dfa76b7f"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/db/d3-dwb-reserved",
+    "bytes": 8192,
+    "sha256": "9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/db/d3-dwb-stage",
+    "bytes": 16384,
+    "sha256": "d41e90be6604e53a18131b42c8bc1089827fdb8d403ed23bd646e7a4ae1181ae"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/db/d3-filemap-0",
+    "bytes": 2113536,
+    "sha256": "5c68a64618b99736aa8a0e10adece83318cc8996ef9039e0879dc0e5d0fb33d1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/db/d3-filemap-1",
+    "bytes": 2113536,
+    "sha256": "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/db/d3-profile",
+    "bytes": 4096,
+    "sha256": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/db/d3-rebase-0",
+    "bytes": 2097152,
+    "sha256": "a84173c9c3ac36a682f33f9406a196b7fa4eaa7db36be5db9a076e3ac06ff8c3"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/db/d3-rebase-1",
+    "bytes": 2097152,
+    "sha256": "a84173c9c3ac36a682f33f9406a196b7fa4eaa7db36be5db9a076e3ac06ff8c3"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/db/d3-wal-00000003",
+    "bytes": 4096,
+    "sha256": "9aa7b0fc943ec1d16b6fca4a177cbc0fe91e0933bab822e26ff8f8ad1e1324e1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/produce/before-arena.bin",
+    "bytes": 1048576,
+    "sha256": "fd00b0a435e6f7bb92896d5680740e5da995d0c97d42c93e85761ddb65782b9b"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/produce/before-claims.bin",
+    "bytes": 22528,
+    "sha256": "b5e7c10822698b50ca7cbdbf84fcff4ea98f5b3d3999bdc40896a5da37c93878"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/produce/before.tsv",
+    "bytes": 123,
+    "sha256": "bbc24a9308b0afeeb0f47dc830211625632cd08d5ed5c47408c7fb781316cc8b"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/produce/effects.tsv",
+    "bytes": 949552,
+    "sha256": "1f19a724b0d2b776c7b27b8896aff88228dc993be00c63a296da27e167e799cf"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/produce/entropy.tsv",
+    "bytes": 41,
+    "sha256": "d22ef334e655f669f2466d923dd6ca61adc5de19a4a61c56eafa98e0e90b3fbb"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/produce/files.json",
+    "bytes": 1875,
+    "sha256": "d0b97fdcfdbd01dad74970f1f19dc98ce3f40a534a5e4475f4d751ee47d8495c"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/produce/receipt.tsv",
+    "bytes": 378,
+    "sha256": "11077448306b050d37a4fa9024e39a808d9029fc4e89466712824a415c4b2af6"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/produce/test.log",
+    "bytes": 673,
+    "sha256": "66cfa7c692b8a066134ba6f39acc31d490e1c42fe039d2a2c4d8e2898527974d"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/recover/effects.tsv",
+    "bytes": 415559,
+    "sha256": "d773eb05928d1323f30763bec7ffb37d43e6a19cb5faec7b7eaca4b63f823981"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/recover/entropy.tsv",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/recover/files.json",
+    "bytes": 2248,
+    "sha256": "bcdbf2d752c2b1ddb565de40b306e8efa08ffaa16b01a445f0fab77cd08e6a6d"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/recover/input-db/DWB",
+    "bytes": 4096,
+    "sha256": "d486bfa3bbec8e2d27073bd8e1aa39a6bd43e1d7e9ddc09fc1c18a885ae776ad"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/recover/input-db/FILEMAP",
+    "bytes": 4096,
+    "sha256": "5938c6fac59aa7d816b2e8b358df8e15511e78c1f85934b1451fea92fc36dba0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/recover/input-db/LOCK",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/recover/input-db/WRITER",
+    "bytes": 4096,
+    "sha256": "82a9e17a80dcb5d9a06c343f90cc4c325deede22362d9c2e82ba8d04b2acd899"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/recover/input-db/d3-bootstrap",
+    "bytes": 4096,
+    "sha256": "e748c4c73df39f04bf9b82bd4219ad4317d7556f6a2f081254fcdf1a9ddd2883"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/recover/input-db/d3-data-0000000100000001",
+    "bytes": 1048576,
+    "sha256": "51089a061ddc825966580bfe86a7046aa482c68ec35439ad36b5640f3b541476"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/recover/input-db/d3-dwb-0",
+    "bytes": 16384,
+    "sha256": "9cc33556e5bf91bacd7f7604916172217988eaebc4d42ac0fb12dde08de9b912"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/recover/input-db/d3-dwb-1",
+    "bytes": 16384,
+    "sha256": "4fe7b59af6de3b665b67788cc2f99892ab827efae3a467342b3bb4e3bc8e5bfe"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/recover/input-db/d3-dwb-images",
+    "bytes": 16711680,
+    "sha256": "6c5e5b0f07ad132df7a8fbe84a1e6a18e99afdcb24d68409c1f98abc8f27f3c4"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/recover/input-db/d3-dwb-reserved",
+    "bytes": 8192,
+    "sha256": "9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/recover/input-db/d3-dwb-stage",
+    "bytes": 16384,
+    "sha256": "2f55b2245100ab1380a48bb9168c3276ace2d1aa7c4b1832cdc34856752ccf94"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/recover/input-db/d3-filemap-0",
+    "bytes": 2113536,
+    "sha256": "5c68a64618b99736aa8a0e10adece83318cc8996ef9039e0879dc0e5d0fb33d1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/recover/input-db/d3-filemap-1",
+    "bytes": 2113536,
+    "sha256": "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/recover/input-db/d3-profile",
+    "bytes": 4096,
+    "sha256": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/recover/input-db/d3-wal-00000001",
+    "bytes": 3342590,
+    "sha256": "7c9456322b5e48da9bd68cd9360e0e2d1ed160164973378ae83a07b146500a04"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/recover/receipt.tsv",
+    "bytes": 370,
+    "sha256": "4a2cf4da8614eae15d15a1ebdc76a623168cbaa9001616657c161c2b2974243e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/recover/test.log",
+    "bytes": 873,
+    "sha256": "04ca13a9808e8a28937a3eb153554ee6d87730a2461f596228cab06820224385"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/recover-arena.bin",
+    "bytes": 1048576,
+    "sha256": "bd38abc957c70d70b50a5daa0efe6f42659acf64a5cdaf23b069432f05aea555"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/recover-claims.bin",
+    "bytes": 22528,
+    "sha256": "c29234136c509f081d9fccc72a76fea86442005a2aec87ca4dcd5879105f785f"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/reenter/effects.tsv",
+    "bytes": 197863,
+    "sha256": "a243963b7a14d37645c2658495c3479adcbab1f8498429a80ad3b7a82d3e88f8"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/reenter/entropy.tsv",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/reenter/files.json",
+    "bytes": 2246,
+    "sha256": "1b9a0617f6edcc2c4288d51cd424339eb181fa817f2a6d5bbf915d57c266106c"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/reenter/input-db/CURRENT",
+    "bytes": 4096,
+    "sha256": "7a270e99716bc3cafe87759c1cd06f4004721091d0bb8b55b9b421a76d999319"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/reenter/input-db/DWB",
+    "bytes": 4096,
+    "sha256": "445641d7592ece1ea066a0df3548705e3294d8d18954605d2a189d462f24ea4e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/reenter/input-db/FILEMAP",
+    "bytes": 4096,
+    "sha256": "5938c6fac59aa7d816b2e8b358df8e15511e78c1f85934b1451fea92fc36dba0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/reenter/input-db/LOCK",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/reenter/input-db/WRITER",
+    "bytes": 4096,
+    "sha256": "10d067298a5fa5e35e0641caba916086425e68b274ad4c4c274c8b7ffc1d139c"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/reenter/input-db/d3-bootstrap",
+    "bytes": 4096,
+    "sha256": "e748c4c73df39f04bf9b82bd4219ad4317d7556f6a2f081254fcdf1a9ddd2883"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/reenter/input-db/d3-data-0000000100000001",
+    "bytes": 1048576,
+    "sha256": "bd38abc957c70d70b50a5daa0efe6f42659acf64a5cdaf23b069432f05aea555"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/reenter/input-db/d3-dwb-0",
+    "bytes": 16384,
+    "sha256": "ada529c7cd223080c5e4d9f82961e35534124420aae5201e9661c8a9059ffaa6"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/reenter/input-db/d3-dwb-1",
+    "bytes": 16384,
+    "sha256": "8243c1c61221bd5422356c1b5db3f398470a66869d0c2b1ed21e79c2cbbf9d06"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/reenter/input-db/d3-dwb-images",
+    "bytes": 16711680,
+    "sha256": "e52151daf551e500fddc33beb6e76931d721606e6a93eb49f63e0c22f087d5e2"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/reenter/input-db/d3-dwb-reserved",
+    "bytes": 8192,
+    "sha256": "9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/reenter/input-db/d3-dwb-stage",
+    "bytes": 16384,
+    "sha256": "ada529c7cd223080c5e4d9f82961e35534124420aae5201e9661c8a9059ffaa6"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/reenter/input-db/d3-filemap-0",
+    "bytes": 2113536,
+    "sha256": "5c68a64618b99736aa8a0e10adece83318cc8996ef9039e0879dc0e5d0fb33d1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/reenter/input-db/d3-filemap-1",
+    "bytes": 2113536,
+    "sha256": "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/reenter/input-db/d3-profile",
+    "bytes": 4096,
+    "sha256": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/reenter/input-db/d3-rebase-0",
+    "bytes": 2097152,
+    "sha256": "1c4b2e604f2bbc44f29b800ca25489080ea776eda738ab3eaec4226428afcafd"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/reenter/input-db/d3-rebase-1",
+    "bytes": 2097152,
+    "sha256": "1c4b2e604f2bbc44f29b800ca25489080ea776eda738ab3eaec4226428afcafd"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/reenter/input-db/d3-wal-00000002",
+    "bytes": 172632,
+    "sha256": "9f258fb93570377f7bb0a1e7929bec4554d6745caac500ce31cad127ebdad041"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/reenter/receipt.tsv",
+    "bytes": 362,
+    "sha256": "6a8a199d147adbda7c56813d3545a52d40186137e6daa2e5c6f0a1515b8bc0b9"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/reenter/test.log",
+    "bytes": 865,
+    "sha256": "2b60672aa2d36e8d197bc8c157204a246597080ee4bfe821734e60efa0e472fa"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/reenter-arena.bin",
+    "bytes": 1048576,
+    "sha256": "6bcdb3804e64c7184616d5341c277749b3af8cf6eb23ddcb083f467da36021fe"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC4/reenter-claims.bin",
+    "bytes": 22528,
+    "sha256": "c29234136c509f081d9fccc72a76fea86442005a2aec87ca4dcd5879105f785f"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/db/CURRENT",
+    "bytes": 4096,
+    "sha256": "da1ae9b3fbb70caf1403754741b2e9a9753d2811eec8ad0fd14801da7c96c167"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/db/DWB",
+    "bytes": 4096,
+    "sha256": "c19ee9dfe18aa803ead1db0de0379e8bf8843bcef710bbef59bc4d1323e5b364"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/db/FILEMAP",
+    "bytes": 4096,
+    "sha256": "5938c6fac59aa7d816b2e8b358df8e15511e78c1f85934b1451fea92fc36dba0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/db/LOCK",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/db/WRITER",
+    "bytes": 4096,
+    "sha256": "991a7578773bf79c111927cc77783bc668ef29919899e3d6fed12beba85060b1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/db/d3-bootstrap",
+    "bytes": 4096,
+    "sha256": "e748c4c73df39f04bf9b82bd4219ad4317d7556f6a2f081254fcdf1a9ddd2883"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/db/d3-data-0000000100000001",
+    "bytes": 1048576,
+    "sha256": "6bcdb3804e64c7184616d5341c277749b3af8cf6eb23ddcb083f467da36021fe"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/db/d3-dwb-0",
+    "bytes": 16384,
+    "sha256": "f9ea826927b57d3148b7ccd4e7e523a51d361ffcbf4662c6bad875720fcc59e4"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/db/d3-dwb-1",
+    "bytes": 16384,
+    "sha256": "d41e90be6604e53a18131b42c8bc1089827fdb8d403ed23bd646e7a4ae1181ae"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/db/d3-dwb-images",
+    "bytes": 16711680,
+    "sha256": "30c419d5c8a9671a3099fb5727e33e4ee8606bc81662807bd57cb5a1dfa76b7f"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/db/d3-dwb-reserved",
+    "bytes": 8192,
+    "sha256": "9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/db/d3-dwb-stage",
+    "bytes": 16384,
+    "sha256": "d41e90be6604e53a18131b42c8bc1089827fdb8d403ed23bd646e7a4ae1181ae"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/db/d3-filemap-0",
+    "bytes": 2113536,
+    "sha256": "5c68a64618b99736aa8a0e10adece83318cc8996ef9039e0879dc0e5d0fb33d1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/db/d3-filemap-1",
+    "bytes": 2113536,
+    "sha256": "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/db/d3-profile",
+    "bytes": 4096,
+    "sha256": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/db/d3-rebase-0",
+    "bytes": 2097152,
+    "sha256": "a84173c9c3ac36a682f33f9406a196b7fa4eaa7db36be5db9a076e3ac06ff8c3"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/db/d3-rebase-1",
+    "bytes": 2097152,
+    "sha256": "a84173c9c3ac36a682f33f9406a196b7fa4eaa7db36be5db9a076e3ac06ff8c3"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/db/d3-wal-00000003",
+    "bytes": 4096,
+    "sha256": "9aa7b0fc943ec1d16b6fca4a177cbc0fe91e0933bab822e26ff8f8ad1e1324e1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/produce/before-arena.bin",
+    "bytes": 1048576,
+    "sha256": "fd00b0a435e6f7bb92896d5680740e5da995d0c97d42c93e85761ddb65782b9b"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/produce/before-claims.bin",
+    "bytes": 22528,
+    "sha256": "b5e7c10822698b50ca7cbdbf84fcff4ea98f5b3d3999bdc40896a5da37c93878"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/produce/before.tsv",
+    "bytes": 123,
+    "sha256": "bbc24a9308b0afeeb0f47dc830211625632cd08d5ed5c47408c7fb781316cc8b"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/produce/effects.tsv",
+    "bytes": 975506,
+    "sha256": "ee150c69d8bd110267ac0e7e16c868884ed7f0125f18cadf928ef0fd63323257"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/produce/entropy.tsv",
+    "bytes": 41,
+    "sha256": "555a74a51b7c6dfb6971bfbd81b55c9a31c7e3dc7ab5eea4b5d6094b6cff101f"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/produce/files.json",
+    "bytes": 1875,
+    "sha256": "d0b97fdcfdbd01dad74970f1f19dc98ce3f40a534a5e4475f4d751ee47d8495c"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/produce/receipt.tsv",
+    "bytes": 379,
+    "sha256": "a95b383e37c6de02d1d7d3b434509617f2fdc25ebc4a4d195b48dbf9f40143e4"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/produce/test.log",
+    "bytes": 674,
+    "sha256": "7b962b4d3531450842dad6a3f285c63e74f159bad34d8f8e452396648bc18179"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/recover/effects.tsv",
+    "bytes": 415559,
+    "sha256": "cff786f53a76c54426974f29a0589de9e718c5f4f9e82c47d447f59735170660"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/recover/entropy.tsv",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/recover/files.json",
+    "bytes": 2248,
+    "sha256": "bcdbf2d752c2b1ddb565de40b306e8efa08ffaa16b01a445f0fab77cd08e6a6d"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/recover/input-db/DWB",
+    "bytes": 4096,
+    "sha256": "d486bfa3bbec8e2d27073bd8e1aa39a6bd43e1d7e9ddc09fc1c18a885ae776ad"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/recover/input-db/FILEMAP",
+    "bytes": 4096,
+    "sha256": "5938c6fac59aa7d816b2e8b358df8e15511e78c1f85934b1451fea92fc36dba0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/recover/input-db/LOCK",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/recover/input-db/WRITER",
+    "bytes": 4096,
+    "sha256": "82a9e17a80dcb5d9a06c343f90cc4c325deede22362d9c2e82ba8d04b2acd899"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/recover/input-db/d3-bootstrap",
+    "bytes": 4096,
+    "sha256": "e748c4c73df39f04bf9b82bd4219ad4317d7556f6a2f081254fcdf1a9ddd2883"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/recover/input-db/d3-data-0000000100000001",
+    "bytes": 1048576,
+    "sha256": "51089a061ddc825966580bfe86a7046aa482c68ec35439ad36b5640f3b541476"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/recover/input-db/d3-dwb-0",
+    "bytes": 16384,
+    "sha256": "9cc33556e5bf91bacd7f7604916172217988eaebc4d42ac0fb12dde08de9b912"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/recover/input-db/d3-dwb-1",
+    "bytes": 16384,
+    "sha256": "4fe7b59af6de3b665b67788cc2f99892ab827efae3a467342b3bb4e3bc8e5bfe"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/recover/input-db/d3-dwb-images",
+    "bytes": 16711680,
+    "sha256": "6c5e5b0f07ad132df7a8fbe84a1e6a18e99afdcb24d68409c1f98abc8f27f3c4"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/recover/input-db/d3-dwb-reserved",
+    "bytes": 8192,
+    "sha256": "9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/recover/input-db/d3-dwb-stage",
+    "bytes": 16384,
+    "sha256": "2f55b2245100ab1380a48bb9168c3276ace2d1aa7c4b1832cdc34856752ccf94"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/recover/input-db/d3-filemap-0",
+    "bytes": 2113536,
+    "sha256": "5c68a64618b99736aa8a0e10adece83318cc8996ef9039e0879dc0e5d0fb33d1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/recover/input-db/d3-filemap-1",
+    "bytes": 2113536,
+    "sha256": "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/recover/input-db/d3-profile",
+    "bytes": 4096,
+    "sha256": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/recover/input-db/d3-wal-00000001",
+    "bytes": 3342590,
+    "sha256": "7c9456322b5e48da9bd68cd9360e0e2d1ed160164973378ae83a07b146500a04"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/recover/receipt.tsv",
+    "bytes": 371,
+    "sha256": "961d1b18f33ca4e4543a8bd2b3eb7aa8439931799f7b0b6c84be50ebd4c88b6c"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/recover/test.log",
+    "bytes": 873,
+    "sha256": "2c377133c1cccadcd9f0e52c3a1a8e8427307adeb9f09de5b69fd8238551a4c6"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/recover-arena.bin",
+    "bytes": 1048576,
+    "sha256": "bd38abc957c70d70b50a5daa0efe6f42659acf64a5cdaf23b069432f05aea555"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/recover-claims.bin",
+    "bytes": 22528,
+    "sha256": "c29234136c509f081d9fccc72a76fea86442005a2aec87ca4dcd5879105f785f"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/reenter/effects.tsv",
+    "bytes": 197863,
+    "sha256": "c3265cb8fca76a3d1cdcf3190075056cd12c2cf47e4415d6c55ae0a56c9ffade"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/reenter/entropy.tsv",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/reenter/files.json",
+    "bytes": 2246,
+    "sha256": "1b9a0617f6edcc2c4288d51cd424339eb181fa817f2a6d5bbf915d57c266106c"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/reenter/input-db/CURRENT",
+    "bytes": 4096,
+    "sha256": "7a270e99716bc3cafe87759c1cd06f4004721091d0bb8b55b9b421a76d999319"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/reenter/input-db/DWB",
+    "bytes": 4096,
+    "sha256": "445641d7592ece1ea066a0df3548705e3294d8d18954605d2a189d462f24ea4e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/reenter/input-db/FILEMAP",
+    "bytes": 4096,
+    "sha256": "5938c6fac59aa7d816b2e8b358df8e15511e78c1f85934b1451fea92fc36dba0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/reenter/input-db/LOCK",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/reenter/input-db/WRITER",
+    "bytes": 4096,
+    "sha256": "10d067298a5fa5e35e0641caba916086425e68b274ad4c4c274c8b7ffc1d139c"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/reenter/input-db/d3-bootstrap",
+    "bytes": 4096,
+    "sha256": "e748c4c73df39f04bf9b82bd4219ad4317d7556f6a2f081254fcdf1a9ddd2883"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/reenter/input-db/d3-data-0000000100000001",
+    "bytes": 1048576,
+    "sha256": "bd38abc957c70d70b50a5daa0efe6f42659acf64a5cdaf23b069432f05aea555"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/reenter/input-db/d3-dwb-0",
+    "bytes": 16384,
+    "sha256": "ada529c7cd223080c5e4d9f82961e35534124420aae5201e9661c8a9059ffaa6"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/reenter/input-db/d3-dwb-1",
+    "bytes": 16384,
+    "sha256": "8243c1c61221bd5422356c1b5db3f398470a66869d0c2b1ed21e79c2cbbf9d06"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/reenter/input-db/d3-dwb-images",
+    "bytes": 16711680,
+    "sha256": "e52151daf551e500fddc33beb6e76931d721606e6a93eb49f63e0c22f087d5e2"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/reenter/input-db/d3-dwb-reserved",
+    "bytes": 8192,
+    "sha256": "9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/reenter/input-db/d3-dwb-stage",
+    "bytes": 16384,
+    "sha256": "ada529c7cd223080c5e4d9f82961e35534124420aae5201e9661c8a9059ffaa6"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/reenter/input-db/d3-filemap-0",
+    "bytes": 2113536,
+    "sha256": "5c68a64618b99736aa8a0e10adece83318cc8996ef9039e0879dc0e5d0fb33d1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/reenter/input-db/d3-filemap-1",
+    "bytes": 2113536,
+    "sha256": "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/reenter/input-db/d3-profile",
+    "bytes": 4096,
+    "sha256": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/reenter/input-db/d3-rebase-0",
+    "bytes": 2097152,
+    "sha256": "1c4b2e604f2bbc44f29b800ca25489080ea776eda738ab3eaec4226428afcafd"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/reenter/input-db/d3-rebase-1",
+    "bytes": 2097152,
+    "sha256": "1c4b2e604f2bbc44f29b800ca25489080ea776eda738ab3eaec4226428afcafd"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/reenter/input-db/d3-wal-00000002",
+    "bytes": 172632,
+    "sha256": "9f258fb93570377f7bb0a1e7929bec4554d6745caac500ce31cad127ebdad041"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/reenter/receipt.tsv",
+    "bytes": 363,
+    "sha256": "3d5b159ffac56e808286bba3517b98300ae13dd2ced8d382ebd05355ffe08e2a"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/reenter/test.log",
+    "bytes": 865,
+    "sha256": "793303432f222dbabb7fe3db4b20b7ed2005ebcea50944b619f02c74ef79d0a8"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/reenter-arena.bin",
+    "bytes": 1048576,
+    "sha256": "6bcdb3804e64c7184616d5341c277749b3af8cf6eb23ddcb083f467da36021fe"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NC5/reenter-claims.bin",
+    "bytes": 22528,
+    "sha256": "c29234136c509f081d9fccc72a76fea86442005a2aec87ca4dcd5879105f785f"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/db/CURRENT",
+    "bytes": 4096,
+    "sha256": "e1cb98ffb150cd750f689bdc2ccf555296137a66b2bf325902d5d75b36e40000"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/db/DWB",
+    "bytes": 4096,
+    "sha256": "549782e75a097343f767aca8b00ccfcb73824faa84e6db99d101e6bb24b38dab"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/db/FILEMAP",
+    "bytes": 4096,
+    "sha256": "5938c6fac59aa7d816b2e8b358df8e15511e78c1f85934b1451fea92fc36dba0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/db/LOCK",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/db/WRITER",
+    "bytes": 4096,
+    "sha256": "5bffc1ae884d957503ba56e960936089b8ce2ec7c6303a138787f1971af8c871"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/db/d3-bootstrap",
+    "bytes": 4096,
+    "sha256": "e748c4c73df39f04bf9b82bd4219ad4317d7556f6a2f081254fcdf1a9ddd2883"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/db/d3-data-0000000100000001",
+    "bytes": 1048576,
+    "sha256": "e7dcdce5799528013257bdef82fc1294fa1ab2c82ebded60377c74013c84342e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/db/d3-dwb-0",
+    "bytes": 16384,
+    "sha256": "3816507268799972faf255e77ea255676c9dabc5035cc375ddc00015c75bb3d9"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/db/d3-dwb-1",
+    "bytes": 16384,
+    "sha256": "29d849ff7fc1ef17a5e26bdf270f0895edbb4994456ae1cd29c76920ff2584cd"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/db/d3-dwb-images",
+    "bytes": 16711680,
+    "sha256": "c689ac146763d24b433c4ecb0494d627a755fe2e4baf283821df7c7f1e381b28"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/db/d3-dwb-reserved",
+    "bytes": 8192,
+    "sha256": "9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/db/d3-dwb-stage",
+    "bytes": 16384,
+    "sha256": "3816507268799972faf255e77ea255676c9dabc5035cc375ddc00015c75bb3d9"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/db/d3-filemap-0",
+    "bytes": 2113536,
+    "sha256": "5c68a64618b99736aa8a0e10adece83318cc8996ef9039e0879dc0e5d0fb33d1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/db/d3-filemap-1",
+    "bytes": 2113536,
+    "sha256": "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/db/d3-profile",
+    "bytes": 4096,
+    "sha256": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/db/d3-rebase-0",
+    "bytes": 2097152,
+    "sha256": "8b2c7acf24bac4d18d7a12e4924d504470c22c243dc814d60f48c9dcc201a71c"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/db/d3-rebase-1",
+    "bytes": 2097152,
+    "sha256": "8b2c7acf24bac4d18d7a12e4924d504470c22c243dc814d60f48c9dcc201a71c"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/db/d3-wal-00000003",
+    "bytes": 4096,
+    "sha256": "1f2309394ece893a50959ae04094d0efaec8aa80e982d566051cda8b01c00a97"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/produce/before-arena.bin",
+    "bytes": 1048576,
+    "sha256": "945c7ae44ce4ac79d9ee8e16e2d1a2ce751f55f9a8499811d23efe06b7796380"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/produce/before-claims.bin",
+    "bytes": 22528,
+    "sha256": "90a561c4bbfe3b7c1b12e999fb3ae638361d001e550ad1cd7f9be53c71628233"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/produce/before.tsv",
+    "bytes": 122,
+    "sha256": "8bc969283c50f2a92f2ded49eb954565a1262f313c484a71afece65c24ed172a"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/produce/effects.tsv",
+    "bytes": 923677,
+    "sha256": "c9117a165f3631381aec7da816d9141e3e3740ec8c79f0aa3c20ea8cf3e228fd"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/produce/entropy.tsv",
+    "bytes": 41,
+    "sha256": "c48ca98f6fc491e5a60414cd7a0f7e3937a66e6507f08dc8244f7dad230a4be9"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/produce/files.json",
+    "bytes": 1875,
+    "sha256": "5c588f464d8cc0d78da1c8e9811fe44fa191942d605cc16324c75c08840f8679"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/produce/receipt.tsv",
+    "bytes": 379,
+    "sha256": "3b811a7bd5d3eb9781bca7f420734daed9c808b3ff7051c961e790b39473c96e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/produce/test.log",
+    "bytes": 674,
+    "sha256": "e62a6f892685ab2957bf69490430de906cc0620196d87f17efff493f8c62f9c7"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/recover/effects.tsv",
+    "bytes": 400342,
+    "sha256": "b6719c79908e2caddf9d02666c454c8817fee45c6e92c002d0bc1d37dcc6ca58"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/recover/entropy.tsv",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/recover/files.json",
+    "bytes": 2248,
+    "sha256": "39808c227c0833677df983105f961385a9b0ef2ebd7fbc929d055c293c3963f2"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/recover/input-db/DWB",
+    "bytes": 4096,
+    "sha256": "d486bfa3bbec8e2d27073bd8e1aa39a6bd43e1d7e9ddc09fc1c18a885ae776ad"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/recover/input-db/FILEMAP",
+    "bytes": 4096,
+    "sha256": "5938c6fac59aa7d816b2e8b358df8e15511e78c1f85934b1451fea92fc36dba0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/recover/input-db/LOCK",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/recover/input-db/WRITER",
+    "bytes": 4096,
+    "sha256": "82a9e17a80dcb5d9a06c343f90cc4c325deede22362d9c2e82ba8d04b2acd899"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/recover/input-db/d3-bootstrap",
+    "bytes": 4096,
+    "sha256": "e748c4c73df39f04bf9b82bd4219ad4317d7556f6a2f081254fcdf1a9ddd2883"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/recover/input-db/d3-data-0000000100000001",
+    "bytes": 1048576,
+    "sha256": "51089a061ddc825966580bfe86a7046aa482c68ec35439ad36b5640f3b541476"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/recover/input-db/d3-dwb-0",
+    "bytes": 16384,
+    "sha256": "9cc33556e5bf91bacd7f7604916172217988eaebc4d42ac0fb12dde08de9b912"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/recover/input-db/d3-dwb-1",
+    "bytes": 16384,
+    "sha256": "4fe7b59af6de3b665b67788cc2f99892ab827efae3a467342b3bb4e3bc8e5bfe"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/recover/input-db/d3-dwb-images",
+    "bytes": 16711680,
+    "sha256": "6c5e5b0f07ad132df7a8fbe84a1e6a18e99afdcb24d68409c1f98abc8f27f3c4"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/recover/input-db/d3-dwb-reserved",
+    "bytes": 8192,
+    "sha256": "9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/recover/input-db/d3-dwb-stage",
+    "bytes": 16384,
+    "sha256": "2f55b2245100ab1380a48bb9168c3276ace2d1aa7c4b1832cdc34856752ccf94"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/recover/input-db/d3-filemap-0",
+    "bytes": 2113536,
+    "sha256": "5c68a64618b99736aa8a0e10adece83318cc8996ef9039e0879dc0e5d0fb33d1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/recover/input-db/d3-filemap-1",
+    "bytes": 2113536,
+    "sha256": "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/recover/input-db/d3-profile",
+    "bytes": 4096,
+    "sha256": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/recover/input-db/d3-wal-00000001",
+    "bytes": 3257950,
+    "sha256": "574e871f99f57085f3e20bc291857df020c4055f4630bef1200d7c7a607639c5"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/recover/receipt.tsv",
+    "bytes": 369,
+    "sha256": "f188c6a6289a4670a6f3cdca3afa7a4ebffff511f55fbe93efb9202260852604"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/recover/test.log",
+    "bytes": 871,
+    "sha256": "6accd22112fb8a92d52548c0c8d67a4a1497756819ab310b673d3d0e529c375d"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/recover-arena.bin",
+    "bytes": 1048576,
+    "sha256": "fd00b0a435e6f7bb92896d5680740e5da995d0c97d42c93e85761ddb65782b9b"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/recover-claims.bin",
+    "bytes": 22528,
+    "sha256": "b5e7c10822698b50ca7cbdbf84fcff4ea98f5b3d3999bdc40896a5da37c93878"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/reenter/effects.tsv",
+    "bytes": 195878,
+    "sha256": "314c46128fa32839eb5d427088581e2eb6a64607c06d3c2c5409845dd88ecfd4"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/reenter/entropy.tsv",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/reenter/files.json",
+    "bytes": 2246,
+    "sha256": "31b3df3b3b17a72835e69fe24309a2d16fcf7c2c1cbcbcc912e9c987677d0556"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/reenter/input-db/CURRENT",
+    "bytes": 4096,
+    "sha256": "23685ded37981226c4fe66a65d789b22e4a2e01e42a65362d570f95cafe7faed"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/reenter/input-db/DWB",
+    "bytes": 4096,
+    "sha256": "eaa7e6a352dc2f2401ddc404d688c8ff9d4370f235699518028edd382e333c41"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/reenter/input-db/FILEMAP",
+    "bytes": 4096,
+    "sha256": "5938c6fac59aa7d816b2e8b358df8e15511e78c1f85934b1451fea92fc36dba0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/reenter/input-db/LOCK",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/reenter/input-db/WRITER",
+    "bytes": 4096,
+    "sha256": "6a5943517803e761e1a24971f1b6baa5a5d52c432fab3cd55cc49372c365d00b"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/reenter/input-db/d3-bootstrap",
+    "bytes": 4096,
+    "sha256": "e748c4c73df39f04bf9b82bd4219ad4317d7556f6a2f081254fcdf1a9ddd2883"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/reenter/input-db/d3-data-0000000100000001",
+    "bytes": 1048576,
+    "sha256": "fd00b0a435e6f7bb92896d5680740e5da995d0c97d42c93e85761ddb65782b9b"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/reenter/input-db/d3-dwb-0",
+    "bytes": 16384,
+    "sha256": "1af61eede44ac54511cd4a65c590f1b4e3bc63ca663ba886388df9e9fba456db"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/reenter/input-db/d3-dwb-1",
+    "bytes": 16384,
+    "sha256": "e1774763b23373e5d5d9635f6aa9201788be2578ad7e5bc5368de6566288bfb0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/reenter/input-db/d3-dwb-images",
+    "bytes": 16711680,
+    "sha256": "f5b49a91261837074308b7f1ca84971191a5c4f3360678dbd41e19a97703c882"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/reenter/input-db/d3-dwb-reserved",
+    "bytes": 8192,
+    "sha256": "9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/reenter/input-db/d3-dwb-stage",
+    "bytes": 16384,
+    "sha256": "e1774763b23373e5d5d9635f6aa9201788be2578ad7e5bc5368de6566288bfb0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/reenter/input-db/d3-filemap-0",
+    "bytes": 2113536,
+    "sha256": "5c68a64618b99736aa8a0e10adece83318cc8996ef9039e0879dc0e5d0fb33d1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/reenter/input-db/d3-filemap-1",
+    "bytes": 2113536,
+    "sha256": "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/reenter/input-db/d3-profile",
+    "bytes": 4096,
+    "sha256": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/reenter/input-db/d3-rebase-0",
+    "bytes": 2097152,
+    "sha256": "5e949a090ee8ccadb7f94dac86c37bdc79ee46d4538fa201321a757ac04d2d74"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/reenter/input-db/d3-rebase-1",
+    "bytes": 2097152,
+    "sha256": "5e949a090ee8ccadb7f94dac86c37bdc79ee46d4538fa201321a757ac04d2d74"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/reenter/input-db/d3-wal-00000002",
+    "bytes": 172632,
+    "sha256": "48f5842fa137be41fccb0c31259e9e8c93797568becbbac19a17565f5feb094c"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/reenter/receipt.tsv",
+    "bytes": 361,
+    "sha256": "8ebf3d12f88a592bba33536cd767dfa276d3c4c38dcb94edcc8c02826e3d8fce"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/reenter/test.log",
+    "bytes": 863,
+    "sha256": "1013b4e6bd355adc27784d0383242b396dbd1b9ac701350ae062cb01a8056829"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/reenter-arena.bin",
+    "bytes": 1048576,
+    "sha256": "e7dcdce5799528013257bdef82fc1294fa1ab2c82ebded60377c74013c84342e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/SMO-NR5/reenter-claims.bin",
+    "bytes": 22528,
+    "sha256": "b5e7c10822698b50ca7cbdbf84fcff4ea98f5b3d3999bdc40896a5da37c93878"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/complete.json",
+    "bytes": 4011,
+    "sha256": "bf7b4636725bd39bf3eafb3ed6b4f4fd2ba0946adc8ab2fb764b5ba43d6f45eb"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/execution-plan.json",
+    "bytes": 1823,
+    "sha256": "c61a17984001d13993279170e7cafb7b6022424b97145044b501abac3b70ab44"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/results.json",
+    "bytes": 1645,
+    "sha256": "58e3ea31d03d0b65d49f8351670e220c1e0bf1a8775eea98945948088ef6a94b"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-rest/source-files.sha256",
+    "bytes": 129971,
+    "sha256": "c1d892f917631e1547506cd85ba89f9342de1c66c229d728b47e253533d02358"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/db/CURRENT",
+    "bytes": 4096,
+    "sha256": "e1cb98ffb150cd750f689bdc2ccf555296137a66b2bf325902d5d75b36e40000"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/db/DWB",
+    "bytes": 4096,
+    "sha256": "549782e75a097343f767aca8b00ccfcb73824faa84e6db99d101e6bb24b38dab"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/db/FILEMAP",
+    "bytes": 4096,
+    "sha256": "5938c6fac59aa7d816b2e8b358df8e15511e78c1f85934b1451fea92fc36dba0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/db/LOCK",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/db/WRITER",
+    "bytes": 4096,
+    "sha256": "5bffc1ae884d957503ba56e960936089b8ce2ec7c6303a138787f1971af8c871"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/db/d3-bootstrap",
+    "bytes": 4096,
+    "sha256": "e748c4c73df39f04bf9b82bd4219ad4317d7556f6a2f081254fcdf1a9ddd2883"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/db/d3-data-0000000100000001",
+    "bytes": 1048576,
+    "sha256": "e7dcdce5799528013257bdef82fc1294fa1ab2c82ebded60377c74013c84342e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/db/d3-dwb-0",
+    "bytes": 16384,
+    "sha256": "3816507268799972faf255e77ea255676c9dabc5035cc375ddc00015c75bb3d9"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/db/d3-dwb-1",
+    "bytes": 16384,
+    "sha256": "29d849ff7fc1ef17a5e26bdf270f0895edbb4994456ae1cd29c76920ff2584cd"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/db/d3-dwb-images",
+    "bytes": 16711680,
+    "sha256": "c689ac146763d24b433c4ecb0494d627a755fe2e4baf283821df7c7f1e381b28"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/db/d3-dwb-reserved",
+    "bytes": 8192,
+    "sha256": "9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/db/d3-dwb-stage",
+    "bytes": 16384,
+    "sha256": "3816507268799972faf255e77ea255676c9dabc5035cc375ddc00015c75bb3d9"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/db/d3-filemap-0",
+    "bytes": 2113536,
+    "sha256": "5c68a64618b99736aa8a0e10adece83318cc8996ef9039e0879dc0e5d0fb33d1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/db/d3-filemap-1",
+    "bytes": 2113536,
+    "sha256": "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/db/d3-profile",
+    "bytes": 4096,
+    "sha256": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/db/d3-rebase-0",
+    "bytes": 2097152,
+    "sha256": "8b2c7acf24bac4d18d7a12e4924d504470c22c243dc814d60f48c9dcc201a71c"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/db/d3-rebase-1",
+    "bytes": 2097152,
+    "sha256": "8b2c7acf24bac4d18d7a12e4924d504470c22c243dc814d60f48c9dcc201a71c"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/db/d3-wal-00000003",
+    "bytes": 4096,
+    "sha256": "1f2309394ece893a50959ae04094d0efaec8aa80e982d566051cda8b01c00a97"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/produce/before-arena.bin",
+    "bytes": 1048576,
+    "sha256": "945c7ae44ce4ac79d9ee8e16e2d1a2ce751f55f9a8499811d23efe06b7796380"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/produce/before-claims.bin",
+    "bytes": 22528,
+    "sha256": "90a561c4bbfe3b7c1b12e999fb3ae638361d001e550ad1cd7f9be53c71628233"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/produce/before.tsv",
+    "bytes": 122,
+    "sha256": "8bc969283c50f2a92f2ded49eb954565a1262f313c484a71afece65c24ed172a"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/produce/effects.tsv",
+    "bytes": 898373,
+    "sha256": "61def7f512b6528976a6d12a6e111678d4280227f63138ac61324a06de1fbca4"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/produce/entropy.tsv",
+    "bytes": 41,
+    "sha256": "b074f881717a3ced576277a5f5b1cfbd11c431e9f796a74587380782a6bfbe8f"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/produce/files.json",
+    "bytes": 1875,
+    "sha256": "5c588f464d8cc0d78da1c8e9811fe44fa191942d605cc16324c75c08840f8679"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/produce/receipt.tsv",
+    "bytes": 378,
+    "sha256": "0f52df77b3314cbda12cfa70093b69b9f81d0d8bbadf1eb2c1a8b30f883580c3"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/produce/test.log",
+    "bytes": 673,
+    "sha256": "c86916536b0f000f6debcbee6e945d2013a58016feef1f187583cff8e8830e2f"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/recover/effects.tsv",
+    "bytes": 400342,
+    "sha256": "7e10ccf606eb775cb1ddecc024999bdcc657270f002b8988b627d6bc73536bdf"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/recover/entropy.tsv",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/recover/files.json",
+    "bytes": 2248,
+    "sha256": "39808c227c0833677df983105f961385a9b0ef2ebd7fbc929d055c293c3963f2"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/recover/input-db/DWB",
+    "bytes": 4096,
+    "sha256": "d486bfa3bbec8e2d27073bd8e1aa39a6bd43e1d7e9ddc09fc1c18a885ae776ad"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/recover/input-db/FILEMAP",
+    "bytes": 4096,
+    "sha256": "5938c6fac59aa7d816b2e8b358df8e15511e78c1f85934b1451fea92fc36dba0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/recover/input-db/LOCK",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/recover/input-db/WRITER",
+    "bytes": 4096,
+    "sha256": "82a9e17a80dcb5d9a06c343f90cc4c325deede22362d9c2e82ba8d04b2acd899"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/recover/input-db/d3-bootstrap",
+    "bytes": 4096,
+    "sha256": "e748c4c73df39f04bf9b82bd4219ad4317d7556f6a2f081254fcdf1a9ddd2883"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/recover/input-db/d3-data-0000000100000001",
+    "bytes": 1048576,
+    "sha256": "51089a061ddc825966580bfe86a7046aa482c68ec35439ad36b5640f3b541476"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/recover/input-db/d3-dwb-0",
+    "bytes": 16384,
+    "sha256": "9cc33556e5bf91bacd7f7604916172217988eaebc4d42ac0fb12dde08de9b912"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/recover/input-db/d3-dwb-1",
+    "bytes": 16384,
+    "sha256": "4fe7b59af6de3b665b67788cc2f99892ab827efae3a467342b3bb4e3bc8e5bfe"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/recover/input-db/d3-dwb-images",
+    "bytes": 16711680,
+    "sha256": "6c5e5b0f07ad132df7a8fbe84a1e6a18e99afdcb24d68409c1f98abc8f27f3c4"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/recover/input-db/d3-dwb-reserved",
+    "bytes": 8192,
+    "sha256": "9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/recover/input-db/d3-dwb-stage",
+    "bytes": 16384,
+    "sha256": "2f55b2245100ab1380a48bb9168c3276ace2d1aa7c4b1832cdc34856752ccf94"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/recover/input-db/d3-filemap-0",
+    "bytes": 2113536,
+    "sha256": "5c68a64618b99736aa8a0e10adece83318cc8996ef9039e0879dc0e5d0fb33d1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/recover/input-db/d3-filemap-1",
+    "bytes": 2113536,
+    "sha256": "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/recover/input-db/d3-profile",
+    "bytes": 4096,
+    "sha256": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/recover/input-db/d3-wal-00000001",
+    "bytes": 3257950,
+    "sha256": "574e871f99f57085f3e20bc291857df020c4055f4630bef1200d7c7a607639c5"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/recover/receipt.tsv",
+    "bytes": 368,
+    "sha256": "cb7ee2e091c79ed924b9b8cbc04dc92f2b491c874b06c401a79767c66c9bd9b2"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/recover/test.log",
+    "bytes": 871,
+    "sha256": "8435762e869bbecf64c905b284f7f8b1d1a5006563ea6fc92147c5488e9ab712"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/recover-arena.bin",
+    "bytes": 1048576,
+    "sha256": "fd00b0a435e6f7bb92896d5680740e5da995d0c97d42c93e85761ddb65782b9b"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/recover-claims.bin",
+    "bytes": 22528,
+    "sha256": "b5e7c10822698b50ca7cbdbf84fcff4ea98f5b3d3999bdc40896a5da37c93878"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/reenter/effects.tsv",
+    "bytes": 195878,
+    "sha256": "fb35db206b5a242d58d1803dfb308160c1f032f7b9c72fee0f47336a1bb766b7"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/reenter/entropy.tsv",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/reenter/files.json",
+    "bytes": 2246,
+    "sha256": "31b3df3b3b17a72835e69fe24309a2d16fcf7c2c1cbcbcc912e9c987677d0556"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/reenter/input-db/CURRENT",
+    "bytes": 4096,
+    "sha256": "23685ded37981226c4fe66a65d789b22e4a2e01e42a65362d570f95cafe7faed"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/reenter/input-db/DWB",
+    "bytes": 4096,
+    "sha256": "eaa7e6a352dc2f2401ddc404d688c8ff9d4370f235699518028edd382e333c41"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/reenter/input-db/FILEMAP",
+    "bytes": 4096,
+    "sha256": "5938c6fac59aa7d816b2e8b358df8e15511e78c1f85934b1451fea92fc36dba0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/reenter/input-db/LOCK",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/reenter/input-db/WRITER",
+    "bytes": 4096,
+    "sha256": "6a5943517803e761e1a24971f1b6baa5a5d52c432fab3cd55cc49372c365d00b"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/reenter/input-db/d3-bootstrap",
+    "bytes": 4096,
+    "sha256": "e748c4c73df39f04bf9b82bd4219ad4317d7556f6a2f081254fcdf1a9ddd2883"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/reenter/input-db/d3-data-0000000100000001",
+    "bytes": 1048576,
+    "sha256": "fd00b0a435e6f7bb92896d5680740e5da995d0c97d42c93e85761ddb65782b9b"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/reenter/input-db/d3-dwb-0",
+    "bytes": 16384,
+    "sha256": "1af61eede44ac54511cd4a65c590f1b4e3bc63ca663ba886388df9e9fba456db"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/reenter/input-db/d3-dwb-1",
+    "bytes": 16384,
+    "sha256": "e1774763b23373e5d5d9635f6aa9201788be2578ad7e5bc5368de6566288bfb0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/reenter/input-db/d3-dwb-images",
+    "bytes": 16711680,
+    "sha256": "f5b49a91261837074308b7f1ca84971191a5c4f3360678dbd41e19a97703c882"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/reenter/input-db/d3-dwb-reserved",
+    "bytes": 8192,
+    "sha256": "9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/reenter/input-db/d3-dwb-stage",
+    "bytes": 16384,
+    "sha256": "e1774763b23373e5d5d9635f6aa9201788be2578ad7e5bc5368de6566288bfb0"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/reenter/input-db/d3-filemap-0",
+    "bytes": 2113536,
+    "sha256": "5c68a64618b99736aa8a0e10adece83318cc8996ef9039e0879dc0e5d0fb33d1"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/reenter/input-db/d3-filemap-1",
+    "bytes": 2113536,
+    "sha256": "60840ebe89c25a45643458246c34e43315d67bca75118a904c9bdc80a018c199"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/reenter/input-db/d3-profile",
+    "bytes": 4096,
+    "sha256": "f49d4bb26a5c0e1bd66dec9a2b0f77aa24e3fafadf54f27e5db9ab9a960e204e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/reenter/input-db/d3-rebase-0",
+    "bytes": 2097152,
+    "sha256": "5e949a090ee8ccadb7f94dac86c37bdc79ee46d4538fa201321a757ac04d2d74"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/reenter/input-db/d3-rebase-1",
+    "bytes": 2097152,
+    "sha256": "5e949a090ee8ccadb7f94dac86c37bdc79ee46d4538fa201321a757ac04d2d74"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/reenter/input-db/d3-wal-00000002",
+    "bytes": 172632,
+    "sha256": "48f5842fa137be41fccb0c31259e9e8c93797568becbbac19a17565f5feb094c"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/reenter/receipt.tsv",
+    "bytes": 360,
+    "sha256": "8a2e94a7cfcef04c6b1e11381035c827d9710bdfa0749dd04b0c411242d3f5eb"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/reenter/test.log",
+    "bytes": 863,
+    "sha256": "71a4547aa6f42e5f6e418cb8ec81ca947f3c05ce8c1bfdfc3cd4a3d739f59048"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/reenter-arena.bin",
+    "bytes": 1048576,
+    "sha256": "e7dcdce5799528013257bdef82fc1294fa1ab2c82ebded60377c74013c84342e"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/SMO-NR4/reenter-claims.bin",
+    "bytes": 22528,
+    "sha256": "b5e7c10822698b50ca7cbdbf84fcff4ea98f5b3d3999bdc40896a5da37c93878"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/complete.json",
+    "bytes": 669,
+    "sha256": "89d00873ee274a34656ef1ec2b003c809c0547b917af1b01d2553a7e7df945c4"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/execution-plan.json",
+    "bytes": 1034,
+    "sha256": "b8716f653bbc6200a3c329b42d2f031e8fa72b84c8e875c6bee116b1cdb04985"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/results.json",
+    "bytes": 318,
+    "sha256": "d281274f9a4a9b9cf3891db916580f6405f2536549c9685761fbcab795027a77"
+  },
+  {
+    "path": "artifacts/dev3-08/effect/native-r13-retry/source-files.sha256",
+    "bytes": 129971,
+    "sha256": "c1d892f917631e1547506cd85ba89f9342de1c66c229d728b47e253533d02358"
+  }
+]

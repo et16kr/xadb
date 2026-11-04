@@ -1,0 +1,39 @@
+{
+  "worker": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::native::structural_effect_native_worker",
+  "cases": {
+    "SMO-NR1": {
+      "case": "SMO-NR1",
+      "child": "0",
+      "cut": "stage_before",
+      "partitions": "4",
+      "new_pages": "0",
+      "level": "0"
+    }
+  },
+  "phases": [
+    "produce",
+    "recover",
+    "reenter"
+  ],
+  "source": "d7d1273823abe7d764f09146ae212ccc5054af0b2b093077bd1cb7b43880e2a7",
+  "elf": "8fef9896e6f6bafe77eb857bf62a90da1c7e3531352315cd63acf0f41c3c91f5",
+  "input": "6fdc98d39ba23ad745048bdd2d54d334ceb4b4dda67e486b83465e67982536c1",
+  "per_process_seconds": 180,
+  "log_bytes_cap": 16777216,
+  "expected_rows": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "expected_values": [
+    7,
+    8,
+    9,
+    10
+  ],
+  "q_ready": [
+    2,
+    3
+  ]
+}

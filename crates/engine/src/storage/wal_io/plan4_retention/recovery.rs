@@ -1420,6 +1420,22 @@ fn restored_credits(
 
 #[cfg(test)]
 impl<W: WriterNamespace> Plan4Retention<'_, '_, '_, '_, '_, '_, '_, '_, W> {
+    /// Test-only copy of the original recovered canonical arena. No page is
+    /// registered, pinned or granted INIT/load authority by this observation.
+    pub(in crate::storage) fn recovery_test_structural_arena(&mut self) -> Result<Vec<u8>> {
+        if self.recovery_binding.is_none() {
+            return Err(unchanged(
+                RetentionPhase::Prepare,
+                RetentionCause::WrongState,
+            ));
+        }
+        self.refresh_recovered()?;
+        Ok(self.history.exclusive()?[..64 * PAGE_BYTES].to_vec())
+    }
+    #[cfg(test)]
+    pub(in crate::storage) fn recovery_test_structural_provenance(&self) -> Vec<u8> {
+        self.history.test_structural_provenance()
+    }
     /// An expected target copied from the original validated replay. This is
     /// not a pin/reservation; normal consumers still revalidate membership.
     pub(in crate::storage) fn recovery_test_expected_target(

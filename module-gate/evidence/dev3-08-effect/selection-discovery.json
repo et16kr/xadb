@@ -1,0 +1,23 @@
+{
+  "result": "PASS",
+  "execution": false,
+  "selected_cases": [
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::structural_effect_original_root_then_child_and_target_debt_refusal",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_stage_capacity_cancels_and_reenters_root_child",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_unwind_at_install_publication_and_finish_boundaries",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_replay_checked_return_failure_keeps_pending",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_guardless_durable_wait_blocks_ordinary_paths_and_io_failure",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_durable_write_failure_keeps_pending_and_fences",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::refusals::structural_effect_original_clean_victim_stamp_change_rejects_before_claim",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::refusals::structural_effect_original_clean_victim_stamp_change_child",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::refusals::structural_effect_changed_selection_and_before_cancel_without_wal",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::refusals::structural_effect_flush_admission_and_failed_cancel_lease",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::refusals::structural_effect_actual_stage_history_and_replay_errors_are_fatal",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::structural::effect::tests::structural_effect_source_phases_fit_original_admission_and_callers",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::flush_io::retention_internal_flush_levels_are_bounded_and_profile_specific",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_source_memory",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_source_native",
+    "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::native::structural_effect_native_worker"
+  ],
+  "note": "libtest discovery only; no test cases repeated"
+}

@@ -147,6 +147,23 @@
         "crates/engine/src/storage/dirty_frame/retention_residency.rs": "b1b9bfd785b8c22a177f3e82833c073797abcac4"
       },
       "log": "module-gate/evidence/dev3-08-admission/review.md (sha256 7f4b4306fbd465ac91cfd5ce8d213d2506ac89fc25f086651b1f5f15690dc390)"
+    },
+    {
+      "id": "dev3-08-effect-final-overlap",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/dirty_init.rs": "5b99c0f583bcbc02b8fba51d61455ac54379e460",
+        "crates/engine/src/storage/dirty_init/structural.rs": "5d7c821f369e1928f3c6c236575eff2590cce8f9",
+        "devdoc/contracts/dev3-tree-smo.md": "e60ff6fbfcf0d52fccce95425f9d9913c2560164"
+      },
+      "log": "module-gate/evidence/dev3-08-effect/review.md (sha256 5c0f1ecbb805aad6300bdb7e4d93eaba1d05e0709a3bb3c69a9a7a44cbe49d1f)"
     }
   ]
 }

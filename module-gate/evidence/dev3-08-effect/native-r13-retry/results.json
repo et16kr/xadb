@@ -1,0 +1,20 @@
+[
+  {
+    "case": "SMO-NR4",
+    "phase": "produce",
+    "exit": 0,
+    "reused_from": "artifacts/dev3-08/effect/native-r11-rest"
+  },
+  {
+    "case": "SMO-NR4",
+    "phase": "recover",
+    "exit": 0,
+    "seconds": 1.43
+  },
+  {
+    "case": "SMO-NR4",
+    "phase": "reenter",
+    "exit": 0,
+    "seconds": 0.67
+  }
+]

@@ -1,0 +1,78 @@
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+error[E0433]: cannot find `native` in `wal_io`
+    --> crates/engine/src/storage/wal_io/plan4_retention/structural_effect.rs:758:43
+     |
+ 758 |         inspect::<crate::storage::wal_io::native::Writer>("NATIVE_TYPE");
+     |                                           ^^^^^^ could not find `native` in `wal_io`
+     |
+note: these modules exist but are inaccessible
+    --> crates/engine/src/storage/recovery_select.rs:537:1
+     |
+ 537 | mod native;
+     | ^^^^^^^^^^^ `crate::storage::recovery_select::native`: not accessible
+     |
+    ::: crates/engine/src/storage/plan4_recovery_select.rs:470:1
+     |
+ 470 | pub(in crate::storage) mod native;
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `crate::storage::recovery_select::plan4::native`: not accessible
+     |
+    ::: crates/engine/src/storage/wal_io/recovery_effect/mod.rs:380:1
+     |
+ 380 | pub(in crate::storage::wal_io) mod native;
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::recovery_prefix::effect::native`: not accessible
+     |
+    ::: crates/engine/src/storage/wal_io/recovery_prefix.rs:1675:1
+     |
+1675 | mod native;
+     | ^^^^^^^^^^^ `crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::recovery_prefix::native`: not accessible
+     |
+    ::: crates/engine/src/storage/wal_io/mutable_storage/status_bootstrap_tests.rs:24:1
+     |
+  24 | mod native;
+     | ^^^^^^^^^^^ `crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_bootstrap_tests::native`: not accessible
+     |
+    ::: crates/engine/src/storage/wal_io/mixed_system_owner/tests.rs:1133:1
+     |
+1133 | mod native;
+     | ^^^^^^^^^^^ `crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::mixed::tests::native`: not accessible
+     |
+    ::: crates/engine/src/storage/wal_io/status_home_flush/tests.rs:471:1
+     |
+ 471 | mod native;
+     | ^^^^^^^^^^^ `crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::status_flush::tests::native`: not accessible
+     |
+    ::: crates/engine/src/storage/wal_io/status_init/tests.rs:129:1
+     |
+ 129 | mod native;
+     | ^^^^^^^^^^^ `crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::status_init::tests::native`: not accessible
+help: consider importing this module
+     |
+ 703 +     use crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::native;
+     |
+help: if you import `native`, refer to it directly
+     |
+ 758 -         inspect::<crate::storage::wal_io::native::Writer>("NATIVE_TYPE");
+ 758 +         inspect::<native::Writer>("NATIVE_TYPE");
+     |
+
+error[E0599]: no method named `len` found for type `usize` in the current scope
+   --> crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_effect.rs:159:53
+    |
+159 |                     let wal_before = files(state).0.len();
+    |                                                     ^^^
+    |
+help: there is a method `le` with a similar name, but with different arguments
+   --> /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/core/src/cmp.rs:1428:4
+
+error[E0599]: no method named `len` found for type `usize` in the current scope
+   --> crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_effect.rs:164:47
+    |
+164 |                     assert_eq!(files(state).0.len() - wal_before, operation.frame_bytes());
+    |                                               ^^^
+    |
+help: there is a method `le` with a similar name, but with different arguments
+   --> /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/core/src/cmp.rs:1428:4
+
+Some errors have detailed explanations: E0433, E0599.
+For more information about an error, try `rustc --explain E0433`.
+error: could not compile `xadb-engine` (lib test) due to 3 previous errors

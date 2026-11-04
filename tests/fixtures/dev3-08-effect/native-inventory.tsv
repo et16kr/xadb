@@ -1,0 +1,11 @@
+case	child	cut	partitions	new_pages	level
+SMO-NR1	0	stage_before	4	0	0
+SMO-NR2	0	staged	4	0	0
+SMO-NR3	0	installed	4	0	0
+SMO-NR4	0	durable	2,2	2	1
+SMO-NR5	0	finished	2,2	2	1
+SMO-NC1	1	stage_before	2,2	0	1
+SMO-NC2	1	staged	2,2	0	1
+SMO-NC3	1	installed	2,2	0	1
+SMO-NC4	1	durable	1,1,2	1	1
+SMO-NC5	1	finished	1,1,2	1	1

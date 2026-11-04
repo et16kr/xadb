@@ -1516,6 +1516,25 @@
         "tests/fixtures/module-row-format/envelopes/profiles.bin": "721736fc0e2edafa27e9eb43278ab33d2edb4b34"
       },
       "log": "module-gate/evidence/dev3-08-admission/review.md (sha256 7f4b4306fbd465ac91cfd5ce8d213d2506ac89fc25f086651b1f5f15690dc390)"
+    },
+    {
+      "id": "dev3-08-effect-final-overlap",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/dirty_frame.rs": "5efdc407c9d01d886a9317ece29fee70b5dbc5e3",
+        "crates/engine/src/storage/wal_io/plan4_retention/structural_prepare.rs": "6530c3b05fd730f6e62cf25d504c2e15f33050ac",
+        "devdoc/contracts/dev3-tree-smo.md": "e60ff6fbfcf0d52fccce95425f9d9913c2560164",
+        "devdoc/evidence/dev3-tree-structure-20261104.md": "3cbf4621b4adb6745467aeb6ed9837248a16c255",
+        "devdoc/implementation/dev3-implementation.md": "b14ea8e13f962830e23c45279dd1cca602e3efc5"
+      },
+      "log": "module-gate/evidence/dev3-08-effect/review.md (sha256 5c0f1ecbb805aad6300bdb7e4d93eaba1d05e0709a3bb3c69a9a7a44cbe49d1f)"
     }
   ]
 }

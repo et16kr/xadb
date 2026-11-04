@@ -1,0 +1,32 @@
+[
+  {
+    "case": "structural_effect_unwind_at_install_publication_and_finish_boundaries",
+    "exit": 0,
+    "seconds": 291.98
+  },
+  {
+    "case": "structural_effect_replay_checked_return_failure_keeps_pending",
+    "exit": 0,
+    "seconds": 19.68
+  },
+  {
+    "case": "structural_effect_guardless_durable_wait_blocks_ordinary_paths_and_io_failure",
+    "exit": 0,
+    "seconds": 38.27
+  },
+  {
+    "case": "structural_effect_changed_selection_and_before_cancel_without_wal",
+    "exit": 0,
+    "seconds": 64.64
+  },
+  {
+    "case": "structural_effect_flush_admission_and_failed_cancel_lease",
+    "exit": 0,
+    "seconds": 76.26
+  },
+  {
+    "case": "structural_effect_actual_stage_history_and_replay_errors_are_fatal",
+    "exit": 0,
+    "seconds": 77.56
+  }
+]

@@ -1,0 +1,10 @@
+{
+  "scope": "census modified to name Job decode and rank/try_apply/try_version cleanup; new effect E01 independent nonleaf/XOI oracle; old unchanged runtime not selected",
+  "filters": [
+    "structural_effect_source_phases_fit_original_admission_and_callers",
+    "structural_effect_original_root_then_child_and_target_debt_refusal"
+  ],
+  "cases": 2,
+  "build_timeout_seconds": 300,
+  "runtime_timeout_seconds": 200
+}

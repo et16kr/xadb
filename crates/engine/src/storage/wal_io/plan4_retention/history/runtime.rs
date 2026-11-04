@@ -110,6 +110,19 @@ impl<'a, 'c, 's> RuntimeHistory<'a, 'c, 's> {
             .unwrap_or_else(|error| error.into_inner());
         state.available.is_some() && state.active.is_none()
     }
+    #[cfg(test)]
+    pub(in super::super) fn test_hold_replay(&self) -> impl Drop + '_ {
+        self.replay.lock().unwrap()
+    }
+    /// Observation only; no checkout or source/INIT authority is created.
+    #[cfg(test)]
+    pub(in super::super) fn test_structural_provenance(&self) -> Vec<u8> {
+        let state = self.replay_state().unwrap();
+        assert!(state.active.is_none());
+        super::catalog::provenance(state.available.as_deref().unwrap())
+            .as_flattened()
+            .to_vec()
+    }
     fn replay_state(&self) -> Result<MutexGuard<'_, ReplayState<'a>>> {
         self.healthy()?;
         let state = self.replay.try_lock().map_err(|error| match error {

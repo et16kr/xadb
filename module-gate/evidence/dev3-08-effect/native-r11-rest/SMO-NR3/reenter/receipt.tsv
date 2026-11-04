@@ -1,0 +1,15 @@
+case	SMO-NR3
+phase	reenter
+pid	58650
+source	d7d1273823abe7d764f09146ae212ccc5054af0b2b093077bd1cb7b43880e2a7
+elf	8fef9896e6f6bafe77eb857bf62a90da1c7e3531352315cd63acf0f41c3c91f5
+input	6fdc98d39ba23ad745048bdd2d54d334ceb4b4dda67e486b83465e67982536c1
+child	0
+cut	installed
+result	ready
+q_ready	3
+partitions	4
+high_water	0
+rows	1,2,3,4
+values	7,8,9,10
+handles	0

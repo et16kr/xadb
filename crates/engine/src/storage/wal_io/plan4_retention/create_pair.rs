@@ -1,6 +1,10 @@
 //! Sealed original CREATE/pool bridge. Parsed fields cannot manufacture any of
 //! these capabilities. Factories belong to the actual Reserve/Forward/CLR
 //! producer and remain closed until its semantic preparation is connected.
+pub(in crate::storage) use catalog_live::structural::effect::{
+    StructuralAuthority, StructuralCancelPermit, StructuralControlCommit, StructuralInstallPermit,
+    StructuralStageRejection,
+};
 #[path = "catalog_live.rs"]
 pub(super) mod catalog_live;
 pub(in crate::storage) use catalog_live::lifecycle::row::retire::RowRetirementRejected;

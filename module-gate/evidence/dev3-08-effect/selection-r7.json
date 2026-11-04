@@ -1,0 +1,14 @@
+{
+  "scope": "New E04 cancel/reentry, E05-E09 faults and original checked return; test-only hooks, no completed E01/source repetition",
+  "filters": [
+    "structural_effect_stage_capacity_cancels_and_reenters_root_child",
+    "structural_effect_unwind_at_install_publication_and_finish_boundaries",
+    "structural_effect_replay_checked_return_failure_keeps_pending",
+    "structural_effect_guardless_durable_wait_blocks_ordinary_paths_and_io_failure"
+  ],
+  "cases": 4,
+  "build_timeout_seconds": 300,
+  "runtime_timeout_seconds": 480,
+  "per_variant_seconds": 90,
+  "correction": "test-only unwrap_err Debug bound and original DedicatedFlusher role handoff"
+}

@@ -104,6 +104,14 @@ raw 입력을 적재한 별도 pool의 물리 읽기 helper에 한정한다. 실
 새7개와 변경된 source1개 및 실제 caller2개가 source별 PASS다. 후보 선택은 등록/claim을
 바꾸지 않으며 dirty 관측은 실제 flush 증거가 아니다. 원 effect 수명과08-1 잔여는 유지한다.
 
+[실제 split 효과](../evidence/dev3-tree-structure-20261104.md#structural-effect)는 원 writer의
+claim→stage→5page 설치→guard0 durable→canonical replay/INIT 검산→finish를 연결한다.
+prestage 취소는 소비한 generation tombstone을 보존하고, stage 이후 불명 결과와 반환 실패는
+fence한다. 대상 table의 모든 non-Free Job은 현재 거절하며 다른 table의 부채는 보존한다.
+복구 READY의 epoch seed도 검증된 RowInternal root를 수용한다. 실제 native cut과 후속 빈 거래
+Commit의 검증은 이 제한 단위에 속하며, 다단계 Row CRUD·unlink·root shrink·retirement 및
+전체 F05/08-1 완료를 뜻하지 않는다. 최신 사용자는 이 진행 중 수정의 commit·push까지 요청했다.
+
 <a id="catalog-remaining"></a>
 2026-10-26 [Catalog CREATE 남은 메모리 사례](../evidence/dev3-catalog-remaining-20261026.md): 남은 9개를 모두 source별로 PASS했다. lookup이 Live CREATE Undo를 초기 Free page로만 검증해 fence하던 결함을 고쳤고 Writer 준비 분리를 포함했다. 같은 epoch 두 번째 CREATE의 pair victim 준비를 [D3-CATALOG-CREATE-002](../contracts/dev3-catalog-create.md#sequential-create)로 보완해 MT02가 r36에서 통과했다. [검토 후 수정](../evidence/dev3-catalog-review-fix-20261026.md)에서 Profile에 맞는 Root/Jobs decoder를 연결하고 신규8개와 변경 source 계산2개를 통과했다. 첫 Row INSERT·runtime F05·DEV3/S5는 미완료다.
 

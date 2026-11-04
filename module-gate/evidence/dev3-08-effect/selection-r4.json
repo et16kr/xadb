@@ -1,0 +1,10 @@
+{
+  "scope": "r3 compile FAIL missing test WAL accessor; add readonly prefix getter. D1 correction: row::source_bytes covers Job chain; root_decode_source_bytes excludes Jobs. Run changed source-only then E01 first runtime.",
+  "filters": [
+    "structural_effect_source_phases_fit_original_admission_and_callers",
+    "structural_effect_original_root_then_child_and_target_debt_refusal"
+  ],
+  "cases": 2,
+  "build_timeout_seconds": 300,
+  "runtime_timeout_seconds": 200
+}

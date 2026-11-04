@@ -1,0 +1,12 @@
+
+running 1 test
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::refusals::structural_effect_original_clean_victim_stamp_change_child ... CATALOG_MEMORY_CONTEXT	SMO-E02-clean-true	28c2e1f2cea2098c2984269ed1c98f70c697665497af774dfe8b516059d0a27c	5c883107d9d5a7e48c3d87beb7d139eb555a9075a504d87ac573669e31a1b647	9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	SMO-E02-clean-true
+SMO_E02 original flush RowLeaf level=0 clean
+SMO_E02 original flush RowInternal level=1 clean
+SMO_E02 clean victim child=true original stamp/unchanged generations/reentry
+CATALOG_MEMORY_PASS	SMO-E02-clean-true
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2327 filtered out; finished in 22.73s
+

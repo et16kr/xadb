@@ -1,0 +1,15 @@
+
+running 1 test
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::structural_effect_original_root_then_child_and_target_debt_refusal' (52527) panicked at crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs:488:59:
+missing XADB_CATALOG_SOURCE_SHA256
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::structural_effect_original_root_then_child_and_target_debt_refusal ... FAILED
+
+failures:
+
+failures:
+    storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::structural_effect_original_root_then_child_and_target_debt_refusal
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 2315 filtered out; finished in 0.00s
+

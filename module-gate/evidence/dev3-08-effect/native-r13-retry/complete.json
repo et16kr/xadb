@@ -1,0 +1,26 @@
+{
+  "SMO-NR4": {
+    "result": "PASS",
+    "pids": [
+      "58652",
+      "59674",
+      "59676"
+    ],
+    "expected": {
+      "case": "SMO-NR4",
+      "child": "0",
+      "cut": "durable",
+      "partitions": "2,2",
+      "new_pages": "2",
+      "level": "1"
+    },
+    "producer_identity": {
+      "source": "d7d1273823abe7d764f09146ae212ccc5054af0b2b093077bd1cb7b43880e2a7",
+      "elf": "8fef9896e6f6bafe77eb857bf62a90da1c7e3531352315cd63acf0f41c3c91f5"
+    },
+    "recovery_identity": {
+      "source": "c1d892f917631e1547506cd85ba89f9342de1c66c229d728b47e253533d02358",
+      "elf": "38706753dd4265d18c156a725c5bc699508c503d6d2782aafaebb6ec1731a45c"
+    }
+  }
+}

@@ -1,0 +1,15 @@
+case	SMO-NC4
+phase	reenter
+pid	59828
+source	c1d892f917631e1547506cd85ba89f9342de1c66c229d728b47e253533d02358
+elf	38706753dd4265d18c156a725c5bc699508c503d6d2782aafaebb6ec1731a45c
+input	6fdc98d39ba23ad745048bdd2d54d334ceb4b4dda67e486b83465e67982536c1
+child	1
+cut	durable
+result	ready
+q_ready	3
+partitions	1,1,2
+high_water	58
+rows	1,2,3,4
+values	7,8,9,10
+handles	0

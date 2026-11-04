@@ -1,0 +1,20 @@
+[
+  {
+    "case": "SMO-NR1",
+    "phase": "produce",
+    "exit": 0,
+    "reused_from": "artifacts/dev3-08/effect/native-r11-first"
+  },
+  {
+    "case": "SMO-NR1",
+    "phase": "recover",
+    "exit": 0,
+    "seconds": 1.12
+  },
+  {
+    "case": "SMO-NR1",
+    "phase": "reenter",
+    "exit": 0,
+    "seconds": 0.47
+  }
+]

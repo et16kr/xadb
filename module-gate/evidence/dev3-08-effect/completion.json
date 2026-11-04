@@ -1,0 +1,58 @@
+{
+  "scope": "Clean Row leaf RootSplit/ChildSplit effects, exact lifecycle faults, original RowInternal flush and native recovery/READY. Not whole08-1.",
+  "normal_effect": {
+    "source": "r5",
+    "log": "e01-r5.log",
+    "result": "PASS"
+  },
+  "source_census": {
+    "source": "r4",
+    "log": "source-test-r4.log",
+    "result": "PASS"
+  },
+  "callers": {
+    "source": "r9",
+    "logs": [
+      "caller-r9-0.log",
+      "caller-r9-1.log"
+    ],
+    "result": "PASS"
+  },
+  "fault_variants": {
+    "count": 66,
+    "r7_E04": 2,
+    "r9": 58,
+    "r12_write": 4,
+    "r13_root_only": 1,
+    "r15_child": 1,
+    "r13_selector_overall": "FAIL"
+  },
+  "new_flush_shape": {
+    "source": "r15",
+    "log": "faults-r15-0.log",
+    "result": "PASS"
+  },
+  "native": {
+    "histories": 10,
+    "successful_processes": 30,
+    "failed_processes": 1,
+    "unchanged_producer_repeats": 0,
+    "NR4": "r11 producer, r13 recovery/reenter; not same ELF"
+  },
+  "source_caps": {
+    "effect": 37550,
+    "pool": 12151,
+    "charge": 44304,
+    "caller_memory": [
+      64016,
+      187024,
+      252560
+    ],
+    "caller_native": [
+      64024,
+      187032,
+      252568
+    ]
+  },
+  "completed_unchanged_test_repeats": 0
+}

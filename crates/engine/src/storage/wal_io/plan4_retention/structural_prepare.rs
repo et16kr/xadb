@@ -6,6 +6,8 @@
     reason = "original structural preparation precedes its effect consumer"
 )]
 use super::*;
+#[path = "structural_effect.rs"]
+pub(in crate::storage) mod effect;
 use crate::storage::{
     page,
     retention_page::row::JobCells,

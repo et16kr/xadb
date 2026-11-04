@@ -1,0 +1,146 @@
+{
+  "SMO-NR5": {
+    "result": "PASS",
+    "pids": [
+      "59765",
+      "59767",
+      "59769"
+    ],
+    "expected": {
+      "case": "SMO-NR5",
+      "child": "0",
+      "cut": "finished",
+      "partitions": "2,2",
+      "new_pages": "2",
+      "level": "1"
+    },
+    "producer_identity": {
+      "source": "c1d892f917631e1547506cd85ba89f9342de1c66c229d728b47e253533d02358",
+      "elf": "38706753dd4265d18c156a725c5bc699508c503d6d2782aafaebb6ec1731a45c"
+    },
+    "recovery_identity": {
+      "source": "c1d892f917631e1547506cd85ba89f9342de1c66c229d728b47e253533d02358",
+      "elf": "38706753dd4265d18c156a725c5bc699508c503d6d2782aafaebb6ec1731a45c"
+    }
+  },
+  "SMO-NC1": {
+    "result": "PASS",
+    "pids": [
+      "59771",
+      "59774",
+      "59776"
+    ],
+    "expected": {
+      "case": "SMO-NC1",
+      "child": "1",
+      "cut": "stage_before",
+      "partitions": "2,2",
+      "new_pages": "0",
+      "level": "1"
+    },
+    "producer_identity": {
+      "source": "c1d892f917631e1547506cd85ba89f9342de1c66c229d728b47e253533d02358",
+      "elf": "38706753dd4265d18c156a725c5bc699508c503d6d2782aafaebb6ec1731a45c"
+    },
+    "recovery_identity": {
+      "source": "c1d892f917631e1547506cd85ba89f9342de1c66c229d728b47e253533d02358",
+      "elf": "38706753dd4265d18c156a725c5bc699508c503d6d2782aafaebb6ec1731a45c"
+    }
+  },
+  "SMO-NC2": {
+    "result": "PASS",
+    "pids": [
+      "59778",
+      "59781",
+      "59783"
+    ],
+    "expected": {
+      "case": "SMO-NC2",
+      "child": "1",
+      "cut": "staged",
+      "partitions": "2,2",
+      "new_pages": "0",
+      "level": "1"
+    },
+    "producer_identity": {
+      "source": "c1d892f917631e1547506cd85ba89f9342de1c66c229d728b47e253533d02358",
+      "elf": "38706753dd4265d18c156a725c5bc699508c503d6d2782aafaebb6ec1731a45c"
+    },
+    "recovery_identity": {
+      "source": "c1d892f917631e1547506cd85ba89f9342de1c66c229d728b47e253533d02358",
+      "elf": "38706753dd4265d18c156a725c5bc699508c503d6d2782aafaebb6ec1731a45c"
+    }
+  },
+  "SMO-NC3": {
+    "result": "PASS",
+    "pids": [
+      "59785",
+      "59792",
+      "59794"
+    ],
+    "expected": {
+      "case": "SMO-NC3",
+      "child": "1",
+      "cut": "installed",
+      "partitions": "2,2",
+      "new_pages": "0",
+      "level": "1"
+    },
+    "producer_identity": {
+      "source": "c1d892f917631e1547506cd85ba89f9342de1c66c229d728b47e253533d02358",
+      "elf": "38706753dd4265d18c156a725c5bc699508c503d6d2782aafaebb6ec1731a45c"
+    },
+    "recovery_identity": {
+      "source": "c1d892f917631e1547506cd85ba89f9342de1c66c229d728b47e253533d02358",
+      "elf": "38706753dd4265d18c156a725c5bc699508c503d6d2782aafaebb6ec1731a45c"
+    }
+  },
+  "SMO-NC4": {
+    "result": "PASS",
+    "pids": [
+      "59796",
+      "59821",
+      "59828"
+    ],
+    "expected": {
+      "case": "SMO-NC4",
+      "child": "1",
+      "cut": "durable",
+      "partitions": "1,1,2",
+      "new_pages": "1",
+      "level": "1"
+    },
+    "producer_identity": {
+      "source": "c1d892f917631e1547506cd85ba89f9342de1c66c229d728b47e253533d02358",
+      "elf": "38706753dd4265d18c156a725c5bc699508c503d6d2782aafaebb6ec1731a45c"
+    },
+    "recovery_identity": {
+      "source": "c1d892f917631e1547506cd85ba89f9342de1c66c229d728b47e253533d02358",
+      "elf": "38706753dd4265d18c156a725c5bc699508c503d6d2782aafaebb6ec1731a45c"
+    }
+  },
+  "SMO-NC5": {
+    "result": "PASS",
+    "pids": [
+      "59830",
+      "59841",
+      "59843"
+    ],
+    "expected": {
+      "case": "SMO-NC5",
+      "child": "1",
+      "cut": "finished",
+      "partitions": "1,1,2",
+      "new_pages": "1",
+      "level": "1"
+    },
+    "producer_identity": {
+      "source": "c1d892f917631e1547506cd85ba89f9342de1c66c229d728b47e253533d02358",
+      "elf": "38706753dd4265d18c156a725c5bc699508c503d6d2782aafaebb6ec1731a45c"
+    },
+    "recovery_identity": {
+      "source": "c1d892f917631e1547506cd85ba89f9342de1c66c229d728b47e253533d02358",
+      "elf": "38706753dd4265d18c156a725c5bc699508c503d6d2782aafaebb6ec1731a45c"
+    }
+  }
+}

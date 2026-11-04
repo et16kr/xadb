@@ -1,0 +1,12 @@
+[
+  {
+    "case": "structural_effect_original_clean_victim_stamp_change_rejects_before_claim",
+    "exit": 101,
+    "seconds": 18.07
+  },
+  {
+    "case": "structural_effect_durable_write_failure_keeps_pending_and_fences",
+    "exit": 0,
+    "seconds": 38.24
+  }
+]

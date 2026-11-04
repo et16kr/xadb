@@ -165,8 +165,9 @@ pub(crate) struct PreparedCatalog<'i, 'c, 's> {
 }
 
 pub(in crate::storage) use create_pair::{
-    TxPairAuthority, TxPairCancelKind, TxPairCancelPermit, TxPairControlCommit,
-    TxPairInstallPermit, TxPairRetirePermit, TxPairStageRejection,
+    StructuralAuthority, StructuralCancelPermit, StructuralControlCommit, StructuralInstallPermit,
+    StructuralStageRejection, TxPairAuthority, TxPairCancelKind, TxPairCancelPermit,
+    TxPairControlCommit, TxPairInstallPermit, TxPairRetirePermit, TxPairStageRejection,
 };
 #[allow(unused_imports)]
 pub(in crate::storage) use visibility::{
