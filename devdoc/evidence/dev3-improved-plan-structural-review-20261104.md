@@ -8,6 +8,8 @@
 
 검토 대상은 PR #51 병합 main `8a4f8e4a6fee6b5498145d9ee9b17a7105e1c851`의 DEV3-REVIEW-012(초안 `d8b4125`와 PR #51 리뷰 반영 `fe380e2`)다. 같은 PR에 있는 [Codex 검토](dev3-scalability-ha-plan-review-20261104.md)와 겹치지 않는 부분을 중심으로 적는다. 코드 근거는 같은 commit에서 직접 읽었다.
 
+후속 참조: PR #52 댓글의 B1–B6와 Codex 보완 의견을 대조한 [댓글별 반영 판단](dev3-scalability-ha-plan-review-20261104.md#comment-followup)이 추가됐다. 아래 본문은 `8dad2914`에 수록된 Claude의 당시 검토 기록으로 보존하며, 후속 판단이 이 문서 전체의 승인이나 계약·제품 목표의 채택을 뜻하지 않는다.
+
 <a id="summary"></a>
 ## 1. 결론
 

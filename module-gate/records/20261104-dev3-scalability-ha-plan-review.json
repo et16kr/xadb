@@ -1,5 +1,5 @@
 {
   "schema": "XADB_MODULE_GATE_RECORD_V1",
-  "change": "D0 documentation-only review of PR51 A0-A7 and DEV8 HA: record five recommendations and register the evidence document. No product, contract, policy, schedule or test changes; no independent D1/D2 approval claimed.",
+  "change": "D0 documentation-only review of PR51 A0-A7 and DEV8 HA, with PR52 comment follow-up: clarify fixed profiles, RC and transaction-size tradeoffs, checkpoint/WAL and audit write interruption, strict-write recovery, sustained-load criteria and D2/D3 boundaries. Preserve the prior Claude review with a follow-up link and update entry summaries. No product, contract, policy, schedule or test changes; no independent D1/D2 approval claimed.",
   "reviews": []
 }
