@@ -131,6 +131,7 @@ pub(in crate::storage) fn entry_source_phases() -> (usize, usize, usize) {
         + directory
             .max(system_init)
             .max(pair_init)
+            .max(init::structural_source_observation())
             .max(load)
             .max(flush)
             .max(dpt)

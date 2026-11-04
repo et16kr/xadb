@@ -11,6 +11,64 @@ use crate::transaction::TxnId;
 use foundation::identity::{Generation, ObjectId};
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
+#[test]
+fn pair_and_system_dispatch_keep_their_existing_claim_policy() {
+    fixture(|pool, authority| {
+        let key = pool.prepare_tx_pair(authority, [7, 8]).unwrap();
+        let mut state = pool.entry_registry().unwrap();
+        let slot = state.init_claim.as_mut().unwrap();
+        assert!(slot.blocks_ordinary());
+        assert!(slot.system().is_none());
+        assert!(!slot.owns_unpublished_pin(7));
+        slot.initializer_pins_held = true;
+        assert!(slot.owns_unpublished_pin(7));
+        assert!(slot.owns_unpublished_pin(8));
+        assert!(!slot.owns_unpublished_pin(0));
+        assert!(slot.blocks_load(0, request(0)));
+        assert!(slot.blocks_load(9, request(11)));
+        slot.initializer_pins_held = false;
+        drop(state);
+        drop(key); // Metadata fixture leaves the original unresolved claim fenced.
+    });
+    let record = InitClaimRecord {
+        allocator: request(0),
+        payload: request(9),
+        work: SystemWorkRef::new(
+            crate::api::Namespace {
+                database: request(0).identity.database,
+                timeline: 1,
+            },
+            SystemWorkKind::AllocationMaintenance,
+            1,
+            Generation::new(1).unwrap(),
+        )
+        .unwrap(),
+        birth: PageLsn(7),
+        ordinal: 0,
+        generations: [1, 2],
+        payload_index: 3,
+    };
+    let slot = InitClaimSlot {
+        identity: InitClaimIdentity::System(record),
+        initializer_pins_held: true,
+    };
+    assert!(!slot.blocks_ordinary());
+    assert_eq!(slot.system(), Some(&record));
+    assert!(slot.matches_system(&record));
+    assert!(slot.owns_unpublished_pin(3));
+    assert!(!slot.owns_unpublished_pin(0));
+    assert!(slot.blocks_load(0, request(0)));
+    assert!(slot.blocks_load(8, request(9)));
+    assert!(!slot.blocks_load(8, request(10)));
+    assert_eq!(
+        slot.diagnostic_registration(3),
+        Some(Registration {
+            request: record.payload,
+            generation: 2,
+        })
+    );
+}
+
 fn request(page: u64) -> TargetRequest {
     let mut identity = expected();
     identity.page.page_no = page;

@@ -25,6 +25,12 @@ RootSplit/ChildSplit의 Core/Layout·새 Structural 완료 descriptor·native/re
 allocator-owned 집합 대조와 실제 SMO/base 연결은 후속 의무이며, 높이16 시험은16page
 순회 뒤 capacity 거절 경계만 확인한다. 일정08 적립은 여전히0이다.
 
+원 pool의 [Structural claim metadata](../contracts/dev3-tree-smo.md#pool-claim-metadata)도
+추가했다. active1/2 INIT·exact5 target/pin·generation 검산, dynamic RowInternal 등록과
+등록 보존 single finish, 기존 ordinary 접근 gate를 신규8개로 확인했다. 실제 타입과
+공통 source 상한은 기존 크기를 유지한다. authority factory·실제 claim/SMO 설치·복구와
+전체 F05 완료는 아니다([원 증거](../evidence/dev3-tree-structure-20261104.md#pool-claim-metadata)).
+
 <a id="catalog-remaining"></a>
 2026-10-26 [Catalog CREATE 남은 메모리 사례](../evidence/dev3-catalog-remaining-20261026.md): 남은 9개를 모두 source별로 PASS했다. lookup이 Live CREATE Undo를 초기 Free page로만 검증해 fence하던 결함을 고쳤고 Writer 준비 분리를 포함했다. 같은 epoch 두 번째 CREATE의 pair victim 준비를 [D3-CATALOG-CREATE-002](../contracts/dev3-catalog-create.md#sequential-create)로 보완해 MT02가 r36에서 통과했다. [검토 후 수정](../evidence/dev3-catalog-review-fix-20261026.md)에서 Profile에 맞는 Root/Jobs decoder를 연결하고 신규8개와 변경 source 계산2개를 통과했다. 첫 Row INSERT·runtime F05·DEV3/S5는 미완료다.
 

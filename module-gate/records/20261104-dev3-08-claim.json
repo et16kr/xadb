@@ -1,0 +1,106 @@
+{
+  "schema": "XADB_MODULE_GATE_RECORD_V1",
+  "change": "DEV3 08: original-pool Structural metadata, narrow RowInternal registration, single finish and unchanged layout/common source bound; live SMO remains open",
+  "rust_tests": [
+    {
+      "paths": [
+        "crates/engine/src/storage/dirty_init.rs",
+        "crates/engine/src/storage/dirty_init/structural.rs",
+        "crates/engine/src/storage/dirty_init/structural/tests.rs",
+        "crates/engine/src/storage/dirty_init/tx_pair_tests.rs",
+        "crates/engine/src/storage/dirty_frame/registration.rs",
+        "crates/engine/src/storage/dirty_frame/retention_residency.rs"
+      ],
+      "reason": "Eight new cases exercise the added Structural metadata and changed shared dispatch/directory/census; no prior unchanged helpers are selected. Original pre-change layout diagnostic and r0 compile failure are preserved separately.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/dirty_init/structural/tests.rs",
+          "case": "storage::dirty_frame::init::structural::tests::structural_claim_preserves_prior_layout_and_entry_budget",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/dirty_init/structural/tests.rs",
+          "case": "storage::dirty_frame::init::structural::tests::structural_claim_accepts_root_child_shapes_and_all_active_pins",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/dirty_init/structural/tests.rs",
+          "case": "storage::dirty_frame::init::structural::tests::structural_claim_rejects_malformed_count_identity_and_mask_without_panics",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/dirty_init/structural/tests.rs",
+          "case": "storage::dirty_frame::init::structural::tests::structural_claim_rejects_wrong_closed_state_and_published_identity",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/dirty_init/structural/tests.rs",
+          "case": "storage::dirty_frame::init::structural::tests::structural_single_finish_preserves_resident_and_consumed_generation",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/dirty_init/structural/tests.rs",
+          "case": "storage::dirty_frame::init::structural::tests::structural_directory_allows_only_dynamic_row_internal_levels",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/dirty_init/structural/tests.rs",
+          "case": "storage::dirty_frame::init::structural::tests::structural_ordinary_gate_blocks_original_pin_load_and_capture",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/dirty_init/tx_pair_tests.rs",
+          "case": "storage::dirty_frame::init::tx_pair::tests::pair_and_system_dispatch_keep_their_existing_claim_policy",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        }
+      ]
+    }
+  ],
+  "reviews": [
+    {
+      "id": "dev3-08-claim-d2-d1",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/dirty_init.rs": "f3d02b66081dc6f9d9d66f05ccfd4cfa9f2f5a3c",
+        "crates/engine/src/storage/dirty_init/structural.rs": "7918746004bb31160caf4cdf0a754c8f4f08d412",
+        "crates/engine/src/storage/dirty_init/structural/tests.rs": "b5d989f88963359b16591fb93d911157bae7e43c",
+        "crates/engine/src/storage/dirty_init/tx_pair_tests.rs": "6d8d246b9391264980a6c45fb4e8af717d11342d",
+        "crates/engine/src/storage/dirty_frame/registration.rs": "aabb16e5b281156a31cf3ea940ca16aab3b0975b",
+        "crates/engine/src/storage/dirty_frame/retention_residency.rs": "ef721b87b9cf921dd307815bfe87ac0ab0188172",
+        "devdoc/contracts/dev3-tree-smo.md": "30b3425d42682ed5c278b3381f84d0f9311b5c53"
+      },
+      "log": "module-gate/evidence/dev3-08-claim/review.md (sha256 acc9e9452b699a81564195292c68613add16f95221fdbe69252be29e6e51017a)"
+    }
+  ]
+}

@@ -8,6 +8,10 @@ use crate::storage::{
 };
 use std::sync::LockResult;
 
+#[path = "dirty_init/structural.rs"]
+mod structural;
+pub(super) use structural::source_observation as structural_source_observation;
+
 #[path = "dirty_init/tx_pair.rs"]
 mod tx_pair;
 pub(in crate::storage) use tx_pair::source_census as tx_pair_source_census;
@@ -31,6 +35,11 @@ struct InitClaimRecord {
 enum InitClaimIdentity {
     System(InitClaimRecord),
     TxPair(tx_pair::TxPairClaimRecord),
+    #[allow(
+        dead_code,
+        reason = "constructed by the original SMO authority when its effect is connected"
+    )]
+    Structural(structural::StructuralClaimRecord),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -39,10 +48,13 @@ pub(super) struct InitClaimSlot {
     pub(super) initializer_pins_held: bool,
 }
 impl InitClaimSlot {
-    /// Ordinary callers cannot acquire a new pin/load/capture while CREATE
-    /// owns the original pair claim. System INIT keeps its existing policy.
+    /// CREATE and Structural claims exclude ordinary pin/load/capture until
+    /// their original completion owner finishes. System INIT keeps its policy.
     pub(super) fn blocks_ordinary(&self) -> bool {
-        matches!(&self.identity, InitClaimIdentity::TxPair(_))
+        matches!(
+            &self.identity,
+            InitClaimIdentity::TxPair(_) | InitClaimIdentity::Structural(_)
+        )
     }
     #[cfg(test)]
     pub(super) fn diagnostic_registration(&self, index: usize) -> Option<Registration> {
@@ -59,19 +71,22 @@ impl InitClaimSlot {
             }
             InitClaimIdentity::System(_) => None,
             InitClaimIdentity::TxPair(record) => record.diagnostic_registration(index),
+            InitClaimIdentity::Structural(record) => record.diagnostic_registration(index),
         }
     }
     fn system(&self) -> Option<&InitClaimRecord> {
         match &self.identity {
             InitClaimIdentity::System(record) => Some(record),
-            InitClaimIdentity::TxPair(_) => None,
+            InitClaimIdentity::TxPair(_) | InitClaimIdentity::Structural(_) => None,
         }
     }
     #[cfg(test)]
     fn system_mut(&mut self) -> &mut InitClaimRecord {
         match &mut self.identity {
             InitClaimIdentity::System(record) => record,
-            InitClaimIdentity::TxPair(_) => panic!("expected original System claim"),
+            InitClaimIdentity::TxPair(_) | InitClaimIdentity::Structural(_) => {
+                panic!("expected original System claim")
+            }
         }
     }
     fn matches_system(&self, identity: &InitClaimRecord) -> bool {
@@ -83,6 +98,7 @@ impl InitClaimSlot {
                 index == 0 || index == record.payload_index || request.same_address(&record.payload)
             }
             InitClaimIdentity::TxPair(record) => record.blocks_load(index, request),
+            InitClaimIdentity::Structural(record) => record.blocks_load(index, request),
         }
     }
     pub(super) fn owns_unpublished_pin(&self, index: usize) -> bool {
@@ -90,6 +106,7 @@ impl InitClaimSlot {
             && match &self.identity {
                 InitClaimIdentity::System(record) => record.payload_index == index,
                 InitClaimIdentity::TxPair(record) => record.indices().contains(&index),
+                InitClaimIdentity::Structural(record) => record.owns_index(index),
             }
     }
 }
@@ -409,6 +426,10 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
                             || (pins.counts[0] != 0 && pins.counts[identity.payload_index] != 0))
                 }
                 InitClaimIdentity::TxPair(identity) => {
+                    identity.valid_in(self, pins)
+                        && (!slot.initializer_pins_held || identity.held_pins_valid(pins))
+                }
+                InitClaimIdentity::Structural(identity) => {
                     identity.valid_in(self, pins)
                         && (!slot.initializer_pins_held || identity.held_pins_valid(pins))
                 }

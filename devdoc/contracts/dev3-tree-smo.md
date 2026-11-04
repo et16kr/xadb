@@ -318,3 +318,28 @@ alias 오용, 취소 후 stale key, Root/Child 부분 설치, wait_durable 오�
 authentic requirement 발급 시점, installed frontier와 provenance의 구분을 수정한 뒤
 문서 범위 D2 ACCEPT·필수0이다. [검토 기록](../../module-gate/evidence/dev3-08-smo-lifetime/review.md)을
 따르며 실제 타입·F05·fault/effect 실행을 승인 또는 PASS로 표시하지 않는다.
+
+<a id="pool-claim-metadata"></a>
+### 원 pool claim metadata 공급
+
+`dirty_init::StructuralClaimRecord`와 원 `InitClaimIdentity::Structural`을 추가했다.
+1|2 count를 slice 접근 전에 검산하고, Child의 비활성 칸을 정규화한다. birth/work ID,
+Row owner·level·주소와 exact5 mask, active INIT의 closed single/pair·pool generation,
+기존 allocator/anchor/source/(Child parent) 역할과 실제5 pin을 확인한다. 신규 right는
+level0..14이고 Root의 새 root만15까지 가능하다. 물리 주소 alias는 incarnation이 달라도
+거절한다. 실제 canonical target5개와 before stamp의 sealed 권한은 후속 factory 의무다.
+
+원 directory는 dynamic RowInternal level1..15만 넓혔고, `finish_retention_slot`은
+published exact registration/index를 확인한 뒤 등록과 generation을 보존하고 closed 표지만
+지운다. Structural claim은 기존 ordinary pin/load/capture gate에 들어간다. System/TxPair의
+분기 정책은 그대로이며 신규 dispatch 시험에서 함께 대조했다. 실제 claim factory,
+victim 선택/claim 설치·stage·image/control/DPT 설치·durable finish는 아직 제공하지 않는다.
+
+Rust1.95.0·64bit의 변경 전 실제 타입을 신규 진단으로 측정했다. System/TxPair record216B,
+identity224B, slot/Option232B, registry13,616B다. 새 Structural record도216B이고 나머지
+실제 타입 크기는 전후 동일하다. 새 검산 branch는2,083B이며, 변경 없는 기존 pair branch의
+2,211B 안에 들어 공통 entry phases `(80,3307,76)`을 유지한다. source 식은 rank의
+PageRef 인코딩 임시값과 실제 중첩 carrier를 포함한다. 이는 전체 SMO F05 완료가 아니다.
+
+신규8개 선택 시험과 보존한 변경 전 측정·compile 실패·source/ELF hash는
+[공급 증거](../evidence/dev3-tree-structure-20261104.md#pool-claim-metadata)에 귀속한다.

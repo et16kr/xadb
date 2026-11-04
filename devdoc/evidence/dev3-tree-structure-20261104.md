@@ -158,6 +158,31 @@ stage 전 취소 경계와 guard0 durable 대기, installed frontier와 후속 p
 구분한다. 실제 타입 크기·F05·fault inventory·효과 구현은 아직 미완료다. 이 문서 변경으로
 제품 시험을 실행하지 않았으며 앞선 PASS를 새 source의 실행으로 바꾸지 않았다.
 
+<a id="pool-claim-metadata"></a>
+### 원 pool Structural claim metadata
+
+`2719e791` 뒤 [metadata 계약](../contracts/dev3-tree-smo.md#pool-claim-metadata)에 따라
+원 claim enum·검산·ordinary gate와 dynamic RowInternal 등록, 등록 보존 single finish를
+추가했다. 독립 검토자의 사전 반례를 입력으로 사용했다. 실제 authority factory·claim 설치·
+WAL/image/control/DPT 효과·durable 완료·복구는 아직 연결하지 않았다.
+
+[원 로그·source/ELF hash](../../module-gate/evidence/dev3-08-claim/)를 보존한다.
+변경 전 신규 진단은 실제 원 타입 크기를 측정했고, r0는 신규 시험의 OwnerRole import와
+존재하지 않는 claim_load 호출 때문에 compile FAIL·실행0이었다. 실제 원 경로인
+claim_retention_load로 고치고 독립 검토에서 발견한 rank의 중첩 carrier 계산 누락을
+반영했다. r1은 신규8개만 실행해8 PASS(build1분32초·runtime0.01초·기존2,220개 filtered)다.
+완료한 무변경 시험이나 전체 wrapper는 실행하지 않았다.
+
+System/TxPair/Structural record는 각216B, identity224B, slot/Option232B,
+registry13,616B로 기존 pool 크기를 유지했다. 신규 branch2,083B는 변경 없는 pair branch
+2,211B보다128B 작다. 현재 source 식의 이 지배 관계로 common entry phases
+`(80,3307,76)`이 그대로임을 확인하며, 과거 로그의 숫자 일치만을 근거로 삼지 않는다.
+전체 SMO F05와 효과 인수는 여전히 미완료다.
+
+engine all-targets/all-features Clippy-r0도1분22초에 PASS했다. r1 이후 제품·시험 source는
+변경하지 않았다. 독립 reviewer가 실제 source와 원 로그·hash 및 계약 경계를 확인해
+D2/D1 ACCEPT·필수0으로 판정했다([검토 기록](../../module-gate/evidence/dev3-08-claim/review.md)).
+
 08 전체의 승인 범위는 유지한다. 다음 작업은 08-1의 실제 system owner·WAL·복구다.
 독립 사전 검토에서 새 사용자 판단이 필요한 제품 방향 충돌은 발견하지 않았다.
 
