@@ -916,8 +916,10 @@ pub(in super::super) fn row_group_terms<const N: usize>() -> RowLifecycleTerms {
         + size_of::<[TargetRequest; N]>()
         + size_of::<[Option<FrameStamp>; 9]>()
         + observation;
-    // Sequential under the typed read: the shared target observation, then
-    // the Row Inputs and the borrowed producer (its scratch is a loan).
+    // Sequential under the typed read: shared target observation, recovery
+    // Prune's canonical table selection, then Row Inputs and the borrowed
+    // producer (its scratch is a loan). The typed read remains live during
+    // selection, so the replay phase alone is not its cost bound.
     let observe = 8 * size_of::<&()>()
         + size_of::<u8>()
         + 2 * size_of::<Result<()>>()
@@ -926,11 +928,17 @@ pub(in super::super) fn row_group_terms<const N: usize>() -> RowLifecycleTerms {
         + 2 * size_of::<Result<FrameStamp>>();
     let produce = targets::call_bytes::<N>().max(
         size_of::<targets::CatalogRead<'_, '_, '_, '_, '_, '_, '_, N>>()
-            + observe.max(
-                size_of::<row_group::Inputs<'_>>()
-                    + size_of::<&mut [u8; ROW_REPLAY_SCRATCH_BYTES]>()
-                    + row_group::produce_borrowed_source_bytes(),
-            ),
+            + observe
+                .max(
+                    history::row::table_source_bytes()
+                        + 2 * size_of::<job3::JobView<'_>>()
+                        + 2 * size_of::<Option<row_group::TableSource<'_>>>(),
+                )
+                .max(
+                    size_of::<row_group::Inputs<'_>>()
+                        + size_of::<&mut [u8; ROW_REPLAY_SCRATCH_BYTES]>()
+                        + row_group::produce_borrowed_source_bytes(),
+                ),
     );
     let observer = targets::call_bytes::<N>().max(
         size_of::<targets::CatalogRead<'_, '_, '_, '_, '_, '_, '_, N>>()

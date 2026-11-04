@@ -15,6 +15,7 @@ use super::catalog::{image, raw_descriptor, row_actor};
 use super::*;
 use crate::storage::{
     allocation_page::ReservationOwner,
+    anchor::{self, TreeKind},
     catalog_record::{self, CatalogDefinitionView, CatalogExpectation},
     obligation,
     page::{FileId, PageRef},
@@ -167,9 +168,11 @@ fn undo_allocated(
     }
     Ok(())
 }
-/// The Job's table: its anchor/leaf images and the canonical Catalog schema
+/// The Job's table: its current anchor/leaf images and canonical Catalog schema
 /// from the fixed CatalogLeaf (page 8). The record must be the Job's live
 /// table handle with the Job's anchor; a retired table has no Row replay.
+/// The leaf hint is historical. Select the RowId from the immutable canonical
+/// tree; this selector does not relax downstream operation/profile limits.
 pub(in super::super) fn table_source<'a>(
     arena: &'a [u8],
     profile: Profile,
@@ -228,11 +231,49 @@ pub(in super::super) fn table_source<'a>(
     if header.identity != handle || header.anchor != pair[0] {
         return Err(invalid());
     }
+    let anchor_image = image(arena, pair[0])?;
+    let identity = PageIdentity {
+        database: namespace.database,
+        page: pair[0],
+        owner: handle.object,
+        owner_generation: handle.generation,
+    };
+    let anchor = anchor::decode_anchor(anchor_image, identity).map_err(RetentionCause::Page)?;
+    let root = anchor.root();
+    if root.tree != TreeKind::Row {
+        return Err(RetentionCause::Unsupported);
+    }
+    let row = job.row_id().ok_or_else(invalid)?;
+    let key = row.get().to_be_bytes();
+    let leaf = tree_page::search::find_leaf_in_images(
+        TreeExpectation {
+            identity: PageIdentity {
+                page: root.page,
+                ..identity
+            },
+            kind: if root.level == 0 {
+                PageKind::RowLeaf
+            } else {
+                PageKind::RowInternal
+            },
+            level: root.level,
+            arity: 0,
+        },
+        &key,
+        |expected| {
+            // Only the original canonical arena supplies these bytes. The
+            // search decoder checks the full identity, not just this ordinal.
+            image(arena, expected.identity.page)
+                .map(|bytes| bytes.as_slice())
+                .map_err(|_| tree_page::TreeError::Corrupt)
+        },
+    )
+    .map_err(RetentionCause::Tree)?;
     Ok(TableSource {
         handle,
         anchor: pair[0],
-        anchor_image: image(arena, pair[0])?,
-        leaf_image: Some(image(arena, pair[1])?),
+        anchor_image,
+        leaf_image: Some(image(arena, leaf.header().identity.page)?),
         schema: RowSchemaInput::Catalog(schema),
     })
 }
@@ -955,15 +996,7 @@ pub(in super::super) fn source_bytes() -> SourceCensus {
                 + 2 * size_of::<ObservationResult<StatusHome>>()
                 + semantic_catalog_status(),
         )
-        .max(
-            size_of::<tree_page::TreePageView<'_>>()
-                + size_of::<tree_page::TreeEntry<'_>>()
-                + size_of::<catalog_record::CatalogRecordView<'_>>()
-                + size_of::<catalog_record::CatalogHeader>()
-                + 2 * size_of::<ObservationResult<TableSource<'_>>>()
-                + transition::tree_source_bytes()
-                    .max(crate::storage::semantic_catalog::catalog_read_codec_bytes()),
-        )
+        .max(table_source_bytes())
         .max(
             2 * size_of::<allocation_page::AllocationPage<'_>>()
                 + 2 * size_of::<ObservationResult<PageIdentity>>()
@@ -1009,4 +1042,38 @@ pub(in super::super) fn source_bytes() -> SourceCensus {
 }
 fn semantic_catalog_status() -> usize {
     crate::storage::semantic_catalog::status_read_codec_bytes()
+}
+
+/// Catalog/anchor observations stay live across the bounded immutable search.
+/// The visited path is one fixed array, not sixteen nested search frames.
+pub(in super::super) fn table_source_bytes() -> usize {
+    use crate::storage::tree_page::{SearchPosition, TreeEntry, TreeError, TreePageView};
+    use std::mem::size_of;
+    let (checked_key, checked_result, _, _) = tree_page::catalog_source_carrier_bytes();
+    let selected = size_of::<TreePageView<'_>>()
+        + size_of::<TreeEntry<'_>>()
+        + size_of::<catalog_record::CatalogRecordView<'_>>()
+        + size_of::<catalog_record::CatalogHeader>()
+        + size_of::<catalog_record::TableDefinitionView<'_>>()
+        + 2 * size_of::<ObservationResult<TableSource<'_>>>()
+        + size_of::<anchor::TreeAnchor>()
+        + size_of::<anchor::AnchorRoot>()
+        + size_of::<PageIdentity>()
+        + size_of::<[u8; 8]>()
+        + 16 * size_of::<&[u8]>()
+        + 16 * size_of::<u64>();
+    let path = size_of::<[Option<PageRef>; 16]>()
+        + 3 * size_of::<TreeExpectation>()
+        + 4 * size_of::<Option<&[u8]>>()
+        + 2 * size_of::<TreePageView<'_>>()
+        + 2 * size_of::<std::result::Result<TreePageView<'_>, TreeError>>()
+        + 4 * checked_key
+        + 2 * checked_result
+        + 3 * size_of::<SearchPosition>()
+        + 4 * size_of::<TreeEntry<'_>>()
+        + 16 * size_of::<usize>();
+    selected
+        + path
+        + transition::tree_source_bytes()
+            .max(crate::storage::semantic_catalog::catalog_read_codec_bytes())
 }

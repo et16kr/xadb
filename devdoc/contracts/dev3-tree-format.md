@@ -277,3 +277,29 @@ live pool의 pin/latch·anchor revision 재검증을 이 immutable 함수로 대
 
 이 공급은 실제 SMO·cursor 인수가 아니며 일정08 적립은 없다. 소비자를 연결할 때 live source
 안정성이나 full-tree audit가 필요한 경우 이 API 경계와 시험 범위를 다시 검토한다.
+
+#### canonical Row replay의 첫 선택 연결
+
+`history::row::table_source`는 canonical arena의 Catalog handle·anchor를 검산한 뒤,
+Job RowId의 BE key를 현재 anchor에서 재탐색한다. Job pair[0]의 anchor 결합은 유지하고
+pair[1]은 현재 위치의 증거로 사용하지 않는다. callback의 ordinal lookup 뒤에는 항상
+검색기의 exact identity·family·level·범위 검산이 따른다. arena가 원 accepted-source에서
+온다는 기존 replay 소유 의무는 그대로며 이 선택 함수가 allocator/INIT 증명을 발급하지 않는다.
+
+이 첫 연결에서는 downstream Row transition의 level0 제한을 유지한다. 따라서 multi-level
+선택을 시험했다고 실제 multi-level Forward/CLR/recovery를 지원한다고 표시하지 않는다.
+F05 source census는 Catalog/anchor 관측과 검색의 visited16·기대값·경계·중첩 decoder를 합산한다.
+
+신규 선택 시험3개는 `row_replay_tree_selector_`로 실행한다(build 포함180초,4 jobs).
+기존 h-501의 anchor/leaf/Job·Profile fixture에서 level0 선택을 대조하고, 해당 행 bytes를
+두 leaf와 새 root로 직접 배치해 stale hint 대신 현재 anchor의 오른쪽 leaf를 고르는지 확인한다.
+잘못된 identity·하한 위반·Catalog anchor 불일치·retired table은 거절하고 입력을 보존한다.
+세 번째 시험은 변경된 source 계산이 원 owner admission 한도 안에 드는지 확인한다.
+이 fixture는 selector-only이며 full allocation/base graph의 유효 상태를 주장하지 않는다.
+
+이후 기존 Row replay의 실제 변경 호출을 검증하기 위해
+`s1b_row_arm_replays_n1_and_a_literals`, `rdl_j_row_arm_replays_history_d`,
+`rup_r_row_arm_replays_history_u`, `s1b_row_arm_refuses_mutations_without_effect`,
+`s1g_row_reserve_refuses_without_effect`만 선택한다. INSERT/DELETE/UPDATE·CLR/Prune와
+Reserve가 변경된 `table_source`를 호출하므로 해당 연결의 검증이며, 하위 무변경 codec 시험은
+선택하지 않는다. build 포함180초·4 jobs, 실패는 원 결과 보존 뒤 영향 사례만 다시 검증한다.

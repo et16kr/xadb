@@ -11,6 +11,10 @@ root→leaf 탐색을 공급했다. 각각 신규 고유4개 선택 PASS·독립
 단일 분할로 pending 행을 수용할 수 없는 반례와 원 시험 실패를 보존했다.
 이 helper들은 실제 Undo 가중치 증명·live pin·WAL/복구 적용 권한이 아니며 일정 적립은 없다.
 
+canonical Row replay의 leaf 선택도 현재 anchor/RowId 탐색으로 연결했다. 신규 기능2·자원1과
+영향받는 기존 replay5개를 source별로 통과했고 독립 D2/D1 ACCEPT다. Prune의 typed read와
+탐색 중첩도 census에 포함했다. downstream level0 제한과 실제 SMO 미완료는 유지한다.
+
 <a id="catalog-remaining"></a>
 2026-10-26 [Catalog CREATE 남은 메모리 사례](../evidence/dev3-catalog-remaining-20261026.md): 남은 9개를 모두 source별로 PASS했다. lookup이 Live CREATE Undo를 초기 Free page로만 검증해 fence하던 결함을 고쳤고 Writer 준비 분리를 포함했다. 같은 epoch 두 번째 CREATE의 pair victim 준비를 [D3-CATALOG-CREATE-002](../contracts/dev3-catalog-create.md#sequential-create)로 보완해 MT02가 r36에서 통과했다. [검토 후 수정](../evidence/dev3-catalog-review-fix-20261026.md)에서 Profile에 맞는 Root/Jobs decoder를 연결하고 신규8개와 변경 source 계산2개를 통과했다. 첫 Row INSERT·runtime F05·DEV3/S5는 미완료다.
 

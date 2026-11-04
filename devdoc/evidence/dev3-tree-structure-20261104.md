@@ -80,6 +80,27 @@ field에서 읽도록 바꾼 것은 lint-only이며 동등성 재검토를 받�
 
 ### 다음 제품 연결
 
+먼저 `history::row::table_source`의 leaf 선택을 canonical Catalog·현재 anchor에서
+Job RowId로 찾도록 연결했다. pair[1]은 현재 leaf의 근거로 읽지 않는다. downstream
+Row transition의 level0 제한은 유지하므로 multi-level 행 변경·복구 완료는 아니다.
+[선택 로그·hash·검토](../../module-gate/evidence/dev3-08-row-selector/)를 보존한다.
+
+| 실행 | 결과와 귀속 |
+| --- | --- |
+| row-selector-r0 | 시험 submodule이 scope3 macro보다 먼저 선언되어 compile FAIL, 실행0 |
+| row-selector-r1 | 신규 자원1 PASS, 기능2 FAIL: h-501 Job의 실제 RowId7을2로 가정 |
+| row-selector-r2 | 추가 caller census 수정 뒤 자원1 PASS, 기능2 FAIL: 실제4행을3행으로 가정 |
+| row-selector-r3 | 수정 기능2와 변경 selector를 부르는 기존 replay5:7 PASS. 완료된 무변경 자원 시험은 반복하지 않음 |
+
+새 source 계산은 semantic24,323B, 원 owner peak64,016B·metadata187,024B·whole252,560B로
+기존 한도 안이다. reviewer가 찾은 Prune의 typed read와 탐색 중첩은 `row_group_terms`에
+명시했고 실제 CheckedKey 크기를 썼다. 별도 D2/D1 ACCEPT·필수0, engine Clippy PASS다.
+전체 wrapper·무변경 하위 codec 시험과 native I/O 시험은 실행하지 않았다.
+
+후속 [SMO 제안](../contracts/dev3-tree-smo.md)은 nonempty INIT의 원 WAL→state seal→
+selected base 증거 승계를 정리한다. scope4·원 pool 설치·F05·fault inventory는 아직 제안/미완료이며
+이 문서나 위 selector 시험을 그 실행 증거로 세지 않는다.
+
 08 전체의 승인 범위는 유지한다. 다음 작업은 08-1의 실제 system owner·WAL·복구다.
 독립 사전 검토에서 새 사용자 판단이 필요한 제품 방향 충돌은 발견하지 않았다.
 

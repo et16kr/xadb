@@ -2652,6 +2652,11 @@
       "path": "evidence/dev3-tree-structure-20261104.md",
       "role": "evidence",
       "title": "DEV3 일정08 첫 트리 구조 후보 구현·선택 검증"
+    },
+    "dev3-tree-smo.md": {
+      "path": "contracts/dev3-tree-smo.md",
+      "role": "contracts",
+      "title": "DEV3 tree SMO — 완결 structural group 연결 설계"
     }
   }
 }

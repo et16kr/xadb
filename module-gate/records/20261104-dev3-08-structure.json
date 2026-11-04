@@ -188,9 +188,9 @@
         "crates/engine/src/storage/tree_page/structure/tests.rs": "ae186624dd7c82f5a1575c23793a2d0eb0ef5d91",
         "crates/engine/src/storage/tree_page/search.rs": "f1c7ddc3315c20ae9d2e3bf13d9a8e815f77aa7c",
         "crates/engine/src/storage/tree_page/search/tests.rs": "8e2ac966071809757b7a38f46ecd673f91565761",
-        "devdoc/contracts/dev3-tree-format.md": "5f3dec100e4120ffeb591852088b03b023a684a0"
+        "devdoc/contracts/dev3-tree-format.md": "10c91f618da6ce51b16115a014c32d0d7cc1b68b"
       },
-      "log": "module-gate/evidence/dev3-08-structure/review.md (sha256 54fdb24d67cc903250e7cf711eec8d9dbd840850848c969cdd13c259bae8516b); module-gate/evidence/dev3-08-search/review.md (sha256 fd577618f012ebf19d377c66362b033aa448026ef7b38ce58b843597701eeb8f)"
+      "log": "module-gate/evidence/dev3-08-structure/review.md (sha256 54fdb24d67cc903250e7cf711eec8d9dbd840850848c969cdd13c259bae8516b); module-gate/evidence/dev3-08-search/review.md (sha256 fd577618f012ebf19d377c66362b033aa448026ef7b38ce58b843597701eeb8f); module-gate/evidence/dev3-08-row-selector/review.md (sha256 d912c602c63eb65c675c870a196c9dabfd1315d4889bbfc55db85a007a733b49)"
     }
   ]
 }

@@ -1,0 +1,34 @@
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+error: cannot find macro `scope3` in this scope
+   --> crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests/tree_search.rs:119:44
+    |
+119 |     assert_eq!(before.leaf_image.unwrap(), scope3!("h-501-leaf.bin"));
+    |                                            ^^^^^^
+    |
+    = help: have you added the `#[macro_use]` on the module/import?
+
+error: cannot find macro `scope3` in this scope
+  --> crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests/tree_search.rs:22:16
+   |
+22 |     let bank = scope3!("h-501-bank.bin");
+   |                ^^^^^^
+   |
+   = help: have you added the `#[macro_use]` on the module/import?
+
+error: cannot find macro `scope3` in this scope
+  --> crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests/tree_search.rs:21:61
+   |
+21 |     arena[13 * PAGE_BYTES..14 * PAGE_BYTES].copy_from_slice(scope3!("h-501-leaf.bin"));
+   |                                                             ^^^^^^
+   |
+   = help: have you added the `#[macro_use]` on the module/import?
+
+error: cannot find macro `scope3` in this scope
+  --> crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests/tree_search.rs:20:61
+   |
+20 |     arena[12 * PAGE_BYTES..13 * PAGE_BYTES].copy_from_slice(scope3!("anchor.bin"));
+   |                                                             ^^^^^^
+   |
+   = help: have you added the `#[macro_use]` on the module/import?
+
+error: could not compile `xadb-engine` (lib test) due to 4 previous errors
