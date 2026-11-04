@@ -274,6 +274,53 @@ r1은 이 변경1개만 실행해1 PASS(build32.77초·runtime0.03초·2,250개 
 결합해야 한다. stage/install·복구 수락·global closure·실제 source census/F05·native fault는
 미완료이며 일정08 적립은0을 유지한다.
 
+<a id="base-structural-claims"></a>
+### Base4 Structural birth 관측
+
+`1a4caa6d` 뒤 [Base4 birth 계약](../contracts/dev3-tree-smo.md#base-structural-claims)에 따라
+certificate의 RowInternal level과 Structural INIT role5/6를 Profile3 한정으로 확장했다.
+System owner의 atomic birth·generation/epoch·주소·revision·kind/level을 검산하며 같은
+init LSN의 claims 전체를 대조한다. 현재 peer incarnation이 살아 있으면 대응 birth를
+요구하고 퇴역·다른 incarnation 재사용이면 옛 peer의 현재 존재를 강제하지 않는다.
+CREATE pair accessor와 기존 role1..4 규칙은 유지한다. role6는 생성 이력이며 현재 root
+또는 현재 revision의 단언이 아니다. shared decoder와 group loop의 source bound도 추가한다.
+
+[원 로그·hash](../../module-gate/evidence/dev3-08-base-claims/)의 r0는 신규8개를 실행해
+4 PASS/4 FAIL(build1분55초·runtime0.01초·기존2,251개 filtered)이다. 네 실패는 internal
+fixture에 metadata만 있고 separator가 없는 입력 오류였으며 독립 검토도 이를 지적했다.
+독립 literal separator를 추가한 r1은 영향4개만 실행해3 PASS/1 FAIL(build26.29초·
+runtime0.09초·2,255개 filtered)이다. 남은 실패는 기존 ACTIVE가 raw-layout literal이므로
+그 Anchor의 semantic decode까지 유효하다고 가정한 시험 입력 오류다. 해당 시험에 실제
+canonical anchor를 넣고 같은 birth의 다른 System kind 충돌 사례를 추가했다. r2는 변경1·
+신규1을 실행해2 PASS(build28.83초·runtime0.04초·2,258개 filtered)다.
+
+raw initial digest를 바꾸고 내부 checksum을 다시 만든 base는 layout이 수락한다. 원 fixture의
+full closure 정상 baseline 없이 그 후 full decode 거절을 Structural의 거절 증거로 쓰지 않는다.
+독립 검토 권고대로 그 부수 assertion을 제거하고 관측 한계만 검산하도록 범위를 좁혔다.
+r3는 변경1개만 실행해1 PASS(build27.55초·runtime0.01초·2,259개 filtered)다. selected
+CURRENT와 원 WAL의 역사 보증은 이 시험의 공급 범위가 아니다.
+
+source의 별도 검토는 outer Result만으로 nested identity decoder의 array·constructor·
+iterator·두 group loop/비교 carrier가 독립 검산되지 않는 점을 지적했다. 실제 overflow를
+발견한 것은 아니다. 기존 Base4 source 시험의 독립 inventory에 해당 체인을 추가하고,
+layout 및 certificate 상계와 개별 grammar/group 상계를 함께 비교한다.
+
+r4는 수정된 기존 source 시험1개만 실행해1 PASS(build27.34초·runtime0.00초·2,259개
+filtered)다. grammar1,934≤2,252, group1,315≤2,668, certificate1,515≤1,542B이며 전체
+phase가 상계 이내다. Row peak는 inventory51,867+outer7,808=59,675B로 유지된다.
+Row layout20,232B·Catalog layout19,592B의 증가는 해당 caller peak를 바꾸지 않는다.
+
+Clippy-r0는 제품에서 쓰지 않는 StructuralOperation reexport를 지적했다. 이를 제거하고
+두 시험은 같은 enum을 원 경로에서 import하도록 고쳤다. reviewer는 이 세 import만
+역치환하면 r4 source SHA와 정확히 같음을 확인했다. runtime 본문은 같아 재실행하지 않고
+final-source hash를 별도로 남겼다. Clippy-r1은 engine all-targets/all-features에서41.10초에
+PASS다. 독립 D1/D2는 한정 ACCEPT·필수0이며 [검토 기록](../../module-gate/evidence/dev3-08-base-claims/review.md)에
+신규 고유9개·수정된 기존 source1개의 실제 source별 결과를 구분했다.
+
+현재 mint·System ledger/bank·전체 current tree closure·scope4 replay 수락·설치/F05는
+연결하지 않았으며 일정08 적립은0이다. 원 실패와 source/ELF hash는 보존하고 성공한
+무변경 시험을 반복하지 않는다.
+
 08 전체의 승인 범위는 유지한다. 다음 작업은 08-1의 실제 system owner·WAL·복구다.
 독립 사전 검토에서 새 사용자 판단이 필요한 제품 방향 충돌은 발견하지 않았다.
 

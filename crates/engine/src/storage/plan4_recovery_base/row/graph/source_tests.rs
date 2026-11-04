@@ -109,9 +109,138 @@ fn certificate_chain() -> usize {
         + size_of::<Certificate>()
         + object_result()
         + size_of::<Native<Option<Certificate>, BaseError>>()
+        + size_of::<(Profile, u16, std::ops::RangeInclusive<u8>, &u8, bool)>()
+        + page_reference_decode()
+}
+
+/// Identity constructors and scalar/slice decoders nested under wire identities.
+/// Exclusive constructor arms are summed; these values are not just the outer
+/// Result that the caller retained. Error construction is included explicitly.
+fn identity_decode() -> usize {
+    use crate::api::DatabaseId;
+    size_of::<(
+        u64,
+        Option<std::num::NonZeroU64>,
+        Generation,
+        foundation::Error,
+    )>() + generation_result()
+        + size_of::<(
+            [u8; 16],
+            DatabaseId,
+            crate::Error,
+            Native<DatabaseId, crate::Error>,
+        )>()
+        + size_of::<(
+            u64,
+            crate::storage::page::FileId,
+            Native<crate::storage::page::FileId, PageError>,
+        )>()
+        + size_of::<(&[u8], usize, [u8; 8], u64, std::slice::Iter<'_, u8>, bool)>()
+}
+
+fn page_reference_decode() -> usize {
+    size_of::<(&[u8], PageRef, Native<PageRef, PageError>)>()
+        + size_of::<Native<crate::storage::page::FileId, PageError>>()
+        + generation_result()
+        + identity_decode()
+}
+
+fn source_owner_decode() -> usize {
+    use crate::storage::allocation_page::SystemWorkKind;
+    let system = size_of::<(&[u8], [u8; 16], Namespace, SystemWorkKind, Generation)>()
+        + size_of::<Native<SystemWorkKind, AllocationError>>()
+        + size_of::<Native<Generation, AllocationError>>()
+        + size_of::<(Namespace, SystemWorkKind, u64, Generation, SystemWorkRef)>()
+        + 2 * size_of::<Native<SystemWorkRef, AllocationError>>();
+    let transaction = size_of::<(&[u8], TxnId, Generation, Native<TxnId, PageError>)>()
+        + size_of::<(&[u8], [u8; 16], [u8; 4], TxnId, Native<TxnId, PageError>)>()
+        + size_of::<(TxnId, Generation, TxnRef, bool)>()
+        + 2 * size_of::<Native<TxnRef, PageError>>();
+    system.max(transaction) + identity_decode()
+}
+
+fn birth_accessors() -> usize {
+    use crate::storage::plan4_recovery_base::{StructuralInit, image_records::StructuralOperation};
+    // Both comparison results may coexist while the second accessor decodes.
+    size_of::<(InitProvenance<'_>, StructuralInit<'_>, StructuralOperation)>()
+        + 2 * size_of::<ReservationOwner>()
+        + 2 * size_of::<Option<ObjectHandle>>()
+        + 2 * size_of::<Option<PageRef>>()
+        + 2 * size_of::<[u64; 2]>()
+        + size_of::<(&[u8; 32], Native<&[u8; 32], TryFromSliceError>)>()
+        + source_owner_decode().max(page_reference_decode()).max(
+            size_of::<(
+                ObjectHandle,
+                ObjectId,
+                Generation,
+                foundation::identity::SchemaEpoch,
+            )>() + object_result()
+                + generation_result()
+                + identity_decode(),
+        )
+}
+
+/// validate_provenance -> validate_structural and the independent group pass.
+fn birth_chains() -> (usize, usize) {
+    use crate::storage::plan4_recovery_base::{INIT_BYTES, StructuralInit};
+    type Refs<'a> = std::iter::Enumerate<std::iter::Copied<std::slice::Iter<'a, Option<PageRef>>>>;
+    type Prefix<'a> = std::iter::Flatten<std::slice::Iter<'a, Option<PageRef>>>;
+    let common = size_of::<(&[u8; INIT_BYTES], Certificate, Expected, PageRef)>()
+        + size_of::<Native<(), BaseError>>();
+    let structural = size_of::<(
+        &[u8; INIT_BYTES],
+        Certificate,
+        Expected,
+        SystemWorkRef,
+        PageRef,
+        PageRef,
+        u64,
+        Option<PageRef>,
+    )>() + size_of::<[Option<PageRef>; 4]>()
+        + size_of::<(Refs<'_>, usize, Option<PageRef>, PageRef, Prefix<'_>)>()
+        + size_of::<(
+            &PageRef,
+            &PageRef,
+            PageRef,
+            Range<u64>,
+            std::ops::RangeInclusive<u8>,
+            bool,
+        )>()
+        + size_of::<(Profile, crate::storage::control::ProfileSpec, u16)>()
+        + 3 * size_of::<Native<PageRef, PageError>>()
+        + size_of::<Native<SystemWorkRef, AllocationError>>()
+        + size_of::<Native<(), BaseError>>();
+    let legacy = size_of::<(
+        SystemWorkRef,
+        TxnRef,
+        [PageRef; 2],
+        std::slice::Iter<'_, PageRef>,
+    )>() + size_of::<(Profile, crate::storage::control::ProfileSpec)>()
+        + size_of::<Native<SystemWorkRef, AllocationError>>()
+        + size_of::<Native<TxnRef, PageError>>()
+        + 2 * size_of::<Native<PageRef, PageError>>()
+        + size_of::<Native<(), BaseError>>();
+    let grammar =
+        common + structural.max(legacy) + source_owner_decode().max(page_reference_decode());
+    let groups = size_of::<(
+        LayoutView<'_>,
+        u32,
+        Range<usize>,
+        usize,
+        Range<usize>,
+        usize,
+    )>() + 2 * size_of::<(
+        InitProvenance<'_>,
+        Option<InitProvenance<'_>>,
+        Native<Option<InitProvenance<'_>>, BaseError>,
+    )>() + 2 * size_of::<(StructuralInit<'_>, Option<StructuralInit<'_>>)>()
+        + size_of::<Native<StructuralInit<'_>, BaseError>>()
+        + size_of::<Native<(), BaseError>>()
+        + provenance_read().max(birth_accessors());
+    (grammar, groups)
 }
 /// decode_layout (or encode_layout, which ends in it) with the shared
-/// certificate/provenance matchers charged as the certificate chain.
+/// certificate/provenance matchers and both historical group passes.
 fn layout_measured() -> usize {
     use crate::storage::plan4_recovery_base::INIT_BYTES;
     type Sections4 = (usize, usize, usize, usize);
@@ -141,13 +270,16 @@ fn layout_measured() -> usize {
         + size_of::<(Option<[PageRef; 2]>, [PageRef; 2], PageRef)>()
         + size_of::<Native<(), BaseError>>()
         + provenance_read();
+    let (birth_grammar, birth_groups) = birth_chains();
     let decode_chain = decode
         + header_chain()
             .max(digest())
             .max(certificate_chain())
             .max(page_codec())
             .max(row_codec())
-            .max(pairs);
+            .max(pairs)
+            .max(birth_grammar)
+            .max(birth_groups);
     let encode = size_of::<(Header, Expected, Sections<'_>, &mut [u8; BASE_BYTES])>()
         + size_of::<Native<(), BaseError>>()
         + size_of::<(usize, Sections4, usize)>()
@@ -907,6 +1039,21 @@ fn inventory_measured() -> [(&'static str, usize); 3] {
 #[test]
 fn base4_closure_source_bound_covers_measured_frames() {
     let census = source_census();
+    let (birth_grammar, birth_groups) = birth_chains();
+    let birth_bound = crate::storage::plan4_recovery_base::image_records::provenance_source_bytes();
+    let group_bound = birth_bound
+        + 2 * size_of::<crate::storage::plan4_recovery_base::StructuralInit<'_>>()
+        + 2 * size_of::<Option<crate::storage::plan4_recovery_base::StructuralInit<'_>>>()
+        + 2 * size_of::<LayoutView<'_>>()
+        + 2 * size_of::<Range<usize>>();
+    println!(
+        "ROW_BASE_BIRTH_SOURCE grammar={birth_grammar} grammar_bound={birth_bound} groups={birth_groups} group_bound={group_bound} certificate={} certificate_bound={}",
+        certificate_chain(),
+        certificate_read()
+    );
+    assert!(birth_grammar <= birth_bound);
+    assert!(birth_groups <= group_bound);
+    assert!(certificate_chain() <= certificate_read());
     let outer = decode_frame().max(encode_frame()) + validate_frame();
     let graph = new_frame() + row_codec();
     let mut chains = vec![

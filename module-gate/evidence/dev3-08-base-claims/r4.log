@@ -1,0 +1,39 @@
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 27.34s
+     Running unittests src/lib.rs (artifacts/dev3-08/target/debug/deps/engine-e4e141083d864921)
+
+running 1 test
+ROW_BASE_BIRTH_SOURCE grammar=1934 grammar_bound=2252 groups=1315 group_bound=2668 certificate=1515 certificate_bound=1542
+ROW_BASE_SOURCE_CHAIN outer measured=4296 bound=7808
+ROW_BASE_SOURCE_CHAIN layout measured=11555 bound=20232
+ROW_BASE_SOURCE_CHAIN graph measured=8360 bound=9352
+ROW_BASE_SOURCE_CHAIN queue measured=7585 bound=8016
+ROW_BASE_SOURCE_CHAIN provenance measured=7658 bound=9768
+ROW_BASE_SOURCE_CHAIN actors measured=20794 bound=21398
+ROW_BASE_SOURCE_CHAIN row_ledger measured=14325 bound=14713
+ROW_BASE_SOURCE_CHAIN relations_job measured=8842 bound=19950
+ROW_BASE_SOURCE_CHAIN relations_terminal measured=16118 bound=19950
+ROW_BASE_SOURCE_CHAIN relations_root measured=16647 bound=19950
+ROW_BASE_SOURCE_CHAIN relations_catalog measured=15534 bound=19950
+ROW_BASE_SOURCE_CHAIN relations_payloads measured=15619 bound=19950
+ROW_BASE_SOURCE_CHAIN relations_allocation measured=9066 bound=19950
+ROW_BASE_SOURCE_CHAIN relations_reservation measured=7099 bound=19950
+ROW_BASE_SOURCE_CHAIN tables_direct measured=15249 bound=24896
+ROW_BASE_SOURCE_CHAIN tables_nested_rows measured=18525 bound=24896
+ROW_BASE_SOURCE_CHAIN tables_nested_commits measured=19785 bound=24896
+ROW_BASE_SOURCE_CHAIN tables_terminal measured=9440 bound=24896
+ROW_BASE_SOURCE_CHAIN tables_compensated measured=14184 bound=24896
+ROW_BASE_SOURCE_CHAIN ledger_rows measured=22021 bound=34565
+ROW_BASE_SOURCE_CHAIN ledger_reverse measured=18634 bound=34565
+ROW_BASE_SOURCE_CHAIN ledger_system_provenance measured=20135 bound=34565
+ROW_BASE_SOURCE_CHAIN ledger_system_allocation measured=14191 bound=34565
+ROW_BASE_SOURCE_CHAIN inventory_verify measured=48291 bound=51867
+ROW_BASE_SOURCE_CHAIN inventory_items measured=23802 bound=51867
+ROW_BASE_SOURCE_CHAIN inventory_row_item measured=22723 bound=51867
+ROW_BASE_CATALOG_HOOK hook=12480 profile3_transaction=11259 profile2_transaction=11259
+ROW_BASE_SOURCE peak=59675 outer=7808 layout=20232 graph=9352 queue=8016 provenance=9768 relations=19950 actors=21398 tables=24896 row_ledger=14713 ledger=34565 inventory=51867 measured_peak=52587 row_codec=6736 catalog_peak=45591 catalog_outer=7132 catalog_layout=19592 catalog_layout_census=19592
+ROW_BASE_SIZES row_census=72 row_base_view=248 inventory_observation=32 reserved_inventory=1 graph=664 layout_view=176 catalog_census=80
+test storage::plan4_recovery_base::row::graph::source::tests::base4_closure_source_bound_covers_measured_frames ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2259 filtered out; finished in 0.00s
+

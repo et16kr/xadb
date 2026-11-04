@@ -1,0 +1,10 @@
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 28.83s
+     Running unittests src/lib.rs (artifacts/dev3-08/target/debug/deps/engine-e4e141083d864921)
+
+running 2 tests
+test storage::plan4_recovery_base::row::tests::structural::structural_base_rejects_cross_class_birth_collision ... ok
+test storage::plan4_recovery_base::row::tests::structural::structural_base_layout_accepts_historical_nonroot_and_retired_peers ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 2258 filtered out; finished in 0.04s
+

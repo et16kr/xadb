@@ -13,6 +13,7 @@
 pub(super) mod catalog;
 #[path = "plan4_recovery_base/image_records.rs"]
 mod image_records;
+pub(in crate::storage) use image_records::StructuralInit;
 #[path = "plan4_recovery_base/row.rs"]
 pub(super) mod row;
 

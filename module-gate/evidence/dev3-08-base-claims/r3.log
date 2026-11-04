@@ -1,0 +1,9 @@
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 27.55s
+     Running unittests src/lib.rs (artifacts/dev3-08/target/debug/deps/engine-e4e141083d864921)
+
+running 1 test
+test storage::plan4_recovery_base::row::tests::structural::structural_base_raw_digest_is_observation_only ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2259 filtered out; finished in 0.01s
+

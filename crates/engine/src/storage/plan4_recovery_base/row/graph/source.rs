@@ -111,6 +111,7 @@ pub(in crate::storage) fn certificate_read() -> usize {
         + 2 * size_of::<std::result::Result<PageRef, PageError>>()
         + 2 * size_of::<std::result::Result<PageKind, PageError>>()
         + size_of::<PageIdentity>()
+        + size_of::<(u8, bool)>() // certificate kind/level profile branch
         + slack()
 }
 /// semantic_row::ledger observe, remaining and descriptor decode.

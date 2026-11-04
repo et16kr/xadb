@@ -1,0 +1,22 @@
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 26.29s
+     Running unittests src/lib.rs (artifacts/dev3-08/target/debug/deps/engine-e4e141083d864921)
+
+running 4 tests
+test storage::plan4_recovery_base::row::tests::structural::structural_base_certificate_levels_and_profile_isolation ... ok
+
+thread 'storage::plan4_recovery_base::row::tests::structural::structural_base_layout_accepts_historical_nonroot_and_retired_peers' (23813) panicked at crates/engine/src/storage/plan4_recovery_base/row_structural_tests.rs:375:10:
+called `Result::unwrap()` on an `Err` value: Corrupt
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test storage::plan4_recovery_base::row::tests::structural::structural_base_layout_accepts_historical_nonroot_and_retired_peers ... FAILED
+test storage::plan4_recovery_base::row::tests::structural::structural_base_raw_digest_is_observation_and_full_closure_stays_closed ... ok
+test storage::plan4_recovery_base::row::tests::structural::structural_base_groups_bind_same_lsn_even_with_changed_owner ... ok
+
+failures:
+
+failures:
+    storage::plan4_recovery_base::row::tests::structural::structural_base_layout_accepts_historical_nonroot_and_retired_peers
+
+test result: FAILED. 3 passed; 1 failed; 0 ignored; 0 measured; 2255 filtered out; finished in 0.09s
+
+error: test failed, to rerun pass `-p xadb-engine --lib`

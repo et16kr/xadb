@@ -49,6 +49,13 @@ census·source 안정성·live 설치 권한·F05는 후속 의무다. 과거 le
 epoch의 descriptor를 승계해 deeper leaf ChildSplit을 만드는 사례도 확인했다. 실제 WAL
 stage·설치·global closure·복구 수락과 전체 F05는 미완료다.
 
+[Base4 Structural birth 관측](../contracts/dev3-tree-smo.md#base-structural-claims)은 Profile3의
+RowInternal certificate·role5/6와 같은 birth LSN의 교차 검산을 추가한다. 현재 root와 역사
+role를 구분하고 퇴역 peer·다른 incarnation 재사용을 허용한다. 신규 고유9개와 수정된 기존
+source 시험1개를 source별 검증했고 독립 D1/D2 ACCEPT·Clippy PASS다. 원 실패와 한계는
+[기록](../evidence/dev3-tree-structure-20261104.md#base-structural-claims)에 남긴다.
+raw layout 수락은 원 INIT 증명이나 복구 수락이 아니고, mint·ledger·전체 tree 연결은 남는다.
+
 <a id="catalog-remaining"></a>
 2026-10-26 [Catalog CREATE 남은 메모리 사례](../evidence/dev3-catalog-remaining-20261026.md): 남은 9개를 모두 source별로 PASS했다. lookup이 Live CREATE Undo를 초기 Free page로만 검증해 fence하던 결함을 고쳤고 Writer 준비 분리를 포함했다. 같은 epoch 두 번째 CREATE의 pair victim 준비를 [D3-CATALOG-CREATE-002](../contracts/dev3-catalog-create.md#sequential-create)로 보완해 MT02가 r36에서 통과했다. [검토 후 수정](../evidence/dev3-catalog-review-fix-20261026.md)에서 Profile에 맞는 Root/Jobs decoder를 연결하고 신규8개와 변경 source 계산2개를 통과했다. 첫 Row INSERT·runtime F05·DEV3/S5는 미완료다.
 

@@ -463,3 +463,40 @@ immutable borrow 또는 재검산으로 결합해야 한다. 이 API는 stage·�
 encoder를 호출하지 않는다. 이는 frame 형식 oracle이며 전체 SMO 의미의 별도 재구현은 아니다.
 Root/Child leaf/internal의 bytes, wire decode는 수락하는 checksum 보정 변조의 canonical
 거절, 실제 before 결합, output 재계산, buffer/tail·이전 epoch owner·callback 오류를 검산한다.
+
+<a id="base-structural-claims"></a>
+## Base4 certificate와 Structural birth 관측
+
+shared `image_records`의 RowInternal certificate는 Profile3에서만 level1..15를 허용하고,
+기존 kind는 level0을 유지한다. certificate raw[2]·현재 page header·provenance raw[3]은
+같아야 한다. Base3/Profile2 외곽 결합과 기존 INIT role1..4의 level0·reserve<init·zero tail은
+바뀌지 않는다. 이 확장은 raw layout 관측이며 full graph나 selected-source 권한은 아니다.
+
+role5/6의 source는 namespace가 같은 StructuralChange이고 id=reserve=init LSN,
+generation=writer epoch다. 현재 제한 profile의 object generation/schema epoch는1이다.
+right는 RowLeaf0 또는 RowInternal1..14, new root는 RowInternal1..15다. ChildSplit은
+role5와 zero peer만 허용한다. before revision은 양수이며 checked increment한 값이 after다.
+anchor·left·self·RootSplit peer는 첫 extent의 dynamic reference이고 물리 주소가 서로 달라야
+한다. incarnation만 바꾼 alias도 거절한다. `object()`는 Structural에도 값을 주지만 `pair()`는
+CREATE 출처만 반환한다. 별도 borrowed `StructuralInit`이 역사 필드를 노출한다.
+
+Base4 layout은 새 role의 미래 writer epoch를 거절하고 **같은 init LSN 전체**를 비교한다.
+owner 전체·epoch·object·anchor·left·frame/core digest·operation·birth revisions가 같아야 한다.
+RootSplit의 살아 있는 claims는 최대2개, 서로 role5/6·상호 peer·level 차이1이어야 하며,
+ChildSplit은 role5 한 개다. 한 claim의 owner/epoch를 바꿔 비교 그룹을 피할 수 없다.
+
+role6는 생성 당시의 역할이므로 현재 anchor root나 현재 revision과 같다고 요구하지 않는다.
+historical source/peer의 현재 할당도 요구하지 않는다. 정확한 peer incarnation이 현재 살아
+있으면 같은 birth의 대응 claim이어야 한다. 퇴역했거나 같은 주소가 다른 incarnation으로
+재사용됐으면 그 옛 peer의 존재를 강제하지 않는다. CREATE pair의 현재 상호 존재 규칙은 이
+순수 공급에서 아직 바꾸지 않으며 실제 unlink/retirement 연결 때 따로 일반화한다.
+
+raw layout은 임의 initial digest의 역사적 진실성을 보증하지 않는다. mint는 앞 절의 accepted
+canonical frame·exact INIT 비교 뒤 원 history owner만 수행한다. 아직 System ledger·bank·
+현재 전체 tree closure·replay dispatch를 확장하지 않았으므로 raw 수락을 복구 수락으로
+승격하지 않는다. 기존 Allocation System 소비자에 새 claims를 그대로 넘기는 우회도 금지한다.
+
+source bound는 shared provenance grammar·borrowed accessor의 실제 typed carriers와 결과를
+명시해 Base3/Base4 layout에 더하고, Base4 group loop의 views·ranges 및 certificate의 새
+scalar branch를 별도로 센다. caller의2MiB/page loan은 기존 소유자가 계산하며 이 관측층
+계산만으로 SMO F05나 live admission이 충족됐다고 판정하지 않는다.
