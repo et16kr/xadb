@@ -1479,6 +1479,6 @@ source·ELF·input hash는 자리표시, 시험마다 자기 ID 전부를 `XADB_
 | --- | --- |
 | `xrb_canonical_snapshots` C001..C015, `xrb_section_rejections` S001..S016, `xrb_global_census_rejections` G001..G024, `xrb_provenance_and_bindings` I001..I008, `xrb_encoder_literals` E001..E008, `xrb_partial_source_layout` ST001 | 모두 XB_PASS |
 | `bridges::xrb_catalog_bridge_literals` BC001..BC006, `xrb_allocation_bridge_states` BA001..BA024, `xrb_reserved_terminal_adjacency` BB001, `xrb_borrowed_inventory_bridge` BI001..BI008, `xrb_bridge_source_layout` BST001 | 모두 XB_PASS |
-| `xrb_header_rejections` H002..H016 | XB_PASS |
-| `xrb_header_rejections` H001(header version 2를 Unsupported로 기대) | **XB_FAIL**("invalid base accepted"). main `1c9486a`의 같은 명령에서도 같은 위치(`plan4_recovery_base_tests.rs:295`)로 실패하므로 U1 전부터 있던 실패다. 원인은 분석하지 않았다(`read_header_format`은 Row가 아닌 mode에서 version 2를 V2System으로 받는다). 이 단계에서 고치지 않는다 |
+| `xrb_header_rejections` H002..H016 | XB_PASS(`cases()`는 첫 실패에서 멈추므로 H001 뒤의 15개는 `XADB_XRB_INCLUDE=XB-H002,…,XB-H016`로 따로 실행했다) |
+| `xrb_header_rejections` H001(header version 2를 Unsupported로 기대) | **XB_FAIL**("invalid base accepted"). main `1c9486a`의 같은 명령에서도 같은 위치(`plan4_recovery_base_tests.rs:295`)로 실패하므로 U1 전부터 있던 실패다. 원인은 분석하지 않았다(`read_header_format`은 Row가 아닌 mode에서 version 2를 V2System으로 받는다). 이 단계에서 고치지 않고 별도 작업으로 넘겼다(재현: 위 fixture·env로 `XADB_XRB_INCLUDE=XB-H001 cargo test -p xadb-engine --lib -- --exact storage::plan4_recovery_base::tests::xrb_header_rejections`) |
 | `xrb_s5_reserved_header_bytes` | `#[ignore]` 시험이라 실행되지 않음 |
