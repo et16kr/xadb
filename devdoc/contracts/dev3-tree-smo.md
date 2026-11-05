@@ -1619,7 +1619,7 @@ U1에서 미룬 것의 처리:
 | 명령(`cargo test -p xadb-engine --lib -- …`) | 결과 |
 | --- | --- |
 | `storage::anchor::tests:: storage::semantic_row::structure:: storage::plan4_recovery_base::row` | 115 passed, 0 ignored(U1의 113개 + UNL-R04 source·UNL-P08 Catalog 부채) |
-| `retention::history::structure:: retention::recovery::structural_ catalog_live::structural:: plan4_recovery::analysis::structural_bank_tests plan4_recovery::tests::row_gate:: retire::driver::structural_ split_rows:: row::census_tests:: retention::owner_tests::` | 79 passed, 1 ignored(`structural_effect_native_worker`). UNL-R01..R04, 바뀐 dispatch를 지나는 split replay·live split·재시작 시험(SPL-A01..A06·A08·A10·SPL-J01..J07·structural effect. SPL-A07·A09는 U2 code에 닿지 않아 고르지 않았다), S1B 회계(26,452B), S2W-C01..C06(live Row 회계·C 여유), owner 회계(recovered peak ≤ 65,536)를 포함한다 |
+| `retention::history::structure:: retention::recovery::structural_ catalog_live::structural:: plan4_recovery::analysis::structural_bank_tests plan4_recovery::tests::row_gate:: retire::driver::structural_ split_rows:: row::census_tests:: retention::owner_tests::` | 79 passed, 1 ignored(`structural_effect_native_worker`). UNL-R01..R03과 history 쪽 UNL-R04(source 쪽 R04는 첫 명령), 바뀐 dispatch를 지나는 split replay·live split·재시작 시험(SPL-A01..A06·A08·A10·SPL-J01..J07·structural effect. SPL-A07·A09는 U2 code에 닿지 않아 고르지 않았다), S1B 회계(26,452B), S2W-C01..C06(live Row 회계·C 여유), owner 회계(recovered peak ≤ 65,536)를 포함한다 |
 | `plan4_recovery::tests::recovery_source_` | 2 passed(바뀐 history 회계가 들어가는 recovery 자원 회계) |
 
 U2는 Base4 decode(`plan4_recovery_base`)를 바꾸지 않으므로 executor 전용 XRB 시험은 다시 돌리지 않았다.
