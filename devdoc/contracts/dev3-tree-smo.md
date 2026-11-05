@@ -875,7 +875,7 @@ capture/mapping 검산과 retirement 인계에서 Profile3·RowInternal level1..
 <a id="current-leaf-consumers"></a>
 ## current-leaf 소비자 일반화
 
-상태는 **2026-11-05 구현·memory 시험 PASS / 독립 D2 검토 전**이다. 사용자가 Codex 브랜치를
+상태는 **2026-11-05 구현·memory 시험 PASS / 독립 D2 ACCEPT(2회차)**이다. 사용자가 Codex 브랜치를
 받아 08-1을 완료하라고 요청했고, 이 절은 그중 [효과 계약](#structural-effect)이 최종08-1 조건으로
 남긴 current-leaf 소비자 일반화와 admission 한정 제거를 다룬다. 빈 leaf unlink·root shrink·
 retirement opcode와 A의 자동 split 호출자는 이 절의 범위가 아니며08-1 잔여로 남는다.
@@ -914,7 +914,9 @@ key로 다시 route한다. 이것은 SMO를 건너는 cursor/locator 인수(일�
 point.row_load 34,381B다. B route 단계(row_route)는 `route_row_step`이 품는 tree codec까지 세어
 cursor 7,737B, point 7,545B다. C preflight는 여유184B, reserve는 여유499B 안이다. 예약 D는
 `typed_leaf` 아래에서 돌지 않으므로 transition의 leaf·delete·reserve 단계는 D를 단계 frame의
-callee로 센다. S1B Row arm frame은 scope4 structural arm 26,420B가 기존 phase 최대보다 커서 그
+callee로 센다. D와 그 Corrupt 판정은 이제 각 단계의 view decode 뒤(`prepare_leaf`에서는 lsn·pair 판정 뒤,
+`prepare_value`에서는 `value_source` 뒤)에 오지만 출력 전이다. 두 결함이 겹칠 때 보고하는 오류 종류만
+달라지고, 수락·거절되는 입력은 같다. S1B Row arm frame은 scope4 structural arm 26,420B가 기존 phase 최대보다 커서 그
 값으로 고정했다. `check`는 structural bank 관측과 ATT/Job scan을 각자 never-inline frame으로
 나눴고, 두 frame 모두 receiver·Profile·prefix 인자를 센다. 모두 source-value 회계이며 compiler
 stack/RSS 측정이 아니다.

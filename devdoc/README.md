@@ -13,6 +13,7 @@ DEV3 일정 보고는 [전체 예상 일정·누적 진척률 V1](plans/dev3-sch
 `claude/project-thread-e9itre`(Codex branch + main `c52e555`)다. C preflight·rollback·cleanup·recovery,
 A 그룹 관측, B point/cursor, 리프별 예약 D가 split tree의 현재 leaf를 route하고, split은 Active Row 부채
 옆에서도 허용된다. SPL-J01..J05가 split 뒤 INSERT/DELETE/UPDATE의 Commit·rollback·Prune·재시작을 검산한다.
+독립 D2 검토는 2회차에 ACCEPT였다(1회차의 source census 누락 3건 수정, 원 charge 44,304B 그대로).
 빈 leaf unlink·root shrink·retirement와 A의 자동 split 호출자는08-1 잔여라 적립은0, 누적은 그대로다.
 
 직전 작업은 Codex의 [clean Row leaf의 실제 RootSplit/ChildSplit과 복구](evidence/dev3-tree-structure-20261104.md#structural-effect)다.

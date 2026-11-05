@@ -1678,8 +1678,6 @@ fn mcb00_d12_cleanup_failure_replaces_flush_and_scan_errors_keep_progress() {
     assert_eq!(output, [FILL; 16]);
 }
 
-/// MCB00-D13 reports the concrete B frames consumed by the S5 C join. The
-/// combined Full assertions live with the actual C memory/native census.
 /// SPL-B01 (dev3-tree-smo.md#current-leaf-consumers): a split tree's two
 /// leaves, 10 and 20 below the separator 30 and 30 and 40 at or above it.
 /// After 20 the left leaf has no next key, so the cursor routes the next leaf
@@ -1756,6 +1754,8 @@ fn spl_b01_cursor_crosses_split_leaves_at_the_upper_bound() {
     bounded.close().unwrap();
 }
 
+/// MCB00-D13 reports the concrete B frames consumed by the S5 C join. The
+/// combined Full assertions live with the actual C memory/native census.
 #[test]
 fn mcb00_d13_memory_call_inventory() {
     type W = crate::storage::wal_io::plan4_test_support::Writer;
