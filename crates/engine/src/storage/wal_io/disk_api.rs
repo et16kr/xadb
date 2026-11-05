@@ -11,10 +11,10 @@ pub(crate) use super::bootstrap::doublewrite_install::mutable_storage::plan4_pag
     ISOLATION_BYTES, IntoRetentionError, IsolationLevel, MaintenancePort, MissingCatalogEvidence,
     MissingRowEvidence, MutationPort, Plan4Recovered, Plan4RecoveryError, Plan4RecoveryProgress,
     PreflightRow, PreparedCatalog, PreparedRecoveryRow, PreparedRollbackTask, PreparedRow,
-    ROW_PREFLIGHT_CALLER_BYTES, ROW_WRITE_CALLER_BYTES, ReadOnlyCommit, ReadPort, ReadStep,
-    RecoveryAction, RecoveryOwnedError, RecoveryRowTask, ReservedCatalogCreate, ReservedRow,
-    RetentionCause, RetentionError, RetentionFlushPhase, RetentionPhase, RollbackScope,
-    RollbackStep, RowApplied, RowCancelled, RowCandidate, RowCommitObservation,
+    ROW_PREFLIGHT_CALLER_BYTES, ROW_SPLIT_CALLER_BYTES, ROW_WRITE_CALLER_BYTES, ReadOnlyCommit,
+    ReadPort, ReadStep, RecoveryAction, RecoveryOwnedError, RecoveryRowTask, ReservedCatalogCreate,
+    ReservedRow, RetentionCause, RetentionError, RetentionFlushPhase, RetentionPhase,
+    RollbackScope, RollbackStep, RowApplied, RowCancelled, RowCandidate, RowCommitObservation,
     RowControlObservation, RowCopyObservation, RowDeleteStep, RowInputPlan, RowMutationObservation,
     RowOperation, RowOwnedError, RowPageRole, RowPreflightContext, RowPreflightOperation,
     RowPreflightStep, RowPreparedOperation, RowProducerContext, RowProducerInput, RowProducerLane,
@@ -42,6 +42,9 @@ pub(in crate::storage) use super::bootstrap::doublewrite_install::mutable_storag
 // The live Row cleanup step `MutationPort::retire_row` returns (reclamation
 // `#live-row-retirement`), for A's cleanup drain.
 pub(in crate::storage) use super::bootstrap::doublewrite_install::mutable_storage::plan4_pages::apply::RowRetireStep;
+// The live split step `MutationPort::split_row_live` returns
+// (dev3-tree-smo.md#automatic-split), for A's row loop.
+pub(in crate::storage) use super::bootstrap::doublewrite_install::mutable_storage::plan4_pages::apply::RowSplitStep;
 pub(in crate::storage) use crate::transaction::concurrency::Owner;
 pub(in crate::storage::wal_io) use super::bootstrap::doublewrite_install::mutable_storage::plan4_pages::apply::legacy::from_legacy as legacy_install;
 

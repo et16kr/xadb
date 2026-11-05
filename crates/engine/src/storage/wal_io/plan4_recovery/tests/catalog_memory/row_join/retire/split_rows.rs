@@ -1223,3 +1223,8 @@ fn spl_j05_catalog_debt_of_the_table_is_refused_without_effect() {
         );
     });
 }
+
+/// SPL-A: the automatic split of a full Row leaf by A's row loop
+/// (dev3-tree-smo.md#automatic-split).
+#[path = "auto_split.rs"]
+mod auto_split;

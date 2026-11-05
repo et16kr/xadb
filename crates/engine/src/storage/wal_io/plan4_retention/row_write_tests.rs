@@ -346,3 +346,23 @@ pub(in crate::storage) mod mca01_v12_p {
         }
     }
 }
+
+/// SPL-A (dev3-tree-smo.md#automatic-split): `leaf_short`, the one space
+/// rule of a Row Reserve's leaf Capacity and of the live split's need
+/// check, at its boundary for an INSERT and an UPDATE.
+#[test]
+fn spl_leaf_short_is_exact_at_the_boundary() {
+    use crate::storage::row_record::ROW_HEADER_BYTES;
+    // An INSERT's cell: L + header + key12 + slot4, beside D.
+    let need = 22 + ROW_HEADER_BYTES + 16;
+    assert!(!leaf_short(22, None, 100, (need + 100) as u16));
+    assert!(leaf_short(22, None, 100, (need + 99) as u16));
+    // An UPDATE's growth over its old cell (head 12 and the old record).
+    let old = 40 + ROW_HEADER_BYTES + 12;
+    let grown = 300 + ROW_HEADER_BYTES + 12 - old;
+    assert!(!leaf_short(300, Some(old), 7, (grown + 7) as u16));
+    assert!(leaf_short(300, Some(old), 7, (grown + 6) as u16));
+    // A value that shrinks needs no room beyond D.
+    assert!(!leaf_short(5, Some(old), 0, 0));
+    assert!(leaf_short(5, Some(old), 1, 0));
+}

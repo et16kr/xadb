@@ -1,21 +1,21 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-11-04T08:15:31.580874+09:00",
+  "date": "2026-11-05T22:21:21.954392+09:00",
   "status": "PASS",
   "errors": [],
   "markdown_documents": [
     {
       "file": "devdoc/README.md",
-      "links": 306,
+      "links": 315,
       "duplicate_ids": 0,
-      "sha256": "4273051791521ff1eaed48f2685746229f943c2410779a44943d24d841bc92ec"
+      "sha256": "3f0f84c457d5c83a3268e69edc17c161384e8e545014e6efde14c613f1a9e017"
     },
     {
       "file": "devdoc/contracts/README.md",
-      "links": 133,
+      "links": 134,
       "duplicate_ids": 0,
-      "sha256": "220e69b2bd2f7ac098fe1a4471cad644e346cd233bdc20208ce49de51af7e5a8"
+      "sha256": "9d39e8d3c76ba179a24ab465aecc0806fc59094ba3528772973e783f83d1f620"
     },
     {
       "file": "devdoc/contracts/ai-performance-engineering.md",
@@ -157,9 +157,9 @@
     },
     {
       "file": "devdoc/contracts/dev3-module-boundaries.md",
-      "links": 364,
+      "links": 365,
       "duplicate_ids": 0,
-      "sha256": "dc86773836bf9a15feddd883bdfc0437c7dc853d7d8158a6d19f2bd41022b887"
+      "sha256": "f3b1f5e1539b982de4153aac7b805a40a8b595059adf94a13f0a01232dec04f7"
     },
     {
       "file": "devdoc/contracts/dev3-module-consumers.md",
@@ -277,9 +277,9 @@
     },
     {
       "file": "devdoc/contracts/dev3-resource-bounds.md",
-      "links": 41,
+      "links": 43,
       "duplicate_ids": 0,
-      "sha256": "8f9c44cd659e15109b927c1b6a1569b972acc8511d0b2f91c90e57f0f29a8bb0"
+      "sha256": "82a983f28867456a52b0a04b1fc68d5a389302e77a097ab34a140c087c514418"
     },
     {
       "file": "devdoc/contracts/dev3-retention-live.md",
@@ -289,9 +289,9 @@
     },
     {
       "file": "devdoc/contracts/dev3-row-delete.md",
-      "links": 30,
+      "links": 31,
       "duplicate_ids": 0,
-      "sha256": "9cf57ff0d8c40bf27c7f249d5f84f59c926d7c4e9ecefde831410e08d16fef7b"
+      "sha256": "9d9c2ac2c00517a20794436d54f4a427152aa02d6c58031432c3d26eb98a33b7"
     },
     {
       "file": "devdoc/contracts/dev3-row-format.md",
@@ -301,9 +301,9 @@
     },
     {
       "file": "devdoc/contracts/dev3-row-update.md",
-      "links": 33,
+      "links": 35,
       "duplicate_ids": 0,
-      "sha256": "0b85d7bb1ea687f24602aa15cf6fa857434f139a2e4071425791164c505e0f18"
+      "sha256": "175f50899d4863ad81b4f02eedecd759603c56d72eba6cdba14b65080c0d8725"
     },
     {
       "file": "devdoc/contracts/dev3-selector-port.md",
@@ -367,9 +367,9 @@
     },
     {
       "file": "devdoc/contracts/dev3-task-04-wal.md",
-      "links": 11,
+      "links": 13,
       "duplicate_ids": 0,
-      "sha256": "670c786783e570164aad81f0f27a9a546413ee7897952763cf1fbfeb3719b416"
+      "sha256": "d62d578c96e4aaa7450e9e8b388569af51cc7febbcb1d4096cb8bbdad936a56c"
     },
     {
       "file": "devdoc/contracts/dev3-task-05-buffer-flush.md",
@@ -403,9 +403,9 @@
     },
     {
       "file": "devdoc/contracts/dev3-task-10-concurrency.md",
-      "links": 38,
+      "links": 42,
       "duplicate_ids": 0,
-      "sha256": "c405474a76b4a4b99c806fff31c523018f8fbbf1245ac9e788df69e2ffd6d65d"
+      "sha256": "e0d8d7d64a9e36dd8f7341781b6559cfc3ca0f76c36e30c2fa3d9f199ba21b90"
     },
     {
       "file": "devdoc/contracts/dev3-task-11-commit.md",
@@ -421,9 +421,9 @@
     },
     {
       "file": "devdoc/contracts/dev3-task-13-checkpoint.md",
-      "links": 19,
+      "links": 21,
       "duplicate_ids": 0,
-      "sha256": "7e43b2bfa9fc6dc69411308b8cd725538fc752b34ab3af655b5dd5e512911a21"
+      "sha256": "ccfc36998fc648f2d253be6590714c3d98dc9c060bf9cfa26e097219ee802892"
     },
     {
       "file": "devdoc/contracts/dev3-task-14-reclamation.md",
@@ -433,15 +433,15 @@
     },
     {
       "file": "devdoc/contracts/dev3-task-15-backup-integrity.md",
-      "links": 22,
+      "links": 24,
       "duplicate_ids": 0,
-      "sha256": "64281b128116e0c1c62a99e6b492cd474c277dd06ac76a950562b6c8e925e973"
+      "sha256": "43085d17f2b31f4ff9e0c058610bd84e9bd7f5ab02ba31b3b287ca4db5daa917"
     },
     {
       "file": "devdoc/contracts/dev3-task-16-qualification.md",
-      "links": 14,
+      "links": 17,
       "duplicate_ids": 0,
-      "sha256": "dbf4dc0c79b8fc7f204c0328990f95e92ef0de8b4a3e6ad7412832318e52aa5a"
+      "sha256": "5685a7238c29dd3cada4f9e51cc4826692e3a5bd28e7fd37f7f6f89b4f480805"
     },
     {
       "file": "devdoc/contracts/dev3-task-designs.md",
@@ -457,9 +457,15 @@
     },
     {
       "file": "devdoc/contracts/dev3-tree-format.md",
-      "links": 5,
+      "links": 7,
       "duplicate_ids": 0,
-      "sha256": "7b1ef62c9db60b4e47a63117d9d2b4b8bb3e6a9fd2f6286e7e6fa48836f8e7c1"
+      "sha256": "0a7cbfe6a64db68df41cd929211497be7a9447ca1c7880794472e8ec1726e8a2"
+    },
+    {
+      "file": "devdoc/contracts/dev3-tree-smo.md",
+      "links": 22,
+      "duplicate_ids": 0,
+      "sha256": "ec3461b52b12390be6448a37fe3b52182784cc46a16cc09ea05ed3fcba2f81f8"
     },
     {
       "file": "devdoc/contracts/dev3-undo-format.md",
@@ -571,9 +577,9 @@
     },
     {
       "file": "devdoc/contracts/disk-storage-design.md",
-      "links": 59,
+      "links": 63,
       "duplicate_ids": 0,
-      "sha256": "467e73fdc6f43d610adfdd052209d3e1bd7f1449121041784e5e921138ff2f6a"
+      "sha256": "ce97f59965f2ae796416c3577a67fdf2b562d68e0c566869f3f7bfeeac9f7381"
     },
     {
       "file": "devdoc/contracts/implementation-contracts.md",
@@ -595,9 +601,9 @@
     },
     {
       "file": "devdoc/evidence/README.md",
-      "links": 404,
+      "links": 411,
       "duplicate_ids": 0,
-      "sha256": "da0cc4bf0bae4762951c8e531686928a4f55a7f6cb45a963573b5d6545b9971f"
+      "sha256": "9ee134a495625c29cab3a08d771896ef54403df825100664a13d4cd418b2a972"
     },
     {
       "file": "devdoc/evidence/autocommit-insert-20261102.md",
@@ -852,6 +858,12 @@
       "sha256": "8ad24506d09807cbcc2bf496f5f80a46fdf9dc3eaef8824268363de27fb278e9"
     },
     {
+      "file": "devdoc/evidence/dev3-cross-dbms-design-review-20261104.md",
+      "links": 85,
+      "duplicate_ids": 0,
+      "sha256": "7888d2900e0a0318fea66880683c9d9d957f51d1f9406e945f332fbe41c4adba"
+    },
+    {
       "file": "devdoc/evidence/dev3-dev4-architecture-review.md",
       "links": 7,
       "duplicate_ids": 0,
@@ -880,6 +892,12 @@
       "links": 13,
       "duplicate_ids": 0,
       "sha256": "837e1a0eaf70d451f13de6c1b8900f659e100f408757fd00c7e63e57d56483ad"
+    },
+    {
+      "file": "devdoc/evidence/dev3-improved-plan-structural-review-20261104.md",
+      "links": 68,
+      "duplicate_ids": 0,
+      "sha256": "41521735f89b2fdaa3bcc1a271f825ead6736743ae5d86d5978970b7b857b379"
     },
     {
       "file": "devdoc/evidence/dev3-leaf-edit-20261025.md",
@@ -916,6 +934,12 @@
       "links": 2,
       "duplicate_ids": 0,
       "sha256": "dbced2ed412aaca7a4a25f820bd57a80bf0e3bf1e4e547dda8f1e7749288148e"
+    },
+    {
+      "file": "devdoc/evidence/dev3-oracle-direction-review-20261103.md",
+      "links": 77,
+      "duplicate_ids": 0,
+      "sha256": "620db555de88daf4fa6683bd7e7df854aa3e8df4ee2f920c3ba9a9711d57c0f4"
     },
     {
       "file": "devdoc/evidence/dev3-plan4-clean-owner-20261024.md",
@@ -1002,6 +1026,12 @@
       "sha256": "9d03b95d147f76c5b0a4ba87e771f6a0abbaded526e6401e0ac856c6a41b7413"
     },
     {
+      "file": "devdoc/evidence/dev3-scalability-ha-plan-review-20261104.md",
+      "links": 43,
+      "duplicate_ids": 0,
+      "sha256": "e021bf3a66736db704a99492ffe5a0cfd26f31f9a40dd85fd1c612ed2be1e946"
+    },
+    {
       "file": "devdoc/evidence/dev3-source-research.md",
       "links": 3,
       "duplicate_ids": 0,
@@ -1066,6 +1096,12 @@
       "links": 22,
       "duplicate_ids": 0,
       "sha256": "561a1d5562f4f0cc38a0d8037ac0fdd2d0670a49c38f3b244cd69b4bfe44ca7a"
+    },
+    {
+      "file": "devdoc/evidence/dev3-tree-structure-20261104.md",
+      "links": 41,
+      "duplicate_ids": 0,
+      "sha256": "18d3df72cdbfe449092d4e2f653a0c8578715b3deb406d63da905b2de1121b3a"
     },
     {
       "file": "devdoc/evidence/dev3-undo-bootstrap-20261024.md",
@@ -1405,9 +1441,9 @@
     },
     {
       "file": "devdoc/implementation/dev3-implementation.md",
-      "links": 264,
+      "links": 285,
       "duplicate_ids": 0,
-      "sha256": "ccddc89f2c4ac308c30868004de7a367de5f5772f74787def8a7d59452224a63"
+      "sha256": "159d17d59772b3869b0b61c88afb4f87ed7969c5e216fdb71489a6ca5f7d9cc5"
     },
     {
       "file": "devdoc/implementation/dev4-implementation.md",
@@ -1417,9 +1453,9 @@
     },
     {
       "file": "devdoc/plans/README.md",
-      "links": 79,
+      "links": 82,
       "duplicate_ids": 0,
-      "sha256": "1dd306871f32e16c06288a592054eb9958d4e7205c1fcd9a750138d0e36eb5d5"
+      "sha256": "ccd7685724fc47aa82cf0862c6812ed9e69ec1a0799a08f7fa09e53a6f21d656"
     },
     {
       "file": "devdoc/plans/bottom-up-development.md",
@@ -1453,21 +1489,21 @@
     },
     {
       "file": "devdoc/plans/dev3-implementation-plan.md",
-      "links": 123,
+      "links": 144,
       "duplicate_ids": 0,
-      "sha256": "6afbfd8c72479724df28a246916122a5ca2fef8c6f9c76a5808a8cb183b0bfbc"
+      "sha256": "b7c4e160300aea6548ecc9d02bd9f75efbdb53d0b11bf1dffa09415d68e16527"
     },
     {
       "file": "devdoc/plans/dev3-schedule-baseline.md",
-      "links": 114,
+      "links": 120,
       "duplicate_ids": 0,
-      "sha256": "858c0bdd3f9df80f9fa2a6cd2a3fff38006c06ee1210e48eca33bb8b5ae59677"
+      "sha256": "d61277c6788db799aaa98dea8086e62795d775332e429d498e5082245b365291"
     },
     {
       "file": "devdoc/plans/dev3-test-plan.md",
-      "links": 159,
+      "links": 162,
       "duplicate_ids": 0,
-      "sha256": "d53f92848bf066ec60f328bb2e5cd661f1b5175aec152e48858af462e7c00b18"
+      "sha256": "538d4eef582ae6c5398b87010ec51280f95e45a500b0d07c184beb69344238ad"
     },
     {
       "file": "devdoc/plans/dev4-implementation-plan.md",
@@ -1549,9 +1585,9 @@
     },
     {
       "file": "devdoc/plans/module-independence-followup-plan.md",
-      "links": 73,
+      "links": 76,
       "duplicate_ids": 0,
-      "sha256": "0a12f8b1679182975582e089f01c24bb328a2b8394a22ce0d6d4ca506f085e68"
+      "sha256": "10b62aca3e144333f57b187707f63a53e77f76adfc22d103439874bf051741e3"
     },
     {
       "file": "devdoc/plans/module-independence-plan.md",

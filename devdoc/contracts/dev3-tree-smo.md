@@ -941,5 +941,180 @@ stack/RSS 측정이 아니다.
 | SPL-B01 | B driver의 literal 두 leaf(10,20 / 30,40, separator 30). cursor가 20 뒤 왼쪽 leaf의 upper bound로 오른쪽 leaf를 route해 30·40을 돌려주고 끝남. 범위가 separator에서 끝나면 오른쪽 leaf를 route하지 않고 끝남 |
 | SMO-E01 | 기존 Active·Commit 후 거절 단언을 위 admission에 맞춰 제거. 깨끗한 leaf의 Root→Child 효과 검산은 그대로 |
 
-이 절은08-1을 완료로 적립하지 않는다. 빈 leaf unlink·root shrink·retirement와 Capacity 시 A의
-자동 split 호출자가 남아 있다.
+이 절은 08-1을 완료로 적립하지 않는다. 빈 leaf unlink·root shrink·retirement와 Capacity 시 A의
+[자동 split 호출자](#automatic-split)가 남아 있다.
+
+<a id="automatic-split"></a>
+## A 자동 split 호출자
+
+상태는 **2026-11-05 구현 / 독립 D2 3회차 ACCEPT, 필수 0**이다. 1차 D2(계약 초안)는 REJECT였고
+필수 2건(F4 예산, A literal 시험)을 반영했다. 2회차는 그 둘의 해소와 설계 변경 둘(값 검사 발동, 필요 검산 뒤
+부채 검사)을 받아들이고, 예약 D>0의 Reserve Capacity 경로에 실제 C 증거가 없다는 필수 1을 냈다. SPL-A10과
+서술 정정으로 반영했고, [3회차 검토](../../module-gate/evidence/dev3-08-1-auto-split/review.md)에서 ACCEPT를 받았다. 사용자의 08-1 완료
+요청에서 [current-leaf 소비자](#current-leaf-consumers) 다음으로 남은 제품 호출자를 다룬다. 이 절은 leaf가
+찬 INSERT·UPDATE를 A가 split으로 이어 가는 경로만 정한다. 빈 leaf unlink·root shrink·retirement opcode는
+이 절의 범위가 아니며 08-1 잔여로 남는다.
+
+**발동.** A의 INSERT·UPDATE 행 하나의 시도가 다음 둘 중 하나로 끝나고, 그 preflight finish가 cleanup 오류
+없이 끝났으며 `must_resolve`가 아닐 때만이다.
+
+1. A의 값 검사(C validation lane 위의 `validate_insert`)가 `InsertError::Capacity`를 돌려줌. route한 leaf의
+   여유(`leaf_free_bytes`, D 없음)가 `L+ROW_HEADER_BYTES+16`보다 작다는 뜻이다. 실측으로 꽉 찬 leaf는
+   Reserve 전에 여기서 먼저 걸린다. L은 값의 canonical 길이로, schema가 이미 받아들인 값이므로 A가
+   `canonical_values_len`으로 센다.
+2. C의 Reserve가 `Before`로 정확히 `Unchanged(Prepare, Capacity)`를 돌려줌(`RetentionError::row_capacity`;
+   `_`·Frame·다른 phase·effect는 포함하지 않는다). L은 `RowInputPlan::encoded_len`이다. 이 Capacity는 leaf
+   공간(`check_candidate`, D 포함)과 WAL 상한(`check_progress_room`) 두 곳에서 나오므로, C가 아래 필요
+   검산으로 둘을 가른다. Retained INSERT root는 D에 아무것도 더하지 않으므로, leaf 쪽 Reserve Capacity는 같은
+   leaf에 Retained DELETE·줄어든 UPDATE root가 있어 D>0일 때만 난다(SPL-A10). D=0이면 찬 leaf는 1이 먼저 잡는다.
+
+Preflight의 Capacity(Free Undo 없음, `row_high` overflow)와 그 밖의 거절·Fatal, Forward 이후 단계는
+발동하지 않는다. DELETE는 공간을 쓰지 않으므로 해당하지 않는다. 발동하면 A는 L을 `full`에 남기고, 그
+시도의 `Failure`는 그대로 쥔다.
+
+**C 진입 `split_row_live`.** `MutationPort::split_row_live(owner, table: &CheckedTable, row: Option<RowId>, length, private, flusher) -> Result<RowSplitStep>`.
+`row`는 UPDATE의 대상 RowId이고 INSERT는 None이다(같은 cut의 Root `row_high+1`). 다른 session·pool의
+table은 Unchanged BindingMismatch다. 답은 셋이고, `Split`은 split 관측을 싣지 않는다(A는 같은 행을 다시
+시도할 뿐이고, 결과 slot을 작게 두어 F4 예산을 지킨다).
+
+| 답 | 뜻 |
+| --- | --- |
+| `Split` | RootSplit 또는 ChildSplit 한 그룹이 설치되고 frame이 durable. A는 같은 행을 preflight부터 다시 시도 |
+| `FlushRequired(target)` | 거주 단계가 이 dirty victim의 flush를 먼저 요구. 준비·stage·pin 없음. A가 flush한 뒤 같은 split을 다시 부름 |
+| `NotNeeded` | route한 leaf가 그 행과 예약 D를 이미 담음(C의 규칙). 아무 효과 없음. A는 그 시도의 실패로 행을 끝냄 |
+
+shell은 `split_row`와 같다. health·origin·pool/flusher binding, `CheckedTable`의 core·binding·fence,
+`close_reads_for_retirement`(owner Idle, read operation 없음)와 `catalog_progress` admission을 잡고, 모든
+출구에서 checked 반환한다. statement view는 받지 않는다. split은 사용자 거래의 일부가 아니다. 비용으로,
+매 split은 그 owner의 reads를 닫고 split frame 하나의 durable wait(fsync)를 한다. `NotNeeded`와 부채
+Unsupported 답도 shell(모든 owner의 admitted read 대기)과 `catalog_progress`, route LOAD와 그 FlushRequired
+flush를 치른다. SQL 계층은 `Stage::Split` Unsupported를 "split이 필요하지만 이 table에서는 아직 할 수 없음"으로
+옮긴다.
+
+본문(`split_live_admitted`)은 길이 검사와 두 never-inline 단계다.
+
+0. **길이.** L이 `MIN_CANONICAL..=INLINE_ROW_BYTES`(5..=2048, RowReserve producer의 범위) 밖이면 무효과 Unchanged
+   `RowSemantic(InvalidInput)`이다. 아무것도 읽지 않는다.
+1. **거주와 선택(`split_resident`).** retire의 Prune route처럼 anchor를 LOAD하고(INSERT면 Root도 LOAD해
+   `row_high+1`을 key로 읽는다), anchor의 현재 root부터 key를 route하며 각 RowInternal을 LOAD한다. route의
+   LOAD는 anchor와 그 page만 보호한다. 경로의 page마다 "Row separator 하나를 더 받을 공간"
+   (`search::separator_room`: `(len+1)·40 ≤ TREE_ENTRY_CAPACITY` 16,188. len은 `TreePageView::len`, metadata
+   entry를 세지 않는 entry 수이고, 40은 Row internal cell 36B(4+8+24)와 slot 4B다. 경계는 len 404)을 적는다.
+   깊이는 root level로 묶인다(≤15).
+   - **필요 검산(`leaf_needs_split`).** route한 leaf의 typed read와 control Jobs로 `check_candidate`와 같은
+     함수 `leaf_short`를 본다. INSERT는 `L+ROW_HEADER_BYTES+16`, UPDATE는
+     `max(0, L+ROW_HEADER_BYTES+12−C)`(C는 그 leaf의 대상 cell). D는 그 leaf의 `leaf_reservation`, 여유는
+     `leaf_free_bytes`다. `필요+D ≤ 여유`이면 `NotNeeded`. UPDATE 대상이 route한 leaf에 없어도 `NotNeeded`다.
+     그래서 WAL 상한의 Reserve Capacity는 `NotNeeded`가 되어 원 실패가 그대로 남는다.
+   - **split 부채(`check_split_debt`).** 필요가 확인된 뒤, split 집합을 읽기 전에 table의 RootReserved Row
+     root나 non-Free Catalog Job을 보고 무효과 Unchanged Unsupported로 거절한다. 필요 검산보다 뒤에 두므로
+     필요 없는 행은 부채가 있어도 `NotNeeded`이고, 필요한 행은 준비 없이 싸게 거절된다. `split_row_admitted`가
+     준비한 cut에서 같은 검사를 다시 한다.
+   - **대상(`search::split_target`).** leaf에서 위로, 부모가 separator를 받을 수 있는 가장 낮은 page를
+     고른다. 그런 부모가 없으면 root다. root면 RootSplit, 아니면 그 부모와의 ChildSplit이다. 부모가 찬 경우
+     위쪽을 먼저 나누고, A의 다음 시도가 다시 아래로 내려온다(잘린 cascade를 공개하지 않는다는 위 결정과
+     같다). 첫 extent(64 page)에서는 부모의 child가 64 이하라 "부모가 참" 분기는 실제로 닿지 않고 SPL-A07의
+     순수 시험으로만 덮인다.
+   - **split 집합 거주.** anchor·대상·부모(RootSplit은 anchor·root)를 서로 보호하며 LOAD한다. allocator는
+     frame 0이다. 그다음 INIT victim을 producer와 같은 함수(`structural_flush_victim`, 곧 `structural_candidates`의
+     `retention_candidate_at`, clean 우선)로 미리 본다. 보호 집합은 producer의 targets에서 INIT를 뺀 것과
+     정확히 같다(RootSplit {allocator, anchor, root}, ChildSplit {allocator, anchor, 대상, 부모}). 필요한
+     수(Child 1, Root 2) 안에 dirty 후보가 있으면 그 frame의 target으로 `FlushRequired`다. 이 검사는 읽기만
+     한다. 최소 pool은 이 집합과 INIT 수를 더한 frame이고, 그보다 작으면 LOAD나 victim 선택의 원 무효과
+     거절이 난다.
+2. **효과.** `split_row_admitted(table.handle, 대상)`를 그대로 부른다. admission(allocator Reserved·모든
+   RootReserved 거절, 대상 table의 non-Free Catalog Job Unsupported, Retained·Releasing·terminal 허용),
+   canonical 준비, victim 선택, 설치, durable wait와 그 거절은 [효과 계약](#structural-effect)과 위 절
+   그대로다. 단계 1과 2는 같은 port 호출 안이므로 그 사이에 다른 owner가 residency를 바꾸지 못한다.
+   `FlushRequired` 왕복 사이의 변경은 다음 호출의 단계 1이 처음부터 다시 보며, 그래도 놓친 dirty victim은
+   2가 무효과 Busy로 거절하고 A가 행을 끝낸다.
+
+첫 extent의 Free page가 모자라거나 root level 15에서 RootSplit하려 하면 producer의 Exhausted이고 C에서
+`RowSemantic(Exhausted)`가 된다. leaf가 entry 1개뿐이면 그 전에 필요 검산이 `NotNeeded`를 낸다(가장 큰 행
+2,232B와 그 D를 더해도 16,188 안이다). 모두 무효과다.
+
+**A의 행 loop.** INSERT·UPDATE statement의 행 하나는 바깥 loop에서 돈다. 시도(`insert_row`·`update_row`,
+preflight·flush·validate·Reserve…)가 실패하면 never-inline 단계 `split_leaf`가 `full`을 꺼낸다.
+
+- `full`이 비었으면 split하지 않고 그 시도의 실패로 행을 끝낸다.
+- `Split`이면 행의 split 횟수를 하나 늘리고 같은 행을 preflight부터 다시 시도한다. 한 행의 split은
+  `MAX_ROW_SPLITS` = 16회다. 넘으면 마지막 시도의 실패로 행을 끝낸다. 진행성: split마다 key 쪽 leaf의
+  entry와 D가 줄고, entry 1개 leaf에서는 언제나 `NotNeeded`이며, 부모 cascade는 깊이 15로 묶인다. 첫
+  extent에서 깊이는 2 이하라 16회로 충분하다.
+- `FlushRequired`는 preflight의 flush와 같은 `flush`(`try_flush`·`continue_flush`)로 처리하고 같은 split을
+  다시 부른다. 횟수는 늘리지 않는다(flush마다 dirty page 하나가 clean이 되므로 끝난다). flush 실패는
+  `Stage::Flush` 또는 `Stage::ContinueFlush`로 행을 끝낸다.
+- `NotNeeded`는 그 시도의 실패(`Stage::Validate` Capacity 또는 `Stage::Reserve` Capacity)를 그대로 돌려준다.
+- split 거절은 새 `Stage::Split`과 그 오류로 행을 끝낸다. C가 Fatal·CallerMustResolve면 `must_resolve`다.
+- 행이 끝난 뒤의 statement 처리(`end_statement`의 Returned·RollbackRequired·MustResolve)는 지금과 같다.
+  split은 행을 적용하지 않으므로 applied 수를 바꾸지 않는다. split 뒤 재시도가 다른 이유(예: preflight
+  Busy)로 실패하면 그 오류로 행이 끝나고 split은 durable로 남는다.
+
+**사용자에게 보이는 변화.** CREATE Catalog Job이 남은 table의 찬 leaf INSERT는 지금까지 `Stage::Validate`
+Capacity였고, 이제 `Stage::Split` Unsupported다(둘 다 무효과). split이 필요하지만 그 table에서는 아직 할 수
+없다는 실제 원인을 보여 주려는 선택이다. 소비자 inventory MCA05-V30("다음 split 거절")은 이 거절로
+기대를 바꾼다. table의 CREATE Catalog Job을 live로 정리하는 제품 호출자는 아직 없으므로, 일정 10-1(table
+일반 create·drain) 전에는 제품 table에서 자동 split이 늘 이 거절로 끝난다. 시험은 `retire_create!`로 그
+부채를 먼저 정리한다.
+
+**발견한 기존 편차(이 절 밖).** UPDATE의 값 검사는 새 cell 전체를 leaf 여유와 비교한다(`encode_input`,
+`L'+184 > 여유`). 그래서 여유가 새 cell 전체보다 작은 leaf에서는 같은 크기·줄어드는 UPDATE와, 증가분+D는
+들어가는 커지는 UPDATE도 `Stage::Validate` Capacity로 거절된다. [UPDATE 계약](dev3-row-update.md#known-deviation-validate-capacity)은
+`entries+max(0, C'−C)+D ≤ 16188`을 허용하므로 이는 07의 편차다. C의 필요 검산은 계약대로 증가분 규칙을 쓰므로
+이 경우 `NotNeeded`가 되고 원 실패가 남는다(거절 전에 위 shell·LOAD 비용을 치른다). 증가분이 안 들어가는
+UPDATE는 split 뒤 성공한다(SPL-A04). 편차는 UPDATE 계약에 기록하고 수정은 별도 작업으로 다룬다.
+
+**거래·rollback·복구.** split은 redo-only system 그룹이다. 같은 행이 나중에 거절되거나 statement·거래가
+rollback·abort되어도 split은 남고, 그 행과 이후 행·CLR·Prune은 current-leaf 규칙대로 현재 leaf를 쓴다.
+split은 statement·거래 중간(이미 Retained root가 있는 상태)에서도 같은 admission으로 허용된다. split 뒤·행의
+Reserve 전에 crash하면 재시작은 완결 split만 REDO하고 그 행은 효과가 없다. 새 WAL 형식·recovery 단계는 없다.
+D>0 때문에 생긴 split은 cleanup으로 D가 사라지면 불필요했던 것이 되지만 unlink가 없어 되돌리지 않는다.
+첫 extent의 가용 page가 약 55개이므로 열린 거래가 많은 부하에서는 extent를 먼저 쓸 수 있다(08-1 잔여의
+unlink·shrink에서 다룬다).
+
+**F4 상한.** C가 `ROW_SPLIT_CALLER_BYTES = 6144`를 정의하고 `storage::disk`로 재노출한다(값은 preflight의
+6,144와 같고, 들어가는 가장 큰 값이 아니다).
+
+- C: 두 writer에서 `split_row_live`의 단계별 census(`structural_live::source_bytes`, SPL-A08)를 낸다.
+  carrier(table source, tree·need·결과 slot, 참조) 1,352B, 거주 단계 36,900B(shell 진입 + carrier +
+  `split_resident` frame + 가장 큰 callee: LOAD 본문, route, typed read, 부채의 Job decode, victim
+  look-ahead), 효과 단계 37,438B(원 split 본문의 peak에서 `split_row`의 진입 slot을 live 진입 slot으로 바꾼 값).
+  peak 37,438 + 6,144 = 43,582 ≤ 44,304(여유 722B)다. charge와 다른 F4 상수는 바꾸지 않는다.
+- A: 호출 지점 `insert.split`·`update.split`은 `Bound::Split`(6,144), split 안의 flush
+  `*.split_try_flush`·`*.split_continue_flush`와 값 검사 거절의 finish `*.validate_finish`는
+  `ROW_WRITE_CALLER_BYTES`(11,520)다. `budget_tests`의 match에 split arm을 명시하고, `CALL_SITES`는 62다.
+  바깥 행 frame은 `full`(Option<usize>)과 횟수(usize), 그 시도의 결과와 `split_leaf`의 결과 slot
+  (`Result<bool, Failure>`)만 쥐고, split 호출과 그 flush는 `split_leaf` 단계에만 있다. 실측(autocommit/explicit): insert.preflight 5,716/5,483(여유 428/661),
+  update.preflight 5,665/5,432(479/712), insert.split 5,388/5,155(756/989), update.split 5,161/4,928
+  (983/1,216). MCA00-D12 live_insert 11,644 ≤ 12,288(여유 644). 상수를 바꾸면 두 쪽 census를 다시 통과한다.
+
+| ID | 고정 경계와 판정 |
+| --- | --- |
+| SPL-A01 | `fill!`(autocommit INSERT 한 행씩 commit·drain)로 큰 행 7개가 한 leaf를 채움(q 2..8). 다음 INSERT의 값 검사가 Capacity, RootSplit 한 번 뒤 q 9 Committed. 두 leaf의 key 집합, 새 statement read, 재시작 read |
+| SPL-A02 | 한 autocommit statement의 큰 행 15개가 중간에 RootSplit과 ChildSplit을 거쳐 모두 적용·q 2 Commit. leaf 3개 이상, key 순서, drain, read, 재시작 |
+| SPL-A03 | 명시 거래 statement의 큰 행 8개가 8번째 행의 값 검사 Capacity에서 split(D를 만들지 않는 거래의 Retained INSERT root 7개 옆), Done 8. rollback 뒤 행은 없고 split(두 leaf, 빈)은 남음. 다음 INSERT q 2 Commit, read, 재시작 |
+| SPL-A04 | 100B 행 + 큰 행 7개(q 2..9, 여유 271B). 100B 행을 큰 값으로 바꾸는 UPDATE가 값 검사 Capacity, split 뒤 q 10 Commit. 새 값 read와 재시작 |
+| SPL-A05 | 18-frame pool(`fill!`이 통과하는 가장 작은 pool)에서 C가 직접 `FlushRequired`(WAL·Jobs·leaf 불변)를 답함. 같은 상태의 A INSERT가 flush 뒤 같은 split을 다시 불러 RootSplit·q 9 Commit, 재시작 read. 이 pool에서 split 뒤 새 statement의 table issue는 C의 table issue가 MissingTarget으로 거절하므로(split 전 17-frame에서도 같다) read는 재시작 뒤에만 본다 |
+| SPL-A06 | 거절: CREATE Catalog Job이 남은 T의 찬 leaf INSERT는 `Stage::Split` Unsupported로 abort, leaf 불변. 같은 T에 C를 직접 부르면 들어가는 행은 `NotNeeded`, 찬 행은 Unsupported, WAL·Jobs·leaf 불변. 정리 뒤 들어가는 INSERT와 같은 크기 UPDATE는 `NotNeeded`, 길이 0·4·2049(`MIN_CANONICAL` 5와 2048 바깥)는 `RowSemantic`, 찬 행은 Split |
+| SPL-A07 | 순수 함수: `separator_room(n)` ⇔ n+1 entry 인코딩 성공(경계 404), `split_target`이 부모 여유가 있는 가장 낮은 page, 모두 차면 root |
+| SPL-A08 | C census: 위 단계별 값, 6,144 상수, peak + 6,144 ≤ 44,304 = charge (memory·native W). `spl_row_capacity_is_exactly_the_unchanged_prepare_capacity`, `spl_leaf_short_is_exact_at_the_boundary`(INSERT·UPDATE의 `필요+D = 여유`와 1B 초과) |
+| SPL-A10 | 예약 D>0의 Reserve Capacity: 큰 행 7개(q 2..8) 뒤 명시 거래가 첫 행을 DELETE(tombstone 뒤 여유 2,612B, D = 2,228−180 = 2,048). C 직접 호출은 경계 380B 행(380+184+D = 2,612)에 `NotNeeded`, WAL·Jobs·leaf 불변. 같은 거래의 381B 행 INSERT는 값 검사(565 ≤ 2,612)를 지나 Reserve Capacity, RootSplit 뒤 Done 1, Commit q 9, 두 leaf, read, 재시작. C가 D를 0으로 읽으면 381B 행이 `NotNeeded`로 실패하므로 D 배선도 고정된다 |
+| SPL-A09 | A literal: 값 검사 Capacity와 Reserve Capacity가 깨끗한 finish 뒤 split을 L과 함께 부름, Split 뒤 같은 행 재시도, FlushRequired는 flush 뒤 같은 split(미계수), NotNeeded는 원 실패, split 거절은 `Stage::Split`, Fatal은 `must_resolve`, 16회 상한, split flush 거절은 Flush stage, 뒤 행의 split, 재시도의 preflight Busy. Preflight Capacity, Reserve Busy·Unsupported, 거절된 finish, Fatal finish는 split하지 않음. MCA00-D04·D05의 호출 기록은 Capacity 뒤 `Split`(NotNeeded)을 더함 |
+
+PR #54 후속 리뷰는 아래 신규 사례를 추가했다. 모두 실제 C/A/B 경로와 메모리 I/O double의 파일에서
+새 recovery를 실행한다. native process crash·실제 fsync 검증을 추가한 것으로 해석하지 않는다.
+
+| ID | 새 검증 경계 |
+| --- | --- |
+| SPL-REVIEW-01 | committed 큰 행 7개 위에서 live split만 완료하고 행을 재시도하지 않은 파일을 재시작. Q=8, CLR=0, 기존 값 7개·leaf 2개 유지, 8번째 행 없음 |
+| SPL-REVIEW-02 | Active 거래의 큰 행 7개 위에서 live split만 완료한 파일을 재시작. Q=1, loser CLR=7, Row Job=0, 행은 없고 빈 leaf 2개 유지 |
+| SPL-REVIEW-03 | 명시 거래의 앞 statement 7행 뒤, 다음 statement가 split·1행 INSERT 후 NULL 거절. 그 statement만 rollback, 앞 7행 유지, 후속 INSERT·Commit 성공(Q=2, 8행), 재시작 값·leaf 2개 검산 |
+
+실행 identity와 독립 검토는 [후속 리뷰 증거](../../module-gate/evidence/dev3-08-1-auto-split/review-followup.md)를 따른다.
+
+남은 D2 선택(시험 미작성): SPL-A05가 A의 split flush 호출을 직접 단언하는 관측, 최소 pool 경계 시험,
+FlushRequired 왕복 사이 경합(`Stage::Split` Busy), SPL-A01..A04의
+split 종류 직접 관측. 18-frame pool에서 split 뒤 table issue의 MissingTarget(SPL-A05)은 C table issue의 작은 pool
+한계로 남긴다.
+
+이 절로 08-1을 완료로 적립하지 않는다. 빈 leaf unlink·root shrink·retirement가 남는다.

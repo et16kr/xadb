@@ -220,6 +220,22 @@ pub(crate) fn canonical_row_len_borrowed(
     canonical_row_input_len(schema, RowValuesInput::Borrowed(values))
 }
 
+/// The canonical length of `values` as `canonical_row_len_borrowed` counts
+/// it, without its schema or bound checks. Only for values a table's schema
+/// already accepted: A's note of a full leaf after its validation refused
+/// Capacity (dev3-tree-smo.md#automatic-split), which C bounds again.
+pub(crate) fn canonical_values_len(values: &[ValueRef<'_>]) -> usize {
+    values.iter().fold(4_usize, |total, value| {
+        total.saturating_add(match value {
+            ValueRef::Null => 1,
+            ValueRef::Bool(_) => 2,
+            ValueRef::Int64(_) => 9,
+            ValueRef::Utf8(value) => 5 + value.len(),
+            ValueRef::Binary(value) => 5 + value.len(),
+        })
+    })
+}
+
 fn canonical_row_input_len(
     schema: RowSchemaInput<'_>,
     values: RowValuesInput<'_>,

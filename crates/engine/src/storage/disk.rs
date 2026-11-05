@@ -16,17 +16,18 @@ pub(crate) use super::wal_io::disk_api::{
     ISOLATION_BYTES, IntoRetentionError, IsolationLevel, MaintenancePort, MissingCatalogEvidence,
     MissingRowEvidence, MutationPort, Plan4Recovered, Plan4RecoveryError, Plan4RecoveryProgress,
     Plan4ResidencyCursor, Plan4Target, PreflightRow, PreparedCatalog, PreparedRecoveryRow,
-    PreparedRollbackTask, PreparedRow, ROW_PREFLIGHT_CALLER_BYTES, ROW_WRITE_CALLER_BYTES,
-    ReadOnlyCommit, ReadPort, ReadStep, RecoveryAction, RecoveryOwnedError, RecoveryRowTask,
-    ReservedCatalogCreate, ReservedRow, RetentionCause, RetentionError, RetentionFlushPhase,
-    RetentionPhase, RollbackScope, RollbackStep, RowApplied, RowCancelled, RowCandidate,
-    RowCommitObservation, RowControlObservation, RowCopyObservation, RowDeleteStep, RowInputPlan,
-    RowMutationObservation, RowOperation, RowOwnedError, RowPageRole, RowPreflightContext,
-    RowPreflightOperation, RowPreflightStep, RowPreparedOperation, RowProducerContext,
-    RowProducerInput, RowProducerLane, RowProposal, RowReadOperation, RowReservedOperation,
-    RowRollback, RowRollbackDone, RowRollbackTask, RowSearchPage, RowSourceBinding, RowSourceRole,
-    RowStatementView, RowTransaction, RowValidationLane, RowValueBefore, StatementFinishError,
-    TableStep, TransactionFinishError, TransactionOptions, row_write_charge,
+    PreparedRollbackTask, PreparedRow, ROW_PREFLIGHT_CALLER_BYTES, ROW_SPLIT_CALLER_BYTES,
+    ROW_WRITE_CALLER_BYTES, ReadOnlyCommit, ReadPort, ReadStep, RecoveryAction, RecoveryOwnedError,
+    RecoveryRowTask, ReservedCatalogCreate, ReservedRow, RetentionCause, RetentionError,
+    RetentionFlushPhase, RetentionPhase, RollbackScope, RollbackStep, RowApplied, RowCancelled,
+    RowCandidate, RowCommitObservation, RowControlObservation, RowCopyObservation, RowDeleteStep,
+    RowInputPlan, RowMutationObservation, RowOperation, RowOwnedError, RowPageRole,
+    RowPreflightContext, RowPreflightOperation, RowPreflightStep, RowPreparedOperation,
+    RowProducerContext, RowProducerInput, RowProducerLane, RowProposal, RowReadOperation,
+    RowReservedOperation, RowRollback, RowRollbackDone, RowRollbackTask, RowSearchPage,
+    RowSourceBinding, RowSourceRole, RowStatementView, RowTransaction, RowValidationLane,
+    RowValueBefore, StatementFinishError, TableStep, TransactionFinishError, TransactionOptions,
+    row_write_charge,
 };
 
 #[allow(unused_imports)]
@@ -45,6 +46,11 @@ pub(in crate::storage) use super::wal_io::disk_api::Owner;
     reason = "named only by A's cleanup drain; the C+B export has no A"
 )]
 pub(in crate::storage) use super::wal_io::disk_api::RowRetireStep;
+#[allow(
+    unused_imports,
+    reason = "named only by A's row loop; the C+B export has no A"
+)]
+pub(in crate::storage) use super::wal_io::disk_api::RowSplitStep;
 
 pub(crate) use super::wal_io::disk_api::{
     DurableCommit, InstalledCommit, StagedCommit, UnstagedCommit,

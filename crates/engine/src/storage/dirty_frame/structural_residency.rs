@@ -72,6 +72,38 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
         self.freeze_structural_candidates(init, targets, slots)
     }
 
+    /// The live split's victim look-ahead (dev3-tree-smo.md#automatic-split):
+    /// the same scan `structural_candidates` makes for its `count` INIT
+    /// victims (one for a ChildSplit, two for a RootSplit) beside the
+    /// resident `required` pages, without an INIT identity. Returns the
+    /// request of a dirty victim that scan would take, which must be flushed
+    /// before the split, or None when clean or empty frames suffice. It reads
+    /// only; Busy and CounterExhausted are the scan's own refusals.
+    pub(in crate::storage) fn structural_flush_victim(
+        &self,
+        required: &[TargetRequest],
+        count: usize,
+    ) -> Result<Option<TargetRequest>> {
+        self.health()?;
+        if !matches!(count, 1 | 2) || required.is_empty() {
+            return Err(unchanged(Cause::Shape));
+        }
+        let first = self.retention_candidate_at(None, 1, required, 5, None)?;
+        let second = if count == 2 {
+            Some(self.retention_candidate_at(None, first.next, required, 5, Some(first.index))?)
+        } else {
+            None
+        };
+        for slot in std::iter::once(first).chain(second) {
+            if slot.kind == StatusCandidateKind::Flush {
+                return self
+                    .registration(slot.index)
+                    .map(|entry| Some(entry.request));
+            }
+        }
+        Ok(None)
+    }
+
     fn freeze_structural_candidates(
         &self,
         init: &[TargetRequest],

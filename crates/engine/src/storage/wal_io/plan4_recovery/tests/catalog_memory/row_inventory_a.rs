@@ -1208,9 +1208,12 @@ fn mca05_v12_undo_slots_one_over() {
 /// which would split the leaf, is refused. Each inline row of canonical
 /// length 2048 costs its record (168 + 2048) and a 16-byte entry slot of
 /// the tree page's entry capacity, so `rows` = capacity / 2232 rows land in
-/// one statement; a second statement's row is refused by A at Validate
-/// (Capacity) before its Reserve, with no effect, and the Commit (q 2)
-/// publishes exactly those rows.
+/// one statement. A second statement's row is refused Capacity by A's value
+/// check before its Reserve, so A asks C's live split
+/// (dev3-tree-smo.md#automatic-split); T keeps its CREATE Catalog Job, so C
+/// refuses the split Unchanged Unsupported after its need check and the
+/// row ends `Stage::Split`, with no effect, and the Commit (q 2) publishes
+/// exactly those rows.
 #[test]
 fn mca05_v30_leaf_maximum_then_the_split_is_refused() {
     let cost = 2048 + 168 + 16;
@@ -1277,11 +1280,14 @@ fn mca05_v30_leaf_maximum_then_the_split_is_refused() {
                         after: After::Returned(view),
                     }) => {
                         println!("MCA05-V30 rows={rows} refusal={failure:?}");
-                        assert_eq!(failure.stage, Stage::Validate);
+                        assert_eq!(failure.stage, Stage::Split);
                         assert!(
-                            matches!(failure.error, DriverError::Insert(InsertError::Capacity)),
+                            matches!(&failure.error, DriverError::Disk(error)
+                                if error.effect == Effect::Unchanged
+                                    && matches!(error.cause, RetentionCause::Unsupported)),
                             "{failure:?}"
                         );
+                        assert!(failure.cleanup.is_none() && !failure.must_resolve);
                         view
                     }
                     Err(error) => panic!("{:?}", error.failure),

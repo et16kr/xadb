@@ -27,7 +27,7 @@ use crate::storage::{
         RetentionError, RollbackScope, RowInputPlan, RowOwnedError, RowProposal,
         StatementFinishError, TransactionFinishError,
     },
-    row_record::{MAX_ROW_COLUMNS, ValueRef},
+    row_record::{MAX_ROW_COLUMNS, ValueRef, canonical_values_len},
     semantic_row::Operation,
 };
 use foundation::{error::Effect, identity::RowId};
@@ -140,7 +140,40 @@ trait Boundary {
         operation: Operation,
         loan: &mut Loan,
     ) -> Result<RetireNext<Self::Target>, RetentionError>;
+    /// C's live split for a row of `table` refused for its leaf's room: A's
+    /// value check refused `InsertError::Capacity`, or C refused its Reserve
+    /// `Unchanged(Prepare, Capacity)` (`split_row_live`,
+    /// dev3-tree-smo.md#automatic-split). `row` is an UPDATE's target and
+    /// None an INSERT's, `length` the row value's encoded length. It runs
+    /// with the statement Owner and the call's flusher as its flush lease.
+    fn split(
+        &mut self,
+        table: &Self::Table,
+        row: Option<RowId>,
+        length: usize,
+        loan: &mut Loan,
+    ) -> Result<SplitNext<Self::Target>, RetentionError>;
 }
+
+/// What C answered for one live split (dev3-tree-smo.md#automatic-split).
+#[derive(Debug)]
+enum SplitNext<F> {
+    /// One RootSplit or ChildSplit is installed and durable: the same row is
+    /// tried again from preflight.
+    Split,
+    /// The residency of its target set needs this dirty victim flushed
+    /// first; nothing was prepared, staged or pinned.
+    Flush(F),
+    /// The routed leaf already holds the row beside its reservation by C's
+    /// rule: the row's failure stands.
+    NotNeeded,
+}
+
+/// The splits one row may ask before its Capacity failure ends it
+/// (dev3-tree-smo.md#automatic-split). Each split at most halves a full
+/// leaf or lifts a full parent's split one level, so a row of a valid size
+/// needs far fewer.
+const MAX_ROW_SPLITS: usize = 16;
 
 /// What C answered for one live Row cleanup group.
 #[derive(Debug)]
@@ -340,6 +373,8 @@ pub(crate) enum Stage {
     RollbackFlush,
     /// C's finish of a complete rollback (`autocommit`).
     RollbackFinish,
+    /// C's live split of a row's full leaf (`split_row_live`).
+    Split,
 }
 
 /// A failed call's first error and, for a row, the one release after it.
@@ -567,15 +602,26 @@ fn insert_statement<B: Boundary>(
     }
     let mut failed = None;
     let mut applied_rows = 0;
-    for (values, slot) in rows.iter().zip(slots.iter_mut()) {
-        match insert_row(call, &statement, table, loan, values) {
-            Ok(applied) => {
-                *slot = Some(applied);
-                applied_rows += 1;
-            }
-            Err(failure) => {
-                failed = Some(failure);
-                break;
+    'rows: for (values, slot) in rows.iter().zip(slots.iter_mut()) {
+        // A row whose Reserve found its leaf full leaves its length in
+        // `full`; C's live split is then asked and the same row tried again
+        // (`split_leaf`, dev3-tree-smo.md#automatic-split).
+        let (mut full, mut splits) = (None, 0);
+        loop {
+            match insert_row(call, &statement, table, loan, values, &mut full) {
+                Ok(applied) => {
+                    *slot = Some(applied);
+                    applied_rows += 1;
+                    break;
+                }
+                Err(failure) => {
+                    match split_leaf(call, table, None, (&mut full, &mut splits), loan) {
+                        Ok(true) => continue,
+                        Ok(false) => failed = Some(failure),
+                        Err(split) => failed = Some(split),
+                    }
+                    break 'rows;
+                }
             }
         }
     }
@@ -629,6 +675,7 @@ fn insert_row<B: Boundary>(
     table: &B::Table,
     loan: &mut Loan,
     values: &[ValueRef<'_>],
+    full: &mut Option<usize>,
 ) -> Result<B::Applied, Failure> {
     let preflight = loop {
         // C's answer is dropped at the end of this statement, so the flush
@@ -653,7 +700,7 @@ fn insert_row<B: Boundary>(
         // again from preflight in this statement (MCA05-V31).
         flush(call, &target)?;
     };
-    write_row(preflight, values)
+    write_row(preflight, values, full)
 }
 
 /// The row after a Ready preflight: validation and the Reserve
@@ -672,15 +719,22 @@ fn insert_row<B: Boundary>(
     clippy::result_large_err,
     reason = "Failure keeps the stage, the error and any refused cleanup inline, without allocation"
 )]
-fn write_row<P: Preflight>(preflight: P, values: &[ValueRef<'_>]) -> Result<P::Applied, Failure> {
-    match reserve_row(preflight, values) {
+fn write_row<P: Preflight>(
+    preflight: P,
+    values: &[ValueRef<'_>],
+    full: &mut Option<usize>,
+) -> Result<P::Applied, Failure> {
+    match reserve_row(preflight, values, full) {
         Ok(reserved) => forward_row(reserved),
         Err(failure) => Err(failure),
     }
 }
 
 /// The row's input checked over C's validation lane, then its one Reserve.
-/// A refusal finishes the preflight.
+/// A refusal finishes the preflight. A value check refused Capacity
+/// (`refuse_validation`) or a Reserve refused `Unchanged(Prepare,
+/// Capacity)`, whose preflight finished, leaves the row's encoded length in
+/// `full`, for C's live split (`split_leaf`).
 #[inline(never)]
 #[allow(
     clippy::result_large_err,
@@ -689,18 +743,58 @@ fn write_row<P: Preflight>(preflight: P, values: &[ValueRef<'_>]) -> Result<P::A
 fn reserve_row<P: Preflight>(
     mut preflight: P,
     values: &[ValueRef<'_>],
+    full: &mut Option<usize>,
 ) -> Result<P::Reserved, Failure> {
     let input = match validate_row(&mut preflight, values) {
         Ok(input) => input,
-        Err(failure) => return Err(finish_preflight(preflight, failure)),
+        Err(failure) => return Err(refuse_validation(preflight, failure, values, full)),
     };
+    let length = input.encoded_len();
     match preflight.reserve(input) {
         Ok(reserved) => Ok(reserved),
         Err(RowOwnedError::Before { error, owned }) => {
-            let failure = Failure::new(Stage::Reserve, error.into());
-            Err(finish_preflight(owned, failure))
+            let capacity = error.row_capacity();
+            let failure = finish_preflight(owned, Failure::new(Stage::Reserve, error.into()));
+            note_full(&failure, capacity.then_some(length), full);
+            Err(failure)
         }
         Err(RowOwnedError::Fatal(error)) => Err(Failure::fatal(Stage::Reserve, error)),
+    }
+}
+
+/// A validation refusal finishes the preflight. A's value check refused
+/// Capacity (the routed leaf's free bytes, read by the preflight, cannot
+/// take the encoded row) notes the row's canonical length in `full`, as a
+/// Reserve's Capacity does (`note_full`). Never inlined: its slots are laid
+/// out only on a refusal.
+#[inline(never)]
+#[allow(
+    clippy::result_large_err,
+    reason = "Failure keeps the stage, the error and any refused cleanup inline, without allocation"
+)]
+fn refuse_validation<P: Preflight>(
+    preflight: P,
+    failure: Failure,
+    values: &[ValueRef<'_>],
+    full: &mut Option<usize>,
+) -> Failure {
+    let capacity = matches!(failure.error, DriverError::Insert(InsertError::Capacity));
+    let failure = finish_preflight(preflight, failure);
+    note_full(
+        &failure,
+        capacity.then(|| canonical_values_len(values)),
+        full,
+    );
+    failure
+}
+
+/// A row refused for its leaf's room (`length`) leaves the length in `full`
+/// for C's live split (`split_leaf`) once its preflight finished with no
+/// refused cleanup and nothing to resolve; any other refusal leaves `full`
+/// empty and ends the row.
+fn note_full(failure: &Failure, length: Option<usize>, full: &mut Option<usize>) {
+    if length.is_some() && failure.cleanup.is_none() && !failure.must_resolve {
+        *full = length;
     }
 }
 
@@ -849,13 +943,24 @@ fn update_statement<B: Boundary>(
         let failure = Failure::new(Stage::Statement, error.into());
         return Err(DriveError::new(failure, After::Returned(statement)));
     }
-    let (failed, updated) = match update_row(call, &statement, table, loan, row, values) {
-        Ok(Some(applied)) => {
-            *slot = Some(applied);
-            (None, 1)
+    // As an INSERT's row: a full leaf asks C's live split and tries the
+    // same row again (`split_leaf`).
+    let (mut full, mut splits) = (None, 0);
+    let (failed, updated) = loop {
+        match update_row(call, &statement, table, loan, (row, values), &mut full) {
+            Ok(Some(applied)) => {
+                *slot = Some(applied);
+                break (None, 1);
+            }
+            Ok(None) => break (None, 0),
+            Err(failure) => {
+                match split_leaf(call, table, Some(row), (&mut full, &mut splits), loan) {
+                    Ok(true) => continue,
+                    Ok(false) => break (Some(failure), 0),
+                    Err(split) => break (Some(split), 0),
+                }
+            }
         }
-        Ok(None) => (None, 0),
-        Err(failure) => (Some(failure), 0),
     };
     end_statement(call, statement, failed, updated, updated)
 }
@@ -876,8 +981,8 @@ fn update_row<B: Boundary>(
     statement: &B::Statement,
     table: &B::Table,
     loan: &mut Loan,
-    row: RowId,
-    values: &[ValueRef<'_>],
+    (row, values): (RowId, &[ValueRef<'_>]),
+    full: &mut Option<usize>,
 ) -> Result<Option<B::Applied>, Failure> {
     let preflight = loop {
         // C's answer is dropped at the end of this statement, so the flush
@@ -892,7 +997,7 @@ fn update_row<B: Boundary>(
         };
         flush(call, &target)?;
     };
-    rewrite_row(preflight, values).map(Some)
+    rewrite_row(preflight, values, full).map(Some)
 }
 
 /// The UPDATE after a Ready preflight: the new value's validation and the
@@ -904,15 +1009,20 @@ fn update_row<B: Boundary>(
     clippy::result_large_err,
     reason = "Failure keeps the stage, the error and any refused cleanup inline, without allocation"
 )]
-fn rewrite_row<P: Preflight>(preflight: P, values: &[ValueRef<'_>]) -> Result<P::Applied, Failure> {
-    match reserve_update_row(preflight, values) {
+fn rewrite_row<P: Preflight>(
+    preflight: P,
+    values: &[ValueRef<'_>],
+    full: &mut Option<usize>,
+) -> Result<P::Applied, Failure> {
+    match reserve_update_row(preflight, values, full) {
         Ok(reserved) => forward_row(reserved),
         Err(failure) => Err(failure),
     }
 }
 
 /// The new value checked over C's validation lane, then the UPDATE's one
-/// Reserve, as `reserve_row`. A refusal finishes the preflight.
+/// Reserve, as `reserve_row`. A refusal finishes the preflight; a full leaf
+/// leaves the new value's length in `full`, as `reserve_row`'s.
 #[inline(never)]
 #[allow(
     clippy::result_large_err,
@@ -921,16 +1031,20 @@ fn rewrite_row<P: Preflight>(preflight: P, values: &[ValueRef<'_>]) -> Result<P:
 fn reserve_update_row<P: Preflight>(
     mut preflight: P,
     values: &[ValueRef<'_>],
+    full: &mut Option<usize>,
 ) -> Result<P::Reserved, Failure> {
     let input = match validate_row(&mut preflight, values) {
         Ok(input) => input,
-        Err(failure) => return Err(finish_preflight(preflight, failure)),
+        Err(failure) => return Err(refuse_validation(preflight, failure, values, full)),
     };
+    let length = input.encoded_len();
     match preflight.reserve_update(input) {
         Ok(reserved) => Ok(reserved),
         Err(RowOwnedError::Before { error, owned }) => {
-            let failure = Failure::new(Stage::Reserve, error.into());
-            Err(finish_preflight(owned, failure))
+            let capacity = error.row_capacity();
+            let failure = finish_preflight(owned, Failure::new(Stage::Reserve, error.into()));
+            note_full(&failure, capacity.then_some(length), full);
+            Err(failure)
         }
         Err(RowOwnedError::Fatal(error)) => Err(Failure::fatal(Stage::Reserve, error)),
     }
@@ -1032,6 +1146,54 @@ fn flush<B: Boundary>(call: &mut B, target: &B::Target) -> Result<(), Failure> {
         }
     }
     Ok(())
+}
+
+/// After a row's failed attempt, C's live split
+/// (dev3-tree-smo.md#automatic-split) when the attempt left the row's length
+/// in `full` (its value check refused Capacity or its Reserve was refused
+/// `Unchanged(Prepare, Capacity)`, and the preflight finished) and the row
+/// has split fewer than `MAX_ROW_SPLITS`
+/// times. `Ok(true)`: a split is installed and durable, and the same row is
+/// tried again from preflight. `Ok(false)`: the attempt's failure ends the
+/// row (no split was asked, C answered NotNeeded, or the row's splits are
+/// used up). A FlushRequired victim is flushed as a preflight's (`flush`)
+/// and the same split asked again, which is not counted; a refused split
+/// (`Stage::Split`) or flush ends the row with its own Failure. Nothing of
+/// the row is held here: its preflight is finished and nothing is reserved,
+/// and a split applies no row, so the statement's applied rows stay as they
+/// were.
+#[inline(never)]
+#[allow(
+    clippy::result_large_err,
+    reason = "Failure keeps the stage, the error and any refused cleanup inline, without allocation"
+)]
+fn split_leaf<B: Boundary>(
+    call: &mut B,
+    table: &B::Table,
+    row: Option<RowId>,
+    (full, splits): (&mut Option<usize>, &mut usize),
+    loan: &mut Loan,
+) -> Result<bool, Failure> {
+    let Some(length) = full.take() else {
+        return Ok(false);
+    };
+    if *splits >= MAX_ROW_SPLITS {
+        return Ok(false);
+    }
+    loop {
+        // C's answer is dropped at the end of this statement, so the flush
+        // below may borrow the call again.
+        let target = match call.split(table, row, length, loan) {
+            Ok(SplitNext::Split) => {
+                *splits += 1;
+                return Ok(true);
+            }
+            Ok(SplitNext::NotNeeded) => return Ok(false),
+            Ok(SplitNext::Flush(target)) => target,
+            Err(error) => return Err(Failure::new(Stage::Split, error.into())),
+        };
+        flush(call, &target)?;
+    }
 }
 
 /// Explicit no-effect release before the first Reserve. After a
@@ -1510,13 +1672,20 @@ const fn carrier_bytes<B: Boundary + 'static>() -> (usize, usize) {
         + size_of::<Result<A<B>, Failure>>()
         + size_of::<Result<(), DriveError<S<B>>>>()
         + size_of::<Result<usize, DriveError<S<B>>>>()
-        + 2 * size_of::<usize>();
+        + 2 * size_of::<usize>()
+        + size_of::<Option<usize>>()
+        + size_of::<usize>()
+        + size_of::<Result<bool, Failure>>();
     // insert_row and the write_row steps (the values argument of write_row,
-    // reserve_row and validate_row; the preflight and the reservation they
-    // take by value count once, where they are: the reservation in
-    // reserve_row's result).
+    // reserve_row and validate_row; the split state reference of insert_row,
+    // write_row and reserve_row, and reserve_row's length and capacity flag;
+    // the preflight and the reservation they take by value count once, where
+    // they are: the reservation in reserve_row's result).
     let row = 2 * size_of::<Result<PreflightNext<P<B>, G<B>>, RetentionError>>()
         + 3 * size_of::<&[ValueRef<'static>]>()
+        + 3 * size_of::<&mut Option<usize>>()
+        + size_of::<usize>()
+        + size_of::<bool>()
         + size_of::<P<B>>()
         + size_of::<Result<V<B>, RetentionError>>()
         + 2 * size_of::<Result<RowInputPlan, Failure>>()
@@ -1558,6 +1727,9 @@ pub(super) enum Bound {
     /// An A stage (validate, Forward, CLR): the share plus A's own frames
     /// is that phase, compared with the charge.
     A,
+    /// The live split call (dev3-tree-smo.md#automatic-split):
+    /// `ROW_SPLIT_CALLER_BYTES`.
+    Split,
 }
 
 /// A's share at one call site of the driver (S2-0 Row write amendment §4
@@ -1590,7 +1762,7 @@ impl CallSite {
     }
 }
 
-pub(super) const CALL_SITES: usize = 54;
+pub(super) const CALL_SITES: usize = 62;
 
 /// A's share at each call site, in the size_of inventory sense of
 /// `carrier_bytes` and with its conventions: a C call's result counts twice
@@ -1636,7 +1808,8 @@ pub(super) const CALL_SITES: usize = 54;
 /// `write_row` and its steps (`reserve_row`, `validate_row`, `forward_row`,
 /// `produce_row`, `prepare_row`, `apply_row`), the DELETE's `delete_row`,
 /// `erase_row` and `reserve_delete_row`, the UPDATE's `update_row`,
-/// `rewrite_row` and `reserve_update_row`, `flush`, `finish_preflight`,
+/// `rewrite_row` and `reserve_update_row`, `split_leaf`, `flush`,
+/// `finish_preflight`,
 /// `cancel`, `finish_statement`, `compensate`, the two rollback starts and
 /// `rollback_step` are never inlined, so none
 /// of their slots is laid out in their caller's frame: none of `write_row`'s
@@ -1688,26 +1861,43 @@ const fn call_sites<B: Boundary + 'static>() -> [CallSite; CALL_SITES] {
         + size_of::<&mut [Option<A<B>>]>()
         + size_of::<S<B>>()
         + size_of::<Result<usize, DriveError<S<B>>>>();
+    // The row loop's split state (dev3-tree-smo.md#automatic-split): the
+    // length a full leaf left and the row's split count, live through the
+    // row's attempts and splits.
+    let split_state = size_of::<Option<usize>>() + size_of::<usize>();
     // ... while insert_row runs: the loop state and the row's result slot,
-    // and insert_row's arguments.
+    // and insert_row's arguments (the split state's reference among them).
     let rows_state = size_of::<Option<Failure>>()
         + size_of::<usize>()
         + size_of::<Zip<Iter<'static, Values>, IterMut<'static, Option<A<B>>>>>()
         + size_of::<&Values>()
         + size_of::<&mut Option<A<B>>>()
-        + size_of::<Result<A<B>, Failure>>();
-    let row_arguments = 4 * r + size_of::<Values>();
+        + size_of::<Result<A<B>, Failure>>()
+        + split_state;
+    let row_arguments = 5 * r + size_of::<Values>();
     let row = statement + rows_state + row_arguments;
-    // ... and, after a Ready preflight, write_row's values (the preflight it
-    // takes by value stays in insert_row's frame and counts there).
-    let writing = row + size_of::<Values>();
-    // ... while reserve_row runs: the preflight, its values and its result
-    // slot in write_row; while validate_row runs, also its arguments and its
+    // ... and, after a Ready preflight, write_row's values and split state
+    // reference (the preflight it takes by value stays in insert_row's frame
+    // and counts there).
+    let writing = row + size_of::<Values>() + r;
+    // ... while reserve_row runs: the preflight, its values, its split state
+    // reference, the row's length and the capacity flag, and its result slot
+    // in write_row; while validate_row runs, also its arguments and its
     // result slot in reserve_row.
-    let reserving =
-        writing + size_of::<P<B>>() + size_of::<Values>() + size_of::<Result<R<B>, Failure>>();
+    let reserving = writing
+        + size_of::<P<B>>()
+        + size_of::<Values>()
+        + r
+        + size_of::<usize>()
+        + size_of::<bool>()
+        + size_of::<Result<R<B>, Failure>>();
     let validating =
         reserving + r + size_of::<Values>() + size_of::<Result<RowInputPlan, Failure>>();
+    // ... after a refused value check: refuse_validation's arguments (the
+    // Failure, the values and the split state reference; the preflight it
+    // takes is the one `reserving` counts) and its result slot in
+    // reserve_row, and the capacity flag.
+    let refusing = reserving + 2 * failure + size_of::<Values>() + r + size_of::<bool>();
     // ... after the Reserve: the reservation forward_row takes (in
     // reserve_row's result slot); while produce_row runs, also its argument
     // and its result slot in forward_row.
@@ -1716,6 +1906,18 @@ const fn call_sites<B: Boundary + 'static>() -> [CallSite; CALL_SITES] {
     // `flush`: the target insert_row holds, flush's arguments and its result
     // slot in insert_row.
     let flushing = row + size_of::<G<B>>() + 2 * r + size_of::<Result<(), Failure>>();
+    // `split_leaf` after a row's failed attempt: the row's result, which
+    // holds the attempt's Failure, stays in the statement's slot (rows_state
+    // or the UPDATE's), with split_leaf's result slot and its arguments
+    // (the call, the table, the target, the split state's two references
+    // and the loan) and the length it takes out of `full`; its flush as
+    // `flushing`.
+    let split_arguments = 5 * r + size_of::<Option<RowId>>() + size_of::<usize>();
+    let splitting = statement + rows_state + size_of::<Result<bool, Failure>>() + split_arguments;
+    let split_flushing = splitting + size_of::<G<B>>() + 2 * r + size_of::<Result<(), Failure>>();
+    // C's split forward: its receiver, the table, the target, the length and
+    // the loan.
+    let split_forward = 3 * r + size_of::<Option<RowId>>() + size_of::<usize>();
     // The caller's held rollback path.
     let held = slack + 4 * r;
     let stepping =
@@ -1730,6 +1932,7 @@ const fn call_sites<B: Boundary + 'static>() -> [CallSite; CALL_SITES] {
         + size_of::<Result<(), RetentionError>>()
         + size_of::<Result<(), InsertError>>()
         + rows_state
+        + size_of::<Result<bool, Failure>>()
         + 2 * failure;
     // end_statement: its call and its two counts (the statement and the
     // failed row's Failure it takes by value count in insert_statement);
@@ -1757,17 +1960,21 @@ const fn call_sites<B: Boundary + 'static>() -> [CallSite; CALL_SITES] {
         + size_of::<Result<FlushStep, RetentionError>>()
         + size_of::<Result<FlushStep, Failure>>()
         + size_of::<FlushStep>();
-    // write_row: its values and reserve_row's result, which holds the
-    // reservation forward_row takes; forward_row's result is its own (a tail
-    // call), and so is a refused row's Failure.
-    let write_frame = size_of::<Values>() + size_of::<Result<R<B>, Failure>>();
-    // reserve_row: its values; validate_row's result and the plan; the
-    // Reserve's result; the refused Reserve's Failure and the results of the
-    // two finishes.
+    // write_row: its values, its split state reference and reserve_row's
+    // result, which holds the reservation forward_row takes; forward_row's
+    // result is its own (a tail call), and so is a refused row's Failure.
+    let write_frame = size_of::<Values>() + r + size_of::<Result<R<B>, Failure>>();
+    // reserve_row: its values and split state reference; validate_row's
+    // result and the plan; the row's length; the Reserve's result; the
+    // capacity flag; the refused Reserve's Failure, its finish's result and
+    // refuse_validation's result.
     let reserve_frame = size_of::<Values>()
+        + r
         + size_of::<Result<RowInputPlan, Failure>>()
         + size_of::<RowInputPlan>()
+        + size_of::<usize>()
         + size_of::<Result<R<B>, RowOwnedError<P<B>>>>()
+        + size_of::<bool>()
         + 3 * failure;
     // validate_row: its arguments; the results of validation_lane and of
     // validate (moved into `map_err`).
@@ -1775,6 +1982,18 @@ const fn call_sites<B: Boundary + 'static>() -> [CallSite; CALL_SITES] {
         + size_of::<Values>()
         + size_of::<Result<V<B>, RetentionError>>()
         + size_of::<Result<RowInputPlan, InsertError>>();
+    // refuse_validation: its arguments (the preflight, the Failure, the
+    // values and the split state reference), the capacity flag,
+    // finish_preflight's result and the noted length. The preflight and
+    // the Failure it takes are counted again here (`refusing` counts them
+    // in the callers): a conservative reading, as a by-value argument may
+    // be copied into the callee's frame.
+    let refuse_frame = size_of::<P<B>>()
+        + 2 * failure
+        + size_of::<Values>()
+        + r
+        + size_of::<bool>()
+        + size_of::<Option<usize>>();
     // forward_row: produce_row's result and the proposal; the Cancel's
     // result. prepare_row's result is its own (a tail call).
     let forward_frame =
@@ -1798,6 +2017,13 @@ const fn call_sites<B: Boundary + 'static>() -> [CallSite; CALL_SITES] {
     let finish_preflight_frame = size_of::<Result<(), RetentionError>>();
     let cancel_frame = size_of::<Result<(), RowOwnedError<R<B>>>>();
     let finish_statement_frame = r + size_of::<Result<(), StatementFinishError<S<B>>>>();
+    // split_leaf: its arguments and the length; C's split answer and the
+    // flush target it binds out of it; flush's result (a refused split's
+    // Failure is built in its result, the caller's).
+    let split_frame = split_arguments
+        + size_of::<Result<SplitNext<G<B>>, RetentionError>>()
+        + size_of::<G<B>>()
+        + size_of::<Result<(), Failure>>();
     // The frames below each kind of insert call. A Cancel is called from
     // forward_row, prepare_row and apply_row; apply_row's path is the
     // deepest.
@@ -1805,9 +2031,12 @@ const fn call_sites<B: Boundary + 'static>() -> [CallSite; CALL_SITES] {
     let in_end = in_statement + end_frame;
     let in_row = in_statement + row_frame;
     let in_flush = in_row + flush_frame;
+    let in_split = in_statement + split_frame;
+    let in_split_flush = in_split + flush_frame;
     let in_write = in_row + write_frame;
     let in_reserve = in_write + reserve_frame;
     let in_validate = in_reserve + validate_frame;
+    let in_refuse = in_reserve + refuse_frame;
     let in_forward = in_write + forward_frame;
     let in_produce = in_forward + produce_frame;
     let in_prepare = in_forward + prepare_frame;
@@ -1882,24 +2111,46 @@ const fn call_sites<B: Boundary + 'static>() -> [CallSite; CALL_SITES] {
         + size_of::<&mut Option<A<B>>>()
         + size_of::<S<B>>()
         + size_of::<Result<usize, DriveError<S<B>>>>();
+    // update_statement holds the split state through the row's attempts
+    // and splits, as insert_statement.
     let update_row = update_statement
+        + split_state
         + size_of::<Result<Option<A<B>>, Failure>>()
-        + 4 * r
+        + 5 * r
         + size_of::<RowId>()
         + size_of::<Values>();
     // ... after a Ready preflight: rewrite_row's result slot in update_row
-    // (it is mapped, not a tail) and its values; while reserve_update_row
-    // runs, the preflight (in update_row's frame), its values and its
-    // result slot; while validate_row runs, also its arguments and result.
-    let rewriting = update_row + size_of::<Result<A<B>, Failure>>() + size_of::<Values>();
-    let update_reserving =
-        rewriting + size_of::<P<B>>() + size_of::<Values>() + size_of::<Result<R<B>, Failure>>();
+    // (it is mapped, not a tail), its values and split state reference;
+    // while reserve_update_row runs, the preflight (in update_row's frame),
+    // its values and split state reference, the row's length and the
+    // capacity flag, and its result slot; while validate_row runs, also its
+    // arguments and result.
+    let rewriting = update_row + size_of::<Result<A<B>, Failure>>() + size_of::<Values>() + r;
+    let update_reserving = rewriting
+        + size_of::<P<B>>()
+        + size_of::<Values>()
+        + r
+        + size_of::<usize>()
+        + size_of::<bool>()
+        + size_of::<Result<R<B>, Failure>>();
     let update_validating =
         update_reserving + r + size_of::<Values>() + size_of::<Result<RowInputPlan, Failure>>();
+    let update_refusing =
+        update_reserving + 2 * failure + size_of::<Values>() + r + size_of::<bool>();
     // ... after the Reserve, as `forwarding` and `producing`.
     let update_forwarding = rewriting + size_of::<R<B>>();
     let update_producing = update_forwarding + r + size_of::<Result<RowProposal, Failure>>();
     let update_flushing = update_row + size_of::<G<B>>() + 2 * r + size_of::<Result<(), Failure>>();
+    // ... and its split: the row's result, which holds the failed attempt's
+    // Failure, and the split state in update_statement's frame, with
+    // split_leaf's as at the INSERT's.
+    let update_splitting = update_statement
+        + split_state
+        + size_of::<Result<Option<A<B>>, Failure>>()
+        + size_of::<Result<bool, Failure>>()
+        + split_arguments;
+    let update_split_flushing =
+        update_splitting + size_of::<G<B>>() + 2 * r + size_of::<Result<(), Failure>>();
     // update_statement's own slots: as delete_statement's, with the new
     // values beside the target.
     let update_statement_frame = update_statement - slack
@@ -1907,11 +2158,13 @@ const fn call_sites<B: Boundary + 'static>() -> [CallSite; CALL_SITES] {
         + failure
         + size_of::<Result<Option<A<B>>, Failure>>()
         + size_of::<Option<Failure>>()
-        + size_of::<usize>();
+        + size_of::<usize>()
+        + split_state
+        + size_of::<Result<bool, Failure>>();
     // update_row: its arguments; C's preflight answer; the Ready preflight
     // and the flush target; flush's result; rewrite_row's result before
     // `map`.
-    let update_row_frame = 4 * r
+    let update_row_frame = 5 * r
         + size_of::<RowId>()
         + size_of::<Values>()
         + size_of::<Result<PreflightNext<P<B>, G<B>>, RetentionError>>()
@@ -1926,9 +2179,12 @@ const fn call_sites<B: Boundary + 'static>() -> [CallSite; CALL_SITES] {
     let in_update_end = in_update + end_frame;
     let in_update_row = in_update + update_row_frame;
     let in_update_flush = in_update_row + flush_frame;
+    let in_update_split = in_update + split_frame;
+    let in_update_split_flush = in_update_split + flush_frame;
     let in_rewrite = in_update_row + rewrite_frame;
     let in_update_reserve = in_rewrite + reserve_update_frame;
     let in_update_validate = in_update_reserve + validate_frame;
+    let in_update_refuse = in_update_reserve + refuse_frame;
     let in_update_forward = in_rewrite + forward_frame;
     let in_update_produce = in_update_forward + produce_frame;
     let in_update_prepare = in_update_forward + prepare_frame;
@@ -2013,6 +2269,24 @@ const fn call_sites<B: Boundary + 'static>() -> [CallSite; CALL_SITES] {
             in_flush + size_of::<Result<FlushStep, RetentionError>>() + r,
         ),
         Site::new(
+            "insert.split",
+            Bound::Split,
+            splitting + 2 * size_of::<Result<SplitNext<G<B>>, RetentionError>>() + split_forward,
+            in_split + size_of::<Result<SplitNext<G<B>>, RetentionError>>() + split_forward,
+        ),
+        Site::new(
+            "insert.split_try_flush",
+            Bound::Write,
+            split_flushing + 2 * size_of::<Result<(), RetentionError>>() + 2 * r,
+            in_split_flush + size_of::<Result<(), RetentionError>>() + 2 * r,
+        ),
+        Site::new(
+            "insert.split_continue_flush",
+            Bound::Write,
+            split_flushing + 2 * size_of::<Result<FlushStep, RetentionError>>() + r,
+            in_split_flush + size_of::<Result<FlushStep, RetentionError>>() + r,
+        ),
+        Site::new(
             "insert.validation_lane",
             Bound::Write,
             validating + 2 * size_of::<Result<V<B>, RetentionError>>() + r,
@@ -2040,6 +2314,12 @@ const fn call_sites<B: Boundary + 'static>() -> [CallSite; CALL_SITES] {
             Bound::Write,
             reserving + 2 * failure + 2 * size_of::<Result<(), RetentionError>>(),
             in_reserve + finish_preflight_frame + size_of::<Result<(), RetentionError>>(),
+        ),
+        Site::new(
+            "insert.validate_finish",
+            Bound::Write,
+            refusing + 2 * failure + 2 * size_of::<Result<(), RetentionError>>(),
+            in_refuse + finish_preflight_frame + size_of::<Result<(), RetentionError>>(),
         ),
         Site::new(
             "insert.producer_lane",
@@ -2232,6 +2512,26 @@ const fn call_sites<B: Boundary + 'static>() -> [CallSite; CALL_SITES] {
             in_update_flush + size_of::<Result<FlushStep, RetentionError>>() + r,
         ),
         Site::new(
+            "update.split",
+            Bound::Split,
+            update_splitting
+                + 2 * size_of::<Result<SplitNext<G<B>>, RetentionError>>()
+                + split_forward,
+            in_update_split + size_of::<Result<SplitNext<G<B>>, RetentionError>>() + split_forward,
+        ),
+        Site::new(
+            "update.split_try_flush",
+            Bound::Write,
+            update_split_flushing + 2 * size_of::<Result<(), RetentionError>>() + 2 * r,
+            in_update_split_flush + size_of::<Result<(), RetentionError>>() + 2 * r,
+        ),
+        Site::new(
+            "update.split_continue_flush",
+            Bound::Write,
+            update_split_flushing + 2 * size_of::<Result<FlushStep, RetentionError>>() + r,
+            in_update_split_flush + size_of::<Result<FlushStep, RetentionError>>() + r,
+        ),
+        Site::new(
             "update.validation_lane",
             Bound::Write,
             update_validating + 2 * size_of::<Result<V<B>, RetentionError>>() + r,
@@ -2261,6 +2561,12 @@ const fn call_sites<B: Boundary + 'static>() -> [CallSite; CALL_SITES] {
             Bound::Write,
             update_reserving + 2 * failure + 2 * size_of::<Result<(), RetentionError>>(),
             in_update_reserve + finish_preflight_frame + size_of::<Result<(), RetentionError>>(),
+        ),
+        Site::new(
+            "update.validate_finish",
+            Bound::Write,
+            update_refusing + 2 * failure + 2 * size_of::<Result<(), RetentionError>>(),
+            in_update_refuse + finish_preflight_frame + size_of::<Result<(), RetentionError>>(),
         ),
         Site::new(
             "update.producer_lane",

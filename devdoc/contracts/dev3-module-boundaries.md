@@ -2893,7 +2893,7 @@ V28..V34는 다음과 같다.
   - A producer 순수 시험(`row/insert/group_tests.rs`): H의 before count를 0으로 바꿔 다시 seal하면 출력 전에 OrderMismatch, count 1은 그대로 생산된다.
   - 실제 C(`mca05_v29_actual_*`): S1이 a를 넣은 뒤 a의 U(다음 Forward의 H)의 count를 frame에서만 0으로 바꾼다. S2의 INSERT는 A의 producer에 닿기 전에 C의 preflight가 멈춘다. Census 사본이 WAL replay arena와 달라 Fatal(Census, Invariant), fence, 효과 0이다. 이력과 맞으면서 count가 0인 C 상태는 만들 수 없다(U의 count는 C만 WAL 아래에서 쓴다). 그래서 A의 거절이 실제 C에서 나는 경로는 없다.
   - C의 ingress 쪽 거절은 S9의 K07(C+B, 크기 교란 있음)이 맡는다.
-- V30: NEW. 정규 길이 2048 행은 record(168+2048)와 entry slot 16B를 쓰므로 entry 용량/2232개가 한 statement에 들어간다. 다음 statement의 행은 A가 Validate에서 Capacity로 Reserve 전에 거절하고, Commit(q 2)은 그 행들만 공개한다.
+- V30: NEW. 정규 길이 2048 행은 record(168+2048)와 entry slot 16B를 쓰므로 entry 용량/2232개가 한 statement에 들어간다. 다음 statement의 행은 A의 Validate가 Capacity로 Reserve 전에 거절하고, A가 [자동 split](dev3-tree-smo.md#automatic-split)을 부르지만 T에 CREATE Catalog Job이 남아 C가 필요 검산 뒤 무효과 Unchanged Unsupported로 거절하므로 행은 `Stage::Split`으로 끝난다(2026-11-05, 이전 기대는 `Stage::Validate` Capacity). Commit(q 2)은 그 행들만 공개한다.
 - V31: S2-0 개정의 dirty victim flush 재시도를 인용한다(`row_live::mca05_v31_*`).
 - V32: PARTIAL(기록 재확인 R11, 처음 판정 CITED). S2W-R15, R10, R03을 인용한다(API cancel과 finish의 권한 반환). 동결 문언의 "drop", 곧 `PreflightRow`나 활성 `RowSlotReservation`을 drop해 admission, gate, lease를 돌려받는 경로(`plan4_apply/row/write.rs`)는 인용 시험이 실행하지 않는다(검토 N10). [S11](#row-mi03-s11)에서 다시 공급해 PASS다.
 - V33, V34: N/A. Row 경로에 FD·파일 ledger와 DWB slot admission이 없다. dirty target은 A에 FlushRequired로 돌아가고, A가 flusher(자기 DWB slot 하나)로 flush한 뒤 재시도한다(V31). Forward가 DWB slot을 기다리는 일은 없다.

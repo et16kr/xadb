@@ -52,7 +52,7 @@ pub(in super::super::super::super::super) mod cancel;
 
 /// The smallest canonical row the RowReserve producer accepts (its
 /// `5..=INLINE_ROW_BYTES` bound); a plan outside it is a forged candidate.
-const MIN_CANONICAL: usize = 5;
+pub(in super::super::super::super) const MIN_CANONICAL: usize = 5;
 
 #[cfg(test)]
 #[path = "row_write_tests.rs"]
@@ -313,16 +313,30 @@ fn check_candidate(
             RetentionCause::RowSemantic(row_semantic::Error::InvalidInput),
         ));
     }
+    if leaf_short(length, old_cell, reserved, cut.leaf_free) {
+        return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Capacity));
+    }
+    Ok(())
+}
+
+/// The RowLeaf space rule of `check_candidate`, which the live split's need
+/// check reuses (dev3-tree-smo.md#automatic-split): whether a new value of
+/// `length` bytes (an INSERT's new cell, or an UPDATE's growth over the old
+/// cell `old_cell`) beside the leaf reservation `reserved` exceeds the free
+/// entry bytes `free`.
+pub(in super::super::super::super) fn leaf_short(
+    length: usize,
+    old_cell: Option<usize>,
+    reserved: usize,
+    free: u16,
+) -> bool {
     let needed = match old_cell {
         None => length + ROW_HEADER_BYTES + 16,
         // The new cell C' (the row header, the 12-byte cell head and the
         // value) less the old one; the slot stays.
         Some(cell) => (length + ROW_HEADER_BYTES + 12).saturating_sub(cell),
     };
-    if needed + reserved > usize::from(cut.leaf_free) {
-        return Err(unchanged(RetentionPhase::Prepare, RetentionCause::Capacity));
-    }
-    Ok(())
+    needed + reserved > usize::from(free)
 }
 
 /// A DELETE draft's input (dev3-row-delete.md#api): the target row's cell C
