@@ -1122,7 +1122,8 @@ split 종류 직접 관측. 18-frame pool에서 split 뒤 table issue의 Missing
 <a id="empty-leaf-unlink"></a>
 ## 빈 leaf unlink·root 축소·retirement 등록
 
-상태는 **2026-11-05 설계 / 독립 D2 3회차 ACCEPT, 필수 0 / 구현 없음**이다. 1회차 CONDITIONAL(필수 3)과
+상태는 **2026-11-05 설계 / 독립 D2 3회차 ACCEPT, 필수 0 / U1 구현·memory 시험 PASS([U1 결과](#unlink-u1)), U2..U4
+구현 없음**이다. 설계는 1회차 CONDITIONAL(필수 3)과
 2회차 CONDITIONAL(필수 1)을 반영했다([검토 기록](../../module-gate/evidence/dev3-08-1-unlink-design/review.md)). 08-1의 마지막
 범위(3.06.1.c, T06-06)를 닫는 설계다. 08-1은 아래 U4까지 끝나야 완료로 적립한다.
 
@@ -1144,6 +1145,9 @@ split 종류 직접 관측. 18-frame pool에서 split 뒤 table issue의 Missing
   page를 실제로 Free로 만드는 3.03.4로 미룬다.
 - split 공급도 두 곳이 바뀐다: candidate의 anchor encode가 목록을 보존하고, candidate의 소유 검산이 목록을
   받는다(아래 U1). [F05 절](#f05와-검증-동결-잔여)의 재검토 조건("unlink/retirement debt 추가")에 해당한다.
+- [current-leaf 소비자](#current-leaf-consumers)의 "S1B Row arm frame은 scope4 structural arm 26,420B": U1에서
+  split `audit`가 `RetiredList`와 항목 검산 frame을 세므로 그 arm이 26,452B(+32B)가 되었고 S1B 고정값도 그 값이다.
+  live split peak(37,438B)과 복구 peak은 바뀌지 않았다([U1 결과](#unlink-u1)).
 
 ### 범위와 전이
 
@@ -1358,7 +1362,7 @@ extent를 계속 차지하므로 unlink는 tree를 줄이고 route 비용을 줄
 부하에서는 unlink가 없을 때보다 첫 extent를 먼저 소진할 수 있다. 소진되면 [자동 split](#automatic-split)이
 Capacity로 거절한다. 제품 table은 CREATE Catalog Job 때문에 일정 10-1 전에는 unlink도 하지 않는다.
 
-### 시험 계획 (모두 NOT_RUN)
+### 시험 계획 (U1 행의 결과는 [U1 결과](#unlink-u1), 나머지 NOT_RUN)
 
 | ID | 경계와 독립 판정 |
 | --- | --- |
@@ -1388,5 +1392,70 @@ Capacity로 거절한다. 제품 table은 CREATE Catalog Job 때문에 일정 10
 | U3 | `ExistingGroup::Structural`·live 효과·RAM note·A drain·census | UNL-L·A·C03 |
 | U4 | native fault cut | UNL-N |
 
-각 단계는 독립 D2와 PR 하나다. U4가 끝나면 08-1(2단위)을 완료로 적립한다. 이 절은 설계이며 어느 단계의
-PASS도 주장하지 않는다.
+각 단계는 독립 D2와 PR 하나다. U4가 끝나면 08-1(2단위)을 완료로 적립한다. 이 절의 설계 부분은 어느 단계의
+PASS도 주장하지 않는다. 단계의 결과는 아래 각 단계 절에만 적는다.
+
+<a id="unlink-u1"></a>
+### U1 결과
+
+상태는 **2026-11-05 구현·memory 시험 PASS / 독립 D2 결과는 [U1 검토
+기록](../../module-gate/evidence/dev3-08-1-unlink-u1/review.md)**이다. 제품 경로는 아직 이 코드를 부르지 않는다
+(replay dispatch는 U2, live 효과·호출자는 U3). 그래서 사용자에게 보이는 동작은 바뀌지 않는다.
+
+구현:
+
+- `anchor.rs`: XTR1 `RetiredPage`·`RetiredList`(`find`, 물리 순서 병합 `extend`), `retired(input, expected)`,
+  `encode_listed_anchor`(`encode_anchor`는 빈 목록으로 이를 부른다). `decode_anchor`는 cell 1·2개를 받고 cell 1을
+  위 항목 규칙으로 검산한다. 목록이 있으면 anchor revision이 2 이상이어야 한다(목록은 unlink 그룹이 revision+1과
+  함께만 쓴다). 목록이 나쁜 encode 입력은 InvalidInput이다.
+- `semantic_row/structure.rs`·`bank.rs`: `Operation::{LeafUnlink=3, RootCollapse=4}`, opcode별 frame bytes,
+  bank의 consumed WAL 35,248·19,032. bank 관측 이름 `FinishedSplit`을 `FinishedStructural`로 바꿨다(동작 같음).
+  split의 `decode_core`·`decode_layout`·`init`은 opcode 1·2만 받고 3·4는 Unsupported다. opcode 3·4의
+  정확한 대조는 새 `structure::unlink::decode_layout`(길이·record_count·native/redo 수·role 집합·role별 core 칸과
+  kind/level·redo ordinal dense·바뀌지 않는 native의 0xFFFF와 after=before digest·redo target)이 한다. U2의
+  replay dispatch가 opcode로 둘 중 하나를 고른다. finished descriptor 검산은 두 쪽이 같은
+  `validate_finished_owner`를 쓴다.
+- split candidate: anchor after가 `encode_listed_anchor`로 목록 bytes를 보존하고, `audit`이 `reached ⊎ retired ==
+  owned`와 항목 검산(never-inline `retired_pages`: 같은 object·incarnation·generation·kind로 Allocated, 도달하지
+  않음, 그 kind/level로 decode, pageLSN 0 아님·retire LSN 미만, leaf는 cell 0개)을 한다. `verify_after`는 after
+  목록이 before와 bytes로 같은지 본다.
+- `structure::unlink::candidate::prepare`: 위 [준비](#준비효과복구) 1..3과 5, 4의 revision·목록 길이·alias·
+  retire LSN 산술을 한다(`check_progress_room`·`inventory_after`는 C의 live 준비로 U3). 결과는
+  `Prepared::{Unlink, NotNeeded}`이고 after는 anchor·P(opcode 3) 또는 anchor(opcode 4)다. 목록 길이+퇴역 수 > 55는
+  Exhausted로 거절하지만, 첫 extent의 dynamic page가 55개이고 anchor·root가 그중 둘을 쓰므로 실제 tree에서는 닿지
+  않는다(codec의 n=56 거절은 UNL-P02).
+- `structure::unlink::frame::{produce, observe}`: split의 finished descriptor·native 배치·redo cursor를 공유하는
+  opcode 3·4 producer/observer. observer는 같은 cut에서 준비를 다시 하고 bytes로 비교하며, `NotNeeded`인 입력의
+  frame은 IdentityMismatch다.
+- Base4 `current_tree::observe`: [Base4 closure](#준비효과복구) 규칙. source 회계에 `RetiredList`·`RetiredPage`
+  각 2개를 더했다.
+- fixture: `tests/fixtures/module-row-format/current-tree/author.py`가 제품 코드 없이 `unlink-leaf.xrb`(ChildSplit
+  85로 생긴 빈 leaf 19를 90에 LeafUnlink, 목록 [19], revision 5)와 `unlink-collapse.xrb`(RootSplit 70이 CREATE
+  leaf 11을 비우고 90에 RootCollapse, root 16 level 0, revision 3, 목록 [11 leaf, 17 internal])를 쓴다. 기존
+  fixture bytes는 같다.
+
+시험(모두 PASS, memory):
+
+| ID | 시험 |
+| --- | --- |
+| UNL-P01..P04 | `storage::anchor_tests::unl_p01_*`..`unl_p04_*` |
+| UNL-P05..P10 | `semantic_row::structure::weights::candidate_tests::unlink::unl_p05_*`..`unl_p10_*` |
+| UNL-F01..F03 | `semantic_row::structure::weights::unlink_frame_tests::unl_f01_*`..`unl_f03_*`(제품 emitter 없이 쓴 section serializer, F02 변조 14개) |
+| UNL-F04 | `semantic_row::structure::bank_tests::unl_f04_*` |
+| UNL-B01, B07..B09 | `plan4_recovery_base::row::graph::current_tree_tests::unl_b01_*` |
+| UNL-B02..B06 | `plan4_recovery_base::row::graph::current_tree_tests::unl_b02_b06_*`(변조 6개, 모두 IdentityMismatch) |
+
+계획과 다르게 남긴 것:
+
+- UNL-P08의 Catalog 부채(non-Free Catalog Job → Unsupported)는 `check_debt`로 구현했으나 이 단계의 독립 시험이
+  없다. CREATE Catalog Job이 있는 table로 U3의 UNL-L07이 본다. P08은 RootReserved Job·allocator Reserved
+  (OrderMismatch), stale·alias·non-leaf source, revision 소진(Exhausted), high-water 불일치를 본다.
+- UNL-B07의 재시작과 B09의 BaseOnly·다음 rebase capture는 복구 경로가 필요해 U2(UNL-R)로 미룬다. U1의 B07은
+  퇴역한 CREATE leaf를 가리키는 Job pair[1] hint가 그대로 수락되는 것을, B09는 Base4 decode→encode가 목록·퇴역
+  image·claim을 bytes 그대로 남기는 것을 본다. B08은 bank 33의 unlink descriptor(owner 90) 옆에 그보다 오래된
+  split claim(70, 80, 85)이 있는 Base4의 수락이다.
+- S1B Row arm frame 고정값은 26,420B에서 26,452B가 되었다(위 대체 목록). 그 밖에 바뀐 회계 고정값은 없다.
+
+함께 돌린 기존 시험(AGENTS.md 선택 범위): anchor codec, `semantic_row::structure` 전체, `plan4_recovery_base::row`,
+S1B census, SPL-A08, scope4 replay·structural effect, structural bank·history·prepare. 결과 154 PASS, 1 ignored.
+환경 변수가 필요한 `xrb_*`는 이 변경 전 base에서도 같은 이유로 실패하여 제외했다.

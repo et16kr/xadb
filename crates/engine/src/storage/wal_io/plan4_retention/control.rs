@@ -34,7 +34,7 @@ pub(in crate::storage) fn observe_structural_bank_row(
     epoch: u32,
     row: &[u8],
 ) -> std::result::Result<
-    Option<crate::storage::semantic_row::structure::bank::FinishedSplit>,
+    Option<crate::storage::semantic_row::structure::bank::FinishedStructural>,
     RetentionCause,
 > {
     use crate::storage::semantic_row::structure::bank;
@@ -67,7 +67,7 @@ pub(in crate::storage) fn structural_bank_source_bytes() -> usize {
         + size_of::<[u8; 8]>()
         + 2 * size_of::<
             std::result::Result<
-                Option<crate::storage::semantic_row::structure::bank::FinishedSplit>,
+                Option<crate::storage::semantic_row::structure::bank::FinishedStructural>,
                 RetentionCause,
             >,
         >()

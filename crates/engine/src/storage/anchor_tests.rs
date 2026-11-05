@@ -238,3 +238,281 @@ fn root_load_requires_database_owner_reference_kind_and_level() {
     encode_page(PageHeader { level: 2, ..base }, &[], &mut bytes).unwrap();
     assert_eq!(anchor.decode_root(&bytes).err(), Some(PageError::Corrupt));
 }
+
+// UNL-P01..P04 (dev3-tree-smo.md#empty-leaf-unlink): XTR1 retired list.
+// Expected cells are independent byte literals; the page envelope encoder
+// only places them as cell 1.
+fn first(page_no: u64, incarnation: u64) -> PageRef {
+    PageRef {
+        file: FileId::new(0x0000_0001_0000_0001).unwrap(),
+        page_no,
+        incarnation: Generation::new(incarnation).unwrap(),
+    }
+}
+fn first_header(page_no: u64, lsn: u64) -> PageHeader {
+    let mut h = header(page_no, PageKind::TreeAnchor, 0);
+    h.identity.page = first(page_no, 4);
+    h.lsn = PageLsn(lsn);
+    h
+}
+fn row_root(page_no: u64, level: u8, revision: u64) -> AnchorRoot {
+    AnchorRoot {
+        tree: TreeKind::Row,
+        page: first(page_no, 4),
+        level,
+        revision,
+    }
+}
+/// (page, incarnation, kind byte, level, retire LSN)
+fn literal(entries: &[(u64, u64, u8, u8, u64)]) -> Vec<u8> {
+    let mut c = b"XTR1\x01\x00".to_vec();
+    c.extend_from_slice(&(entries.len() as u16).to_le_bytes());
+    c.extend_from_slice(&[0; 8]);
+    for (page_no, incarnation, kind, level, lsn) in entries {
+        c.extend_from_slice(&0x0000_0001_0000_0001u64.to_le_bytes());
+        c.extend_from_slice(&page_no.to_le_bytes());
+        c.extend_from_slice(&incarnation.to_le_bytes());
+        c.push(*kind);
+        c.push(*level);
+        c.extend_from_slice(&[0; 6]);
+        c.extend_from_slice(&lsn.to_le_bytes());
+    }
+    c
+}
+fn listed_page(h: PageHeader, root: AnchorRoot, list: &[u8]) -> [u8; PAGE_BYTES] {
+    let mut plain = [0; PAGE_BYTES];
+    encode_anchor(h, root, &mut plain).unwrap();
+    let cell0 = decode_page(&plain, h.identity, PageKind::TreeAnchor)
+        .unwrap()
+        .cell(0)
+        .unwrap()
+        .to_vec();
+    let mut bytes = [0; PAGE_BYTES];
+    encode_page(h, &[&cell0, list], &mut bytes).unwrap();
+    bytes
+}
+fn items(list: RetiredList<'_>) -> Vec<RetiredPage> {
+    (0..list.len()).map(|i| list.get(i).unwrap()).collect()
+}
+
+/// UNL-P01: n = 1, 2 and 55 match independent literals in both directions.
+#[test]
+fn unl_p01_retired_list_matches_independent_literal_for_1_2_and_55() {
+    let h = first_header(9, 90);
+    let root = row_root(10, 1, 7);
+    let one: Vec<_> = vec![(20, 2, 1, 0, 90)];
+    let two: Vec<_> = vec![(11, 3, 2, 1, 80), (20, 2, 1, 0, 90)];
+    // 55 entries need every first-extent ordinal 9..63, so this vector
+    // places the anchor and root outside them (first file, page 3/4).
+    let full: Vec<_> = (9..64).map(|n| (n, 1, 1, 0, 90 - (n % 2))).collect();
+    let full_h = first_header(3, 90);
+    let full_root = row_root(4, 1, 7);
+    for (h, root, entries) in [(h, root, one), (h, root, two), (full_h, full_root, full)] {
+        let list = literal(&entries);
+        let typed: Vec<_> = entries
+            .iter()
+            .map(|(n, inc, kind, level, lsn)| RetiredPage {
+                page: first(*n, *inc),
+                kind: PageKind::from_byte(*kind).unwrap(),
+                level: *level,
+                retire_lsn: *lsn,
+            })
+            .collect();
+        let mut out = [0; PAGE_BYTES];
+        encode_listed_anchor(h, root, &list, &mut out).unwrap();
+        assert_eq!(out, listed_page(h, root, &list));
+        let decoded = retired(&out, h.identity).unwrap();
+        assert_eq!(decoded.cell(), list.as_slice());
+        assert_eq!(items(decoded), typed);
+        assert_eq!(decode_anchor(&out, h.identity).unwrap().root(), root);
+        // `extend` from empty merges an ordered typed list into the same cell.
+        let mut cell = [0; RETIRED_CELL_BYTES];
+        let used = RetiredList::EMPTY.extend(&typed, &mut cell).unwrap();
+        assert_eq!(&cell[..used], list.as_slice());
+    }
+    // Merging into an existing list keeps physical order.
+    let base = listed_page(h, root, &literal(&[(11, 3, 2, 1, 80), (30, 2, 1, 0, 85)]));
+    let mut cell = [0; RETIRED_CELL_BYTES];
+    let used = retired(&base, h.identity)
+        .unwrap()
+        .extend(
+            &[RetiredPage {
+                page: first(20, 2),
+                kind: PageKind::RowLeaf,
+                level: 0,
+                retire_lsn: 90,
+            }],
+            &mut cell,
+        )
+        .unwrap();
+    assert_eq!(
+        &cell[..used],
+        literal(&[(11, 3, 2, 1, 80), (20, 2, 1, 0, 90), (30, 2, 1, 0, 85)]).as_slice()
+    );
+}
+
+/// UNL-P02: n = 0 and n = 56 are not lists; length must match n.
+#[test]
+fn unl_p02_retired_list_count_and_length_bounds() {
+    let h = first_header(3, 90);
+    let root = row_root(4, 1, 7);
+    let mut zero = literal(&[]);
+    assert_eq!(zero.len(), 16);
+    let mut over = literal(&(9..64).map(|n| (n, 1, 1, 0, 90)).collect::<Vec<_>>());
+    over.extend_from_slice(&literal(&[(5, 1, 1, 0, 90)])[16..]);
+    over[6..8].copy_from_slice(&56u16.to_le_bytes());
+    let mut short = literal(&[(20, 2, 1, 0, 90), (21, 2, 1, 0, 90)]);
+    short[6..8].copy_from_slice(&3u16.to_le_bytes());
+    for list in [&mut zero, &mut over, &mut short] {
+        let page = listed_page(h, root, list);
+        assert_eq!(
+            decode_anchor(&page, h.identity).err(),
+            Some(PageError::Corrupt)
+        );
+        let mut out = [0xa5; PAGE_BYTES];
+        assert_eq!(
+            encode_listed_anchor(h, root, list, &mut out),
+            Err(PageError::InvalidInput)
+        );
+        assert_eq!(out, [0xa5; PAGE_BYTES]);
+    }
+    let mut cell = [0; RETIRED_CELL_BYTES];
+    assert!(RetiredList::EMPTY.extend(&[], &mut cell).is_err());
+    let full = listed_page(
+        h,
+        root,
+        &literal(&(9..64).map(|n| (n, 1, 1, 0, 90)).collect::<Vec<_>>()),
+    );
+    let one = RetiredPage {
+        page: first(5, 1),
+        kind: PageKind::RowLeaf,
+        level: 0,
+        retire_lsn: 90,
+    };
+    assert!(
+        retired(&full, h.identity)
+            .unwrap()
+            .extend(&[one], &mut cell)
+            .is_err()
+    );
+}
+
+/// UNL-P03: order, alias, file/page range, kind/level, LSN, reserved bytes
+/// and version damage are refused by the decoder and the encoder.
+#[test]
+fn unl_p03_retired_list_rejects_order_alias_range_kind_and_lsn() {
+    let h = first_header(9, 90);
+    let root = row_root(10, 1, 7);
+    let ok = (20, 2, 1, 0, 90);
+    let lists: Vec<Vec<u8>> = vec![
+        literal(&[(21, 2, 1, 0, 90), (20, 2, 1, 0, 90)]),
+        literal(&[(20, 2, 1, 0, 90), (20, 3, 1, 0, 90)]),
+        literal(&[(9, 2, 1, 0, 90)]),
+        literal(&[(10, 3, 1, 0, 90)]),
+        literal(&[(8, 2, 1, 0, 90)]),
+        literal(&[(64, 2, 1, 0, 90)]),
+        literal(&[(20, 2, 5, 0, 90)]),
+        literal(&[(20, 2, 1, 1, 90)]),
+        literal(&[(20, 2, 2, 0, 90)]),
+        literal(&[(20, 2, 2, 16, 90)]),
+        literal(&[(20, 2, 1, 0, 0)]),
+        literal(&[(20, 2, 1, 0, 91)]),
+        {
+            let mut c = literal(&[ok]);
+            c[8] = 1;
+            c
+        },
+        {
+            let mut c = literal(&[ok]);
+            c[16 + 26] = 1;
+            c
+        },
+        {
+            let mut c = literal(&[ok]);
+            c[16..24].copy_from_slice(&0x0000_0001_0000_0002u64.to_le_bytes());
+            c
+        },
+        {
+            let mut c = literal(&[ok]);
+            c[0] = b'Z';
+            c
+        },
+    ];
+    for (i, list) in lists.iter().enumerate() {
+        let page = listed_page(h, root, list);
+        assert_eq!(
+            decode_anchor(&page, h.identity).err(),
+            Some(PageError::Corrupt),
+            "list {i}"
+        );
+        assert!(retired(&page, h.identity).is_err());
+        let mut out = [0xa5; PAGE_BYTES];
+        assert_eq!(
+            encode_listed_anchor(h, root, list, &mut out),
+            Err(PageError::InvalidInput),
+            "encode {i}"
+        );
+        assert_eq!(out, [0xa5; PAGE_BYTES]);
+    }
+    let mut version = literal(&[ok]);
+    version[4] = 2;
+    assert_eq!(
+        decode_anchor(&listed_page(h, root, &version), h.identity).err(),
+        Some(PageError::UnsupportedFormat)
+    );
+}
+
+/// UNL-P04: only a Row anchor of revision 2 or later carries a list, a
+/// third cell is refused, and the one-cell anchor bytes are unchanged.
+#[test]
+fn unl_p04_list_is_row_only_and_one_cell_anchor_is_unchanged() {
+    let h = first_header(9, 90);
+    let list = literal(&[(20, 2, 1, 0, 90)]);
+    for root in [
+        AnchorRoot {
+            tree: TreeKind::Index,
+            ..row_root(10, 1, 7)
+        },
+        AnchorRoot {
+            tree: TreeKind::Catalog,
+            ..row_root(10, 0, 7)
+        },
+        row_root(10, 1, 1),
+    ] {
+        let page = listed_page(h, root, &list);
+        assert_eq!(
+            decode_anchor(&page, h.identity).err(),
+            Some(PageError::Corrupt)
+        );
+        let mut out = [0xa5; PAGE_BYTES];
+        assert_eq!(
+            encode_listed_anchor(h, root, &list, &mut out),
+            Err(PageError::InvalidInput)
+        );
+    }
+    let root = row_root(10, 1, 7);
+    let page = listed_page(h, root, &list);
+    let cell0 = decode_page(&page, h.identity, PageKind::TreeAnchor)
+        .unwrap()
+        .cell(0)
+        .unwrap()
+        .to_vec();
+    let mut three = [0; PAGE_BYTES];
+    encode_page(h, &[&cell0, &list, &list], &mut three).unwrap();
+    assert_eq!(
+        decode_anchor(&three, h.identity).err(),
+        Some(PageError::Corrupt)
+    );
+    let mut plain = [0; PAGE_BYTES];
+    encode_anchor(h, root, &mut plain).unwrap();
+    let mut empty = [0; PAGE_BYTES];
+    encode_listed_anchor(h, root, &[], &mut empty).unwrap();
+    assert_eq!(plain, empty);
+    assert_eq!(
+        decode_page(&plain, h.identity, PageKind::TreeAnchor)
+            .unwrap()
+            .len(),
+        1
+    );
+    assert_eq!(retired(&plain, h.identity).unwrap(), RetiredList::EMPTY);
+}

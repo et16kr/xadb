@@ -5,6 +5,8 @@ use super::*;
 mod density;
 #[path = "frame_tests.rs"]
 mod frame;
+#[path = "unlink_tests.rs"]
+mod unlink;
 use crate::{
     api::TableSpec,
     storage::{

@@ -459,3 +459,153 @@ fn base4_current_tree_accepts_internal_root_split_and_checks_off_path_internal()
     assert!(decode_layout(&*bad, expected()).is_ok());
     assert!(current_tree::observe(decode_layout(&*bad, expected()).unwrap(), 0).is_err());
 }
+
+// UNL-B01..B09 (dev3-tree-smo.md#empty-leaf-unlink). The two snapshots are
+// authored independently (author.py leaf_unlink/root_collapse): a LeafUnlink90
+// that listed empty leaf19, and a RootCollapse90 that listed the CREATE leaf11
+// and root17. They prove current-state closure only, not selected history.
+const UNLINK_LEAF: &[u8; BASE_BYTES] = fixture!("current-tree/unlink-leaf.xrb");
+const UNLINK_COLLAPSE: &[u8; BASE_BYTES] = fixture!("current-tree/unlink-collapse.xrb");
+
+/// Independent XTR1 cell: (page, incarnation, kind, level, retire LSN).
+fn xtr1(entries: &[(u64, u64, u8, u8, u64)]) -> Vec<u8> {
+    let mut c = b"XTR1\x01\x00".to_vec();
+    c.extend_from_slice(&(entries.len() as u16).to_le_bytes());
+    c.extend_from_slice(&[0; 8]);
+    for (n, incarnation, kind, level, lsn) in entries {
+        c.extend_from_slice(&0x1_0000_0001u64.to_le_bytes());
+        c.extend_from_slice(&n.to_le_bytes());
+        c.extend_from_slice(&incarnation.to_le_bytes());
+        c.extend_from_slice(&[*kind, *level, 0, 0, 0, 0, 0, 0]);
+        c.extend_from_slice(&lsn.to_le_bytes());
+    }
+    c
+}
+/// Replace every cell of a page image in place (the caller reseals).
+fn set_cells(p: &mut [u8], cells: &[Vec<u8>]) {
+    p[128..PAGE_BYTES - 32].fill(0);
+    p[72..74].copy_from_slice(&(cells.len() as u16).to_le_bytes());
+    p[74..76].copy_from_slice(&((128 + 4 * cells.len()) as u16).to_le_bytes());
+    let mut end = PAGE_BYTES - 32;
+    for (i, cell) in cells.iter().enumerate() {
+        end -= cell.len();
+        p[end..end + cell.len()].copy_from_slice(cell);
+        p[128 + 4 * i..130 + 4 * i].copy_from_slice(&(end as u16).to_le_bytes());
+        p[130 + 4 * i..132 + 4 * i].copy_from_slice(&(cell.len() as u16).to_le_bytes());
+    }
+    p[76..78].copy_from_slice(&(end as u16).to_le_bytes());
+}
+fn cell(p: &[u8], slot: usize) -> Vec<u8> {
+    let size = usize::from(u16::from_le_bytes(
+        p[130 + slot * 4..132 + slot * 4].try_into().unwrap(),
+    ));
+    p[offset(p, slot)..offset(p, slot) + size].to_vec()
+}
+fn leaves(tree: &current_tree::Table<'_>) -> Vec<usize> {
+    (9..64).filter(|&i| tree.has_leaf(i)).collect()
+}
+fn row_page(tree: &current_tree::Table<'_>, row: u64) -> u64 {
+    tree.find(RowId::new(row).unwrap())
+        .unwrap()
+        .header()
+        .identity
+        .page
+        .page_no
+}
+
+/// UNL-B01/B07/B08/B09: Base4 accepts a listed empty leaf and a listed
+/// internal page, the retired CREATE leaf keeps its pair claim and Job
+/// hints, a bank unlink owner beside older split claims, and a Base
+/// rewrite keeps the list and claims byte for byte. Restart over these
+/// states is UNL-R (U2).
+#[test]
+fn unl_b01_base4_accepts_listed_retired_leaf_and_internal_pages() {
+    use crate::storage::semantic_row::structure::{Operation, bank};
+    for (bytes, live, rows, operation) in [
+        (
+            UNLINK_LEAF,
+            vec![11, 16, 18],
+            [11, 18, 16],
+            Operation::LeafUnlink,
+        ),
+        (
+            UNLINK_COLLAPSE,
+            vec![16],
+            [16, 16, 16],
+            Operation::RootCollapse,
+        ),
+    ] {
+        // B08: bank33 holds the unlink owner90; the split claims (70, 80, 85)
+        // are older, so none of them names that owner.
+        let raw: &[u8; 1536] = bytes[BANK + 33 * 1536..BANK + 34 * 1536]
+            .try_into()
+            .unwrap();
+        assert_eq!(
+            bank::observe(expected().profile, 90, 1, 90, Some(raw))
+                .unwrap()
+                .unwrap()
+                .operation,
+            operation
+        );
+        let view = decode(bytes, expected(), &mut scratch()).unwrap();
+        assert_eq!(view.census(), LIVE_CENSUS);
+        let tree = current_tree::observe(view.layout(), 0).unwrap();
+        assert_eq!(leaves(&tree), live);
+        assert_eq!([1, 2, 3].map(|row| row_page(&tree, row)), rows);
+        // B07: Job hints keep naming the CREATE leaf11, retired or not.
+        let graph = Graph::new(view.layout()).unwrap();
+        for ordinal in [1, 2] {
+            assert_eq!(graph.job(ordinal).unwrap().pair().unwrap()[1].page_no, 11);
+        }
+        // B09: a Base rewrite keeps the list, retired images and claims.
+        let (output, result) = encoded(bytes);
+        assert_eq!(result.unwrap(), LIVE_CENSUS);
+        assert_eq!(&*output, bytes);
+    }
+}
+
+/// UNL-B02..B06: an orphan outside the list, a reached listed page, an
+/// unallocated item, a non-empty retired leaf, and a wrong incarnation or
+/// kind are refused by the closure after the layout grammar accepts them.
+#[test]
+fn unl_b02_b06_base4_rejects_retired_list_ownership_mismatch() {
+    for mutation in 0..6 {
+        let mut bytes = backing(UNLINK_LEAF);
+        let list: Option<Vec<u8>> = match mutation {
+            0 => None,
+            1 => Some(xtr1(&[(18, 2, 1, 0, 90), (19, 2, 1, 0, 90)])),
+            2 => Some(xtr1(&[(19, 2, 1, 0, 90), (20, 2, 1, 0, 90)])),
+            3 => {
+                let row = cell(
+                    &UNLINK_LEAF[ARENA + 16 * PAGE_BYTES..ARENA + 17 * PAGE_BYTES],
+                    1,
+                );
+                change_page(&mut bytes, 19, |p| {
+                    let meta = cell(p, 0);
+                    set_cells(p, &[meta, row]);
+                });
+                continue_with(&bytes, mutation);
+                continue;
+            }
+            4 => Some(xtr1(&[(19, 3, 1, 0, 90)])),
+            _ => Some(xtr1(&[(19, 2, 2, 1, 90)])),
+        };
+        change_page(&mut bytes, 10, |p| {
+            let root = cell(p, 0);
+            match &list {
+                None => set_cells(p, &[root]),
+                Some(list) => set_cells(p, &[root, list.clone()]),
+            }
+        });
+        continue_with(&bytes, mutation);
+    }
+    fn continue_with(bytes: &[u8; BASE_BYTES], mutation: usize) {
+        let layout = decode_layout(bytes, expected()).unwrap();
+        assert_eq!(
+            current_tree::observe(layout, 0).err(),
+            Some(BaseError::IdentityMismatch),
+            "mutation {mutation}"
+        );
+        assert!(decode(bytes, expected(), &mut scratch()).is_err());
+    }
+}

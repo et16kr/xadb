@@ -1,4 +1,4 @@
-"""Independent post-split Base4 observations; no product encoder or authority.
+"""Independent post-split/unlink Base4 observations; no product encoder or authority.
 
 The pinned live parent contains rows1/2/3, of which2/3 are Retained INSERTs.
 RootSplit70 moves row3 to16 and installs internal root17. ChildSplit80 then
@@ -272,6 +272,51 @@ def internal_root_split(parent):
     a=image(b,10); at=get(a,128,2); a[at+7]=2; install(b,10,seal(a))
     return finish(b,80,1)
 
+def finish_unlink(b,lsn,wal):
+    """Bank33 = a Finished unlink owner: the child-split descriptor with its
+    lsn fields and consumed WAL (offset608) replaced by the exact frame bytes."""
+    b=finish(b,lsn,2); d=bytearray(b[BANK+33*1536:BANK+34*1536]); put(d,608,wal)
+    b[BANK+33*1536:BANK+34*1536]=seal(d)
+    for i,(at,size) in enumerate(SECTIONS): b[1280+i*64+32:1280+(i+1)*64]=digest(b[at:at+size])
+    return seal(b)
+
+def xtr1(entries):
+    """(page, incarnation, kind, level, retire LSN) in physical order."""
+    c=bytearray(16+40*len(entries)); c[:6]=b'XTR1\x01\x00'; put(c,6,len(entries),2)
+    for i,(n,inc,kind,level,lsn) in enumerate(entries):
+        e=16+40*i; c[e:e+16]=(0x100000001).to_bytes(8,'little')+n.to_bytes(8,'little')
+        put(c,e+16,inc); c[e+24]=kind; c[e+25]=level; put(c,e+32,lsn)
+    return bytes(c)
+
+def listed_anchor(b,revision,lsn,root,level,entries):
+    old=image(b,10); c=bytearray(cells(old)[0]); c[7]=level; c[8:32]=pref(root); put(c,32,revision)
+    install(b,10,page(old,10,11,0,lsn,[c,xtr1(entries)]))
+
+def leaf_unlink(child):
+    """From child-split80 (root17 [2,3] -> 11,18,16): ChildSplit85 had added
+    empty leaf19 right of16 (revision4); LeafUnlink90 removed it again. Root17
+    is rewritten at90, 19 stays allocated and listed (revision5)."""
+    b=bytearray(child); original=image(b,11); meta=cells(original)[0]
+    leaf=page(original,19,1,0,85,[meta]); install(b,19,leaf)
+    c=claim(leaf,5,85,2,None,3); c[232:256]=pref(16); b[CLAIMS+19*352:CLAIMS+20*352]=c
+    install(b,17,internal(original,[2,3],[11,18,16],90))
+    allocator(b,[(19,1)],85); listed_anchor(b,5,90,17,1,[(19,2,1,0,90)])
+    return finish_unlink(b,90,35248)
+
+def root_collapse(parent):
+    """From the live leaf11 (rows1/2/3): RootSplit70 at separator1 left the
+    CREATE leaf11 empty (right16 holds every row, root17 [1]); RootCollapse90
+    made16 the root leaf and listed11 and17 (revision3)."""
+    b=bytearray(parent); original=image(b,11); rows=cells(original)
+    left=page(original,11,1,0,70,rows[:1]); right=page(original,16,1,0,70,rows)
+    root=internal(original,[1],[11,16],70)
+    for n,p in ((11,left),(16,right),(17,root)): install(b,n,p)
+    for n,p,role,peer in ((16,right,5,17),(17,root,6,16)):
+        b[CLAIMS+n*352:CLAIMS+(n+1)*352]=claim(p,role,70,1,peer,1)
+    allocator(b,[(16,1),(17,2)],70)
+    listed_anchor(b,3,90,16,0,[(11,2,1,0,90),(17,2,2,1,90)])
+    return finish_unlink(b,90,19032)
+
 PARENTS = {'base4-closure/variants.bin': '4cb06bcb8548f45075be8bde033eff3eca9e9b58e3beb1e124b49399b939fd88', 'base4-closure/live.xrb': '5a446fbf0fab629b7bfc10b5040e0a54b77ea6e2a993ca58db70482f3f5c94d9', 'structural-bank/root.xod': '55a03eeda6771aae4e226dc3615955f71a1509d0b595fa016754bacfe19cfda3', 'structural-bank/child.xod': 'b1de53f096a5c2be5bb891c04fded4da72966873000dc39a13edaf04e2880b73'}
 
 def main():
@@ -292,6 +337,8 @@ def main():
     b[CLAIMS+18*352:CLAIMS+19*352]=claim(right,5,80,2,None,2)
     allocator(b,[(18,1)],80); anchor(b,3,80); finish(b,80,2)
     (ROOT/'child-split.xrb').write_bytes(b)
+    (ROOT/'unlink-leaf.xrb').write_bytes(leaf_unlink(b))
+    (ROOT/'unlink-collapse.xrb').write_bytes(root_collapse(parent))
     for name in ['state-row-reserved','state-ready-writer','state-compensated-writer']:
         (ROOT/(name+'.xrb')).write_bytes(root_split(variant(name)))
     mixed=root_split(effect_state(parent)); (ROOT/'delete-update.xrb').write_bytes(mixed)

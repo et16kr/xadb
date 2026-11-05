@@ -107,6 +107,25 @@ fn table_chain() -> usize {
         + transition::tree_source_bytes().max(semantic_catalog::catalog_read_codec_bytes())
         + 1536
 }
+/// `retired_pages` plus the anchor list decode that precedes it: one item's
+/// allocation entry and its page decode, children never followed.
+fn retired_chain() -> usize {
+    let frame = size_of::<(
+        &Table<'_>,
+        &AllocationPage<'_>,
+        anchor::RetiredList<'_>,
+        &[u8],
+        &mut (),
+    )>() + 2 * size_of::<anchor::RetiredPage>()
+        + 2 * size_of::<AllocationEntry>()
+        + size_of::<TreeExpectation>()
+        + 2 * size_of::<TreePageView<'_>>()
+        + 2 * slack();
+    frame
+        + (transition::tree_source_bytes() + 1536)
+            .max(allocation_codec())
+            .max(semantic_catalog::page_read_codec_bytes() + 1536)
+}
 fn audit_chain() -> usize {
     let frame = size_of::<(
         &Inputs<'_>,
@@ -115,6 +134,7 @@ fn audit_chain() -> usize {
         u64,
         &mut [u8; 64],
     )>() + size_of::<[usize; MAX_LEAF_ROWS]>()
+        + size_of::<anchor::RetiredList<'_>>()
         + size_of::<ContentHasher>()
         + 4 * size_of::<TreeExpectation>()
         + 2 * size_of::<(TreePageView<'_>, TreeEntry<'_>, SearchPosition)>()
@@ -131,7 +151,11 @@ fn audit_chain() -> usize {
     let traversal = tree_page::audit::frame_source_bytes()
         .max(tree_page::search::frame_source_bytes())
         + callback.max(transition::tree_source_bytes() + 1536);
-    frame + traversal.max(weights_chain()).max(digest())
+    frame
+        + traversal
+            .max(weights_chain())
+            .max(digest())
+            .max(retired_chain())
 }
 fn parent_chain() -> usize {
     size_of::<[&[u8]; SPLIT_REFS]>()
@@ -210,6 +234,7 @@ pub(crate) fn source_census() -> SourceCensus {
         + size_of::<[Option<PageRef>; 2]>()
         + size_of::<([u8; 32], [u8; 40], [u8; 32], [u8; 32], [u64; 2], [u64; 2])>()
         + 2 * size_of::<Result<(usize, [u8; 32])>>()
+        + 2 * size_of::<anchor::RetiredList<'_>>()
         + 2 * slack();
     let after_outer = size_of::<(
         &Inputs<'_>,
@@ -223,6 +248,7 @@ pub(crate) fn source_census() -> SourceCensus {
         + size_of::<Result<(usize, [u8; 32])>>()
         + size_of::<(&[PageHeader; 5], &[[u8; PAGE_BYTES]; 5], &mut ())>()
         + size_of::<(PageRef, Option<usize>)>()
+        + 2 * size_of::<anchor::RetiredList<'_>>()
         + slack();
     // Constructing either result is separate from every nested helper.
     let returning = build_outer

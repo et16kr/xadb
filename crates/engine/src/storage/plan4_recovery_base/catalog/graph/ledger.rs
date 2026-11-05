@@ -580,10 +580,10 @@ pub(in crate::storage::plan4_recovery_base) fn source_census<'a, G: Seam<'a>>() 
         + G::transaction_source_bytes();
     let structural = if G::ROWS {
         2 * size_of::<DescriptorSpec>()
-            + 2 * size_of::<structural_bank::FinishedSplit>()
+            + 2 * size_of::<structural_bank::FinishedStructural>()
             + 2 * size_of::<
                 std::result::Result<
-                    structural_bank::FinishedSplit,
+                    structural_bank::FinishedStructural,
                     crate::storage::semantic_row::Error,
                 >,
             >()
@@ -615,10 +615,10 @@ pub(in crate::storage::plan4_recovery_base) fn source_census<'a, G: Seam<'a>>() 
             + size_of::<Header>()
             + 2 * size_of::<Option<DescriptorSpec>>()
             + 2 * size_of::<Result<Option<DescriptorSpec>>>()
-            + 2 * size_of::<Option<structural_bank::FinishedSplit>>()
+            + 2 * size_of::<Option<structural_bank::FinishedStructural>>()
             + 2 * size_of::<
                 std::result::Result<
-                    Option<structural_bank::FinishedSplit>,
+                    Option<structural_bank::FinishedStructural>,
                     crate::storage::semantic_row::Error,
                 >,
             >()
