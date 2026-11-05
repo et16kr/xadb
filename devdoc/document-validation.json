@@ -1,15 +1,17 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-11-06T11:08:55.402952+09:00",
-  "status": "PASS",
-  "errors": [],
+  "date": "2026-11-06T02:51:36.026704+09:00",
+  "status": "FAIL",
+  "errors": [
+    "/home/claude/xadb/devdoc/contracts/dev3-tree-smo.md: missing link ../../module-gate/evidence/dev3-08-1-unlink-u2/review.md"
+  ],
   "markdown_documents": [
     {
       "file": "devdoc/README.md",
-      "links": 317,
+      "links": 318,
       "duplicate_ids": 0,
-      "sha256": "69fbefaf09b577c1e9a4a2efcfe2b0dbf165d29d3090d1701cad3590efbda606"
+      "sha256": "ba18b13d0c5ec2e893e0697a18aa774d096e169a51fb4953209ad58aa0093711"
     },
     {
       "file": "devdoc/contracts/README.md",
@@ -157,9 +159,9 @@
     },
     {
       "file": "devdoc/contracts/dev3-module-boundaries.md",
-      "links": 366,
+      "links": 365,
       "duplicate_ids": 0,
-      "sha256": "87dcfac7f6c035c39e27ad260d59bd294fa3905b0a53b77291504a660a2c83b6"
+      "sha256": "f3b1f5e1539b982de4153aac7b805a40a8b595059adf94a13f0a01232dec04f7"
     },
     {
       "file": "devdoc/contracts/dev3-module-consumers.md",
@@ -465,7 +467,7 @@
       "file": "devdoc/contracts/dev3-tree-smo.md",
       "links": 47,
       "duplicate_ids": 0,
-      "sha256": "93d3909a3954b954729da4b5d344a04e4aeb8c4c83f3cc62127146e97e6337b4"
+      "sha256": "0c118b72a5c905af26dcaa14314b9be32d5681bcf26159a543b4fbc23708baca"
     },
     {
       "file": "devdoc/contracts/dev3-undo-format.md",
@@ -1495,9 +1497,9 @@
     },
     {
       "file": "devdoc/plans/dev3-schedule-baseline.md",
-      "links": 122,
+      "links": 123,
       "duplicate_ids": 0,
-      "sha256": "df94c73900db3f8f5ebbfe78be48db158a4a08ad8e4f476ff09aadfe8a0210a7"
+      "sha256": "0651d296072625920dd4d8beebd90036a7f338e5d3ff49c3da6295ae3ef7707c"
     },
     {
       "file": "devdoc/plans/dev3-test-plan.md",

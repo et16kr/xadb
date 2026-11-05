@@ -581,7 +581,17 @@ pub(super) fn apply_frame(
             if cursor.allocation.reserved() {
                 return Err(RetentionCause::Invariant);
             }
-            history::structure::apply(profile, expected, input, arena, cells, bank, after, claims)?
+            if history::structure::is_unlink(input) {
+                let after: &mut [[u8; PAGE_BYTES]; 2] =
+                    (&mut after[..2]).try_into().expect("unlink after prefix");
+                history::structure::apply_unlink(
+                    profile, expected, input, arena, cells, bank, after,
+                )?
+            } else {
+                history::structure::apply(
+                    profile, expected, input, arena, cells, bank, after, claims,
+                )?
+            }
         }
         1 => {
             // Any Reserved Job3 root (either scope) excludes a System frame.

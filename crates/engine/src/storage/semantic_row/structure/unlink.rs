@@ -16,6 +16,10 @@ use foundation::identity::{Generation, ObjectHandle, ObjectId, RowId, SchemaEpoc
 
 pub(crate) mod candidate;
 pub(crate) mod frame;
+mod source;
+pub(crate) use source::source_bytes;
+#[cfg(test)]
+mod source_tests;
 
 const CORE_AT: usize = super::CORE_AT;
 const NATIVE_AT: usize = super::NATIVE_AT;

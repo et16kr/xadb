@@ -117,7 +117,7 @@ ID는 모두 `D3-SCH-` 접두어를 갖는다. 아래는 보고용 기본 배치
 | 07-2 | C 형식·전이(before/after 값, 크기 변화의 leaf 공간) | 1 | 완료(PR #49 병합 시) | PR #49, [2단계 구현 기록](../contracts/dev3-row-update.md#implementation-2) |
 | 07-3 | A/B 제품 경로와 Undo/CLR·읽기·reopen·복구(메모리 시험) | 1 | 완료(PR #49 병합 시) | PR #49, [3단계 구현 기록](../contracts/dev3-row-update.md#implementation-3) |
 | 07-4 | native fault cut | 0.5 | 완료(PR #49 병합 시) | PR #49, [4단계 구현 기록](../contracts/dev3-row-update.md#implementation-4) |
-| 08-1 | split/root SMO(system group)의 계약·구현·복구 | 2 | 진행(적립0) | [제한 split 효과](../evidence/dev3-tree-structure-20261104.md#structural-effect), [current-leaf 소비자 일반화](../contracts/dev3-tree-smo.md#current-leaf-consumers), [A 자동 split 호출자](../contracts/dev3-tree-smo.md#automatic-split), [unlink·root 축소 설계](../contracts/dev3-tree-smo.md#empty-leaf-unlink), [U1 codec·frame·closure](../contracts/dev3-tree-smo.md#unlink-u1); unlink/root shrink/retirement 구현 U2–U4 잔여 |
+| 08-1 | split/root SMO(system group)의 계약·구현·복구 | 2 | 진행(적립0) | [제한 split 효과](../evidence/dev3-tree-structure-20261104.md#structural-effect), [current-leaf 소비자 일반화](../contracts/dev3-tree-smo.md#current-leaf-consumers), [A 자동 split 호출자](../contracts/dev3-tree-smo.md#automatic-split), [unlink·root 축소 설계](../contracts/dev3-tree-smo.md#empty-leaf-unlink), [U1 codec·frame·closure](../contracts/dev3-tree-smo.md#unlink-u1), [U2 replay](../contracts/dev3-tree-smo.md#unlink-u2); unlink/root shrink/retirement 구현 U3–U4 잔여 |
 | 08-2 | SMO를 건너는 stable cursor/locator | 1 | 대기 | — |
 | 08-3 | overflow chain 쓰기·읽기·반환 | 2 | 대기 | — |
 | 08-4 | 일반 행 변경(own/repeated write·occupied-before·Undo chain·큰 행 복원) | 2 | 대기 | — |

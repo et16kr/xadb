@@ -9,13 +9,14 @@
 DEV3 일정 보고는 [전체 예상 일정·누적 진척률 V1](plans/dev3-schedule-baseline.md)을 따른다. 최신 기준일·적립 대장·누적률·잔여 예측은 그 문서에서 확인한다. 완료 증거가 있는 일정 항목의 고정 예상 기간을 누적하며 날짜 예측과 제품 인수 판정은 구분한다.
 
 현재 작업은 사용자 요청 "codex/dev3-08-tree-generalization을 받아 08-1을 완료하기"의 마지막 범위인
-**[빈 leaf unlink·root 축소·retirement 등록](contracts/dev3-tree-smo.md#empty-leaf-unlink)의 첫 구현 단계
-[U1](contracts/dev3-tree-smo.md#unlink-u1)**이다. 작업 branch는 `claude/project-thread-e9itre`다. 설계(LeafUnlink·
-RootCollapse를 scope4 opcode 3·4로, 퇴역 page는 Free가 아니라 anchor의 XTR1 목록에)는 독립 D2 3회차 ACCEPT를
-받았다. U1은 XTR1 codec, split candidate의 목록 보존과 `reached ⊎ retired == owned` 검산, 순수 unlink candidate,
-opcode 3·4 frame producer/observer, bank, Base4 closure와 UNL-P01..P10·F01..F04·B01..B06·B08 memory 시험이다(B07·B09는
-일부, 재시작·BaseOnly capture는 U2). 제품
-경로는 아직 이 코드를 부르지 않는다(replay U2, live 효과·호출자 U3, native U4). 앞 단위
+**[빈 leaf unlink·root 축소·retirement 등록](contracts/dev3-tree-smo.md#empty-leaf-unlink)의 구현 단계
+[U1](contracts/dev3-tree-smo.md#unlink-u1)·[U2](contracts/dev3-tree-smo.md#unlink-u2)**이다. 작업 branch는
+`claude/project-thread-e9itre`다. 설계(LeafUnlink·RootCollapse를 scope4 opcode 3·4로, 퇴역 page는 Free가 아니라
+anchor의 XTR1 목록에)는 독립 D2 3회차 ACCEPT를 받았다. U1은 XTR1 codec, split candidate의 목록 보존과
+`reached ⊎ retired == owned` 검산, 순수 unlink candidate, opcode 3·4 frame producer/observer, bank, Base4 closure와
+UNL-P01..P10·F01..F04·B01..B06·B08 memory 시험이다. U2는 복구 replay의 opcode 3·4 dispatch와 source 회계,
+UNL-R01..R04(B07 재시작·B09 capture 포함)와 Catalog 부채 단위 시험이다. 복구는 이제 unlink frame을 받지만 그
+frame을 쓰는 제품 경로는 아직 없다(live 효과·호출자 U3, native U4). 앞 단위
 [current-leaf 소비자 일반화](contracts/dev3-tree-smo.md#current-leaf-consumers)(PR #53)와
 [A 자동 split 호출자](contracts/dev3-tree-smo.md#automatic-split)(PR #54)는 병합됐다. 08-1은 U4가 끝나야 적립하며
 지금 적립은 0, 누적은 그대로다.

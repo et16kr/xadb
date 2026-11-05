@@ -439,6 +439,46 @@ fn unl_p08_rejects_alias_reach_kind_revision_and_debt() {
     }
 }
 
+/// UNL-P08 Catalog debt (U1 deferral, dev3-tree-smo.md#unlink-u2): a
+/// non-Free Catalog Job of this table refuses with Unsupported before any
+/// unlink or NotNeeded decision (and before the tree audit). The Job is the
+/// independent job3 literal (RootRetained, Catalog, table 6 generation 1),
+/// never a product encoder's.
+#[test]
+fn unl_p08_catalog_job_of_the_table_refuses_before_not_needed() {
+    const CELLS: &[u8; 31 * JOB_BYTES] = include_bytes!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../tests/fixtures/module-row-format/job3/cells.bin"
+    ));
+    let mut catalog: [u8; JOB_BYTES] = CELLS[9 * JOB_BYTES..10 * JOB_BYTES].try_into().unwrap();
+    assert_eq!((catalog[6], catalog[7]), (2, 2));
+    // The literal's source TxnRef names the job3 namespace; rename it to
+    // this profile's database (timeline 1 in both).
+    catalog[16..32].copy_from_slice(&profile().spec().namespace.database.bytes());
+    assert_eq!(
+        &catalog[176..200],
+        [6u64, 1, 1].map(u64::to_le_bytes).concat()
+    );
+    let job = row::decode_job(&catalog, profile().spec().namespace).unwrap();
+    assert_eq!(job.scope(), Some(row::JobScope::Catalog));
+    // (source leaf, Catalog Job present, expected): 21 is empty (unlink),
+    // 13 holds rows (NotNeeded without the debt).
+    for (source, debt, expected) in [
+        (21, false, Ok(true)),
+        (13, false, Ok(false)),
+        (21, true, Err(Error::Unsupported)),
+        (13, true, Err(Error::Unsupported)),
+    ] {
+        let mut world = world();
+        world.internal_root();
+        if debt {
+            world.fixture.jobs[40].copy_from_slice(&catalog);
+        }
+        let (result, _, _) = world.unlink(source);
+        assert_eq!(result, expected, "source {source} debt {debt}");
+    }
+}
+
 /// Internal-root world whose leaf 22 was unlinked earlier: root 23 keeps
 /// [13, 20, 21] and 22 stays allocated, empty and listed.
 fn listed_world() -> (World, Vec<u8>) {
