@@ -1122,12 +1122,23 @@ split 종류 직접 관측. 18-frame pool에서 split 뒤 table issue의 Missing
 <a id="empty-leaf-unlink"></a>
 ## 빈 leaf unlink·root 축소·retirement 등록
 
-상태는 **2026-11-05 설계 / 독립 D2 대기 / 구현 없음**이다. 08-1의 마지막 범위(3.06.1.c, T06-06)를
-닫는 설계이며, 앞 절들의 split 공급을 바꾸지 않는다. 다만 아래 두 곳의 이전 서술을 이 절이 대체한다.
-[결정과 범위](#결정과-범위)의 "Finished/잔여0 규칙을 그 opcode에 자동 적용하지 않는다"는 이 절의
-판단(아래 retired 목록)으로 대체하고, [System owner·회계](#system-owner회계)의 "unlink에서 나오는
-retired page는 별도 잔여 owner가 필요하다"는 "그 잔여를 tree object가 anchor 목록으로 소유한다"로
-대체한다. 08-1은 아래 U4까지 끝나야 완료로 적립한다.
+상태는 **2026-11-05 설계 / 독립 D2 1회차 CONDITIONAL(필수 3) 반영, 재검토 대기 / 구현 없음**이다. 08-1의 마지막
+범위(3.06.1.c, T06-06)를 닫는 설계다. 08-1은 아래 U4까지 끝나야 완료로 적립한다.
+
+이 절이 대체하거나 확장하는 앞 서술은 다음과 같다.
+
+- [결정과 범위](#결정과-범위)의 "Finished/잔여0 규칙을 그 opcode에 자동 적용하지 않는다": unlink 그룹의 owner도
+  Finished·잔여0이다. 잔여(퇴역 page)는 아래 anchor 목록이 tree object의 것으로 기록한다.
+- [System owner·회계](#system-owner회계)의 "unlink에서 나오는 retired page는 별도 잔여 owner가 필요하다": 그
+  잔여 owner는 tree object이고 기록은 anchor 목록이다.
+- [제안 F01](#제안-f01-scope4-frame)의 "native5·redo5"와 [bank](#structural-bank)의 "WAL은 Root84,744 또는
+  Child84,640B": opcode 3·4의 수와 길이를 더한다. split의 값은 그대로다.
+- [Base4 birth 관측](#base-structural-claims)의 "CREATE pair의 현재 상호 존재 규칙은 … 실제 unlink/retirement
+  연결 때 따로 일반화한다"와 [현재 tree 전체 검산](#current-tree-closure)의 "최초 leaf 자체의 retirement와 그때의
+  역사 pair 승계": 퇴역 page가 Allocated로 남으므로 기존 pair 규칙(`validate_pairs`)이 그대로 성립한다. 일반화는
+  page를 실제로 Free로 만드는 3.03.4로 미룬다.
+- split 공급도 두 곳이 바뀐다: candidate의 anchor encode가 목록을 보존하고, candidate의 소유 검산이 목록을
+  받는다(아래 U1). [F05 절](#f05와-검증-동결-잔여)의 재검토 조건("unlink/retirement debt 추가")에 해당한다.
 
 ### 범위와 전이
 
@@ -1145,9 +1156,9 @@ L의 parent P에 따라 둘 중 하나다.
 - RootCollapse의 S는 L의 형제이므로 언제나 level 0 leaf다. S의 bytes는 바뀌지 않는다(page에 parent·sibling
   link가 없다). S도 비어 있으면 결과는 빈 root leaf, 곧 빈 table의 정상 표현이다.
 - 하지 않는 경우(`NotNeeded`): L이 root, L에 cell이 있음, P가 non-root이고 separator 1개(남는 child를
-  level이 다른 grandparent에 잇지 않는다. 이 L은 빈 leaf로 남으며 정상 상태다). 그래서 높이 2 이상인
-  tree는 level 1 아래로 줄지 않는다. level 2 이상의 축소와 non-root unary 재구성은 이 절 밖이다.
-- 빈 leaf는 이미 정상 상태다(SPL-A03, SPL-REVIEW-02). 빈 cell 0개는 snapshot이 필요한 tombstone이 모두
+  level이 다른 grandparent에 잇지 않는다. 이 L은 빈 leaf로 남으며 정상 상태다). 그래서 root level이 2 이상인
+  tree는 낮아지지 않는다(RootCollapse는 root level 1→0만 한다). 그 축소와 non-root unary 재구성은 이 절 밖이다.
+- 빈 leaf는 이미 정상 상태다(SPL-A03, SPL-REVIEW-02). cell 0개는 snapshot이 필요한 tombstone이 모두
   DeletePrune(오래된 snapshot 옆에서는 Busy로 보류)이나 INSERT CLR로 지워졌다는 뜻이므로 L에 대한
   Retained root·leaf 예약 D는 없다. 그래도 아래 준비는 이를 다시 검산한다.
 
@@ -1164,15 +1175,22 @@ L의 parent P에 따라 둘 중 하나다.
 | 8..16 | zero |
 | 16+40i.. | 항목 i: PageRef 24B, PageKind u8, level u8, zero 6B, retire LSN u64 |
 
-- 항목은 (file, page_no) 엄격 증가 순서다. 목록이 비면 cell 1이 없다(n=0을 encode하지 않는다). 최대
-  cell은 16+40×55 = 2,216B로 한 cell(8,090B)에 든다.
-- 항목은 anchor·현재 root·서로와 물리 주소가 다르다(incarnation만 다른 alias도 거절). kind/level은
-  RowLeaf 0 또는 RowInternal 1..15다. retire LSN은 0보다 크고 anchor pageLSN 이하이며, 퇴역시킨 그룹의
-  complete LSN이다. 3.14.1의 eligibility(그 LSN보다 오래된 reader)가 후속 소비자다.
-- `decode_anchor`는 cell 1개 또는 2개를 받고 `TreeAnchor::retired()`로 목록을 빌려준다. anchor를 바꾸는
-  모든 writer는 목록을 그대로 이어 쓴다. 특히 split의 anchor after(revision+1, RootSplit의 root 교체)도
-  목록을 보존해야 한다(U1에서 candidate의 anchor encode를 바꾼다). Profile2/Base3 경로는 cell 1을 쓰지 않는다.
-- 3.03.4가 page를 Free로 만들 때 같은 그룹에서 항목을 지운다(이 절 밖). DROP TABLE은 목록의 page까지
+- 항목은 (file, page_no) 엄격 증가 순서다. 목록이 비면 cell 1이 없다(n=0을 encode하지 않는다). 최대 cell은
+  16+40×55 = 2,216B로 anchor page의 cell 여유 안에 든다.
+- 항목 검산: file은 첫 file, page_no 9..63, anchor·현재 root·다른 항목과 물리 주소가 다름(incarnation만 다른
+  alias도 거절), kind/level은 RowLeaf 0 또는 RowInternal 1..15, retire LSN은 0보다 크고 anchor pageLSN 이하.
+  retire LSN은 퇴역시킨 그룹의 complete LSN(그 Structural owner의 id)이므로 Structural high-water 이하이고,
+  퇴역 page는 그 뒤 쓰이지 않으므로 그 page의 pageLSN보다 크다. 3.14.1의 eligibility(그 LSN보다 오래된 reader)가
+  후속 소비자다.
+- 운반: `TreeAnchor`(lifetime 없는 Copy 값, 여러 census가 `size_of`로 센다)는 바꾸지 않는다. `decode_anchor`는
+  cell 1개 또는 2개를 받아 cell 1의 문법만 검산하고, 목록은 별도 borrowed 함수
+  `anchor::retired(input, expected) -> RetiredList<'_>`로 Base4 closure와 candidate만 읽는다. 따라서 root만 쓰는
+  나머지 decode 지점과 그 census는 바뀌지 않는다. cell 1은 Row tree anchor에서만 받는다(Catalog·Index anchor는
+  Corrupt). Profile2/Base3 경로는 목록이 있는 anchor를 거절한다.
+- writer: 지금 Row anchor를 다시 쓰는 곳은 split candidate 하나다. 그 anchor after(revision+1, RootSplit의 root
+  교체)는 목록을 bytes 그대로 보존한다. CREATE와 Base INIT 재구성의 anchor는 초기 image라 목록이 없다.
+- 3.03.4가 page를 Free로 만들 때 같은 그룹에서 항목을 지운다(이 절 밖). 그 Free 그룹의 WAL credit은 3.03.4
+  admission의 몫이며 이 절의 owner는 잔여 0이라 credit을 예약하지 않는다. DROP TABLE은 목록의 page까지
   object의 모든 page를 회수한다(일정 10).
 
 대안과 판단:
@@ -1188,18 +1206,31 @@ L의 parent P에 따라 둘 중 하나다.
 ### scope4 frame (opcode 3·4)
 
 XSG1 version 2·scope 4·outer `txn=None`·group header의 기존 칸을 쓴다. 새 Structural owner, descriptor
-Finished·잔여0, consumed WAL = frame bytes는 split과 같다. native·redo 수는 opcode마다 다르다.
+Finished·잔여0, consumed WAL = frame bytes는 split과 같다. 수는 opcode마다 고정이다.
 
-| opcode | native | redo | frame bytes |
-| --- | --- | --- | --- |
-| 3 LeafUnlink | 3(anchor, P, L) | 2(anchor, P) | 160+192+1536+256+3×128+2×16,344+32 = 35,248 |
-| 4 RootCollapse | 4(anchor, P, L, S) | 1(anchor) | 160+192+1536+256+4×128+16,344+32 = 19,032 |
+| opcode | envelope record_count | native 수(group 124)·bytes(136) | redo 수(132)·bytes(152) | frame bytes |
+| --- | --- | --- | --- | --- |
+| 3 LeafUnlink | 2 | 3 · 384 | 2 · 32,688 | 160+192+1536+256+384+32,688+32 = 35,248 |
+| 4 RootCollapse | 1 | 4 · 512 | 1 · 16,344 | 160+192+1536+256+512+16,344+32 = 19,032 |
 
-native 128B는 split과 같은 배치이고 물리 target 순서다. 새 role은 6 = 퇴역(바뀌지 않음), 7 = survivor
-(opcode 4의 S, 바뀌지 않음)이다. 바뀌지 않는 role은 INIT 0, before LSN·digest가 canonical before와 같고
-after digest = before digest, redo ordinal = 0xFFFF다. opcode 3에서 바뀌는 page는 anchor(role 1)와 P(role 4)이고
-L이 role 6이다. opcode 4에서는 anchor만 바뀌고 P와 L이 모두 role 6, S가 role 7이다. 바뀌는 page의 redo는 기존
-`Patch(offset=72,length=16280)`다.
+native 128B는 split과 같은 배치이고 물리 target 순서다. 아래 "native role"은 native byte 0의 값이며, 같은 문서의
+provenance claim role5/6(split right·new root)과 다른 이름공간이다. opcode마다 role 집합이 정확히 고정되고
+role마다 kind·level·page를 core 칸에서 고른다(role bitmask는 u16으로 넓힌다).
+
+| opcode | native role → core 칸, kind/level | 바뀜 |
+| --- | --- | --- |
+| 3 | 1 anchor → 32, TreeAnchor 0 | 예 |
+| 3 | 4 P → 104, RowInternal 1..15 | 예 |
+| 3 | 6 퇴역 leaf L → 56, RowLeaf 0 | 아니요 |
+| 4 | 1 anchor → 32, TreeAnchor 0 | 예 |
+| 4 | 8 퇴역 internal P → 104, RowInternal 1 | 아니요 |
+| 4 | 6 퇴역 leaf L → 56, RowLeaf 0 | 아니요 |
+| 4 | 7 survivor S → 80, RowLeaf 0 | 아니요 |
+
+- INIT은 모두 0이다. 바뀌는 page는 before LSN·digest와 after digest를 갖고, redo ordinal은 redo record의 0부터
+  dense index이며 redo record는 바뀌는 native의 물리 순서다. redo는 기존 `Patch(offset=72,length=16280)`다.
+- 바뀌지 않는 page는 before LSN·digest가 canonical before와 같고 after digest = before digest, redo ordinal =
+  0xFFFF이며 redo record가 없다.
 
 | core byte | 의미 |
 | --- | --- |
@@ -1220,48 +1251,65 @@ L이 role 6이다. opcode 4에서는 anchor만 바뀌고 P와 L이 모두 role 6
 | 200..224 | zero |
 | 224..256 | 교체 전 structural descriptor full digest, 최초이면 zero |
 
-`bank::validate`는 opcode별 WAL(35,248·19,032)을 더 받는다. `decode_layout`는 opcode의 길이·native·redo
-수를 정확히 대조한다. split의 길이·native 5/redo 5 규칙은 바뀌지 않는다.
+`bank::validate`는 opcode별 WAL(35,248·19,032)을 더 받는다. 두 값은 split의 84,744·84,640과 겹치지 않는다.
+`decode_layout`는 opcode의 길이·record_count·native·redo 수와 bytes를 위 표대로 정확히 대조한다.
 
 ### 준비·효과·복구
 
-**준비(같은 cut의 canonical before).** split candidate와 같은 입력(Catalog handle/schema, anchor, 전체 tree와
-allocator 소유 집합, Jobs)에서 다음을 검산한 뒤에만 after와 frame을 만든다.
+**준비(같은 cut의 canonical before).** split candidate와 같은 입력(Catalog handle/schema, anchor와 목록, 전체
+tree와 allocator 소유 집합, Jobs)에서 다음을 검산한 뒤에만 after와 frame을 만든다. candidate의 소유 검산
+(`audit`)은 split과 공유한다.
 
 1. allocator Reserved·어느 scope의 RootReserved Job도 없음(scope4 규칙). table의 non-Free Catalog Job도
    없음(`check_split_debt`와 같은 부채 규칙, 일정 10-1 전 제품 table은 Unsupported).
 2. L은 현재 tree에서 도달하는 non-root RowLeaf이고 cell이 0개이며, L로 route되는 Retained Row Job이 없다.
 3. P는 L의 실제 parent이고 위 전이 표의 조건을 만족한다. RootCollapse의 S는 P의 다른 child다.
-4. revision+1, 목록 길이+1(또는 +2)·주소 alias·retire LSN 산술을 첫 효과 전에 검산한다.
+4. revision+1, 목록 길이+1(또는 +2)·주소 alias·retire LSN 산술, 그리고 split admission과 같은
+   `check_progress_room`(WAL·수정 counter·RetentionRoot revision 여유)과 XOI successor(`inventory_after`)를 첫
+   효과 전에 검산한다. 바뀌는 page마다 counter+1이다.
 5. after를 before 위에 겹친 전체 tree가 도달 집합 ⊎ 목록 = 소유 집합을 만족하는지 다시 본다.
 
-**live 효과.** C 입구 `unlink_leaf_live(owner, table, key, private, flusher) -> RowUnlinkStep
-{Unlinked(opcode), FlushRequired(target), NotNeeded}`. key는 L로 route되는 RowId다(아래 note). split과
-같은 `structural_shell`(read gate 닫음·CatalogProgress admission) 안에서 anchor LOAD, route LOAD(anchor와
-현재 page만 보호), L·P·S LOAD, 부채 검사를 하고 위 준비를 한다. INIT이 없으므로 원 pool의 Structural INIT
-claim·victim look-ahead는 쓰지 않는다. 바뀌는 page는 기존 page이므로 split의 stage→install→`wait_durable`
-→canonical replay 확인→finish 순서 가운데 INIT을 뺀 부분을 따르고, 퇴역 page(L, P)는 stamp로 묶기만 하며
-쓰지 않는다. stage 전 거절은 Unchanged, stage 뒤 실패는 fatal fence다. 퇴역 page에 shell 밖 reader의 pin이
-남을 수 없다(read gate). 그래도 pin이 보이면 `Visibility(Busy)` Unchanged다. 퇴역 page는 Free가 되지
-않으므로 dirty·flush claim·DWB 상태는 평소처럼 진행된다.
+**live 효과.** C 입구 `unlink_leaf_live(owner, table: ObjectHandle, key: RowId, private, flusher) ->
+RowUnlinkStep {Unlinked(opcode), FlushRequired(target), NotNeeded}`. drain에는 statement view가 없어 `CheckedTable`을
+발급할 수 없으므로 note의 ObjectHandle을 받아 같은 cut의 Catalog로 검산한다. key는 L로 route되는 RowId다(아래
+note). split과 같은 `structural_shell`(read gate 닫음·CatalogProgress admission) 안에서 anchor LOAD, route
+LOAD(anchor와 현재 page만 보호), L·P·S LOAD, 부채 검사를 하고 위 준비를 한다.
+
+설치는 INIT이 없으므로 원 pool의 Structural INIT claim(`StructuralClaimKey`는 INIT 1|2·target 5개를 요구한다)을
+쓰지 않는다. 기존 page만 바꾸는 기존 설치 본문 `apply_existing_n::<3|4>`에 새 `ExistingGroup::Structural` 변종을
+더한다. after를 갖는 target은 opcode 3의 anchor·P, opcode 4의 anchor뿐이고, L(opcode 4의 P·S도)은 stamp만
+대조한다. control part는 split의 `StructuralControlCommit`과 같은 규칙으로 bank 34의 descriptor·high-water·
+STABLE과 XOI successor를 쓰고, mark/check staged 규칙도 같다. 이 본문이 stage·page/metadata/DPT 설치·
+`history.installed`·`wait_durable`을 한다. durable 뒤 split이 하는 canonical replay(`validate_live`)는 INIT
+provenance를 발급할 일이 없으므로 하지 않는다. 같은 cut의 canonical 준비와 frame 비교가 증명이다.
+
+- 거절: stage 전 거절은 Unchanged, stage 뒤 실패는 fatal fence다. 퇴역 page는 shell의 read gate(
+  `close_reads_for_retirement`) 때문에 다른 읽기 연산이 쥘 수 없다. 다른 Owner의 열린 읽기 연산이 있으면 그
+  gate가 `Concurrency(Busy)` Unchanged로 거절하고, 준비와 설치 사이에 target stamp가 바뀌면 split과 같은
+  `RetentionCause::Busy` Unchanged다.
+- 퇴역 page는 Free가 되지 않으므로 dirty·flush claim·DWB 상태는 평소처럼 진행된다.
 
 **복구.** canonical scope4 replay(`history/structure.rs`)가 opcode 3·4를 dispatch하여 같은 준비를 canonical
 before에서 다시 하고, native before digest·redo·after 목록을 정확히 비교한 뒤 anchor·P after를 arena에
-반영하고 Structural bank 칸을 새 descriptor로 바꾼다. INIT provenance claim은 만들지 않는다. 퇴역 page의
-기존 claim(CREATE pair 또는 role5/6)은 그대로 남는다(page가 할당되어 있으므로 CREATE pair의 현재 존재
-규칙도 그대로 성립한다). 복구는 새 unlink를 시작하지 않는다(빈 leaf는 정상 상태다).
+반영하고 Structural bank 칸을 새 descriptor로 바꾼다. INIT provenance claim은 만들지 않는다. 복구 관측
+(`RetentionFrameObservation`)의 `changed`에는 바뀐 page만 넣는다. 퇴역 page를 `retired`에 넣지 않는다. 그 칸은
+Free를 뜻해 arena와 claim을 지운다(`plan4_recovery/analysis.rs`). 그래서 퇴역 page의 기존 claim(CREATE pair 또는
+role5/6)은 그대로 남는다. 복구는 새 unlink를 시작하지 않는다(빈 leaf는 정상 상태다).
 
 **Base4 closure.** [현재 tree 전체 검산](#current-tree-closure)의 `reached == owned`를 `reached ⊎ retired ==
 owned`로 바꾼다. 목록의 각 항목은 같은 object·incarnation·kind·level로 할당되어 있어야 하고(certificate
 대조), RowLeaf 항목은 cell 0개, RowInternal 항목은 유효한 internal로 decode되어야 한다(그 child는 따라가지
 않는다). 목록에 없는 고아, 도달하면서 목록에도 있는 page, 할당되지 않은 항목, 비지 않은 퇴역 leaf는
 거절한다. revision ≤ 1+Structural high-water 규칙은 그대로다. Row actor·graph·D 적립은 도달한 leaf만 쓴다.
+split candidate의 `audit`(그 `build`와 `verify_after`)도 같은 규칙과 항목 검산으로 바꾼다. split은 목록을
+바꾸지 않으므로 `verify_after`는 after anchor의 목록이 before와 bytes로 같은지도 본다. 이를 빼면 첫 unlink 뒤
+그 table의 모든 split이 고아 판정으로 거절된다.
 
 **소비자.** B의 각 읽기 연산과 C의 current-leaf 소비자(CLR·Prune·Release)는 anchor에서 route하므로 퇴역
 page에 닿지 않는다. 읽기 연산 도중에는 read gate 때문에 unlink가 끼어들지 않는다. Forward는 Reserve 때의
 pair[1] leaf에 쓰지만, RootReserved가 하나라도 있으면 unlink가 거절되므로 그 leaf가 그 사이에 퇴역하지 않는다.
-Job의 pair[1]은 그 뒤 퇴역 leaf를 가리킬 수 있으며 이미 이동 전 hint로 허용된다. 퇴역 page는 Allocated로
-남으므로 split의 Free 선택에 들지 않는다.
+Job의 pair[1]은 그 뒤 퇴역 leaf를 가리킬 수 있으며 이미 이동 전 hint로 허용된다. 복구 정리도 pair[1] 대신
+route한 leaf를 쓴다. 퇴역 page는 Allocated로 남으므로 split의 Free 선택에 들지 않는다.
 
 ### 호출자
 
@@ -1271,43 +1319,59 @@ hint이며 `unlink_leaf_live`가 모든 조건을 다시 검산한다. 부채가
 버린다.
 
 A의 정리 drain(`retire_finished`)은 정리 단계를 마친 뒤(`complete`) `unlink_next()`가 None일 때까지, 최대
-`CLEANUP_UNLINKS` = 8회 `unlink_leaf_live`를 부른다. `FlushRequired`는 split과 같이 flush 뒤 다시 부르고
-횟수에 넣지 않는다. `NotNeeded`·`Unlinked`는 note를 지운다. Busy는 note를 남기고 이번 drain의 unlink를
-멈춘다. 다른 거절은 drain의 `RetireStop`(`Stage::Unlink`)이다. `Retired`에 `unlinked` 수를 더한다.
+`CLEANUP_UNLINKS` = 8회 `unlink_leaf_live`를 부른다.
 
-F4: drain의 새 지점(`cleanup.unlink_next`·`cleanup.unlink`·`cleanup.unlink_flush`)은 기존 caller 상한
-`LIVE_ROW_CLEANUP`(4,096B)에 묶는다. 따라서 C의 unlink 본문 peak은 44,304 − 4,096 = 40,208B 이하여야 한다.
-U3에서 split과 같은 단계별 census로 실측한다. 맞지 않으면 별도 caller 상한을 두는 대안을 D2로 다시 본다.
+- `FlushRequired`는 split과 같이 flush(`try_flush`·`continue_flush`) 뒤 다시 부르고 횟수에 넣지 않는다.
+- `Unlinked`·`NotNeeded`는 note를 지운다.
+- Busy 계열(Unchanged이고 cause가 `Concurrency(Busy)`·`RetentionCause::Busy`·`Visibility(Busy)`)은 note를 남기고
+  이번 drain의 unlink를 멈춘다. `Retired`의 정리 결과는 그대로이고 `unlink_held`가 1이 된다.
+- 그 밖의 Unchanged 거절은 note를 지우고 `RetireStop`(`Stage::Unlink`)으로 한 번 알린다(남기면 원인이 사라질
+  때까지 매 drain이 같은 거절로 끝난다). Fatal은 같은 `RetireStop`이고 `must_resolve`다.
+- `Retired`에 `unlinked`·`unlink_held` 수를 더한다.
 
-**사용자에게 보이는 변화.** 없다. SQL 결과·오류는 같다. 퇴역 page는 3.03.4 전까지 첫 extent를 계속 차지하므로
-unlink는 tree를 줄이고 route 비용을 줄이지만 page를 돌려주지 않는다. 그래서 DELETE와 INSERT를 반복하는
-부하는 [자동 split](#automatic-split)의 첫 extent 한계에 그대로 닿는다. 제품 table은 CREATE Catalog Job 때문에
-일정 10-1 전에는 unlink도 하지 않는다.
+F4: drain의 새 지점은 `cleanup.unlink_next`·`cleanup.unlink`·`cleanup.unlink_try_flush`·
+`cleanup.unlink_continue_flush`이고 기존 caller 상한 `LIVE_ROW_CLEANUP`(4,096B)에 묶는다. 따라서 C의 unlink 본문
+peak은 44,304 − 4,096 = 40,208B 이하여야 한다(split 효과 37,438B, live 정리 본문 39,564B). A 쪽도 빡빡하다:
+autocommit 실행기 caller term을 넣은 drain census가 이미 3,979/4,096B(여유 117B)이므로 `Retired`의 새 필드와
+unlink 단계는 inline되지 않는 별도 frame에 둔다. U3에서 split과 같은 단계별 census로 실측하고, 맞지 않으면
+상한을 올리지 않고 이 계약을 D2로 다시 본다.
+
+비용: unlink마다 준비의 canonical replay 1회와 fsync 1회다. drain당 최대 8회가 붙는다. 그룹 수에 대한 이차
+비용은 [F6-a](../evidence/f6-wal-revalidation-survey-20261102.md)의 live 재검증 비용과 같은 성격이다.
+
+**사용자에게 보이는 변화.** SQL 결과·오류는 같다. 다만 공간 사용이 달라진다. 퇴역 page는 3.03.4 전까지 첫
+extent를 계속 차지하므로 unlink는 tree를 줄이고 route 비용을 줄이지만 page를 돌려주지 않는다. RootCollapse 뒤
+다시 자라면 RootSplit이 새 page 2개를 쓰므로(예: 큰 거래의 split → rollback → collapse → 다시 삽입), 그런
+부하에서는 unlink가 없을 때보다 첫 extent를 먼저 소진할 수 있다. 소진되면 [자동 split](#automatic-split)이
+Capacity로 거절한다. 제품 table은 CREATE Catalog Job 때문에 일정 10-1 전에는 unlink도 하지 않는다.
 
 ### 시험 계획 (모두 NOT_RUN)
 
 | ID | 경계와 독립 판정 |
 | --- | --- |
-| UNL-P01..P04 | XTR1 codec: 독립 literal(n=1, 2, 55), n=0·56 거절, 순서·alias·kind/level·LSN 0 거절, cell 1개 anchor의 기존 bytes 불변, split anchor after의 목록 보존 |
+| UNL-P01..P04 | XTR1 codec: 독립 literal(n=1, 2, 55), n=0·56 거절, 순서·alias·file/page_no·kind/level·LSN 거절, Row가 아닌 anchor의 cell 1 거절, cell 1개 anchor의 기존 bytes 불변 |
 | UNL-P05..P08 | 순수 candidate: child index 0·중간·끝의 P after bytes를 독립 XBT1 조립과 비교, RootCollapse의 anchor after, 빈 S, NotNeeded 세 경우, 비지 않은 L·stale revision·alias 거절 |
-| UNL-F01..F04 | opcode 3·4 frame의 독립 section serializer 대조(제품 emitter 미사용), native 수·role·퇴역 after≠before·퇴역 redo·길이 변조의 canonical 거절, bank validate의 opcode별 WAL |
-| UNL-B01..B05 | Base4: 목록의 leaf/internal 수락, 목록 밖 고아, 도달+목록, 미할당 항목, 비지 않은 퇴역 leaf, wrong incarnation/kind 거절 |
+| UNL-P09..P10 | split과의 결합: 목록이 있는 tree에서 RootSplit·ChildSplit 준비 수락과 anchor after의 목록 보존(bytes), 목록 밖 고아·목록을 바꾼 split after 거절 |
+| UNL-F01..F04 | opcode 3·4 frame의 독립 section serializer 대조(제품 emitter 미사용), record_count·native/redo 수·role 집합·redo ordinal·퇴역 after≠before·퇴역 redo·길이 변조의 canonical 거절, bank validate의 opcode별 WAL |
+| UNL-B01..B06 | Base4: 목록의 leaf/internal 수락, 목록 밖 고아, 도달+목록, 미할당 항목, 비지 않은 퇴역 leaf, wrong incarnation/kind 거절 |
+| UNL-B07..B09 | CREATE leaf(pair[1])를 퇴역시킨 Base4의 `validate_pairs`와 재시작, unlink descriptor가 bank에 있고 그보다 오래된 role5/6 claim이 있는 Base4, unlink 뒤 base 재작성(BaseOnly·다음 rebase)의 목록·claim 보존 |
 | UNL-R01..R03 | canonical replay의 opcode 3·4 수락과 재시작 read·leaf 수·목록, frame 변조 거절, 연속 split→unlink→split의 bank high-water |
 | UNL-L01..L08 | live: 중간 leaf의 행을 모두 DELETE·commit·drain → LeafUnlink, leftmost leaf, RootCollapse, 두 child가 빈 root → 빈 root leaf, non-root unary는 NotNeeded로 남음, rollback한 INSERT의 CLR note → unlink(SPL-A03 상태), CREATE Catalog Job table은 note 버림, unlink 뒤 split이 퇴역 page를 쓰지 않음. 각각 재시작 read |
-| UNL-L09..L10 | 작은 pool의 FlushRequired 왕복, read gate Busy가 note를 남김 |
-| UNL-A01..A02 | A literal(drain 순서·상한 8·FlushRequired 미계수·Busy·Stage::Unlink), census(C peak + 4,096 ≤ 44,304, A 새 지점) |
+| UNL-L09..L14 | 작은 pool의 FlushRequired 왕복, 다른 Owner의 열린 읽기가 read gate Busy로 note를 남김, root level 2 tree에서 non-root P(separator ≥2) 아래 LeafUnlink와 지운 separator·이웃 경계 key의 point/cursor 읽기, 가장 오른쪽 leaf unlink 뒤 새 INSERT의 route, 오래된 snapshot이 DeletePrune을 Busy로 잡는 동안 unlink 없음·끝난 뒤 unlink, C 직접 호출의 RootReserved·allocator Reserved 거절 |
+| UNL-A01..A03 | A literal(drain 순서·상한 8·FlushRequired 미계수·Busy 계열·그 밖의 Unchanged·Fatal·`Stage::Unlink`), 9번째 note 버림, census(C peak + 4,096 ≤ 44,304, A 새 지점) |
 | UNL-N01..N06 | native fault cut: stage 전후, sync, install, DWB/home, CURRENT 공개와 reopen. 각 cut 뒤 tree·목록·allocator 일치 |
 
-기대값은 typed 정렬 목록·독립 bytes로 만들고 제품 encoder·탐색 결과로 만들지 않는다. 새 시험만 선택해
-돌린다.
+기대값은 typed 정렬 목록·독립 bytes로 만들고 제품 encoder·탐색 결과로 만들지 않는다. AGENTS.md에 따라 새
+시험과 함께, 단계마다 바뀌는 코드에 닿는 기존 시험(U1: split candidate·canonical 비교, anchor codec, Base4 closure,
+`decode_layout`, bank, U2: scope4 replay, U3: drain·census)만 선택해 돌리고 전체 suite는 돌리지 않는다.
 
 ### 구현 단계
 
 | 단계 | 내용 | 시험 |
 | --- | --- | --- |
-| U1 | XTR1 codec과 `decode_anchor`·split anchor 보존, 순수 candidate, opcode 3·4 producer/observer, bank·`decode_layout`, Base4 closure | UNL-P·F·B |
-| U2 | canonical replay dispatch와 base capture의 목록 | UNL-R |
-| U3 | C live 효과·RAM note·A drain·census | UNL-L·A |
+| U1 | XTR1 codec과 `anchor::retired`, split candidate의 anchor 보존과 `audit` 변경, 순수 unlink candidate, opcode 3·4 producer/observer, bank·`decode_layout`, Base4 closure | UNL-P·F·B |
+| U2 | canonical replay dispatch, 복구 관측의 changed/retired 구분, base capture의 목록 | UNL-R |
+| U3 | `ExistingGroup::Structural`·live 효과·RAM note·A drain·census | UNL-L·A |
 | U4 | native fault cut | UNL-N |
 
 각 단계는 독립 D2와 PR 하나다. U4가 끝나면 08-1(2단위)을 완료로 적립한다. 이 절은 설계이며 어느 단계의

@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-11-05T23:34:45.489181+09:00",
+  "date": "2026-11-05T23:55:30.704116+09:00",
   "status": "PASS",
   "errors": [],
   "markdown_documents": [
@@ -463,9 +463,9 @@
     },
     {
       "file": "devdoc/contracts/dev3-tree-smo.md",
-      "links": 28,
+      "links": 34,
       "duplicate_ids": 0,
-      "sha256": "a1027cddcf17fa9add2d607dd0b2dfe7854467b8fe4e93c41702248612688e4c"
+      "sha256": "40056b12eed63b25b11269eb8e226b1e6f61cc16b93bf33d626b3f6463fb8cad"
     },
     {
       "file": "devdoc/contracts/dev3-undo-format.md",
