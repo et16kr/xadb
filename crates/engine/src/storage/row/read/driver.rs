@@ -79,6 +79,9 @@ trait ReadSource {
     /// The table's current RowLeaf that routes `key`
     /// (dev3-tree-smo.md#current-leaf-consumers).
     fn page(&mut self, key: RowId) -> Result<Step<Self::Page<'_>, Self::Target>, RetentionError>;
+    /// The exclusive upper key bound of the leaf `page` last issued: the
+    /// first key of the next leaf in key order, None for the rightmost leaf.
+    fn upper(&self) -> Option<RowId>;
     fn status(
         &mut self,
         candidate: &Self::Candidate,
@@ -110,9 +113,6 @@ trait ReadSource {
 trait SearchPage {
     type Candidate;
     fn leaf(&self) -> Result<TreePageView<'_>, RetentionError>;
-    /// The leaf's exclusive upper key bound: the first key of the next leaf
-    /// in key order, None for the rightmost leaf.
-    fn upper(&self) -> Option<RowId>;
     /// C rechecks the chosen slot against the latched row before any pin.
     fn capture(self, at: usize) -> Result<Self::Candidate, RetentionError>;
     fn release_checked(self) -> Result<(), RetentionError>;
@@ -470,14 +470,6 @@ enum Scan {
     End,
 }
 
-/// One leaf's answer to a scan step: the next key's slot, the end of the
-/// range, or no next key in this leaf before its upper bound.
-enum LeafNext {
-    Selected(SeekPosition),
-    End,
-    Continue(RowId),
-}
-
 /// Opaque, non-Clone cursor. It borrows the original view and the table it
 /// was opened on and holds its own credit, so the statement cannot finish
 /// while the cursor is live and no call can switch the table under the kept
@@ -596,11 +588,15 @@ impl<'r, V: ReadView + 'r, T: 'r> RowCursor<'r, V, T> {
                     return Ok(Step::FlushRequired { target });
                 }
             };
-            match self.capture_next_page(page, revision, cancel, candidate)? {
-                LeafNext::Selected(at) => return Ok(Step::Ready(Some(at))),
-                LeafNext::End => return Ok(Step::Ready(None)),
-                LeafNext::Continue(upper) if upper > key => key = upper,
-                LeafNext::Continue(_) => return Err(ReadError::InvalidProgress.into()),
+            if let Some(at) = self.capture_next_page(page, revision, cancel, candidate)? {
+                return Ok(Step::Ready(Some(at)));
+            }
+            // No next key in this leaf: the next leaf starts at its upper
+            // bound, while the range still contains it.
+            match source.upper() {
+                Some(upper) if upper <= key => return Err(ReadError::InvalidProgress.into()),
+                Some(upper) if self.progress.continues_at(upper) => key = upper,
+                _ => return Ok(Step::Ready(None)),
             }
         }
     }
@@ -612,7 +608,7 @@ impl<'r, V: ReadView + 'r, T: 'r> RowCursor<'r, V, T> {
         revision: u64,
         cancel: &Cancellation,
         candidate: &mut Option<P::Candidate>,
-    ) -> Result<LeafNext, RowReadError> {
+    ) -> Result<Option<SeekPosition>, RowReadError> {
         let selected = match page.leaf() {
             Ok(leaf) => self
                 .progress
@@ -622,17 +618,11 @@ impl<'r, V: ReadView + 'r, T: 'r> RowCursor<'r, V, T> {
         };
         let at = match selected {
             Ok(Some(at)) => at,
-            Ok(None) => {
-                let next = match page.upper() {
-                    Some(upper) if self.progress.continues_at(upper) => LeafNext::Continue(upper),
-                    _ => LeafNext::End,
-                };
-                return merge(Ok(next), page.release_checked());
-            }
+            Ok(None) => return merge(Ok(None), page.release_checked()),
             Err(error) => return merge(Err(error), page.release_checked()),
         };
         *candidate = Some(page.capture(at.index)?);
-        Ok(LeafNext::Selected(at))
+        Ok(Some(at))
     }
 
     #[inline(never)]

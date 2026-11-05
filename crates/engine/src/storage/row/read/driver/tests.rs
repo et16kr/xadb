@@ -248,6 +248,8 @@ struct LiteralSource<'x> {
     /// A split tree's right leaf and its first key (the separator): a key at
     /// or above it routes there, and the left leaf's upper bound is it.
     right: Option<(RowId, &'x [u8])>,
+    /// The upper bound of the leaf `page` last issued.
+    upper: Option<RowId>,
     log: &'x RefCell<Vec<Call>>,
     page_answer: Answer<()>,
     status: Vec<(u64, Answer<TransactionState>)>,
@@ -264,6 +266,7 @@ impl<'x> LiteralSource<'x> {
         Self {
             bytes,
             right: None,
+            upper: None,
             log,
             page_answer: Answer::Ready(()),
             status: Vec::new(),
@@ -349,13 +352,18 @@ impl<'x> ReadSource for LiteralSource<'x> {
             None => (self.bytes, None),
         };
         Ok(match answer(self.page_answer)? {
-            Step::Ready(()) => Step::Ready(LiteralPage {
-                source: self,
-                bytes,
-                upper,
-            }),
+            Step::Ready(()) => {
+                self.upper = upper;
+                Step::Ready(LiteralPage {
+                    source: self,
+                    bytes,
+                })
+            }
             Step::FlushRequired { target } => Step::FlushRequired { target },
         })
+    }
+    fn upper(&self) -> Option<RowId> {
+        self.upper
     }
     fn status(
         &mut self,
@@ -458,7 +466,6 @@ impl<'x> ReadSource for LiteralSource<'x> {
 struct LiteralPage<'g, 'x> {
     source: &'g mut LiteralSource<'x>,
     bytes: &'x [u8],
-    upper: Option<RowId>,
 }
 
 impl<'x> SearchPage for LiteralPage<'_, 'x> {
@@ -466,9 +473,6 @@ impl<'x> SearchPage for LiteralPage<'_, 'x> {
     fn leaf(&self) -> Result<TreePageView<'_>, RetentionError> {
         self.source.note(Leaf);
         decode_leaf(self.bytes)
-    }
-    fn upper(&self) -> Option<RowId> {
-        self.upper
     }
     fn capture(self, at: usize) -> Result<LiteralCandidate<'x>, RetentionError> {
         let source = self.source;

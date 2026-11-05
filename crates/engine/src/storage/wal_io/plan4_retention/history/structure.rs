@@ -375,34 +375,3 @@ mod tests {
         assert!(retained + mint <= c.finishing && returning <= c.finishing);
     }
 }
-
-#[cfg(test)]
-mod tmp_size_probe {
-    #[test]
-    fn tmp_size_probe() {
-        let f = crate::storage::semantic_row::structure::frame::source_census();
-        let c = crate::storage::semantic_row::structure::candidate::source_census();
-        let s = super::source_bytes();
-        println!("TMP frame outer={} layout={} candidate={} body={} peak={}", f.outer, f.layout, f.candidate, f.body, f.peak);
-        println!("TMP cand outer={} build_outer={} before_outer={} after_outer={} returning={} table={} audit={} weights={} parent={} allocator={} side={} previous={} peak={}", c.outer, c.build_outer, c.before_outer, c.after_outer, c.returning, c.table, c.audit, c.weights, c.parent, c.allocator, c.side, c.previous, c.peak);
-        println!("TMP structural semantic={} finishing={} bank={}", s.semantic, s.finishing, super::control::structural_bank_source_bytes());
-        let row = super::super::row::source_bytes();
-        let cat = super::super::catalog::source_bytes();
-        println!("TMP row semantic={} finishing={} closure={} ; catalog semantic={} finishing={} closure={}", row.semantic, row.finishing, row.closure, cat.semantic, cat.finishing, cat.closure);
-        println!("TMP population replay={}", super::super::super::population::phase_source_bytes().replay);
-        use std::mem::size_of as n;
-        println!("TMP sizes layout={} inputs={} finished={} obs={} robs={} header={} oobs={} ofin={} prior_opt={}",
-            n::<super::LayoutView<'_>>(), n::<super::candidate::Inputs<'_>>(),
-            n::<Option<crate::storage::semantic_row::structure::bank::FinishedSplit>>(),
-            n::<super::frame::Observation>(),
-            n::<std::result::Result<super::frame::Observation, crate::storage::semantic_row::Error>>(),
-            n::<crate::storage::page::PageHeader>(),
-            n::<super::Observed<super::LayoutView<'_>>>(),
-            n::<super::Observed<Option<crate::storage::semantic_row::structure::bank::FinishedSplit>>>(),
-            n::<Option<(crate::storage::allocation_page::SystemWorkRef, &[u8; 1536])>>());
-        println!("TMP route sizes tr={} te={} root={} bounds={} pref={}",
-            n::<crate::storage::dirty_frame::TargetRequest>(), n::<crate::storage::tree_page::TreeExpectation>(),
-            n::<crate::storage::anchor::AnchorRoot>(), n::<crate::storage::tree_page::search::RowRouteBounds>(),
-            n::<crate::storage::page::PageRef>());
-    }
-}

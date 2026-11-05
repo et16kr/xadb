@@ -47,7 +47,7 @@ const _: () = assert!(64 <= SPLIT_REFS);
 mod source;
 pub(crate) use source::source_bytes;
 #[cfg(test)]
-pub(crate) use source::source_census;
+use source::source_census;
 
 #[cfg(test)]
 #[path = "candidate/source_tests.rs"]

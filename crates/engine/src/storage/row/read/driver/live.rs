@@ -89,9 +89,6 @@ impl<'b, 'a, 's, 'c, 'p, 'd> SearchPage for RowSearchPage<'_, 'b, 'a, 's, 'c, 'p
     fn leaf(&self) -> Result<TreePageView<'_>, RetentionError> {
         RowSearchPage::leaf(self)
     }
-    fn upper(&self) -> Option<RowId> {
-        RowSearchPage::upper(self)
-    }
     fn capture(self, at: usize) -> Result<RowCandidate<'b>, RetentionError> {
         RowSearchPage::capture(self, at)
     }
@@ -125,6 +122,9 @@ impl<'b, 'a, 's, 'c, 'p, 'd, W: WriterNamespace> ReadSource
         key: RowId,
     ) -> Result<Step<RowSearchPage<'_, 'b, 'a, 's, 'c, 'p, 'd>, Plan4Target>, RetentionError> {
         self.operation.page(self.table, self.residency, key)
+    }
+    fn upper(&self) -> Option<RowId> {
+        self.operation.upper()
     }
     fn status(
         &mut self,
@@ -318,7 +318,10 @@ pub(in crate::storage) fn test_load_callers<W: WriterNamespace>() -> [usize; 8] 
         + n::<E<&RowCandidate>>()
         + n::<Result<(), super::super::ReadError>>();
     let cursor_outer = 12 * r + n::<E<Step<CursorStep<RowCopyObservation>, Plan4Target>>>();
-    let delta = cursor_outer + next + scan + 2 * r - outer - point - select;
+    // capture_next's route key and the issued leaf's upper bound
+    // (dev3-tree-smo.md#current-leaf-consumers).
+    let route = n::<RowId>() + n::<Option<RowId>>();
+    let delta = cursor_outer + next + scan + route + 2 * r - outer - point - select;
     [
         page,
         status,

@@ -143,21 +143,26 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         // The head's row in the table's current RowLeaf, routed from the
         // resident anchor (dev3-tree-smo.md#current-leaf-consumers): a split
         // since its Reserve may have moved it from the pair[1] leaf hint.
-        let row = job.row_id().ok_or_else(bad)?;
-        let root = self.table_root(owner, table.tree())?;
-        let leaf = match self.route_row_leaf(
-            owner,
+        // Each RowInternal of the path is made resident beside the sources
+        // so far, then read for its child.
+        let mut route = RowRouteCursor::start(
             table.tree(),
-            root,
-            row,
-            &mut cursor,
-            sources.protected(),
-            lanes.scratch,
-        )? {
-            RowRoute::Leaf(leaf) => leaf,
-            RowRoute::Flush(target) => return Ok(RollbackSelection::Flush(target)),
-        };
-        sources.queue(storage, leaf, RowSourceRole::RowLeaf)?;
+            self.table_root(owner, table.tree())?,
+            job.row_id().ok_or_else(bad)?,
+        )
+        .ok_or_else(bad)?;
+        while let Some(internal) = route.internal(table.tree()) {
+            sources.queue_route(storage, internal)?;
+            if let Some(target) =
+                self.make_resident(owner, &mut sources, &mut cursor, lanes.scratch)?
+            {
+                return Ok(RollbackSelection::Flush(target));
+            }
+            self.route_step(owner, table.tree(), internal, &mut route)?;
+            sources.unqueue_route();
+        }
+        let row = route.key();
+        sources.queue(storage, route.leaf(table.tree()), RowSourceRole::RowLeaf)?;
         sources.queue(
             storage,
             undo_request(allocator.identity, head.page()),
@@ -442,11 +447,11 @@ pub(in super::super::super::super) fn source_bytes<W: WriterNamespace>() -> usiz
         + size_of::<JobSlotRef>()
         + size_of::<RowIssued>()
         + size_of::<DraftIssued>()
-        // The head's row, the anchor root and the routed leaf.
+        // The head's row, the anchor root's Result and the route
+        // (dev3-tree-smo.md#current-leaf-consumers).
         + size_of::<RowId>()
-        + size_of::<anchor::AnchorRoot>()
-        + size_of::<TargetRequest>()
-        + 2 * size_of::<Result<RowRoute>>()
+        + 2 * size_of::<Result<anchor::AnchorRoot>>()
+        + super::route_carrier_bytes()
         + 2 * size_of::<Result<RollbackSelection>>()
         + 2 * size_of::<Result<[u8; 32]>>();
     let scope = size_of::<history::runtime::ReplayScope<'_, '_, '_, '_>>()
@@ -483,9 +488,10 @@ pub(in super::super::super::super) fn source_bytes<W: WriterNamespace>() -> usiz
         + 2 * size_of::<Result<RetentionResidencyStep>>()
         + 2 * size_of::<Result<Option<Plan4Target>>>()
         + super::super::super::super::lookup_load::source_bytes::<W>();
-    // The current RowLeaf of the head's row (dev3-tree-smo.md#current-leaf-consumers),
-    // and its arena check beside the read's other callees.
-    let route = super::job_route_source_bytes::<W>();
+    // The anchor root and one route step of the head's row
+    // (dev3-tree-smo.md#current-leaf-consumers); a RowInternal's LOAD is
+    // `load`. The arena check is among the read's callees.
+    let route = super::table_root_source_bytes().max(super::route_step_source_bytes());
     frame
         + replay.max(load).max(route).max(
             crate::storage::obligation::descriptor_source_bytes()

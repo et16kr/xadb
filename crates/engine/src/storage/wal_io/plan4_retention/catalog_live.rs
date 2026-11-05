@@ -2196,8 +2196,9 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
     // (dev3-tree-smo.md#current-leaf-consumers) before them.
     let row_cleanup_residency = scalar
         + lifecycle::row::retire::residency_source_bytes()
+        + lifecycle::row::retire::route_carrier_bytes()
         + super::super::lookup_load::source_bytes::<W>()
-            .max(lifecycle::row::retire::route_source_bytes::<W>());
+            .max(lifecycle::row::retire::route_callee_bytes());
     let row_cleanup_install = lifecycle::application_carrier_bytes::<W>()
         + scalar
         + lifecycle::row::retire::install_source_bytes(wide.control, physical);
@@ -2325,7 +2326,6 @@ pub(in super::super) fn row_write_bodies<W: WriterNamespace>() -> RowWriteBodies
         + size_of::<[Option<FrameStamp>; 9]>()
         + size_of::<Option<usize>>();
     let check = ledger.max(scalar + transaction::catalog::check_source_bytes());
-    eprintln!("TMPCHK scalar={} ledger={} check_src={} queue={} p3={} adm={} hist={}", scalar, ledger, transaction::catalog::check_source_bytes(), queue::source_bytes(), semantic_catalog::profile3_transaction_source_bytes(), crate::storage::semantic_row::ledger::admission_source_bytes(), history_peak);
     let table_census = scalar + super::super::read::catalog_source_bytes::<W>();
     let load = scalar
         + super::super::lookup_load::source_bytes::<W>()

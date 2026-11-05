@@ -504,7 +504,9 @@ pub(super) fn delete_material<'a>(
 /// is in `leaf` (dev3-tree-smo.md#current-leaf-consumers). A Retained INSERT
 /// root restores nothing, and a Retained DELETE or UPDATE root's row (its
 /// tombstone or new row) stays in its current leaf, so a single-leaf tree
-/// keeps the whole-table sum.
+/// keeps the whole-table sum. Only a Row-scope root restores bytes, and it
+/// names its RowId; a root that restores nothing (an INSERT, or another
+/// scope's root of the same object) is not looked up.
 pub(super) fn leaf_reservation(
     jobs: &[[u8; JOB_BYTES]; JOB_COUNT],
     namespace: Namespace,
@@ -515,6 +517,7 @@ pub(super) fn leaf_reservation(
     for cell in jobs {
         let job = row::decode_job(cell, namespace)?;
         if job.state() == JobState::RootRetained
+            && job.restore_bytes() != 0
             && job.object().is_some_and(|object| {
                 object.object == table.object && object.generation == table.generation
             })
