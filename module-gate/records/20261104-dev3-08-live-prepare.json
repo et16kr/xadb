@@ -6,9 +6,7 @@
       "paths": [
         "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/driver.rs",
         "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_prepare.rs",
-        "crates/engine/src/storage/wal_io/plan4_retention/catalog_live.rs",
         "crates/engine/src/storage/wal_io/plan4_retention/history/runtime.rs",
-        "crates/engine/src/storage/wal_io/plan4_retention/resources.rs",
         "crates/engine/src/storage/wal_io/plan4_retention/structural_prepare.rs"
       ],
       "reason": "New original-source split preparation, physical Root3/Child4 before comparison, destination vacancy and source inventory; original memory/native callers consume the changed census branch. Child raw helper is not original live claim authority. Only these six cases selected.",

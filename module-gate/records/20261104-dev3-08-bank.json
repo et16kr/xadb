@@ -16,13 +16,11 @@
         "crates/engine/src/storage/semantic_row/structure/bank_tests.rs",
         "crates/engine/src/storage/semantic_row/structure/candidate.rs",
         "crates/engine/src/storage/wal_io/plan4_apply.rs",
-        "crates/engine/src/storage/wal_io/plan4_apply/transaction_write.rs",
         "crates/engine/src/storage/wal_io/plan4_pages.rs",
         "crates/engine/src/storage/wal_io/plan4_recovery/analysis.rs",
         "crates/engine/src/storage/wal_io/plan4_recovery/analysis/structural_bank_tests.rs",
         "crates/engine/src/storage/wal_io/plan4_recovery/resources.rs",
         "crates/engine/src/storage/wal_io/plan4_retention/control.rs",
-        "crates/engine/src/storage/wal_io/plan4_retention/control/catalog.rs",
         "crates/engine/src/storage/wal_io/plan4_retention/history/catalog.rs",
         "crates/engine/src/storage/wal_io/plan4_retention/recovery.rs",
         "crates/engine/src/storage/wal_io/plan4_retention/recovery/structural_bank_tests.rs",
@@ -344,14 +342,6 @@
             "tests/fixtures/module-row-format/base4-closure/genesis.xrb",
             "tests/fixtures/module-row-format/base4-closure/live.xrb"
           ]
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_apply/transaction_write.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::transaction::writable::tests::writable_capsule_and_wrappers_stay_within_original_limits",
-          "sources": [
-            "head"
-          ],
-          "inputs": []
         }
       ]
     }

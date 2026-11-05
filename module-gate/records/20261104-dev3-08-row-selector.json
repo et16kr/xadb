@@ -4,8 +4,6 @@
   "rust_tests": [
     {
       "paths": [
-        "crates/engine/src/storage/wal_io/plan4_retention/history/row.rs",
-        "crates/engine/src/storage/wal_io/plan4_retention/row_start.rs",
         "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs",
         "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests/tree_search.rs"
       ],

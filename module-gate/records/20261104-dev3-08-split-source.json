@@ -10,8 +10,7 @@
         "crates/engine/src/storage/semantic_row/structure/frame.rs",
         "crates/engine/src/storage/semantic_row/structure/frame/source_tests.rs",
         "crates/engine/src/storage/semantic_row/structure/weights/candidate_density_tests.rs",
-        "crates/engine/src/storage/semantic_row/structure/weights/candidate_tests.rs",
-        "crates/engine/src/storage/semantic_row/transition.rs"
+        "crates/engine/src/storage/semantic_row/structure/weights/candidate_tests.rs"
       ],
       "reason": "New density4 and independently measured source2; directly affected root/child leaf/internal candidate, full parent rejection and canonical four-shape frame. Runtime9 passed r0; source2 passed r1 after review. No unchanged wire/weights/bank/Base4 suite repeated. Only test cfg changed for existing typed Undo bound; no encoder semantics changed.",
       "cases": [

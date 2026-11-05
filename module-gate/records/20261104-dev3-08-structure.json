@@ -130,7 +130,6 @@
     {
       "paths": [
         "crates/engine/src/storage/tree_page.rs",
-        "crates/engine/src/storage/tree_page/search.rs",
         "crates/engine/src/storage/tree_page/search/tests.rs"
       ],
       "reason": "New search behavior and independently calculated boundary/path results; these tests do not claim live SMO or recovery.",

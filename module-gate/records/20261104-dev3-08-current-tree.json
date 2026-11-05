@@ -15,7 +15,6 @@
         "crates/engine/src/storage/plan4_recovery_base/row/graph/structural_bank_tests.rs",
         "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs",
         "crates/engine/src/storage/tree_page/audit.rs",
-        "crates/engine/src/storage/tree_page/search.rs",
         "tests/fixtures/module-row-format/current-tree/actor-1-committed.xrb",
         "tests/fixtures/module-row-format/current-tree/actor-1-compensated.xrb",
         "tests/fixtures/module-row-format/current-tree/actor-1-reserved.xrb",

@@ -6,9 +6,7 @@
       "paths": [
         "crates/engine/src/storage/semantic_row/structure.rs",
         "crates/engine/src/storage/semantic_row/structure/weights.rs",
-        "crates/engine/src/storage/semantic_row/structure/weights/tests.rs",
-        "crates/engine/src/storage/semantic_row/transition.rs",
-        "crates/engine/src/storage/semantic_row/transition/cells.rs"
+        "crates/engine/src/storage/semantic_row/structure/weights/tests.rs"
       ],
       "reason": "Seven new cases exercise new weight derivation and reused helpers. Existing helper bodies are unchanged; only visibility broadens. Literal native after cells supply inputs; independent row cell lengths supply expected costs. No prior unchanged transition suites are selected.",
       "cases": [

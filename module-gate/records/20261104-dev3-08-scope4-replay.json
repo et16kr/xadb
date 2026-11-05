@@ -15,7 +15,6 @@
         "crates/engine/src/storage/wal_io/plan4_recovery/analysis/structural_level_tests.rs",
         "crates/engine/src/storage/wal_io/plan4_recovery/physical.rs",
         "crates/engine/src/storage/wal_io/plan4_retention/history.rs",
-        "crates/engine/src/storage/wal_io/plan4_retention/history/structure.rs",
         "crates/engine/src/storage/wal_io/plan4_retention/recovery.rs",
         "crates/engine/src/storage/wal_io/plan4_retention/recovery/structural_replay_tests.rs",
         "tests/fixtures/module-row-format/structural-replay/author.py",
@@ -241,14 +240,6 @@
         {
           "file": "crates/engine/src/storage/tree_page/audit/tests.rs",
           "case": "storage::tree_page::audit::tests::immutable_tree_audit_visits_all_families_in_exact_preorder",
-          "sources": [
-            "head"
-          ],
-          "inputs": []
-        },
-        {
-          "file": "crates/engine/src/storage/wal_io/plan4_retention/history/structure.rs",
-          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::history::structure::tests::structural_replay_source_inventory_covers_compare_and_claim_mint_phases",
           "sources": [
             "head"
           ],
