@@ -947,10 +947,10 @@ stack/RSS 측정이 아니다.
 <a id="automatic-split"></a>
 ## A 자동 split 호출자
 
-상태는 **2026-11-05 구현 / 독립 D2 2회차 CONDITIONAL, 필수 1 반영**이다. 1차 D2(계약 초안)는 REJECT였고
+상태는 **2026-11-05 구현 / 독립 D2 3회차 ACCEPT, 필수 0**이다. 1차 D2(계약 초안)는 REJECT였고
 필수 2건(F4 예산, A literal 시험)을 반영했다. 2회차는 그 둘의 해소와 설계 변경 둘(값 검사 발동, 필요 검산 뒤
 부채 검사)을 받아들이고, 예약 D>0의 Reserve Capacity 경로에 실제 C 증거가 없다는 필수 1을 냈다. SPL-A10과
-서술 정정으로 반영했다. 사용자의 08-1 완료
+서술 정정으로 반영했고, [3회차 검토](../../module-gate/evidence/dev3-08-1-auto-split/review.md)에서 ACCEPT를 받았다. 사용자의 08-1 완료
 요청에서 [current-leaf 소비자](#current-leaf-consumers) 다음으로 남은 제품 호출자를 다룬다. 이 절은 leaf가
 찬 INSERT·UPDATE를 A가 split으로 이어 가는 경로만 정한다. 빈 leaf unlink·root shrink·retirement opcode는
 이 절의 범위가 아니며 08-1 잔여로 남는다.
@@ -1101,8 +1101,19 @@ unlink·shrink에서 다룬다).
 | SPL-A10 | 예약 D>0의 Reserve Capacity: 큰 행 7개(q 2..8) 뒤 명시 거래가 첫 행을 DELETE(tombstone 뒤 여유 2,612B, D = 2,228−180 = 2,048). C 직접 호출은 경계 380B 행(380+184+D = 2,612)에 `NotNeeded`, WAL·Jobs·leaf 불변. 같은 거래의 381B 행 INSERT는 값 검사(565 ≤ 2,612)를 지나 Reserve Capacity, RootSplit 뒤 Done 1, Commit q 9, 두 leaf, read, 재시작. C가 D를 0으로 읽으면 381B 행이 `NotNeeded`로 실패하므로 D 배선도 고정된다 |
 | SPL-A09 | A literal: 값 검사 Capacity와 Reserve Capacity가 깨끗한 finish 뒤 split을 L과 함께 부름, Split 뒤 같은 행 재시도, FlushRequired는 flush 뒤 같은 split(미계수), NotNeeded는 원 실패, split 거절은 `Stage::Split`, Fatal은 `must_resolve`, 16회 상한, split flush 거절은 Flush stage, 뒤 행의 split, 재시도의 preflight Busy. Preflight Capacity, Reserve Busy·Unsupported, 거절된 finish, Fatal finish는 split하지 않음. MCA00-D04·D05의 호출 기록은 Capacity 뒤 `Split`(NotNeeded)을 더함 |
 
+PR #54 후속 리뷰는 아래 신규 사례를 추가했다. 모두 실제 C/A/B 경로와 메모리 I/O double의 파일에서
+새 recovery를 실행한다. native process crash·실제 fsync 검증을 추가한 것으로 해석하지 않는다.
+
+| ID | 새 검증 경계 |
+| --- | --- |
+| SPL-REVIEW-01 | committed 큰 행 7개 위에서 live split만 완료하고 행을 재시도하지 않은 파일을 재시작. Q=8, CLR=0, 기존 값 7개·leaf 2개 유지, 8번째 행 없음 |
+| SPL-REVIEW-02 | Active 거래의 큰 행 7개 위에서 live split만 완료한 파일을 재시작. Q=1, loser CLR=7, Row Job=0, 행은 없고 빈 leaf 2개 유지 |
+| SPL-REVIEW-03 | 명시 거래의 앞 statement 7행 뒤, 다음 statement가 split·1행 INSERT 후 NULL 거절. 그 statement만 rollback, 앞 7행 유지, 후속 INSERT·Commit 성공(Q=2, 8행), 재시작 값·leaf 2개 검산 |
+
+실행 identity와 독립 검토는 [후속 리뷰 증거](../../module-gate/evidence/dev3-08-1-auto-split/review-followup.md)를 따른다.
+
 남은 D2 선택(시험 미작성): SPL-A05가 A의 split flush 호출을 직접 단언하는 관측, 최소 pool 경계 시험,
-FlushRequired 왕복 사이 경합(`Stage::Split` Busy), split만 있고 행이 없는 상태의 재시작 leaf 수 단언, SPL-A01..A04의
+FlushRequired 왕복 사이 경합(`Stage::Split` Busy), SPL-A01..A04의
 split 종류 직접 관측. 18-frame pool에서 split 뒤 table issue의 MissingTarget(SPL-A05)은 C table issue의 작은 pool
 한계로 남긴다.
 

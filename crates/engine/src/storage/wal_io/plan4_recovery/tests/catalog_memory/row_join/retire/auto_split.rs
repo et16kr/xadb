@@ -875,3 +875,256 @@ fn spl_a10_reservation_capacity_splits_beside_a_retained_delete() {
         println!("SPL_A10 q=9 restart_steps={}", joined.steps);
     });
 }
+
+/// Read through B after recovery, then independently require the durable
+/// split's two leaves, including when loser undo emptied both of them.
+struct SplitScan;
+
+impl JoinRead for SplitScan {
+    fn scan<'s, 'c, W: WriterNamespace>(
+        &self,
+        live: &mut Live<'_, 's, 'c, '_, '_, '_, '_, '_, W>,
+        owner: &mut Owner<'c, 's>,
+        flusher: &mut Owner<'c, 's>,
+        reader_private: &mut [u8; PRIVATE_BYTES],
+        ready_files: &Images,
+    ) -> Vec<(u64, i64)> {
+        let rows = BigScan.scan(live, owner, flusher, reader_private, ready_files);
+        let (writer, _, _) = live.split();
+        let keys: Vec<_> = rows.iter().map(|(key, _)| *key).collect();
+        assert_leaves(&writer.catalog_test_with_pool(leaves), 2, &keys, true);
+        rows
+    }
+}
+
+/// A split is a durable system action even if the row is never retried.
+/// Capture only the I/O double's files (not pool images), immediately after
+/// Split, with either committed rows or seven active loser rows. Recovery
+/// must retain both leaves and must not invent the attempted eighth row.
+fn split_only_restart(active: bool) {
+    let oracle = Oracle::new();
+    let (images, expected) = with_fresh!(
+        oracle,
+        frames = 40,
+        |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+            let (row_status, _) =
+                create_table_with(live, owner, flusher, status, undo, private, true, &spec());
+            retire_create!(live, owner, private);
+            for _ in 0..7 {
+                system_init(live, owner, flusher, true);
+            }
+            let (mut writer, reader, mut flush) = live.split();
+            let mut holder = None;
+            let keys = if active {
+                begun(begin!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    &row_status,
+                    private,
+                    &mut holder
+                ));
+                let (out, slots) = statement!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    reader,
+                    reader_private,
+                    &mut holder,
+                    private,
+                    6,
+                    bigs(0..7)
+                );
+                assert_eq!(done(out), 7);
+                rows_of(&slots)
+            } else {
+                fill!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    reader,
+                    reader_private,
+                    &row_status,
+                    private,
+                    bigs(0..7)
+                )
+            };
+            assert_leaves(&writer.catalog_test_with_pool(leaves), 1, &keys, false);
+            let table = issued!(writer, reader, core, reader_private, flush, flusher);
+            assert!(matches!(
+                writer
+                    .split_row_live(owner, &table, None, 2048, private, &mut flush)
+                    .unwrap(),
+                RowSplitStep::Split
+            ));
+            owner.check_idle().unwrap();
+            assert_leaves(&writer.catalog_test_with_pool(leaves), 2, &keys, false);
+            assert!(!fence.is_fenced());
+            let images = state.lock().unwrap().images();
+            // Dropping an active holder fences the old session after capture.
+            drop(holder);
+            let expected = if active {
+                Vec::new()
+            } else {
+                keys.into_iter()
+                    .enumerate()
+                    .map(|(at, key)| (key, tagged(at, BIG)))
+                    .collect()
+            };
+            (images, expected)
+        }
+    );
+    let joined = join_restart_with(
+        &clone_directory(&images),
+        if active {
+            RowRecoveryPolicy::WithRowClr
+        } else {
+            RowRecoveryPolicy::RejectInitialLosers
+        },
+        None,
+        &Images::new,
+        &SplitScan,
+    );
+    assert_eq!(
+        (joined.ready.0, joined.clrs, joined.row_cells),
+        if active { (1, 7, 0) } else { (8, 0, 0) }
+    );
+    assert_eq!(joined.rows, expected);
+}
+
+#[test]
+fn spl_review_split_only_restart_preserves_committed_rows_and_shape() {
+    case_within("SPL-REVIEW-01", std::time::Duration::from_secs(900), || {
+        split_only_restart(false)
+    });
+}
+
+#[test]
+fn spl_review_split_only_restart_undoes_losers_but_keeps_shape() {
+    case_within("SPL-REVIEW-02", std::time::Duration::from_secs(900), || {
+        split_only_restart(true)
+    });
+}
+
+/// A prior statement's seven rows survive a failed statement which splits,
+/// inserts one row and then hits an invalid value. The transaction remains
+/// usable; its next INSERT and Commit keep only the prior and later rows.
+#[test]
+fn spl_review_failed_statement_after_split_preserves_prior_work() {
+    case_within("SPL-REVIEW-03", std::time::Duration::from_secs(900), || {
+        let oracle = Oracle::new();
+        let (images, expected) = with_fresh!(
+            oracle,
+            frames = 40,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let (row_status, _) =
+                    create_table_with(live, owner, flusher, status, undo, private, true, &spec());
+                retire_create!(live, owner, private);
+                for _ in 0..9 {
+                    system_init(live, owner, flusher, true);
+                }
+                let (mut writer, reader, mut flush) = live.split();
+                let mut holder = None;
+                begun(begin!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    &row_status,
+                    private,
+                    &mut holder
+                ));
+                let (out, slots) = statement!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    reader,
+                    reader_private,
+                    &mut holder,
+                    private,
+                    6,
+                    bigs(0..7)
+                );
+                assert_eq!(done(out), 7);
+                let mut keys = rows_of(&slots);
+                assert_leaves(&writer.catalog_test_with_pool(leaves), 1, &keys, false);
+                let (out, slots) = statement!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    reader,
+                    reader_private,
+                    &mut holder,
+                    private,
+                    6,
+                    vec![big(7), [ValueRef::Null]]
+                );
+                assert_eq!(statement_failed(out).stage, Stage::Validate);
+                assert!(holder.is_some());
+                assert!(slots[0].is_some() && slots[1].is_none());
+                let removed = slots[0].as_ref().unwrap().row().get();
+                assert_leaves(&writer.catalog_test_with_pool(leaves), 2, &keys, false);
+                let (out, slots) = statement!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    reader,
+                    reader_private,
+                    &mut holder,
+                    private,
+                    6,
+                    bigs(8..9)
+                );
+                assert_eq!(done(out), 1);
+                let next = rows_of(&slots)[0];
+                assert!(
+                    next > removed,
+                    "rollback must not reuse the split attempt's RowId"
+                );
+                keys.push(next);
+                assert_eq!(
+                    explicit_committed(commit!(
+                        &mut writer,
+                        owner,
+                        flush,
+                        flusher,
+                        &mut holder,
+                        private,
+                        8
+                    )),
+                    (2, 8)
+                );
+                drains!(&mut writer, owner, flush, flusher, private);
+                assert_row_jobs_free(writer.catalog_test_jobs());
+                assert_leaves(&writer.catalog_test_with_pool(leaves), 2, &keys, false);
+                let mut expected: Vec<_> = keys[..7]
+                    .iter()
+                    .enumerate()
+                    .map(|(at, key)| (*key, tagged(at, BIG)))
+                    .collect();
+                expected.push((next, tagged(8, BIG)));
+                assert_eq!(
+                    read_big!(writer, reader, core, reader_private, flush, flusher),
+                    expected
+                );
+                assert!(!fence.is_fenced());
+                (state.lock().unwrap().images(), expected)
+            }
+        );
+        let joined = join_restart_with(
+            &clone_directory(&images),
+            RowRecoveryPolicy::RejectInitialLosers,
+            None,
+            &Images::new,
+            &SplitScan,
+        );
+        assert_eq!((joined.ready.0, joined.clrs, joined.row_cells), (2, 0, 0));
+        assert_eq!(joined.rows, expected);
+    });
+}

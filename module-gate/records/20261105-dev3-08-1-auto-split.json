@@ -349,7 +349,7 @@
         "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/split_rows.rs",
         "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_inventory_a.rs"
       ],
-      "reason": "Live A over the actual C supply: SPL-A01 single RootSplit then Commit, SPL-A02 RootSplit and ChildSplits inside one statement, SPL-A03 split kept after rollback, SPL-A04 growing UPDATE, SPL-A05 dirty INIT victim flushed then split (18 frames), SPL-A06 debt and room refusals without effect, SPL-A10 Reserve leaf Capacity beside a Retained DELETE root (D>0) split then commit, each with restart reads; MCA05-V30 now ends Stage::Split Unsupported (CREATE debt), MCA05-V01..V03 keep the WAL Reserve Capacity (NotNeeded).",
+      "reason": "Live A over the actual C supply: SPL-A01 single RootSplit then Commit, SPL-A02 RootSplit and ChildSplits inside one statement, SPL-A03 split kept after rollback, SPL-A04 growing UPDATE, SPL-A05 dirty INIT victim flushed then split (18 frames), SPL-A06 debt and room refusals without effect, SPL-A10 Reserve leaf Capacity beside a Retained DELETE root (D>0) split then commit, each with restart reads; MCA05-V30 now ends Stage::Split Unsupported (CREATE debt), MCA05-V01..V03 keep the WAL Reserve Capacity (NotNeeded). PR #54 follow-up adds SPL-REVIEW-01..03: split-only recovery with committed rows and active losers (including two-leaf shape), and statement-local rollback after a split with continued transaction and recovery.",
       "cases": [
         {
           "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_inventory_a.rs",
@@ -427,6 +427,27 @@
           "sources": [
             "head"
           ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/auto_split.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::spl_review_split_only_restart_preserves_committed_rows_and_shape",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/auto_split.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::spl_review_split_only_restart_undoes_losers_but_keeps_shape",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/auto_split.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::spl_review_failed_statement_after_split_preserves_prior_work",
+          "sources": [
+            "head"
+          ]
         }
       ]
     }
@@ -472,6 +493,21 @@
       },
       "log": "module-gate/evidence/dev3-08-1-auto-split/review.md",
       "log_sha256": "6001d535fd903e59177a5cfe57c92b2c563dc65182f3eabf451f54d25a3cbee7"
+    },
+    {
+      "id": "pr54-followup-review",
+      "class": "D1",
+      "scopes": [],
+      "author": "/root",
+      "reviewer": "/root/independent_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/auto_split.rs": "6b7a91d6eeecd108e1bcb6f021aa7983877d4b85",
+        "devdoc/contracts/dev3-tree-smo.md": "07bd33ffca67adaec11f8edaf1df145c38166209"
+      },
+      "log": "module-gate/evidence/dev3-08-1-auto-split/review-followup.md",
+      "log_sha256": "687781deb1ff93786e8a7c4ba2c366d258374da2678c7b0ad2ac7ec329d13916"
     }
   ]
 }
