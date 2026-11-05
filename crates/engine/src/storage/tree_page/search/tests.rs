@@ -392,3 +392,83 @@ fn immutable_tree_search_bounds_height_and_rejects_bad_input_before_loading() {
         );
     }
 }
+
+/// SPL-A07 (dev3-tree-smo.md#automatic-split): the live split's separator
+/// room is the codec's own bound. A RowInternal page of `n` separators takes
+/// one more exactly when a page of `n + 1` encodes, at the boundary and one
+/// past it; one Row separator costs its cell and slot.
+#[test]
+fn spl_a07_separator_room_is_the_codec_bound() {
+    let expect = expected(PageKind::RowInternal, 0, 1, 9);
+    let mut buffer = [0; 128];
+    let cell = encode_internal_cell(
+        PageKind::RowInternal,
+        0,
+        &key(0, 1),
+        reference(10),
+        &mut buffer,
+    )
+    .unwrap();
+    assert_eq!(cell.len() + 4, ROW_SEPARATOR_COST);
+    let fits = |count: u64| {
+        let mut meta = [0; 32];
+        encode_metadata(expect.kind, 0, Some(reference(10)), &mut meta).unwrap();
+        let mut cells = vec![meta.to_vec()];
+        for number in 1..=count {
+            let mut buffer = [0; 128];
+            let cell = encode_internal_cell(
+                expect.kind,
+                0,
+                &key(0, number),
+                reference(10 + number),
+                &mut buffer,
+            )
+            .unwrap();
+            cells.push(cell.to_vec());
+        }
+        let refs: Vec<&[u8]> = cells.iter().map(Vec::as_slice).collect();
+        let mut bytes = vec![0; PAGE_BYTES];
+        encode_tree_page(
+            PageHeader {
+                identity: expect.identity,
+                kind: expect.kind,
+                level: expect.level,
+                lsn: PageLsn(7),
+            },
+            0,
+            &refs,
+            &mut bytes,
+        )
+        .is_ok()
+    };
+    let last = TREE_ENTRY_CAPACITY / ROW_SEPARATOR_COST;
+    for entries in [0, 1, last - 2, last - 1, last] {
+        assert_eq!(
+            separator_room(entries),
+            fits(entries as u64 + 1),
+            "{entries} separators"
+        );
+    }
+    assert!(separator_room(last - 1) && !separator_room(last));
+    assert!(!separator_room(usize::MAX));
+}
+
+/// SPL-A07: the split target over a route's room flags. From the leaf up,
+/// the first page whose parent takes a separator; else the root.
+#[test]
+fn spl_a07_split_target_takes_the_lowest_page_whose_parent_has_room() {
+    assert_eq!(split_target(&[]), None);
+    // A root leaf: a RootSplit.
+    assert_eq!(split_target(&[false]), Some(0));
+    assert_eq!(split_target(&[true]), Some(0));
+    // A leaf under a root with room: a ChildSplit of the leaf.
+    assert_eq!(split_target(&[true, false]), Some(1));
+    // Its root is full: the root first.
+    assert_eq!(split_target(&[false, true]), Some(0));
+    // Three levels: the leaf, its full parent, then a full root.
+    assert_eq!(split_target(&[true, true, false]), Some(2));
+    assert_eq!(split_target(&[true, false, false]), Some(1));
+    assert_eq!(split_target(&[false, false, true]), Some(0));
+    // The leaf's own flag is never read.
+    assert_eq!(split_target(&[true, true, true]), Some(2));
+}

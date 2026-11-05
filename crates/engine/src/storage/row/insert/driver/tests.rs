@@ -21,9 +21,9 @@ use crate::{
     storage::{
         disk::{
             Plan4Target, PreflightRow, PreparedRow, ROW_PREFLIGHT_CALLER_BYTES,
-            ROW_WRITE_CALLER_BYTES, ReservedRow, RetentionCause, RetentionPhase, RowOperation,
-            RowPageRole, RowProducerLane, RowRollback, RowRollbackTask, RowStatementView,
-            RowValidationLane, row_write_charge,
+            ROW_SPLIT_CALLER_BYTES, ROW_WRITE_CALLER_BYTES, ReservedRow, RetentionCause,
+            RetentionPhase, RowOperation, RowPageRole, RowProducerLane, RowRollback,
+            RowRollbackTask, RowStatementView, RowValidationLane, row_write_charge,
         },
         row::insert::encode_input,
         row_record::{RowError, RowSchemaInput},
@@ -33,7 +33,7 @@ use Call::{
     Apply, Cancel, Check, CleanupNext, Clr, ClrApply, ClrLane, ClrPrepare, ClrReopen, Commit,
     ContinueFlush, DropReserved, DropRollback, FinishAborted, FinishPreflight, FinishStatement,
     Forward, Next, PreflightDelete, PreflightUpdate, Prepare, Reopen, Reserve, ReserveDelete,
-    Retire, RollbackFinish, RollbackFlush, RollbackStart, TryFlush, Validate,
+    Retire, RollbackFinish, RollbackFlush, RollbackStart, Split, TryFlush, Validate,
 };
 use foundation::{identity::SchemaEpoch, namespace::WriterNamespace};
 use std::cell::RefCell;
@@ -125,6 +125,8 @@ enum Call {
     /// C's UPDATE preflight, which this literal boundary does not model:
     /// the A UPDATE executor runs over real C (RUP-A, `row_join`).
     PreflightUpdate(u64),
+    /// C's live split (`split_row_live`) of an INSERT's full leaf.
+    Split,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -274,6 +276,12 @@ struct State {
     /// Rows of the actor's chain that are DELETE roots: their CLR restores
     /// the row (`91096+2C+128h`).
     deleted: Vec<u64>,
+    /// C's live split answers in order: None installs a split, Some(target)
+    /// names a dirty victim (FlushRequired). With none left a split answers
+    /// NotNeeded.
+    splits: Vec<Option<u64>>,
+    /// The (row, length) of each live split call.
+    split_calls: Vec<(Option<u64>, usize)>,
 }
 
 impl State {
@@ -327,6 +335,8 @@ fn state(chain: &[(u64, usize)], faults: &[(Call, Fault)]) -> RefCell<State> {
         skips: Vec::new(),
         visible: Vec::new(),
         deleted: Vec::new(),
+        splits: Vec::new(),
+        split_calls: Vec::new(),
     })
 }
 
@@ -644,6 +654,44 @@ impl<'s> Boundary for LiteralCall<'s> {
             state.cleanup.remove(at);
         }
         Ok(RetireNext::Retired)
+    }
+    /// The next scripted answer (`State::splits`) unless a refusal is
+    /// scripted; NotNeeded when none is left. A split never applies a row.
+    fn split(
+        &mut self,
+        _table: &LiteralTable,
+        row: Option<RowId>,
+        length: usize,
+        _loan: &mut Loan,
+    ) -> Result<SplitNext<u64>, RetentionError> {
+        let mut state = self.state.borrow_mut();
+        let fault = state.note(Split);
+        state.split_calls.push((row.map(RowId::get), length));
+        if state.outstanding.is_some() {
+            state
+                .violations
+                .push("split with an outstanding RowReserve");
+        }
+        if state.waiting > 0 || state.dirty.is_some() {
+            state.violations.push("split with a flusher not Ready");
+        }
+        drop(state);
+        factory(Split, fault)?;
+        let mut state = self.state.borrow_mut();
+        if state.splits.is_empty() {
+            return Ok(SplitNext::NotNeeded);
+        }
+        Ok(match state.splits.remove(0) {
+            // The split leaves the routed leaf with an empty half's room.
+            None => {
+                state.free = 16_188;
+                SplitNext::Split
+            }
+            Some(target) => {
+                state.dirty = Some(target);
+                SplitNext::Flush(target)
+            }
+        })
     }
 }
 
@@ -1528,16 +1576,23 @@ fn mca00_d04_value_rejections_release_the_preflight_without_reserve() {
         assert_eq!(insert(&error.failure.error), expected);
         assert!(error.failure.cleanup.is_none() && !error.failure.must_resolve);
         assert!(!returned(error.after).ended);
-        assert_eq!(
-            state.borrow().log,
-            [
-                Check,
-                Call::Preflight,
-                Call::ValidationLane,
-                Validate,
-                FinishPreflight
-            ]
-        );
+        // A Capacity asks C's live split with the row's length, which
+        // answers NotNeeded here (no split scripted), so the value check's
+        // failure stands (SPL-A09); the other refusals ask none.
+        let mut log = vec![
+            Check,
+            Call::Preflight,
+            Call::ValidationLane,
+            Validate,
+            FinishPreflight,
+        ];
+        let mut split = vec![];
+        if expected == InsertError::Capacity {
+            log.push(Split);
+            split.push((None, 22));
+        }
+        assert_eq!(state.borrow().log, log);
+        assert_eq!(state.borrow().split_calls, split);
         assert_eq!(state.borrow().row_high, 6);
         settled(&state);
         assert!(loan.iter().all(|byte| *byte == FILL));
@@ -1613,11 +1668,13 @@ fn mca00_d05_c_refusals_keep_busy_capacity_unsupported_distinct() {
                 FinishPreflight,
             ],
         ),
+        // A Capacity Reserve asks C's live split, which answers NotNeeded
+        // here (no split scripted): the Reserve failure stands (SPL-A).
         (
             Reserve(7),
             Cause::Capacity,
             Stage::Reserve,
-            calls(&[&front, &[Reserve(7), FinishPreflight]]),
+            calls(&[&front, &[Reserve(7), FinishPreflight, Split]]),
         ),
         (
             Reserve(7),
@@ -1999,6 +2056,338 @@ fn aw1_f01_flush_required_flushes_and_retries_the_same_row_from_preflight() {
     );
     assert_eq!(state.borrow().chain, [(7, 22), (8, 18)]);
     settled(&state);
+}
+
+/// SPL-A09 (dev3-tree-smo.md#automatic-split): A's row loop over the
+/// literal boundary. A value check refused `InsertError::Capacity` or a
+/// Reserve refused `Unchanged(Prepare, Capacity)`, whose preflight finished,
+/// asks C's live split with the row's encoded length and nothing held; `Split` tries the same row again from preflight, with the
+/// RowId, input and proposal it gets without a split; FlushRequired is
+/// flushed as a preflight's and the same split asked again, which is not
+/// counted; NotNeeded leaves the Reserve failure; a refused split ends the
+/// row with `Stage::Split`; a row asks at most `MAX_ROW_SPLITS` splits. A
+/// split applies no row, so a later row's split keeps the earlier rows and
+/// the statement's end is as without it. Other value check and Reserve
+/// refusals, and a Capacity whose finish C refused, ask no split.
+#[test]
+fn spl_a09_row_loop_splits_and_retries_the_same_row() {
+    let mut loan = loan();
+    let reserved = [
+        Check,
+        Call::Preflight,
+        Call::ValidationLane,
+        Validate,
+        Reserve(7),
+        FinishPreflight,
+    ];
+    let capacity = (RetentionPhase::Prepare, Cause::Capacity, Effect::Unchanged);
+
+    // One split, then the same row applies.
+    let state = self::state(&[], &[(Reserve(7), Fault::BeforeOnce(Cause::Capacity))]);
+    state.borrow_mut().splits = vec![None];
+    let mut slots = [None];
+    assert_eq!(run(&state, &[&V1], &mut slots, &mut loan).unwrap(), 1);
+    assert_eq!(slots, [Some(LiteralApplied(7))]);
+    assert_eq!(
+        take_log(&state),
+        calls(&[&reserved, &[Split], &applied(7), &[FinishStatement]])
+    );
+    {
+        let state = state.borrow();
+        assert_eq!(state.split_calls, [(None, 22)]);
+        assert_eq!(state.inputs, [plan(22, R1_SHA)]);
+        assert_eq!(state.proposals, [proposal(RowOperation::Forward, 91_506)]);
+        assert_eq!(state.chain, [(7, 22)]);
+    }
+    settled(&state);
+
+    // The value check finds the routed leaf full (205 free bytes, R1 needs
+    // 206): the preflight is finished, C's split asked with the row's
+    // canonical length, and the same row tried again from preflight.
+    let validated = [
+        Check,
+        Call::Preflight,
+        Call::ValidationLane,
+        Validate,
+        FinishPreflight,
+    ];
+    let state = self::state(&[], &[]);
+    {
+        let mut state = state.borrow_mut();
+        state.free = 205;
+        state.splits = vec![None];
+    }
+    let mut slots = [None];
+    assert_eq!(run(&state, &[&V1], &mut slots, &mut loan).unwrap(), 1);
+    assert_eq!(slots, [Some(LiteralApplied(7))]);
+    assert_eq!(
+        take_log(&state),
+        calls(&[&validated, &[Split], &applied(7), &[FinishStatement]])
+    );
+    {
+        let state = state.borrow();
+        assert_eq!(state.split_calls, [(None, 22)]);
+        assert_eq!(state.inputs, [plan(22, R1_SHA)]);
+        assert_eq!(state.chain, [(7, 22)]);
+    }
+    settled(&state);
+    // NotNeeded leaves the value check's failure; a refused finish asks no
+    // split.
+    let state = self::state(&[], &[]);
+    state.borrow_mut().free = 205;
+    let error = failed(run(&state, &[&V1], &mut [None], &mut loan));
+    assert_eq!(error.failure.stage, Stage::Validate);
+    assert_eq!(insert(&error.failure.error), InsertError::Capacity);
+    assert_eq!(take_log(&state), calls(&[&validated, &[Split]]));
+    returned(error.after);
+    let state = self::state(&[], &[(FinishPreflight, Fault::Before(Cause::Busy))]);
+    {
+        let mut state = state.borrow_mut();
+        state.free = 205;
+        state.splits = vec![None];
+    }
+    let error = failed(run(&state, &[&V1], &mut [None], &mut loan));
+    assert_eq!(error.failure.stage, Stage::Validate);
+    assert_eq!(take_log(&state), validated);
+    assert_eq!(state.borrow().split_calls, []);
+    returned(error.after);
+
+    // A dirty victim is flushed until the flusher is Ready, then the same
+    // split is asked again.
+    let faults = [
+        (Reserve(7), Fault::BeforeOnce(Cause::Capacity)),
+        (TryFlush(40), Fault::Steps(2)),
+    ];
+    let state = self::state(&[], &faults);
+    state.borrow_mut().splits = vec![Some(40), None];
+    assert_eq!(run(&state, &[&V1], &mut [None], &mut loan).unwrap(), 1);
+    assert_eq!(
+        take_log(&state),
+        calls(&[
+            &reserved,
+            &[Split, TryFlush(40), ContinueFlush, ContinueFlush, Split],
+            &applied(7),
+            &[FinishStatement]
+        ])
+    );
+    assert_eq!(state.borrow().split_calls, [(None, 22), (None, 22)]);
+    settled(&state);
+
+    // NotNeeded (no split scripted): the Reserve failure ends the row.
+    let state = self::state(&[], &[(Reserve(7), Fault::Before(Cause::Capacity))]);
+    let error = failed(run(&state, &[&V1], &mut [None], &mut loan));
+    assert_eq!(
+        (error.failure.stage, disk(&error.failure.error)),
+        (Stage::Reserve, capacity)
+    );
+    assert!(error.failure.cleanup.is_none() && !error.failure.must_resolve);
+    returned(error.after);
+    assert_eq!(take_log(&state), calls(&[&reserved, &[Split]]));
+    settled(&state);
+
+    // A refused split ends the row with its own stage and error.
+    let faults = [
+        (Reserve(7), Fault::Before(Cause::Capacity)),
+        (Split, Fault::Before(Cause::Unsupported)),
+    ];
+    let state = self::state(&[], &faults);
+    let error = failed(run(&state, &[&V1], &mut [None], &mut loan));
+    assert_eq!(
+        (error.failure.stage, disk(&error.failure.error)),
+        (
+            Stage::Split,
+            (
+                RetentionPhase::Prepare,
+                Cause::Unsupported,
+                Effect::Unchanged
+            )
+        )
+    );
+    returned(error.after);
+    assert_eq!(take_log(&state), calls(&[&reserved, &[Split]]));
+    settled(&state);
+    // C's CallerMustResolve at the split leaves the statement to C's fence.
+    let faults = [
+        (Reserve(7), Fault::Before(Cause::Capacity)),
+        (Split, Fault::Fatal),
+    ];
+    let state = self::state(&[], &faults);
+    let error = failed(run(&state, &[&V1], &mut [None], &mut loan));
+    assert_eq!(error.failure.stage, Stage::Split);
+    assert!(error.failure.must_resolve);
+    assert_eq!(name(&error.after), "MustResolve");
+    // A refused split flush ends the row as a preflight's flush refusal.
+    let faults = [
+        (Reserve(7), Fault::Before(Cause::Capacity)),
+        (TryFlush(40), Fault::Before(Cause::Busy)),
+    ];
+    let state = self::state(&[], &faults);
+    state.borrow_mut().splits = vec![Some(40)];
+    let error = failed(run(&state, &[&V1], &mut [None], &mut loan));
+    assert_eq!(error.failure.stage, Stage::Flush);
+    returned(error.after);
+    assert_eq!(
+        take_log(&state),
+        calls(&[&reserved, &[Split, TryFlush(40)]])
+    );
+
+    // A row that stays full asks MAX_ROW_SPLITS splits, then its Reserve
+    // failure ends it.
+    let state = self::state(&[], &[(Reserve(7), Fault::Before(Cause::Capacity))]);
+    state.borrow_mut().splits = vec![None; MAX_ROW_SPLITS + 1];
+    let error = failed(run(&state, &[&V1], &mut [None], &mut loan));
+    assert_eq!(
+        (error.failure.stage, disk(&error.failure.error)),
+        (Stage::Reserve, capacity)
+    );
+    let log = take_log(&state);
+    assert_eq!(log.iter().filter(|call| **call == Split).count(), 16);
+    assert_eq!(log.iter().filter(|call| **call == Reserve(7)).count(), 17);
+    assert_eq!(log.last(), Some(&FinishPreflight));
+    assert_eq!(state.borrow().splits.len(), 1);
+    settled(&state);
+
+    // A later row's split keeps the earlier row; a failure after it hands
+    // the statement back RollbackRequired as without a split.
+    let state = self::state(&[], &[(Reserve(8), Fault::BeforeOnce(Cause::Capacity))]);
+    state.borrow_mut().splits = vec![None];
+    let mut slots = [None, None];
+    assert_eq!(run(&state, &[&V1, &V2], &mut slots, &mut loan).unwrap(), 2);
+    assert_eq!(slots, [Some(LiteralApplied(7)), Some(LiteralApplied(8))]);
+    assert_eq!(
+        take_log(&state),
+        calls(&[
+            &[Check],
+            &applied(7),
+            &[Call::Preflight, Call::ValidationLane, Validate, Reserve(8)],
+            &[FinishPreflight, Split],
+            &applied(8),
+            &[FinishStatement]
+        ])
+    );
+    assert_eq!(state.borrow().split_calls, [(None, 18)]);
+    settled(&state);
+    let state = self::state(&[], &[(Reserve(8), Fault::Before(Cause::Capacity))]);
+    state.borrow_mut().splits = vec![None];
+    let error = failed(run(&state, &[&V1, &V2], &mut [None, None], &mut loan));
+    assert_eq!(error.failure.stage, Stage::Reserve);
+    rollback_required(error.after);
+    assert_eq!(state.borrow().chain, [(7, 22)]);
+
+    // FlushRequired answers between the splits are not counted: sixteen
+    // splits still run, each after its victim's flush.
+    let state = self::state(&[], &[(Reserve(7), Fault::Before(Cause::Capacity))]);
+    state.borrow_mut().splits = (0..MAX_ROW_SPLITS as u64)
+        .flat_map(|at| [Some(100 + at), None])
+        .collect();
+    let error = failed(run(&state, &[&V1], &mut [None], &mut loan));
+    assert_eq!(error.failure.stage, Stage::Reserve);
+    let log = take_log(&state);
+    assert_eq!(log.iter().filter(|call| **call == Split).count(), 32);
+    assert_eq!(
+        log.iter()
+            .filter(|call| matches!(call, TryFlush(_)))
+            .count(),
+        16
+    );
+    assert_eq!(log.iter().filter(|call| **call == Reserve(7)).count(), 17);
+    assert!(state.borrow().splits.is_empty());
+    settled(&state);
+
+    // A split stands when the row's retry fails for another reason: the
+    // row ends with that refusal and asks no second split. The row loop's
+    // steps are driven one at a time here, to refuse only the retry.
+    let state = self::state(&[], &[(Reserve(7), Fault::BeforeOnce(Cause::Capacity))]);
+    state.borrow_mut().splits = vec![None, None];
+    let mut call = LiteralCall { state: &state };
+    let mut full = None;
+    let mut splits = 0;
+    // The row's first attempt leaves its length; the split runs; then a
+    // Busy preflight ends the retried row.
+    let failure = insert_row(
+        &mut call,
+        &statement(&state),
+        &LiteralTable,
+        &mut loan,
+        &V1,
+        &mut full,
+    )
+    .expect_err("a full leaf");
+    assert_eq!((failure.stage, full), (Stage::Reserve, Some(22)));
+    assert!(
+        split_leaf(
+            &mut call,
+            &LiteralTable,
+            None,
+            (&mut full, &mut splits),
+            &mut loan
+        )
+        .unwrap()
+    );
+    assert_eq!((full, splits), (None, 1));
+    state
+        .borrow_mut()
+        .faults
+        .push((Call::Preflight, Fault::Before(Cause::Busy)));
+    let failure = insert_row(
+        &mut call,
+        &statement(&state),
+        &LiteralTable,
+        &mut loan,
+        &V1,
+        &mut full,
+    )
+    .expect_err("a refused preflight");
+    assert_eq!((failure.stage, full), (Stage::Preflight, None));
+    assert!(
+        !split_leaf(
+            &mut call,
+            &LiteralTable,
+            None,
+            (&mut full, &mut splits),
+            &mut loan
+        )
+        .unwrap()
+    );
+    assert_eq!(splits, 1);
+    settled(&state);
+
+    // No split for a preflight Capacity, any other Reserve refusal, or a
+    // Capacity whose preflight finish C refused or left to C's fence.
+    let state = self::state(&[], &[(Call::Preflight, Fault::Before(Cause::Capacity))]);
+    state.borrow_mut().splits = vec![None];
+    let error = failed(run(&state, &[&V1], &mut [None], &mut loan));
+    assert_eq!(error.failure.stage, Stage::Preflight);
+    assert_eq!(state.borrow().split_calls, []);
+    for (faults, resolve) in [
+        (vec![(Reserve(7), Fault::Before(Cause::Busy))], false),
+        (vec![(Reserve(7), Fault::Before(Cause::Unsupported))], false),
+        (
+            vec![
+                (Reserve(7), Fault::Before(Cause::Capacity)),
+                (FinishPreflight, Fault::Before(Cause::Busy)),
+            ],
+            false,
+        ),
+        (
+            vec![
+                (Reserve(7), Fault::Before(Cause::Capacity)),
+                (FinishPreflight, Fault::Fatal),
+            ],
+            true,
+        ),
+    ] {
+        let state = self::state(&[], &faults);
+        state.borrow_mut().splits = vec![None];
+        let error = failed(run(&state, &[&V1], &mut [None], &mut loan));
+        assert_eq!(error.failure.stage, Stage::Reserve);
+        assert_eq!(error.failure.must_resolve, resolve);
+        assert_eq!(take_log(&state), reserved);
+        assert_eq!(state.borrow().split_calls, []);
+        if !resolve {
+            returned(error.after);
+        }
+    }
 }
 
 /// AW1-F02 (A-W1 unit test). A refused flush ends the row with nothing held,
@@ -2644,6 +3033,7 @@ fn call_site_census<W: WriterNamespace + 'static>(writer: &str) {
         Bound::Write => (ROW_WRITE_CALLER_BYTES, 0),
         Bound::A if site.name == "insert.validate" => (charge, validation),
         Bound::A => (charge, producer),
+        Bound::Split => (ROW_SPLIT_CALLER_BYTES, 0),
     };
     // The A stages bounded here: the Forward producer phase only (the
     // DELETE's DeleteForward included).
@@ -2708,6 +3098,8 @@ fn call_site_census<W: WriterNamespace + 'static>(writer: &str) {
     // The preflights of INSERT, DELETE and UPDATE; A's validate (INSERT,
     // UPDATE), Forward (INSERT, DELETE, UPDATE) and CLR.
     assert_eq!((bound(Bound::Preflight), bound(Bound::A)), (3, 6));
+    // The live split of INSERT and UPDATE (dev3-tree-smo.md#automatic-split).
+    assert_eq!(bound(Bound::Split), 2);
     // The contract's oracle: the per-call share (M3).
     assert!(over.is_empty(), "{writer}: over the bound at {over:?}");
     assert!(

@@ -158,6 +158,35 @@ pub(crate) fn route_row_step(
     Ok(child)
 }
 
+/// One RowInternal separator's entry cost: its cell (`encode_internal_cell`:
+/// the 4-byte head, the 8-byte RowId key and the child reference) and its
+/// 4-byte slot.
+pub(crate) const ROW_SEPARATOR_COST: usize = 4 + 8 + PAGE_REF_BYTES + 4;
+
+/// Whether a RowInternal page of `entries` separators takes one more and
+/// stays one page (dev3-tree-smo.md#automatic-split): the parent edit of a
+/// ChildSplit (`encode_parent`) is refused exactly when it does not.
+pub(crate) fn separator_room(entries: usize) -> bool {
+    entries
+        .checked_add(1)
+        .and_then(|count| count.checked_mul(ROW_SEPARATOR_COST))
+        .is_some_and(|bytes| bytes <= TREE_ENTRY_CAPACITY)
+}
+
+/// The page a full RowLeaf's split takes (dev3-tree-smo.md#automatic-split),
+/// as an index of its route from the root (index 0) to the leaf (the last):
+/// from the leaf up, the first page whose parent has separator room
+/// (`room[at - 1]`), else the root, which a RootSplit takes. `room` holds
+/// one flag per route page; the leaf's own flag is not read. An empty route
+/// is no route and answers None.
+pub(crate) fn split_target(room: &[bool]) -> Option<usize> {
+    let mut at = room.len().checked_sub(1)?;
+    while at > 0 && !room[at - 1] {
+        at -= 1;
+    }
+    Some(at)
+}
+
 /// Complete one-page route cost, including the pure policy and nested
 /// tree codec. Only the page envelope codec is supplied by the caller.
 pub(crate) fn route_step_source_bytes(page_codec: usize) -> usize {

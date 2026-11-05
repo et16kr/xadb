@@ -8,7 +8,7 @@
 use super::{
     Boundary, CALL_SITES, CallSite, DriveError, Failure, FlushStep, Loan, PendingRollback,
     Preflight, PreflightNext, Prepared, PreparedTask, ProducerLane, Reserved, RetireNext,
-    RetireStop, Retired, Rollback, RollbackNext, RollbackStop, RollbackTask, Stage,
+    RetireStop, Retired, Rollback, RollbackNext, RollbackStop, RollbackTask, SplitNext, Stage,
     StartedRollback, StatementView, Stepped, ValidationLane,
     autocommit::{
         Autocommit, abort_transaction, commit_answer, refused, statement_ended, statement_refused,
@@ -27,8 +27,8 @@ use crate::storage::{
         RollbackStep, RowCommitObservation, RowDeleteStep, RowInputPlan, RowMutationObservation,
         RowOwnedError, RowPreflightOperation, RowPreflightStep, RowPreparedOperation,
         RowProducerLane, RowProposal, RowReservedOperation, RowRetireStep, RowRollback,
-        RowRollbackTask, RowStatementView, RowTransaction, RowValidationLane, StatementFinishError,
-        TransactionFinishError,
+        RowRollbackTask, RowSplitStep, RowStatementView, RowTransaction, RowValidationLane,
+        StatementFinishError, TransactionFinishError,
     },
     row::insert::{InsertError, produce_clr, produce_insert, validate_insert},
     row_record::ValueRef,
@@ -367,6 +367,26 @@ impl<'x, 't, 'v, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> Boundar
             Err(error) if error.visibility_busy() => Ok(RetireNext::Held),
             Err(error) => Err(error),
         }
+    }
+    /// The split's observation is not needed: the driver tries the row
+    /// again from preflight, which reads the tree as it is.
+    fn split(
+        &mut self,
+        table: &CheckedTable<'c, 's>,
+        row: Option<RowId>,
+        length: usize,
+        loan: &mut Loan,
+    ) -> Result<SplitNext<Plan4Target>, RetentionError> {
+        Ok(
+            match self
+                .port
+                .split_row_live(self.owner, table, row, length, loan, self.flusher)?
+            {
+                RowSplitStep::Split => SplitNext::Split,
+                RowSplitStep::FlushRequired(target) => SplitNext::Flush(target),
+                RowSplitStep::NotNeeded => SplitNext::NotNeeded,
+            },
+        )
     }
 }
 

@@ -8,13 +8,13 @@
 
 DEV3 일정 보고는 [전체 예상 일정·누적 진척률 V1](plans/dev3-schedule-baseline.md)을 따른다. 최신 기준일·적립 대장·누적률·잔여 예측은 그 문서에서 확인한다. 완료 증거가 있는 일정 항목의 고정 예상 기간을 누적하며 날짜 예측과 제품 인수 판정은 구분한다.
 
-현재 작업은 사용자 요청 "codex/dev3-08-tree-generalization을 받아 08-1을 완료하기"의 첫 단위인
-**[current-leaf 소비자 일반화](contracts/dev3-tree-smo.md#current-leaf-consumers)**다. 작업 branch는
-`claude/project-thread-e9itre`(Codex branch + main `c52e555`)다. C preflight·rollback·cleanup·recovery,
-A 그룹 관측, B point/cursor, 리프별 예약 D가 split tree의 현재 leaf를 route하고, split은 Active Row 부채
-옆에서도 허용된다. SPL-J01..J05가 split 뒤 INSERT/DELETE/UPDATE의 Commit·rollback·Prune·재시작을 검산한다.
-독립 D2 검토는 2회차에 ACCEPT였다(1회차의 source census 누락 3건 수정, 원 charge 44,304B 그대로).
-빈 leaf unlink·root shrink·retirement와 A의 자동 split 호출자는08-1 잔여라 적립은0, 누적은 그대로다.
+현재 작업은 사용자 요청 "codex/dev3-08-tree-generalization을 받아 08-1을 완료하기"의 두 번째 단위인
+**[A 자동 split 호출자](contracts/dev3-tree-smo.md#automatic-split)**다. 작업 branch는 `claude/project-thread-e9itre`
+(main `2102038`)다. A의 INSERT·UPDATE 행이 값 검사나 Reserve에서 leaf 공간 때문에 거절되면 C의 live split
+(`split_row_live`)을 부르고 같은 행을 다시 시도한다. SPL-A01..A10이 split 뒤 Commit·rollback·UPDATE·dirty
+victim flush·거절·예약 D>0을 검산한다. 독립 D2는 2회차 CONDITIONAL(필수 1, D>0 live 증거)이었고 SPL-A10으로
+반영했다. 첫 단위 [current-leaf 소비자 일반화](contracts/dev3-tree-smo.md#current-leaf-consumers)는 PR #53으로
+병합됐다. 빈 leaf unlink·root shrink·retirement는 08-1 잔여라 적립은 0, 누적은 그대로다.
 
 직전 작업은 Codex의 [clean Row leaf의 실제 RootSplit/ChildSplit과 복구](evidence/dev3-tree-structure-20261104.md#structural-effect)다.
 [첫 구조 후보 공급](evidence/dev3-tree-structure-20261104.md)은 독립 검토와 신규 선택 시험을 마쳤다.

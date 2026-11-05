@@ -142,6 +142,12 @@ impl<'c, 's> SharedPool<'c, 's, '_, '_> {
         init.identity.page.page_no = 17;
         let targets = [requests[0], requests[1], requests[2], requests[3], init];
         let before = state(&pool);
+        // The live split's look-ahead (dev3-tree-smo.md#automatic-split)
+        // over the same set without its INIT page names the same victim.
+        assert_eq!(
+            pool.structural_flush_victim(&targets[..4], 1).unwrap(),
+            Some(requests[4])
+        );
         let selected = pool.structural_candidates(&[init], 1, &targets).unwrap();
         assert!(selected.requires_flush());
         assert_eq!(selected.slots[0].kind, StatusCandidateKind::Flush);
@@ -164,6 +170,14 @@ fn structural_selection_root_two_child_one_preserves_registry_and_excludes_all_t
         let count = if child { 1 } else { 2 };
         with_pool(child, count, |pool, targets, init| {
             let before = state(pool);
+            // The live split's look-ahead over the set without its INIT
+            // pages agrees: clean victims need no flush.
+            let required: Vec<_> = targets
+                .iter()
+                .copied()
+                .filter(|target| !init.contains(target))
+                .collect();
+            assert_eq!(pool.structural_flush_victim(&required, count), Ok(None));
             let selected = pool.structural_candidates(init, 1, targets).unwrap();
             assert_eq!(usize::from(selected.count), count);
             assert!(!selected.requires_flush());
@@ -190,6 +204,15 @@ fn structural_selection_root_two_child_one_preserves_registry_and_excludes_all_t
     }
     with_pool(false, 1, |pool, targets, init| {
         let before = state(pool);
+        let required: Vec<_> = targets
+            .iter()
+            .copied()
+            .filter(|target| !init.contains(target))
+            .collect();
+        assert_eq!(
+            pool.structural_flush_victim(&required, 2),
+            Err(unchanged(Cause::Busy))
+        );
         rejected(pool.structural_candidates(init, 1, targets), Cause::Busy);
         assert_eq!(state(pool), before);
     });

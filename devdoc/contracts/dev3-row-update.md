@@ -173,6 +173,15 @@ DEV3 08-1의 [현재 tree 일반화](dev3-tree-smo.md#current-tree-closure)에�
 
 Reserved 상태의 update는 D에 넣지 않는다(DELETE와 같은 이유). 그래서 rollback·복구의 어떤 순서에서도 불변식이 유지되고, UpdateClr은 split 없이 옛 행을 되돌린다. INSERT Reserve·Forward와 delete 단계의 기존 검산은 D의 식만 넓어지고 그대로다. UPDATE 행은 inline이라 entry ≥ 189 B이므로 `ROW_EDIT_CELLS` 87의 전제(§4.3 of DELETE)는 바뀌지 않는다.
 
+<a id="known-deviation-validate-capacity"></a>
+**알려진 편차 RUP-DEV01(2026-11-05 발견, 미수정).** A의 새 값 검사(`row/insert.rs`의 `encode_input`)는 UPDATE에도
+INSERT의 식 `L'+184 > leaf 여유`(D 없음)를 쓴다. 그래서 여유가 새 cell 전체보다 작은 leaf에서는 같은 크기·
+줄어드는 UPDATE와, 위 표의 `entries+max(0, C'−C)+D ≤ 16188`을 만족하는 커지는 UPDATE도 Reserve 전에
+`Stage::Validate` Capacity로 거절된다. 위 표의 규칙보다 엄격한 쪽이라 효과·복구의 안전에는 영향이 없고, 거절이
+더 많을 뿐이다. [자동 split](dev3-tree-smo.md#automatic-split)의 C 필요 검산은 이 표의 증가분 규칙을 쓰므로 이
+경우 `NotNeeded`로 원 실패를 남긴다. 수정은 값 검사가 대상의 옛 cell C를 알도록 validation lane context를
+넓히는 A·C 변경이며 별도 작업으로 한다(담당 A 값 검사·C preflight context, DEV3 08-4 일반 행 변경 전).
+
 <a id="previous-proof"></a>
 ### 4.4 previous root H의 증명
 

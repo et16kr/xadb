@@ -6,6 +6,9 @@ use crate::storage::{
     dirty_frame::{CompletedStructural, StructuralClaimKey, StructuralWriteTargets},
 };
 
+#[path = "structural_live.rs"]
+pub(in crate::storage) mod live;
+
 impl<'c, 's> GroupPayload<'c, 's> for PreparedStructural<'_, 'c, 's> {
     fn core(&self) -> &'c PageConcurrency<'s> {
         self.core
@@ -246,6 +249,26 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         private: &mut [u8; PRIVATE_BYTES],
         flusher: &mut RetentionFlusher<'_, 's, 'c, 'p, 'd, 'm, 'w, W>,
     ) -> Result<split_frame::Observation> {
+        self.structural_shell(owner, flusher, |writer, owner, flusher| {
+            writer.split_row_admitted(owner, table, target, private, flusher)
+        })
+    }
+
+    /// The one shell of a structural split call (`split_row`, and the live
+    /// split of a full leaf, dev3-tree-smo.md#automatic-split): guardless
+    /// health and origin, the pool and flusher binding, the retirement read
+    /// gate (owner Idle, no read operation) and the CatalogProgress
+    /// admission around `body`, both returned checked on every exit.
+    pub(super) fn structural_shell<'f, T>(
+        &mut self,
+        owner: &mut Owner<'c, 's>,
+        flusher: &mut RetentionFlusher<'f, 's, 'c, 'p, 'd, 'm, 'w, W>,
+        body: impl FnOnce(
+            &mut Self,
+            &mut Owner<'c, 's>,
+            &mut RetentionFlusher<'f, 's, 'c, 'p, 'd, 'm, 'w, W>,
+        ) -> Result<T>,
+    ) -> Result<T> {
         let storage = self.storage;
         let _unwind = storage.session_fence().unwind_guard();
         storage
@@ -293,9 +316,39 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             Ok(source) => source,
             Err(e) => return merge(Err(RetentionError::from(e)), reopen(gate)),
         };
-        let result = self.split_row_admitted(owner, table, target, private, flusher);
+        let result = body(self, owner, flusher);
         let returned = source.finish_checked().map_err(RetentionError::from);
         merge(merge(result, returned), reopen(gate))
+    }
+
+    /// The table's Job debt a split refuses Unchanged Unsupported: its
+    /// RootReserved Row root or a non-Free Catalog Job. The live split checks
+    /// it right after its need check as well
+    /// (dev3-tree-smo.md#automatic-split), so a row that needs no split keeps
+    /// its own failure and a split C would refuse reads no split set and
+    /// prepares nothing; `split_row_admitted` checks it again at its
+    /// prepared cut.
+    pub(super) fn check_split_debt(&self, table: ObjectHandle) -> Result<()> {
+        let storage = self.storage;
+        for bytes in self.control.jobs() {
+            use crate::storage::retention_page::row::{JobScope, JobState};
+            let job = crate::storage::retention_page::row::decode_job(
+                bytes,
+                storage.profile().spec().namespace,
+            )
+            .map_err(queue_error)?;
+            if job.object().is_some_and(|object| {
+                object.object == table.object && object.generation == table.generation
+            }) && (job.state() == JobState::RootReserved
+                || job.scope() == Some(JobScope::Catalog) && job.state() != JobState::Free)
+            {
+                return Err(unchanged(
+                    RetentionPhase::Prepare,
+                    RetentionCause::Unsupported,
+                ));
+            }
+        }
+        Ok(())
     }
 
     #[inline(never)]
@@ -315,27 +368,10 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         // is admitted: every current-leaf consumer routes its row
         // (dev3-tree-smo.md#current-leaf-consumers). A RootReserved Row root
         // is already refused globally by canonical preparation (all tables
-        // and scopes), since Forward writes its reserved pair[1] leaf. The
-        // check below additionally refuses any non-Free Catalog Job of the table,
-        // whose split-tree semantics are schedule 09/10's.
-        for bytes in self.control.jobs() {
-            use crate::storage::retention_page::row::{JobScope, JobState};
-            let job = crate::storage::retention_page::row::decode_job(
-                bytes,
-                storage.profile().spec().namespace,
-            )
-            .map_err(queue_error)?;
-            if job.object().is_some_and(|object| {
-                object.object == table.object && object.generation == table.generation
-            }) && (job.state() == JobState::RootReserved
-                || job.scope() == Some(JobScope::Catalog) && job.state() != JobState::Free)
-            {
-                return Err(unchanged(
-                    RetentionPhase::Prepare,
-                    RetentionCause::Unsupported,
-                ));
-            }
-        }
+        // and scopes), since Forward writes its reserved pair[1] leaf.
+        // `check_split_debt` additionally refuses any non-Free Catalog Job of
+        // the table, whose split-tree semantics are schedule 09/10's.
+        self.check_split_debt(table)?;
         let work = SystemWorkRef::new(
             storage.profile().spec().namespace,
             SystemWorkKind::StructuralChange,
@@ -718,21 +754,30 @@ pub(in super::super::super::super) struct SourceCensus {
     pub(in super::super::super::super) peak: usize,
 }
 
-/// Source-value phases, including the original gate/admission and all retained
-/// preparation/key/lease values. Physical buffers remain in the caller loan.
-pub(in super::super::super::super) fn source_census<W: WriterNamespace>() -> SourceCensus {
+/// The structural shell's own entry packet (`structural_shell`) without
+/// its result slots: the gate, the admission, the fences, the target and
+/// table, the borrowed arguments and the shell's scalar and check Results.
+/// `source_census` adds `split_row`'s three `Result<Observation>` slots; the
+/// live split (`live::source_bytes`) adds its own.
+pub(in super::super::super::super) fn shell_entry_bytes() -> usize {
     use std::mem::size_of;
-    type Outcome<'a> = (WalRequirement<'a>, CompletedStructural<'a, 'a>);
-    let entry = size_of::<crate::transaction::concurrency::TerminalReadGate<'_, '_>>()
+    size_of::<crate::transaction::concurrency::TerminalReadGate<'_, '_>>()
         + size_of::<source::OperationSourceAdmission<'_, '_, '_, '_>>()
         + 2 * size_of::<crate::storage::session_fence::UnwindFence<'_>>()
-        + 3 * size_of::<Result<split_frame::Observation>>()
         + size_of::<ObjectHandle>()
         + size_of::<PageRef>()
         + 24 * size_of::<&()>()
         + 16 * size_of::<usize>()
         + 4 * size_of::<Result<()>>()
-        + 3 * size_of::<RetentionError>();
+        + 3 * size_of::<RetentionError>()
+}
+
+/// Source-value phases, including the original gate/admission and all retained
+/// preparation/key/lease values. Physical buffers remain in the caller loan.
+pub(in super::super::super::super) fn source_census<W: WriterNamespace>() -> SourceCensus {
+    use std::mem::size_of;
+    type Outcome<'a> = (WalRequirement<'a>, CompletedStructural<'a, 'a>);
+    let entry = shell_entry_bytes() + 3 * size_of::<Result<split_frame::Observation>>();
     let owned = entry
         + size_of::<PreparedStructural<'_, '_, '_>>()
         + size_of::<StructuralAuthority<'_, '_, '_>>()
@@ -891,6 +936,96 @@ mod tests {
                 caller.metadata,
                 caller.whole
             );
+        }
+        inspect::<crate::storage::wal_io::plan4_test_support::Writer>("MEMORY");
+        inspect::<crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::native::Writer>("NATIVE_TYPE");
+    }
+
+    /// SPL-A (dev3-tree-smo.md#automatic-split): the trigger A matches
+    /// (`RetentionError::row_capacity`) is exactly `Unchanged(Prepare,
+    /// Capacity)`: no other phase, no CallerMustResolve and no frame
+    /// Capacity.
+    #[test]
+    fn spl_row_capacity_is_exactly_the_unchanged_prepare_capacity() {
+        use foundation::error::Effect;
+        let error = |phase, cause, effect| RetentionError {
+            phase,
+            cause,
+            effect,
+        };
+        assert!(
+            error(
+                RetentionPhase::Prepare,
+                RetentionCause::Capacity,
+                Effect::Unchanged
+            )
+            .row_capacity()
+        );
+        for other in [
+            error(
+                RetentionPhase::Prepare,
+                RetentionCause::Capacity,
+                Effect::CallerMustResolve,
+            ),
+            error(
+                RetentionPhase::Load,
+                RetentionCause::Capacity,
+                Effect::Unchanged,
+            ),
+            error(
+                RetentionPhase::Prepare,
+                RetentionCause::Exhausted,
+                Effect::Unchanged,
+            ),
+            error(
+                RetentionPhase::Prepare,
+                RetentionCause::Frame(dirty_frame::DirtyError {
+                    cause: dirty_frame::Cause::Capacity,
+                    effect: Effect::Unchanged,
+                }),
+                Effect::Unchanged,
+            ),
+        ] {
+            assert!(!other.row_capacity(), "{other:?}");
+        }
+    }
+
+    /// SPL-A08 (dev3-tree-smo.md#automatic-split), C's side: the live split
+    /// (`split_row_live`) under the one structural shell, its residency step
+    /// and the original split body each with the live entry's carriers,
+    /// fits the CatalogProgressCharge it reserves beside A's fixed caller
+    /// bound `ROW_SPLIT_CALLER_BYTES`, for either writer. Like the live Row
+    /// retirement it is checked by name and not folded into the charge or
+    /// `peak`, so neither changes.
+    #[test]
+    fn spl_a08_live_split_fits_the_progress_charge() {
+        fn inspect<W: WriterNamespace>(kind: &str) {
+            use crate::storage::wal_io::disk_api::ROW_SPLIT_CALLER_BYTES;
+            let actual = live::source_bytes::<W>();
+            let effect = source_census::<W>();
+            let charge = source::progress_charge_bytes::<W>();
+            println!(
+                "SPL_A08 {kind} {actual:?} effect_entry={} effect_peak={} caller={ROW_SPLIT_CALLER_BYTES} \
+                 charge={charge} room={}",
+                effect.entry,
+                effect.peak,
+                charge as i64 - (actual.peak + ROW_SPLIT_CALLER_BYTES) as i64
+            );
+            assert_eq!(ROW_SPLIT_CALLER_BYTES, 6144);
+            // The live entry's slots stand in for `split_row`'s three
+            // `Result<Observation>` over the same shell and body.
+            assert_eq!(
+                actual.effect + 3 * size_of::<Result<split_frame::Observation>>(),
+                effect.peak + actual.carriers
+            );
+            assert_eq!(
+                shell_entry_bytes() + 3 * size_of::<Result<split_frame::Observation>>(),
+                effect.entry
+            );
+            assert!(actual.residency > shell_entry_bytes() + actual.carriers);
+            assert_eq!(actual.peak, actual.residency.max(actual.effect));
+            assert!(actual.peak + ROW_SPLIT_CALLER_BYTES <= charge);
+            assert_eq!(charge, 44_304);
         }
         inspect::<crate::storage::wal_io::plan4_test_support::Writer>("MEMORY");
         inspect::<crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::native::Writer>("NATIVE_TYPE");

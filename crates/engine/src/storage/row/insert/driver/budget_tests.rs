@@ -115,7 +115,9 @@ fn f4_a_caller_budgets_native() {
 /// caller's term, against the same fixed ceilings (`live::autocommit_sites`,
 /// `live::explicit_sites`).
 fn executor(label: &str, kind: &str, refs: usize, census: live::ExecutorCensus, charge: usize) {
-    use crate::storage::{disk::ROW_PREFLIGHT_CALLER_BYTES, disk::ROW_WRITE_CALLER_BYTES};
+    use crate::storage::disk::{
+        ROW_PREFLIGHT_CALLER_BYTES, ROW_SPLIT_CALLER_BYTES, ROW_WRITE_CALLER_BYTES,
+    };
     let mut output = String::new();
     let (_, producer) = super::super::local_source_carrier_bytes();
     writeln!(
@@ -167,6 +169,7 @@ fn executor(label: &str, kind: &str, refs: usize, census: live::ExecutorCensus, 
                 "insert.preflight" | "delete.preflight" | "update.preflight" => {
                     ROW_PREFLIGHT_CALLER_BYTES
                 }
+                "insert.split" | "update.split" => ROW_SPLIT_CALLER_BYTES,
                 "insert.validate" | "update.validate" => continue,
                 "insert.forward" | "delete.forward" | "update.forward" => charge - producer,
                 _ => ROW_WRITE_CALLER_BYTES,
@@ -208,7 +211,7 @@ fn autocommit<W: WriterNamespace + 'static>(label: &str, kind: live::Kind) {
         .iter()
         .filter(|(name, ..)| name.starts_with(kind.sites()))
         .count();
-    assert_eq!(statement, if kind == live::Kind::Delete { 13 } else { 15 });
+    assert_eq!(statement, if kind == live::Kind::Delete { 13 } else { 19 });
     let name = match kind {
         live::Kind::Insert => "autocommit",
         live::Kind::Delete => "autocommit-delete",

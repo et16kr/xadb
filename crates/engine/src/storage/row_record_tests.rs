@@ -286,6 +286,21 @@ fn catalog_schema(bytes: &[u8]) -> RowSchemaInput<'_> {
     RowSchemaInput::Catalog(view)
 }
 
+/// SPL-A09's length (dev3-tree-smo.md#automatic-split): for values a schema
+/// accepts, `canonical_values_len` is the independent canonical literal's
+/// length, as `canonical_row_len_borrowed` counts it.
+#[test]
+fn spl_canonical_values_len_is_the_literal_length() {
+    for index in 0..10 {
+        let owned = values(index);
+        let input: Vec<_> = owned.iter().map(borrowed).collect();
+        assert_eq!(canonical_values_len(&input), literal(index).len());
+    }
+    let long = [0x5a; 2039];
+    assert_eq!(canonical_values_len(&[ValueRef::Binary(&long)]), 2048);
+    assert_eq!(canonical_values_len(&[]), 4);
+}
+
 #[test]
 fn borrowed_schema_and_values_match_independent_canonical_literals() {
     for index in 0..10 {

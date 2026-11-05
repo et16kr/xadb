@@ -27,6 +27,8 @@ mod read;
 mod recovery;
 #[path = "row/rollback.rs"]
 mod rollback;
+#[path = "row/split.rs"]
+mod split;
 #[path = "row/write.rs"]
 mod write;
 #[path = "row/write_operation.rs"]
@@ -49,6 +51,8 @@ pub(crate) use rollback::{
     PreparedRollbackTask, RollbackScope, RollbackStep, RowRollback, RowRollbackDone,
     RowRollbackTask,
 };
+pub(crate) use split::ROW_SPLIT_CALLER_BYTES;
+pub(in crate::storage) use split::RowSplitStep;
 pub(crate) use write::{
     PreflightRow, PreparedRow, ROW_PREFLIGHT_CALLER_BYTES, ROW_WRITE_CALLER_BYTES, ReservedRow,
     RowApplied, RowCancelled, RowDeleteStep, RowPreflightStep, row_write_charge,

@@ -114,11 +114,12 @@ mod row;
 #[allow(unused_imports)]
 pub(crate) use row::{
     CheckedTable, MissingRowEvidence, PreflightRow, PreparedRollbackTask, PreparedRow,
-    ROW_PREFLIGHT_CALLER_BYTES, ROW_WRITE_CALLER_BYTES, ReservedRow, RollbackScope, RollbackStep,
-    RowApplied, RowCancelled, RowCandidate, RowCommitObservation, RowCopyObservation,
-    RowDeleteStep, RowMutationObservation, RowOwnedError, RowPreflightOperation, RowPreflightStep,
-    RowPreparedOperation, RowReadOperation, RowReservedOperation, RowRollback, RowRollbackDone,
-    RowRollbackTask, RowSearchPage, RowValueBefore, row_write_charge,
+    ROW_PREFLIGHT_CALLER_BYTES, ROW_SPLIT_CALLER_BYTES, ROW_WRITE_CALLER_BYTES, ReservedRow,
+    RollbackScope, RollbackStep, RowApplied, RowCancelled, RowCandidate, RowCommitObservation,
+    RowCopyObservation, RowDeleteStep, RowMutationObservation, RowOwnedError,
+    RowPreflightOperation, RowPreflightStep, RowPreparedOperation, RowReadOperation,
+    RowReservedOperation, RowRollback, RowRollbackDone, RowRollbackTask, RowSearchPage,
+    RowValueBefore, row_write_charge,
 };
 #[allow(unused_imports)]
 pub(in crate::storage) use row::{PreparedRecoveredClr, RecoveredClr, RecoveredClrStep};
@@ -151,6 +152,9 @@ pub(crate) use create_pair::catalog_live::{
     shared_create::{CatalogCancelled, CatalogCreateError, CatalogCreated},
 };
 pub(in crate::storage) use create_pair::{CatalogRetirementRejected, RowRetirementRejected};
+// The live split step `MutationPort::split_row_live` returns
+// (dev3-tree-smo.md#automatic-split), for A's row loop.
+pub(in crate::storage) use row::RowSplitStep;
 
 /// No Clone/Copy and no raw constructor. This borrows immutable private
 /// operation bytes, not replay/control/page guards or a second storage owner.
@@ -356,6 +360,14 @@ impl RetentionError {
                 RetentionCause::Visibility(error)
                     if matches!(error.cause, VisibilityCause::Busy)
             )
+    }
+    /// An unchanged `Prepare(Capacity)` refusal: a Row Reserve's space or WAL
+    /// room check refused it (dev3-tree-smo.md#automatic-split). The caller
+    /// may ask C's live split, whose need check tells the two apart.
+    pub(crate) fn row_capacity(&self) -> bool {
+        self.effect == Effect::Unchanged
+            && self.phase == RetentionPhase::Prepare
+            && matches!(self.cause, RetentionCause::Capacity)
     }
 }
 
@@ -1091,6 +1103,12 @@ impl RowInputPlan {
             schema_epoch,
             digest,
         }
+    }
+
+    /// The row value's encoded length, which A keeps for the live split's
+    /// need check (dev3-tree-smo.md#automatic-split); C rechecks it.
+    pub(in crate::storage) fn encoded_len(&self) -> usize {
+        self.encoded_len
     }
 }
 #[cfg(test)]
