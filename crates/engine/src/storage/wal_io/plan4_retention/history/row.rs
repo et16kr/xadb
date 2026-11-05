@@ -1080,7 +1080,8 @@ pub(in super::super) fn table_source_bytes() -> usize {
         + 16 * size_of::<&[u8]>()
         + 16 * size_of::<u64>();
     selected
-        + (current_leaf_bytes() - transition::tree_source_bytes()
+        + (current_leaf_frame_bytes()
+            + tree_page::search::frame_source_bytes()
             + transition::tree_source_bytes()
                 .max(crate::storage::semantic_catalog::catalog_read_codec_bytes()))
 }
@@ -1089,24 +1090,19 @@ pub(in super::super) fn table_source_bytes() -> usize {
 /// the anchor's identity, root and the key beside the bounded immutable
 /// search, whose visited path is one fixed array.
 pub(in super::super) fn current_leaf_bytes() -> usize {
-    use crate::storage::tree_page::{SearchPosition, TreeEntry, TreeError, TreePageView};
+    current_leaf_frame_bytes()
+        + tree_page::search::frame_source_bytes()
+        + transition::tree_source_bytes()
+}
+
+/// Only the observation/anchor frame belongs to history. Traversal and
+/// codec inventories are owned by tree_page, including helper evolution.
+fn current_leaf_frame_bytes() -> usize {
     use std::mem::size_of;
-    let (checked_key, checked_result, _, _) = tree_page::catalog_source_carrier_bytes();
-    let own = size_of::<(&[u8], Profile, ObjectHandle, PageRef, RowId)>()
+    size_of::<(&[u8], Profile, ObjectHandle, PageRef, RowId)>()
         + 2 * size_of::<ObservationResult<PageRef>>()
         + size_of::<PageIdentity>()
         + size_of::<anchor::AnchorRoot>()
         + 2 * size_of::<std::result::Result<anchor::TreeAnchor, crate::storage::page::PageError>>()
-        + size_of::<[u8; 8]>();
-    let path = size_of::<[Option<PageRef>; 16]>()
-        + 3 * size_of::<TreeExpectation>()
-        + 4 * size_of::<Option<&[u8]>>()
-        + 2 * size_of::<TreePageView<'_>>()
-        + 2 * size_of::<std::result::Result<TreePageView<'_>, TreeError>>()
-        + 4 * checked_key
-        + 2 * checked_result
-        + 3 * size_of::<SearchPosition>()
-        + 4 * size_of::<TreeEntry<'_>>()
-        + 16 * size_of::<usize>();
-    own + path + transition::tree_source_bytes()
+        + size_of::<[u8; 8]>()
 }

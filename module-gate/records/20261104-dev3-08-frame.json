@@ -244,6 +244,24 @@
       },
       "log": "module-gate/evidence/dev3-08-1-pr53-review/review.md",
       "log_sha256": "eee50d2c439a5c2d2eacbc063e2a2a55708ad1e5697591070afdead7bb04adb1"
+    },
+    {
+      "id": "pr53-route-refactor-20261105",
+      "class": "D2",
+      "scopes": [
+        "common",
+        "joint"
+      ],
+      "author": "/root",
+      "reviewer": "/root/independent_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/tree_page/search/tests.rs": "2113745a12294eef46d13faf2315166d34e2388c",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/split_rows.rs": "efb44ba9665d52032c63b9fb8321b36818057760",
+        "devdoc/contracts/dev3-tree-smo.md": "5db50935899a2a5817baf3ac78254241e639db90"
+      },
+      "log": "module-gate/evidence/dev3-08-1-pr53-refactor/review.md (sha256 0ad5f1b1e0fa3ebebf8f30142e989d67f3a5c09953c8a1b7f913961b1ef9c865)"
     }
   ]
 }

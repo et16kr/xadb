@@ -134,6 +134,234 @@ fn ids(rows: &[(RowId, i64)]) -> Vec<u64> {
     rows.iter().map(|(row, _)| row.get()).collect()
 }
 
+/// SPL-J07: a real level-two tree with only one replaceable tree frame.
+/// Allocator + anchor + leaf fit, but a root-restarting walk cannot keep
+/// both internal ancestors resident. Pins belong to a separate owner.
+#[test]
+fn spl_j07_cold_deep_route_progresses_with_one_tree_frame() {
+    use super::super::super::super::row_preflight::with_pins;
+    case_within("SPL-J07", std::time::Duration::from_secs(900), || {
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 12,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let _ = state;
+                let (row_status, row_undo) =
+                    create_table(live, owner, flusher, status, undo, private, true);
+                retire_create!(live, owner, private);
+                let tree: Vec<_> = (1..12)
+                    .filter_map(|at| live.row_test_resident_target(at).ok())
+                    .filter(|target| {
+                        target.identity().owner.get() == 6
+                            && matches!(target.kind(), PageKind::TreeAnchor | PageKind::RowLeaf)
+                    })
+                    .collect();
+                assert_eq!(tree.len(), 2);
+                let mut unrelated = vec![*status, *undo, row_status, row_undo.unwrap()];
+                for _ in 0..3 {
+                    unrelated.push(system_init(live, owner, flusher, true));
+                }
+                unrelated.push(live.target(Plan4Page::CatalogAnchor).unwrap());
+                unrelated.push(live.target(Plan4Page::CatalogLeaf).unwrap());
+                // Legacy Begin requires its already-provisioned lifecycle
+                // targets resident. INITs may have displaced them in 12 frames.
+                let mut prepared = Vec::new();
+                for target in [
+                    live.target(Plan4Page::Root).unwrap(),
+                    live.target(Plan4Page::Jobs { index: 0 }).unwrap(),
+                    row_status,
+                    live.target(Plan4Page::CatalogAnchor).unwrap(),
+                    live.target(Plan4Page::CatalogLeaf).unwrap(),
+                ]
+                .into_iter()
+                .chain(tree)
+                {
+                    let at = match resident_index(live, target.identity().page.page_no) {
+                        Some(at) => at,
+                        None => {
+                            let at = (1..12).find(|at| !prepared.contains(at)).unwrap();
+                            let victim = live.row_test_resident_target(at).unwrap();
+                            drive_flush(live, flusher, Some(&victim));
+                            live.load_into(at, &target).unwrap();
+                            at
+                        }
+                    };
+                    prepared.push(at);
+                }
+                let expected = {
+                    let (mut writer, reader, mut flush) = live.split();
+                    let (out, slots) = autocommit!(
+                        &mut writer,
+                        owner,
+                        flush,
+                        flusher,
+                        reader,
+                        reader_private,
+                        &row_status,
+                        private,
+                        6,
+                        ints(&[7, 8, 9, 10])
+                    );
+                    assert_eq!(committed(out), (2, 4));
+                    let rows = applied(slots, &[7, 8, 9, 10]);
+                    assert_eq!(
+                        drains!(&mut writer, owner, flush, flusher, private),
+                        [drain(21, true)]
+                    );
+                    // Split admission expects resident sources and clean INIT
+                    // victims. Keep the tree dirty so clean non-tree frames
+                    // supply the six new pages without evicting earlier splits.
+                    for at in 1..12 {
+                        let target = writer.test_structural_target_at(at);
+                        if !matches!(target.kind(), PageKind::RowLeaf | PageKind::RowInternal) {
+                            flush_target!(flush, flusher, target);
+                        }
+                    }
+                    let root = writer.catalog_test_with_pool(leaves)[0].0;
+                    split!(writer, owner, flush, private, root, Split::RootSplit);
+                    let children = writer.catalog_test_with_pool(leaves);
+                    assert_eq!(shape(&children).0, [2, 2]);
+                    for (child, _) in children {
+                        split!(writer, owner, flush, private, child, Split::ChildSplit);
+                    }
+                    let root = writer.catalog_test_with_pool(|pool| {
+                        (0..12)
+                            .filter_map(|at| pool.target_request(at).ok())
+                            .find(|r| r.kind == PageKind::RowInternal && r.level == 1)
+                            .unwrap()
+                            .identity
+                            .page
+                    });
+                    split!(writer, owner, flush, private, root, Split::RootSplit);
+                    writer.catalog_test_with_pool(|pool| {
+                        assert!(
+                            (0..12)
+                                .filter_map(|at| pool.target_request(at).ok())
+                                .any(|r| r.kind == PageKind::RowInternal && r.level == 2)
+                        );
+                    });
+                    rows
+                };
+                // Flush actual pages before replacing their frames. Keep
+                // the table anchor and fill nine other frames with unrelated
+                // original targets; no fabricated identity or tree image.
+                for at in 1..12 {
+                    if let Ok(target) = live.row_test_resident_target(at) {
+                        drive_flush(live, flusher, Some(&target));
+                    }
+                }
+                let anchor = (1..12)
+                    .find(|at| {
+                        let r = live.catalog_test_pool().target_request(*at).unwrap();
+                        r.kind == PageKind::TreeAnchor && r.identity.owner.get() == 6
+                    })
+                    .unwrap();
+                let mut pinned = Vec::new();
+                for target in unrelated {
+                    let at = match resident_index(live, target.identity().page.page_no) {
+                        Some(at) => at,
+                        None => {
+                            let at = (1..12)
+                                .find(|at| *at != anchor && !pinned.contains(at))
+                                .unwrap();
+                            live.load_into(at, &target).unwrap();
+                            at
+                        }
+                    };
+                    pinned.push(at);
+                }
+                assert_eq!(pinned.len(), 9);
+                assert!(pinned.iter().enumerate().all(|(at, index)| {
+                    *index != 0 && *index != anchor && !pinned[..at].contains(index)
+                }));
+                let replaceable = (1..12)
+                    .find(|at| *at != anchor && !pinned.contains(at))
+                    .unwrap();
+                let jobs = live.target(Plan4Page::Jobs { index: 1 }).unwrap();
+                match resident_index(live, jobs.identity().page.page_no) {
+                    Some(at) => assert_eq!(at, replaceable),
+                    None => {
+                        live.load_into(replaceable, &jobs).unwrap();
+                    }
+                }
+                assert!((1..12).all(|at| !matches!(
+                    live.catalog_test_pool().target_request(at).unwrap().kind,
+                    PageKind::RowInternal | PageKind::RowLeaf
+                )));
+                let (mut writer, reader, mut flush) = live.split();
+                let mut holder = core.try_owner(OwnerRole::Foreground).unwrap();
+                with_pins(reader.catalog_test_pool(), &mut holder, &pinned, || {
+                    let read = writer
+                        .begin_transaction(
+                            owner,
+                            TransactionOptions {
+                                read_only: true,
+                                isolation: IsolationLevel::ReadCommitted,
+                            },
+                            reader_private,
+                        )
+                        .unwrap();
+                    let view = writer.begin_statement(owner, &read).unwrap();
+                    let table = issue_table!(reader, owner, view, reader_private, flush, flusher);
+                    for (row, value) in &expected {
+                        assert_eq!(
+                            point!(reader, owner, reader_private, &view, &table, *row),
+                            Some(*value)
+                        );
+                    }
+                    let mut cursor = open_cursor_live(&view, &table, None, None).unwrap();
+                    let mut residency = Plan4ResidencyCursor::new();
+                    let mut output = [0u8; 64];
+                    let mut got = Vec::new();
+                    let mut ended = false;
+                    for _ in 0..5 {
+                        match next_live(
+                            &mut cursor,
+                            ReadCall {
+                                port: &reader,
+                                owner,
+                                private: reader_private,
+                                residency: &mut residency,
+                            },
+                            &mut output,
+                            &Cancellation::default(),
+                        )
+                        .unwrap()
+                        {
+                            ReadStep::Ready(CursorStep::Row(copy)) => {
+                                got.push((copy.version().row.get(), int_of(&output, copy.len())));
+                            }
+                            ReadStep::Ready(CursorStep::End) => {
+                                ended = true;
+                                break;
+                            }
+                            ReadStep::FlushRequired { .. } => {
+                                panic!("all eligible frames were flushed")
+                            }
+                        }
+                    }
+                    cursor.close().unwrap();
+                    assert!(ended, "four singleton leaves must reach End in five steps");
+                    assert_eq!(
+                        got,
+                        expected
+                            .iter()
+                            .map(|(row, value)| (row.get(), *value))
+                            .collect::<Vec<_>>()
+                    );
+                    assert!(writer.finish_statement(owner, view).is_ok());
+                    assert!(writer.finish_read_only(owner, read).is_ok());
+                });
+                holder.check_idle().unwrap();
+                owner.check_idle().unwrap();
+                assert_eq!(reader.catalog_test_source_used(), 0);
+                assert!(!fence.is_fenced());
+            }
+        );
+    });
+}
+
 /// SPL-J06: commit before RootSplit, then restart without live cleanup.
 /// RootSplit moves the upper half into a new leaf, making those Jobs'
 /// pair[1] hints stale. Exercise InsertPrune, DeletePrune and UpdatePrune

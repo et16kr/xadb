@@ -5,7 +5,8 @@
 //! every return boundary (`returned`). A `max` joins completed calls; their
 //! still-live parent values are added outside it. Page/status codecs are the
 //! Catalog scope2 census terms over the same codecs; the Undo codec and the
-//! tree terms repeat its `undo_codec`/`tree_codec`/`leaf_edit` inventories, so
+//! leaf-edit terms repeat its `undo_codec`/`leaf_edit` inventories; both owners
+//! delegate tree decode/search terms to tree_page::codec_source_bytes, so
 //! neither owner charges a smaller codec (the Undo one without the
 //! CatalogValue before parse a Row target cannot reach, see `undo_row_codec`).
 //! `slack` is the repo's standard scalar allowance
@@ -125,22 +126,9 @@ pub(super) fn undo_row_codec() -> usize {
         + canonical_codec()
 }
 
-/// Tree page decode, `validate_cells`, search and entry parsing (the
-/// `semantic_catalog::resources::tree_codec` inventory).
+/// Tree-owned decode/search inventory with the shared page envelope cost.
 pub(super) fn tree_codec() -> usize {
-    let (key, key_result, layout, layout_result) = tree_page::catalog_source_carrier_bytes();
-    page_codec()
-        + 3 * key // lower_bound query/current; validate_cells previous
-        + 2 * key_result
-        + layout
-        + layout_result
-        + returned::<TreePageView<'_>, TreeError>()
-        + returned::<TreeEntry<'_>, TreeError>()
-        + returned::<SearchPosition, TreeError>()
-        + size_of::<(TreeExpectation, PageHeader, Option<PageRef>, Option<&[u8]>)>()
-        + size_of::<([usize; 8], bool, u8)>()
-        + size_of::<(&[u8], &[u8], &[u8], &[u8])>()
-        + 3 * size_of::<CodecResult<(), TreeError>>()
+    tree_page::codec_source_bytes(page_codec())
 }
 
 /// `prepare_leaf_edit` and the plan's encode (`resources::leaf_edit`). The

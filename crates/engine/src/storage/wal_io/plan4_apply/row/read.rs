@@ -65,27 +65,16 @@ pub(crate) struct RowReadOperation<
     progress: ReadOperationAdmission<'c, 's>,
 }
 
-/// One page step's route (dev3-tree-smo.md#current-leaf-consumers): the
-/// table's current RowLeaf for the step's key, the anchor revision it was
-/// routed at and the key bounds its parents give it (none for a level0 root).
+/// Copied progress through the current Row tree. The operation read gate
+/// stabilizes its anchor revision across LOADs; no ancestor page is retained.
+/// Only level zero may be issued as a RowSearchPage.
 #[derive(Clone, Copy)]
-struct LeafRoute {
-    leaf: crate::storage::page::PageRef,
+struct RowRoute {
+    page: crate::storage::page::PageRef,
     revision: u64,
     bounds: tree_page::search::RowRouteBounds,
+    level: u8,
 }
-
-/// A walk of the key's path over resident pages: the RowLeaf it reaches, or
-/// the first RowInternal page (page, level) of the path that is not resident.
-enum RouteNext {
-    Leaf(LeafRoute),
-    Missing(crate::storage::page::PageRef, u8),
-}
-
-/// The LOAD steps one route may take before it refuses: a path's pages are
-/// made resident top-down, and only a page evicted again by a later LOAD of
-/// the same walk is loaded twice.
-const ROUTE_LOAD_STEPS: u8 = 32;
 
 /// The validated anchor/leaf/allocation set. Its guards reborrow the Owner for
 /// `'g` only; the other fields are disjoint borrows of the operation.
@@ -602,55 +591,62 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                 .map_err(|e| frame(RetentionPhase::Source, e)),
         )
     }
-    /// `key`'s path from the anchor's current root over resident pages,
-    /// each under its own brief read: the RowLeaf it reaches with the bounds
-    /// its parents give it, or the first RowInternal that is not resident.
+    /// Copy the root while its brief read is held. The operation's read
+    /// gate keeps the revision stable after the guard is released.
     #[inline(never)]
-    fn route_resident(
+    fn route_root(
         &mut self,
         table: &CheckedTable<'c, 's>,
         anchor_request: TargetRequest,
-        key: RowId,
-    ) -> Result<RouteNext> {
+    ) -> Result<RowRoute> {
         let root = self.anchor_root(table, anchor_request)?;
-        let key = key.get().to_be_bytes();
-        let mut route = LeafRoute {
-            leaf: root.page,
+        Ok(RowRoute {
+            page: root.page,
             revision: root.revision,
             bounds: tree_page::search::RowRouteBounds::default(),
-        };
-        let mut level = root.level;
-        while level != 0 {
-            let internal = TargetRequest {
-                identity: PageIdentity {
-                    page: route.leaf,
-                    ..table.anchor
-                },
-                kind: PageKind::RowInternal,
-                level,
-            };
-            match self.route_internal(internal, &key, &mut route.bounds)? {
-                Some(child) => {
-                    route.leaf = child.identity.page;
-                    level = child.level;
-                }
-                None => return Ok(RouteNext::Missing(route.leaf, level)),
-            }
-        }
-        Ok(RouteNext::Leaf(route))
+            level: root.level,
+        })
     }
-    /// The anchor, then `key`'s route and the RowLeaf it reaches, each page
-    /// through the one LOAD body protecting the anchor. The route is walked
-    /// again over resident pages after each RowInternal LOAD, so no route
-    /// value is held across a LOAD; levels strictly decrease, so a walk
-    /// reads at most the root's level of internal pages.
+    /// Consume one resident internal page, then return only copied progress.
+    /// route_internal checks exact identity and a strict one-level decrease.
+    #[inline(never)]
+    fn advance_route(
+        &mut self,
+        table: &CheckedTable<'c, 's>,
+        key: RowId,
+        mut route: RowRoute,
+    ) -> Result<RowRoute> {
+        let child = self
+            .route_internal(
+                TargetRequest {
+                    identity: PageIdentity {
+                        page: route.page,
+                        ..table.anchor
+                    },
+                    kind: PageKind::RowInternal,
+                    level: route.level,
+                },
+                &key.get().to_be_bytes(),
+                &mut route.bounds,
+            )?
+            // Another reader may evict this clean page after our LOAD,
+            // before the brief pin. Cache contention is retryable.
+            .ok_or_else(|| unchanged(RetentionPhase::Load, RetentionCause::Busy))?;
+        route.page = child.identity.page;
+        route.level = child.level;
+        Ok(route)
+    }
+    /// Load the anchor and walk each path page once. Copied bounds/revision
+    /// survive eviction of ancestors, so allocator + anchor + one replaceable
+    /// tree frame suffice. Levels strictly decrease from at most fifteen:
+    /// there are at most sixteen tree LOADs, including the final leaf.
     #[inline(never)]
     fn load_leaf(
         &mut self,
         table: &CheckedTable<'c, 's>,
         residency: &mut Plan4ResidencyCursor,
         key: RowId,
-    ) -> Result<ReadStep<LeafRoute>> {
+    ) -> Result<ReadStep<RowRoute>> {
         let anchor_request = TargetRequest {
             identity: table.anchor,
             kind: PageKind::TreeAnchor,
@@ -663,33 +659,21 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             self.stopped = true;
             return Ok(ReadStep::FlushRequired { target });
         }
-        let mut steps = 0u8;
+        let mut route = self.route_root(table, anchor_request)?;
         loop {
-            let route = self.route_resident(table, anchor_request, key)?;
-            if steps == ROUTE_LOAD_STEPS {
-                return Err(unchanged(RetentionPhase::Load, RetentionCause::Busy));
-            }
-            steps += 1;
-            // The request is the LOAD's own argument, built in place.
             match self.backend.load_lookup_target(
                 self.owner,
-                match route {
-                    RouteNext::Leaf(LeafRoute { leaf, .. }) => TargetRequest {
-                        identity: PageIdentity {
-                            page: leaf,
-                            ..table.anchor
-                        },
-                        kind: PageKind::RowLeaf,
-                        level: 0,
+                TargetRequest {
+                    identity: PageIdentity {
+                        page: route.page,
+                        ..table.anchor
                     },
-                    RouteNext::Missing(page, level) => TargetRequest {
-                        identity: PageIdentity {
-                            page,
-                            ..table.anchor
-                        },
-                        kind: PageKind::RowInternal,
-                        level,
+                    kind: if route.level == 0 {
+                        PageKind::RowLeaf
+                    } else {
+                        PageKind::RowInternal
                     },
+                    level: route.level,
                 },
                 residency,
                 std::slice::from_ref(&anchor_request),
@@ -701,21 +685,22 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                 }
                 RetentionResidencyStep::Resident { .. } => {}
             }
-            if let RouteNext::Leaf(route) = route {
+            if route.level == 0 {
                 return Ok(ReadStep::Ready(route));
             }
+            route = self.advance_route(table, key, route)?;
         }
     }
     #[inline(never)]
     fn issue_page<'g>(
         &'g mut self,
         table: &CheckedTable<'c, 's>,
-        route: LeafRoute,
+        route: RowRoute,
         key: RowId,
     ) -> Result<ReadStep<RowSearchPage<'g, 'b, 'a, 's, 'c, 'p, 'd>>> {
         let leaf = TargetRequest {
             identity: PageIdentity {
-                page: route.leaf,
+                page: route.page,
                 ..table.anchor
             },
             kind: PageKind::RowLeaf,
@@ -1441,7 +1426,7 @@ impl<W: WriterNamespace> ReadPort<'_, '_, '_, '_, '_, '_, '_, '_, W> {
             + n::<Result<()>>()
             + n::<Result<ReadStep<()>>>()
             + n::<RowId>()
-            + n::<Result<ReadStep<LeafRoute>>>()
+            + n::<Result<ReadStep<RowRoute>>>()
             + n::<Result<ReadStep<RowSearchPage<'_, '_, '_, '_, '_, '_, '_>>>>();
         let catalog = 3 * r
             + n::<Result<()>>()
@@ -1449,24 +1434,17 @@ impl<W: WriterNamespace> ReadPort<'_, '_, '_, '_, '_, '_, '_, '_, W> {
             + n::<std::ops::Range<usize>>()
             + n::<usize>()
             + n::<Result<RetentionResidencyStep>>();
-        // load_leaf (dev3-tree-smo.md#current-leaf-consumers): the key, the
-        // anchor request and its LOAD step, the step count, the walk's
-        // Result, and the route page's LOAD step. The route page's request is
-        // the LOAD's own argument.
+        // load_leaf retains one copied route/result across LOAD. Root and
+        // advance return the same carrier in sequential calls. The LOAD's
+        // request is its own argument; no page guard crosses that call.
         let leaf = 3 * r
             + n::<RowId>()
             + n::<TargetRequest>()
             + n::<Result<RetentionResidencyStep>>()
-            + n::<u8>()
-            + n::<Result<RouteNext>>()
+            + n::<Result<RowRoute>>()
             + n::<Result<RetentionResidencyStep>>();
-        // route_resident: its arguments, the anchor root and its Result, the
-        // key bytes, the route and level, the internal request and the step
-        // Result, beside `anchor_root` or `route_internal`. Each of these is
-        // its own values (the allocator request, the guard and its Result,
-        // the membership and decode or route results) beside a two-target
-        // read, the membership or the decode/`route_row_step`. No LOAD runs
-        // under it.
+        // The two brief read helpers nest under route_root/advance_route,
+        // never under LOAD. Account their guard, membership and codec paths.
         let read = |own: usize| {
             own + n::<TargetRequest>()
                 + n::<ReadTargets<'_, '_, '_, '_, '_, '_, 2>>()
@@ -1491,10 +1469,9 @@ impl<W: WriterNamespace> ReadPort<'_, '_, '_, '_, '_, '_, '_, '_, W> {
                             + n::<usize>(),
                     )
                     // `route_row_step` with the tree codec it nests.
-                    .max(
-                        tree_page::search::route_step_source_bytes()
-                            + crate::storage::semantic_row::transition::tree_source_bytes(),
-                    )
+                    .max(tree_page::search::route_step_source_bytes(
+                        crate::storage::semantic_catalog::page_read_codec_bytes(),
+                    ))
                     .max(
                         2 * n::<anchor::TreeAnchor>()
                             + 2 * n::<
@@ -1519,18 +1496,23 @@ impl<W: WriterNamespace> ReadPort<'_, '_, '_, '_, '_, '_, '_, '_, W> {
                 + 2 * n::<anchor::AnchorRoot>()
                 + 2 * n::<Result<anchor::AnchorRoot>>(),
         );
-        let route = 3 * r
+        let route_root = 2 * r
             + n::<TargetRequest>()
-            + n::<RowId>()
             + n::<anchor::AnchorRoot>()
             + 2 * n::<Result<anchor::AnchorRoot>>()
-            + n::<[u8; 8]>()
-            + n::<LeafRoute>()
-            + n::<u8>()
+            + n::<Result<RowRoute>>()
+            + root;
+        let advance = 2 * r
+            + n::<RowId>()
+            + n::<RowRoute>()
             + n::<TargetRequest>()
+            + n::<[u8; 8]>()
+            + n::<TreeExpectation>()
             + 2 * n::<Result<Option<TreeExpectation>>>()
-            + n::<Result<RouteNext>>()
-            + internal.max(root);
+            + n::<Result<TreeExpectation>>()
+            + n::<Result<RowRoute>>()
+            + internal;
+        let route = route_root.max(advance);
         [
             page,
             catalog,

@@ -337,6 +337,37 @@ fn immutable_tree_search_bounds_height_and_rejects_bad_input_before_loading() {
         .unwrap();
         assert_eq!(loads, 16);
         assert_eq!(found.header().identity.page, reference(115));
+        if internal == PageKind::RowInternal {
+            // A live walk retains only copied bounds. Check every supported
+            // Row height against the authored decreasing-level path.
+            for height in 0..16u8 {
+                let mut request = expected(
+                    if height == 0 { leaf } else { internal },
+                    0,
+                    height,
+                    115 - u64::from(height),
+                );
+                let mut bounds = RowRouteBounds::default();
+                for remaining in (0..=height).rev() {
+                    assert_eq!(request.level, remaining);
+                    assert_eq!(request.identity.page, reference(115 - u64::from(remaining)));
+                    let child = route_row_step(
+                        &images[&request.identity.page.page_no],
+                        request,
+                        &1u64.to_be_bytes(),
+                        &mut bounds,
+                    )
+                    .unwrap();
+                    if remaining == 0 {
+                        assert_eq!(child, None);
+                    } else {
+                        request = child.unwrap();
+                    }
+                }
+                assert_eq!(bounds.lower, None);
+                assert_eq!(bounds.upper, (height > 0).then(|| 986u64.to_be_bytes()));
+            }
+        }
         for (root, query) in [
             (expected(internal, arity, 16, 100), key(arity, 1)),
             (expected(internal, arity, 15, 100), key(arity, 0)),

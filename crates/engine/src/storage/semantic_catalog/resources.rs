@@ -50,7 +50,7 @@ use crate::{
             TransactionStatusCell, TxnRef, VersionStamp,
         },
         tree_page::{
-            self, SearchPosition, TreeEntry, TreeError, TreeExpectation, TreePageView,
+            self, SearchPosition, TreeEntry, TreeError, TreePageView,
             edit::{LeafEdit, LeafEditError, LeafEditPlan},
         },
         undo_record::{
@@ -167,18 +167,7 @@ fn catalog_codec() -> usize {
 }
 
 fn tree_codec() -> usize {
-    let (key, key_result, layout, layout_result) = tree_page::catalog_source_carrier_bytes();
-    page_codec()
-        + 3 * key // lower_bound query/current; validate_cells previous
-        + 2 * key_result
-        + layout + layout_result
-        + returned::<TreePageView<'_>, TreeError>()
-        + returned::<TreeEntry<'_>, TreeError>()
-        + returned::<SearchPosition, TreeError>()
-        + size_of::<(TreeExpectation, PageHeader, Option<PageRef>, Option<&[u8]>)>()
-        + size_of::<([usize; 8], bool, u8)>() // count/capacity/slot/cost/entry_bytes/left/right/middle
-        + size_of::<(&[u8], &[u8], &[u8], &[u8])>()
-        + 3 * size_of::<CodecResult<(), TreeError>>()
+    tree_page::codec_source_bytes(page_codec())
 }
 
 fn leaf_edit() -> usize {

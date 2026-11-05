@@ -3048,6 +3048,30 @@
       },
       "log": "module-gate/evidence/dev3-08-1-pr53-review/review.md",
       "log_sha256": "eee50d2c439a5c2d2eacbc063e2a2a55708ad1e5697591070afdead7bb04adb1"
+    },
+    {
+      "id": "pr53-route-refactor-20261105",
+      "class": "D2",
+      "scopes": [
+        "common",
+        "joint"
+      ],
+      "author": "/root",
+      "reviewer": "/root/independent_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/semantic_row/transition/source.rs": "50b56ac03470b12ac9cb384d41889652f2f8e704",
+        "crates/engine/src/storage/tree_page/search.rs": "80ff87958aae2953546f846272f816286faf05de",
+        "crates/engine/src/storage/tree_page/search/tests.rs": "2113745a12294eef46d13faf2315166d34e2388c",
+        "crates/engine/src/storage/wal_io/plan4_apply/row/read.rs": "a0f7b356abfb4ee7c0386123c246eb0b2e7f7867",
+        "crates/engine/src/storage/wal_io/plan4_apply/row/read/census.rs": "0d7e49070199e4df317874dc202dbc57f10e3dec",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/split_rows.rs": "efb44ba9665d52032c63b9fb8321b36818057760",
+        "crates/engine/src/storage/wal_io/plan4_retention/history/row.rs": "39a5fae69de9b3190d4800b4c40bb1a3bdce44b6",
+        "crates/engine/src/storage/wal_io/plan4_retention/row_preflight.rs": "09d3b9704f49c249e675328dfd9246f7e888cbd9",
+        "devdoc/contracts/dev3-tree-smo.md": "5db50935899a2a5817baf3ac78254241e639db90"
+      },
+      "log": "module-gate/evidence/dev3-08-1-pr53-refactor/review.md (sha256 0ad5f1b1e0fa3ebebf8f30142e989d67f3a5c09953c8a1b7f913961b1ef9c865)"
     }
   ]
 }

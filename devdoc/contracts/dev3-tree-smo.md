@@ -900,7 +900,7 @@ key가 부모가 준 bounds 안인지 확인한 뒤 RowInternal이면 child와 �
 | C preflight (`row_preflight`) | `RowRouteCursor`로 anchor→RowInternal→leaf를 같은 residency 집합에 올리고 leaf를 source로 고정. 새 RowId는 가장 오른쪽 leaf로 route |
 | C rollback 선택·live cleanup (`row_rollback_select`, `row_start/retire`) | CLR/Prune 대상 행의 leaf를 route. Prune의 route callee는 LOAD 단계와 max |
 | recovery (`recovery_leaf`, `history/row::current_leaf`) | canonical arena에서 같은 route. `validate_live`는 pool route와 arena leaf를 대조 |
-| B point/cursor (`plan4_apply/row/read.rs`) | anchor LOAD 뒤 resident page만 따라 route하고, 비거주 RowInternal을 만나면 그 page를 LOAD한 뒤 처음부터 다시 걷는 restartable walk(LOAD 최대32단계). leaf 발급 시 anchor revision과 leaf의 bounds를 다시 확인. cursor는 leaf에 다음 key가 없으면 그 leaf의 upper bound로 다음 leaf를 route |
+| B point/cursor (`plan4_apply/row/read.rs`) | anchor LOAD 뒤 page·level·revision·복사 bounds를 유지하며 각 RowInternal→leaf를 한 번씩 LOAD한다. level은 매 단계 정확히1 감소하므로 tree LOAD는 최대16회이고 allocator+anchor+교체 가능한 tree frame1개로 진행한다. LOAD와 pin 사이 다른 reader가 page를 퇴거시키면 무효과 Busy로 재시도한다. leaf 발급 시 anchor revision과 leaf의 bounds를 다시 확인. cursor는 leaf에 다음 key가 없으면 그 leaf의 upper bound로 다음 leaf를 route |
 | lookup LOAD membership | RowInternal은 level1..15, 그 밖의 target은 level0. Index/Catalog internal은 일정09/10 |
 
 B 읽기 operation의 `close_reads_for_retirement` gate가 split과 한 operation을 배타로 두므로,
@@ -915,9 +915,11 @@ Retained·Releasing·terminal Row 부채는 허용한다. 선택 가중치는 �
 restore bytes를 그 행의 쪽에 둔다. 이전 문구의 “대상 table만”은 이 전역 준비 조건을
 누락한 설명 오류이며, 이번 정정은 admission 동작이나 기존 Reserved 배제 계약을 바꾸지 않는다.
 
-**source census.** 원 charge 44,304B는 바꾸지 않았다. B cursor.row_load는 34,573/34,586B(여유13B),
-point.row_load 34,381B다. B route 단계(row_route)는 `route_row_step`이 품는 tree codec까지 세어
-cursor 7,737B, point 7,545B다. C preflight는 여유184B, reserve는 여유499B 안이다. 예약 D는
+**source census.** tree codec 산정은 `tree_page::codec_source_bytes(page_codec)`가 소유하며 Row/Catalog는 page envelope 비용만 전달한다. immutable/live route는 typed 비교·상속 bounds·child 선택의 순수 helper를 공유한다. search frame은 search 모듈이 소유하고 history는 anchor/관측 frame만 더한다. 기존 보수적 search 항목은 유지하고 새 helper·복사 bounds 비용을 추가했다.
+
+원 charge 44,304B는 바꾸지 않았다. B cursor.row_load는 34,572/34,586B(여유14B),
+point.row_load 34,380B다. B route 단계(row_route)는 `route_row_step`이 품는 tree codec까지 세어
+cursor 8,307B, point 8,115B다. C preflight는 여유184B, reserve는 여유499B 안이다. 예약 D는
 `typed_leaf` 아래에서 돌지 않으므로 transition의 leaf·delete·reserve 단계는 D를 단계 frame의
 callee로 센다. D와 그 Corrupt 판정은 이제 각 단계의 view decode 뒤(`prepare_leaf`에서는 lsn·pair 판정 뒤,
 `prepare_value`에서는 `value_source` 뒤)에 오지만 출력 전이다. 두 결함이 겹칠 때 보고하는 오류 종류만
@@ -933,6 +935,7 @@ stack/RSS 측정이 아니다.
 | SPL-J03 | 7..10 commit·RootSplit 뒤 DELETE 7·UPDATE 10→100 상태에서 오른쪽 leaf ChildSplit(1/1), rollback이 둘을 복원(drain9). 같은 변경의 Commit q3, DeletePrune·UpdatePrune(drain11), INSERT q4는 가장 오른쪽 leaf. 재시작 q4가8,9,100,11을 읽음 |
 | SPL-J04 | split tree에서 승자 DELETE 8 Commit(정리 전)과 다른 Status의 패자 DELETE 7·UPDATE 9·INSERT 11, 그 옆 ChildSplit 뒤 파일 채취. 재시작이 승자 Prune과 패자 CLR3을 route한 leaf에서 실행, READY q3·Row Job0, cursor가7,9,10을 읽음 |
 | SPL-J05 | table의 CREATE Catalog Job이 남아 있으면 split은 무효과 Unsupported. WAL·bank·Jobs 불변, fence 없음, B가 네 행을 읽음 |
+| SPL-J07 | 실제 RootSplit→두 ChildSplit→internal RootSplit으로 level2·singleton leaf4를 만든다. 12-frame pool에서 별도 owner가 unrelated page9개를 pin하고 tree를 cold로 만든 뒤 point4개와 cursor의 End까지 검증 |
 | SPL-J06 | Commit 이후 RootSplit으로 오른쪽 leaf로 이동한 INSERT, DELETE·UPDATE의 정리 전 파일로 재시작. Prune 세 종류가 현재 leaf를 찾아 READY q2/q3·CLR0·Row Job0, 같은 파일의 두 번째 재진입도 같은 행을 읽음 |
 | SPL-B02 | 잘못된 leaf upper bound가 route key보다 작거나 같으면 InvalidProgress. page/operation 해제, output·cursor progress 불변 |
 | SPL-B01 | B driver의 literal 두 leaf(10,20 / 30,40, separator 30). cursor가 20 뒤 왼쪽 leaf의 upper bound로 오른쪽 leaf를 route해 30·40을 돌려주고 끝남. 범위가 separator에서 끝나면 오른쪽 leaf를 route하지 않고 끝남 |

@@ -287,6 +287,29 @@ pub(crate) fn catalog_source_carrier_bytes() -> (usize, usize, usize, usize) {
     )
 }
 
+/// Tree decode/search/entry source values. The caller supplies the page
+/// envelope codec's complete cost; tree-owned carriers are counted here so
+/// Catalog and Row cannot silently diverge. No semantic-layer dependency.
+pub(crate) fn codec_source_bytes(page_codec: usize) -> usize {
+    use std::mem::size_of;
+    let (key, key_result, layout, layout_result) = catalog_source_carrier_bytes();
+    page_codec
+        + 3 * key
+        + 2 * key_result
+        + layout
+        + layout_result
+        + size_of::<TreePageView<'_>>()
+        + size_of::<Result<TreePageView<'_>, TreeError>>()
+        + size_of::<TreeEntry<'_>>()
+        + size_of::<Result<TreeEntry<'_>, TreeError>>()
+        + size_of::<SearchPosition>()
+        + size_of::<Result<SearchPosition, TreeError>>()
+        + size_of::<(TreeExpectation, PageHeader, Option<PageRef>, Option<&[u8]>)>()
+        + size_of::<([usize; 8], bool, u8)>()
+        + size_of::<(&[u8], &[u8], &[u8], &[u8])>()
+        + 3 * size_of::<Result<(), TreeError>>()
+}
+
 /// Validate concrete cells before encode, decode publication, or split. No
 /// scratch proportional to page size or entry count is hidden in this routine.
 fn validate_cells<'a>(

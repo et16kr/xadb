@@ -2185,8 +2185,7 @@ pub(in super::super::super) fn route_step_source_bytes() -> usize {
                 + 2 * size_of::<std::result::Result<Option<TreeExpectation>, tree_page::TreeError>>(
                 )
                 // `route_row_step` with the tree codec it nests.
-                + tree_page::search::route_step_source_bytes()
-                + row_group::tree_source_bytes(),
+                + tree_page::search::route_step_source_bytes(crate::storage::semantic_catalog::page_read_codec_bytes()),
         )
 }
 

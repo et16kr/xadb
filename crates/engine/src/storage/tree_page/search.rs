@@ -20,6 +20,8 @@ pub(crate) fn frame_source_bytes() -> usize {
         + 4 * size_of::<Result<TreeEntry<'_>, TreeError>>()
         + 2 * size_of::<SearchPosition>()
         + 32 * size_of::<usize>()
+        + size_of::<Result<Option<TreeExpectation>, TreeError>>()
+        + selection_source_bytes()
 }
 
 /// Follow the selected root to the leaf for `query`, checking each exact
@@ -48,44 +50,75 @@ pub(crate) fn find_leaf_in_images<'images>(
         }
         visited[depth] = Some(expected.identity.page);
         let view = decode_tree_page(image(expected)?, expected)?;
-        // Strict local order is established by the decoder. Its extrema
-        // therefore prove every key lies within the inherited subtree range.
-        if view.len() != 0 {
-            let first = checked_key(expected.kind, expected.arity, view.entry(0)?.key)?;
-            let last = checked_key(
-                expected.kind,
-                expected.arity,
-                view.entry(view.len() - 1)?.key,
-            )?;
-            if let Some(bound) = lower
-                && first.compare(checked_key(expected.kind, expected.arity, bound)?)
-                    == Ordering::Less
-            {
-                return Err(TreeError::Corrupt);
-            }
-            if let Some(bound) = upper
-                && last.compare(checked_key(expected.kind, expected.arity, bound)?)
-                    != Ordering::Less
-            {
-                return Err(TreeError::Corrupt);
-            }
+        match select_child(&view, query, &mut lower, &mut upper)? {
+            None => return Ok(view),
+            Some(child) => expected = child,
         }
-        if expected.level == 0 {
-            return Ok(view);
-        }
-        let at = view.lower_bound(query)?;
-        let child = at.index + usize::from(at.equal);
-        if child > 0 {
-            lower = Some(view.entry(child - 1)?.key);
-        }
-        if child < view.len() {
-            upper = Some(view.entry(child)?.key);
-        }
-        expected = view.child_expectation(child)?;
     }
     // Valid roots have level at most 15 and each exact child decreases it.
     // Reaching here cannot be accepted as a missing row.
     Err(TreeError::Corrupt)
+}
+
+/// Pure path policy shared by immutable images and the live one-page walk.
+/// Bounds borrow stable image bytes here; the live wrapper copies them before
+/// releasing its page. Comparisons remain family-aware, including Index keys.
+fn select_child<'a>(
+    view: &TreePageView<'a>,
+    query: &[u8],
+    lower: &mut Option<&'a [u8]>,
+    upper: &mut Option<&'a [u8]>,
+) -> Result<Option<TreeExpectation>, TreeError> {
+    let header = view.header();
+    // Strict local order is established by the decoder. Its extrema
+    // therefore prove every key lies within the inherited subtree range.
+    if view.len() != 0 {
+        let first = checked_key(header.kind, view.arity, view.entry(0)?.key)?;
+        let last = checked_key(header.kind, view.arity, view.entry(view.len() - 1)?.key)?;
+        if let Some(bound) = *lower
+            && first.compare(checked_key(header.kind, view.arity, bound)?) == Ordering::Less
+        {
+            return Err(TreeError::Corrupt);
+        }
+        if let Some(bound) = *upper
+            && last.compare(checked_key(header.kind, view.arity, bound)?) != Ordering::Less
+        {
+            return Err(TreeError::Corrupt);
+        }
+    }
+    if header.level == 0 {
+        return Ok(None);
+    }
+    let at = view.lower_bound(query)?;
+    let child = at.index + usize::from(at.equal);
+    if child > 0 {
+        *lower = Some(view.entry(child - 1)?.key);
+    }
+    if child < view.len() {
+        *upper = Some(view.entry(child)?.key);
+    }
+    view.child_expectation(child).map(Some)
+}
+
+/// The pure policy frame; nested entry/key/search codecs belong to the
+/// tree codec inventory. Includes both return boundaries conservatively.
+fn selection_source_bytes() -> usize {
+    use std::mem::size_of;
+    size_of::<(
+        &TreePageView<'_>,
+        &[u8],
+        &mut Option<&[u8]>,
+        &mut Option<&[u8]>,
+    )>() + size_of::<PageHeader>()
+        + 2 * size_of::<CheckedKey<'_>>()
+        + 4 * size_of::<Result<CheckedKey<'_>, TreeError>>()
+        + 4 * size_of::<Result<TreeEntry<'_>, TreeError>>()
+        + size_of::<SearchPosition>()
+        + size_of::<Result<SearchPosition, TreeError>>()
+        + size_of::<usize>()
+        + 2 * size_of::<Option<&[u8]>>()
+        + size_of::<Result<TreeExpectation, TreeError>>()
+        + size_of::<Result<Option<TreeExpectation>, TreeError>>()
 }
 
 /// The inherited key range of one Row path step: the separators of the
@@ -113,47 +146,33 @@ pub(crate) fn route_row_step(
         return Err(TreeError::InvalidInput);
     }
     let view = decode_tree_page(bytes, expected)?;
-    if view.len() != 0 {
-        let first = view.entry(0)?.key;
-        let last = view.entry(view.len() - 1)?.key;
-        if bounds.lower.is_some_and(|bound| first < bound.as_slice())
-            || bounds.upper.is_some_and(|bound| last >= bound.as_slice())
-        {
-            return Err(TreeError::Corrupt);
-        }
-    }
-    if expected.level == 0 {
-        return Ok(None);
-    }
-    let at = view.lower_bound(key)?;
-    let child = at.index + usize::from(at.equal);
+    let previous = *bounds;
+    let mut lower = previous.lower.as_ref().map(|key| key.as_slice());
+    let mut upper = previous.upper.as_ref().map(|key| key.as_slice());
+    let child = select_child(&view, key, &mut lower, &mut upper)?;
     let copy = |key: &[u8]| -> Result<[u8; 8], TreeError> {
         key.try_into().map_err(|_| TreeError::Corrupt)
     };
-    if child > 0 {
-        bounds.lower = Some(copy(view.entry(child - 1)?.key)?);
-    }
-    if child < view.len() {
-        bounds.upper = Some(copy(view.entry(child)?.key)?);
-    }
-    view.child_expectation(child).map(Some)
+    bounds.lower = lower.map(copy).transpose()?;
+    bounds.upper = upper.map(copy).transpose()?;
+    Ok(child)
 }
 
-/// `route_row_step`'s own values. Its page decode, `entry`, `lower_bound` and
-/// `child_expectation` are tree-codec calls nested under this frame; this
-/// module has no codec census, so every caller adds the tree codec
-/// (`transition::tree_source_bytes`) to this value.
-pub(crate) fn route_step_source_bytes() -> usize {
+/// Complete one-page route cost, including the pure policy and nested
+/// tree codec. Only the page envelope codec is supplied by the caller.
+pub(crate) fn route_step_source_bytes(page_codec: usize) -> usize {
     use std::mem::size_of;
     size_of::<(&[u8], TreeExpectation, &[u8; 8], &mut RowRouteBounds)>()
         + size_of::<TreePageView<'_>>()
         + 2 * size_of::<Result<TreePageView<'_>, TreeError>>()
-        + 3 * size_of::<&[u8]>()
-        + 3 * size_of::<Result<TreeEntry<'_>, TreeError>>()
-        + size_of::<Result<SearchPosition, TreeError>>()
-        + 2 * size_of::<usize>()
-        + 2 * size_of::<Result<[u8; 8], TreeError>>()
-        + size_of::<Result<Option<TreeExpectation>, TreeError>>()
+        + size_of::<RowRouteBounds>()
+        + 2 * size_of::<Option<&[u8]>>()
+        + size_of::<Option<TreeExpectation>>()
+        + 2 * size_of::<Result<Option<TreeExpectation>, TreeError>>()
+        + 2 * size_of::<Option<Result<[u8; 8], TreeError>>>()
+        + 2 * size_of::<Result<Option<[u8; 8]>, TreeError>>()
+        + selection_source_bytes()
+        + super::codec_source_bytes(page_codec)
 }
 
 #[cfg(test)]
