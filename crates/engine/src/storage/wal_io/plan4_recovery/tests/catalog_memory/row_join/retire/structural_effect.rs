@@ -309,28 +309,13 @@ fn structural_effect_original_root_then_child_and_target_debt_refusal() {
                     [7, 8, 9, 10]
                 );
                 let target = writer.catalog_test_with_pool(source);
-                let active_wal = files(state).0;
-                let active_bank = writer.recovery_test_bank().to_vec();
-                let active_jobs = writer.catalog_test_jobs().to_vec();
-                let rejected = writer.split_row(owner, object(), target, private, &mut flush);
-                assert!(
-                    matches!(rejected, Err(ref e) if e.effect == Effect::Unchanged && matches!(e.cause, RetentionCause::Unsupported)),
-                    "active target must be refused"
-                );
-                assert_eq!(files(state).0, active_wal);
-                assert_eq!(writer.recovery_test_bank(), active_bank);
-                assert_eq!(writer.catalog_test_jobs().as_slice(), active_jobs);
-                assert!(!fence.is_fenced());
-                owner.check_idle().unwrap();
+                // The table's Row debt past its Forward is admitted
+                // (dev3-tree-smo.md#current-leaf-consumers); SPL-J01..J04
+                // split beside it. This case splits the clean leaf.
                 assert_eq!(
                     a_commit!(&mut writer, owner, flush, flusher, tx, private),
                     2
                 );
-                let committed_wal = files(state).0;
-                assert!(
-                    matches!(writer.split_row(owner, object(), target, private, &mut flush), Err(e) if e.effect == Effect::Unchanged && matches!(e.cause, RetentionCause::Unsupported))
-                );
-                assert_eq!(files(state).0, committed_wal);
                 assert_eq!(
                     drained!(&mut writer, owner, flush, flusher, private),
                     done(21, 0)
