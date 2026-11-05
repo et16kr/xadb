@@ -83,10 +83,12 @@ fn identity() -> PageIdentity {
 
 /// Only the unchanged generic envelope/CRC encoder wraps the literal cells.
 fn leaf_page(name: &str) -> Vec<u8> {
-    let cells: Vec<Vec<u8>> = fixture(name)
-        .split(' ')
-        .map(|cell| hex(fixture(cell)))
-        .collect();
+    leaf_of(fixture(name))
+}
+
+/// A RowLeaf of the named literal cells, in the given order.
+fn leaf_of(names: &str) -> Vec<u8> {
+    let cells: Vec<Vec<u8>> = names.split(' ').map(|cell| hex(fixture(cell))).collect();
     let mut metadata = [0; 32];
     metadata[..6].copy_from_slice(b"XBT1\x01\x00");
     let mut slots: Vec<&[u8]> = vec![&metadata];
@@ -1678,6 +1680,82 @@ fn mcb00_d12_cleanup_failure_replaces_flush_and_scan_errors_keep_progress() {
 
 /// MCB00-D13 reports the concrete B frames consumed by the S5 C join. The
 /// combined Full assertions live with the actual C memory/native census.
+/// SPL-B01 (dev3-tree-smo.md#current-leaf-consumers): a split tree's two
+/// leaves, 10 and 20 below the separator 30 and 30 and 40 at or above it.
+/// After 20 the left leaf has no next key, so the cursor routes the next leaf
+/// at that leaf's upper bound and returns 30 there; 40 routes to the right
+/// leaf at once, which ends the scan with no upper bound. A range ending at
+/// the separator ends at the left leaf without routing the right one.
+#[test]
+fn spl_b01_cursor_crosses_split_leaves_at_the_upper_bound() {
+    let left = leaf_of("r10 r20");
+    let right = leaf_of("r30 r40");
+    let log = RefCell::new(Vec::new());
+    let none = Cancellation::default();
+    let view = LiteralView::new(10, None);
+    let table = LiteralTable::default();
+    let source = || {
+        LiteralSource::new(&left, &log)
+            .with_right(30, &right)
+            .with_status(20, committed(8))
+    };
+    let mut output = [FILL; 16];
+    let mut cursor = RowCursor::open(&view, &table, None, None).unwrap();
+    let copy = returned(advance(&mut cursor, source(), &mut output, &none));
+    assert_eq!((copy.version.row, copy.len), (row(20), 13));
+    assert_eq!(
+        log.take(),
+        examined_then(&[
+            Page,
+            Leaf,
+            Capture(20),
+            Status(20),
+            CopyOut(20),
+            Release(20),
+            Finish
+        ])
+    );
+    // The left leaf has nothing after 20: its upper bound 30 routes the right.
+    let copy = returned(advance(&mut cursor, source(), &mut output, &none));
+    assert_eq!((copy.version.row, copy.len), (row(30), 13));
+    assert_eq!(output[..13], V300);
+    assert_eq!(
+        log.take(),
+        [
+            Page,
+            Leaf,
+            ReleasePage,
+            Page,
+            Leaf,
+            Capture(30),
+            CopyOut(30),
+            Release(30),
+            Finish
+        ]
+    );
+    let copy = returned(advance(&mut cursor, source(), &mut output, &none));
+    assert_eq!((copy.version.row, copy.len), (row(40), 13));
+    assert_eq!(output[..13], V400);
+    assert_eq!(
+        log.take(),
+        [Page, Leaf, Capture(40), CopyOut(40), Release(40), Finish]
+    );
+    end(advance(&mut cursor, source(), &mut output, &none));
+    assert_eq!(log.take(), [Page, Leaf, ReleasePage, Finish]);
+    assert_eq!(progress(&cursor), (Some(40), Some(40)));
+    cursor.close().unwrap();
+
+    // [start, 30): the left leaf's upper bound is the range end.
+    let mut bounded = RowCursor::open(&view, &table, None, Some(row(30))).unwrap();
+    let copy = returned(advance(&mut bounded, source(), &mut output, &none));
+    assert_eq!(copy.version.row, row(20));
+    log.take();
+    end(advance(&mut bounded, source(), &mut output, &none));
+    assert_eq!(log.take(), [Page, Leaf, ReleasePage, Finish]);
+    assert_eq!(progress(&bounded), (Some(20), Some(20)));
+    bounded.close().unwrap();
+}
+
 #[test]
 fn mcb00_d13_memory_call_inventory() {
     type W = crate::storage::wal_io::plan4_test_support::Writer;

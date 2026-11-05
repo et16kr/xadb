@@ -139,7 +139,10 @@ pub(crate) fn route_row_step(
     view.child_expectation(child).map(Some)
 }
 
-/// `route_row_step`'s own values beside one tree decode.
+/// `route_row_step`'s own values. Its page decode, `entry`, `lower_bound` and
+/// `child_expectation` are tree-codec calls nested under this frame; this
+/// module has no codec census, so every caller adds the tree codec
+/// (`transition::tree_source_bytes`) to this value.
 pub(crate) fn route_step_source_bytes() -> usize {
     use std::mem::size_of;
     size_of::<(&[u8], TreeExpectation, &[u8; 8], &mut RowRouteBounds)>()

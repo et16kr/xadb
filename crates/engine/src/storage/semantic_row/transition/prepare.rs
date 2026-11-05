@@ -232,8 +232,31 @@ struct LeafSource<'a> {
     expected: TreeExpectation,
     schema: RowSchemaInput<'a>,
     before: &'a [u8; PAGE_BYTES],
-    /// D of the leaf reservation (dev3-row-delete.md#leaf-reservation).
-    reserved: usize,
+    /// The typed entries' bytes (`typed_leaf`), which the leaf reservation
+    /// bounds (`leaf_reserved!`).
+    used: usize,
+}
+/// D of the leaf reservation (dev3-row-delete.md#leaf-reservation) over a
+/// leaf step's decoded `view` of `source`: `cells::leaf_reservation` over the
+/// original bank counts only the Retained roots whose RowId the leaf holds
+/// (dev3-tree-smo.md#current-leaf-consumers). The reservation holds before
+/// every edit: the typed entries leave at least D of the capacity, which also
+/// keeps `ROW_EDIT_CELLS` the edit scratch bound (#leaf-reservation). Each
+/// leaf step expands this right after its own view decode, so D runs as a
+/// callee of the step's frame and never under `typed_leaf`'s.
+macro_rules! leaf_reserved {
+    ($inputs:expr, $table:expr, $source:expr, $view:expr) => {{
+        let reserved = cells::leaf_reservation(
+            $inputs.jobs,
+            $inputs.profile.spec().namespace,
+            $table,
+            $view,
+        )?;
+        if $source.used + reserved > tree_page::TREE_ENTRY_CAPACITY {
+            return Err(Error::Corrupt);
+        }
+        reserved
+    }};
 }
 /// The Job's current RowLeaf (dev3-tree-smo.md#current-leaf-consumers). Its
 /// Reserve wrote the then current leaf as the pair[1] hint. No structural
@@ -250,13 +273,11 @@ fn leaf_source<'a>(inputs: &Inputs<'a>, job: JobView<'_>, forward: bool) -> Resu
 }
 /// The anchor's RowLeaf before image with every row typed by the schema: an
 /// inline row, or a delete's tombstone (`Transaction` stamp with its U,
-/// dev3-row-delete.md#tombstone). The leaf reservation holds before every
-/// edit: its entries leave at least `reserved` (D, `cells::leaf_reservation`
-/// over the original bank, which each leaf step computes first) of the
-/// capacity, which also keeps `ROW_EDIT_CELLS` the edit scratch bound
-/// (#leaf-reservation). D counts only the Retained roots whose RowId is in
-/// this leaf (dev3-tree-smo.md#current-leaf-consumers); one leaf holds them
-/// all in a single-leaf tree, so its value there is unchanged.
+/// dev3-row-delete.md#tombstone), with the entries' bytes that the leaf
+/// reservation bounds. Each leaf step then takes D over its decoded view
+/// (`leaf_reserved!`); D counts only the Retained roots whose RowId is
+/// in this leaf (dev3-tree-smo.md#current-leaf-consumers), and one leaf holds
+/// them all in a single-leaf tree, so its value there is unchanged.
 fn typed_leaf<'a>(
     inputs: &Inputs<'a>,
     table: super::TableSource<'a>,
@@ -302,15 +323,11 @@ fn typed_leaf<'a>(
         // Entry cost: the 12-byte cell head, the record and its 4-byte slot.
         used += value.len() + 16;
     }
-    let reserved = cells::leaf_reservation(inputs.jobs, namespace, table.handle, &view)?;
-    if used + reserved > tree_page::TREE_ENTRY_CAPACITY {
-        return Err(Error::Corrupt);
-    }
     Ok(LeafSource {
         expected,
         schema: table.schema,
         before,
-        reserved,
+        used,
     })
 }
 /// RowReserve's leaf proof (consumers.md:73, :282): the stable RowLeaf types
@@ -327,13 +344,14 @@ fn reserve_leaf(
     let source = typed_leaf(inputs, table, leaf)?;
     let key = row.get().to_be_bytes();
     let view = tree_page::decode_tree_page(source.before, source.expected)?;
+    let reserved = leaf_reserved!(inputs, table.handle, source, &view);
     let cell = tree_page::encode_leaf_cell(PageKind::RowLeaf, 0, &key, record, scratch)?;
     let mut refs: [&[u8]; ROW_EDIT_CELLS] = [&[]; ROW_EDIT_CELLS];
     let plan = view
         .prepare_leaf_edit(edit::LeafEdit::Insert(cell), &mut refs)
         .map_err(cells::edit_error)?;
     // No split, and the leaf reservation still holds after the new row.
-    require(plan.entry_bytes() + source.reserved <= tree_page::TREE_ENTRY_CAPACITY)
+    require(plan.entry_bytes() + reserved <= tree_page::TREE_ENTRY_CAPACITY)
 }
 /// The table's current RowLeaf (dev3-tree-smo.md#current-leaf-consumers): the
 /// stable anchor's level0 root, or in a split tree the leaf the caller routed
@@ -433,6 +451,7 @@ fn prepare_leaf<'a>(
     let row = job.row_id().ok_or(Error::IdentityMismatch)?;
     let key = row.get().to_be_bytes();
     let view = tree_page::decode_tree_page(source.before, source.expected)?;
+    let reserved = leaf_reserved!(inputs, table, source, &view);
     let position = view.lower_bound(&key)?;
     let slot = (position.index + 1) as u16;
     let missing = cells::projection(table, row, None)?;
@@ -452,7 +471,7 @@ fn prepare_leaf<'a>(
                 .prepare_leaf_edit(edit::LeafEdit::Insert(cell), &mut refs)
                 .map_err(cells::edit_error)?;
             // Reserve proved the fit under the leaf reservation; it holds still.
-            require(plan.entry_bytes() + source.reserved <= tree_page::TREE_ENTRY_CAPACITY)?;
+            require(plan.entry_bytes() + reserved <= tree_page::TREE_ENTRY_CAPACITY)?;
             out.leaf = Some((LeafEdit::Insert(cell), source.expected, source.schema));
             (None, Some(slot), missing, *job.projection_digest())
         }
@@ -600,6 +619,7 @@ fn reserve_target(
     let row = version.row;
     let source = typed_leaf(inputs, table, leaf)?;
     let view = tree_page::decode_tree_page(source.before, source.expected)?;
+    let reserved = leaf_reserved!(inputs, table.handle, source, &view);
     let key = row.get().to_be_bytes();
     let position = view.lower_bound(&key)?;
     same(position.equal)?;
@@ -648,8 +668,7 @@ fn reserve_target(
             .prepare_leaf_edit(edit::LeafEdit::Replace(cell), &mut refs)
             .map_err(cells::edit_error)?;
         require(
-            !plan.needs_split()
-                && plan.entry_bytes() + source.reserved <= tree_page::TREE_ENTRY_CAPACITY,
+            !plan.needs_split() && plan.entry_bytes() + reserved <= tree_page::TREE_ENTRY_CAPACITY,
         )?;
         // A's value must make the cell C' the update names. An adopted Job's
         // placeholder is C' − 12 by construction (above), so for it this
@@ -708,7 +727,8 @@ fn prepare_value<'a>(
     // D after this step (#leaf-reservation): a Forward's root joins D with its
     // restore bytes, a CLR's or Prune's root leaves it. D is this leaf's.
     let source = value_source(inputs, job, actor, forward)?;
-    let reserved = source.leaf.reserved;
+    let table = job.object().ok_or(Error::IdentityMismatch)?;
+    let reserved = value_reserved(inputs, table, &source.leaf)?;
     let room = if forward {
         reserved.checked_add(job.restore_bytes())
     } else {
@@ -846,6 +866,20 @@ fn value_source<'a>(
         before,
         row,
     })
+}
+
+/// D of the leaf reservation for `prepare_value` (`leaf_reserved!` over the
+/// typed leaf's view, decoded here again): its own frame beside
+/// `value_source`, which has already returned, so D never runs under
+/// `value_source`'s frame (dev3-tree-smo.md#current-leaf-consumers).
+#[inline(never)]
+fn value_reserved(
+    inputs: &Inputs<'_>,
+    table: foundation::identity::ObjectHandle,
+    source: &LeafSource<'_>,
+) -> Result<usize> {
+    let view = tree_page::decode_tree_page(source.before, source.expected)?;
+    Ok(leaf_reserved!(inputs, table, source, &view))
 }
 
 /// UpdateForward's new value: the canonical bytes of A's new row cell

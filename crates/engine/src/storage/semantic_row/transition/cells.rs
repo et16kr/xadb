@@ -499,9 +499,9 @@ pub(super) fn delete_material<'a>(
 /// D of the leaf reservation (dev3-row-delete.md#leaf-reservation, widened
 /// by dev3-row-update.md#leaf-reservation): the bytes that the Retained roots
 /// of `table`, of every actor, must be able to restore without a split, each
-/// its `JobView::restore_bytes` (DELETE `C-180`, UPDATE `max(0, C-C')`).
-/// D of one RowLeaf: the restore bytes of `table`'s Retained roots whose RowId
-/// is in `leaf` (dev3-tree-smo.md#current-leaf-consumers). A Retained INSERT
+/// its `JobView::restore_bytes` (DELETE `C-180`, UPDATE `max(0, C-C')`),
+/// counting only the roots whose RowId is in `leaf`, the caller's decoded
+/// current RowLeaf (dev3-tree-smo.md#current-leaf-consumers). A Retained INSERT
 /// root restores nothing, and a Retained DELETE or UPDATE root's row (its
 /// tombstone or new row) stays in its current leaf, so a single-leaf tree
 /// keeps the whole-table sum. Only a Row-scope root restores bytes, and it

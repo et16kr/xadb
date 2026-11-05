@@ -840,7 +840,7 @@ decoder/registry/대기 호출이 함께 살아 있는 값을 계산하고 원 m
 
 | ID | 고정 경계와 판정 |
 | --- | --- |
-| SMO-E01 | 실제 원 writer에서 committed/pruned4행의 RootSplit, 이어2행 leaf의 ChildSplit. 각5page와1/2 INIT·bank/XOI·DPT·등록·두 leaf 행 분포를 검산하고 후속 canonical replay 수락. 대상 table의 Active·Commit 후 미정리 Job은 effect 전 무효과 거절 |
+| SMO-E01 | 실제 원 writer에서 committed/pruned4행의 RootSplit, 이어2행 leaf의 ChildSplit. 각5page와1/2 INIT·bank/XOI·DPT·등록·두 leaf 행 분포를 검산하고 후속 canonical replay 수락. (대상 table의 Active·Commit 후 미정리 Job 거절은 [current-leaf 소비자](#current-leaf-consumers)의 admission으로 대체됐다) |
 | SMO-E02 | 선택 victim stamp/generation 변경은 claim 전 무효과 거절. 기존 대상 before stamp/bytes는 whole5 close 뒤 재검산하며 그때 처음 발견한 차이는 checked release→prestage cancel로 반환. 실제 cancel은 generation tombstone을 보존하고 stale key 재사용을 거절 |
 | SMO-E03 | 원 flush의 진행 중 capture/selected DWB 또는 다른 binding·generation: claim 전 거절. RAM pin0만으로 lease를 발급하지 않음 |
 | SMO-E04 | enter_stage 직후 원 WAL Unchanged Capacity: stage rejection proof·checked release·cancel, WAL/control 불변 및 후속 재진입 성공 |
@@ -894,7 +894,7 @@ key가 부모가 준 bounds 안인지 확인한 뒤 RowInternal이면 child와 �
 | 소비자 | 일반화 |
 | --- | --- |
 | transition `table_leaf`/`leaf_source` | level0이면 anchor root, split tree이면 호출자가 route해 공급한 leaf image(anchor·root와 다른 table-owned dynamic page). Forward만 pair[1]과 같아야 함 |
-| 예약 D (`leaf_reservation`) | 그 leaf에 RowId가 있는 table의 Retained root restore bytes 합. restore bytes가 0인 root(INSERT, 다른 scope의 root)는 조회하지 않음. 단일 leaf tree에서는 기존 table 합과 같음 |
+| 예약 D (`leaf_reservation`) | 그 leaf에 RowId가 있는 table의 Retained root restore bytes 합. restore bytes가 0인 root(INSERT, 다른 scope의 root)는 조회하지 않음. 단일 leaf tree에서는 기존 table 합과 같음. 각 leaf 단계가 `typed_leaf` 뒤 자기 view decode 옆에서 계산하고(`leaf_reserved!`), DELETE·UPDATE의 `prepare_value`는 `value_source`가 돌아온 뒤 자기 never-inline frame(`value_reserved`)에서 계산 |
 | A 그룹 관측 (`row/insert/group.rs`) | level0이면 root가 그 leaf, split tree이면 C가 같은 cut에서 route해 공급한 leaf(root·anchor와 다름). Forward만 pair[1] 일치 |
 | C preflight (`row_preflight`) | `RowRouteCursor`로 anchor→RowInternal→leaf를 같은 residency 집합에 올리고 leaf를 source로 고정. 새 RowId는 가장 오른쪽 leaf로 route |
 | C rollback 선택·live cleanup (`row_rollback_select`, `row_start/retire`) | CLR/Prune 대상 행의 leaf를 route. Prune의 route callee는 LOAD 단계와 max |
@@ -911,10 +911,13 @@ key로 다시 route한다. 이것은 SMO를 건너는 cursor/locator 인수(일�
 기존대로 각 Retained root의 restore bytes를 그 행의 쪽에 둔다.
 
 **source census.** 원 charge 44,304B는 바꾸지 않았다. B cursor.row_load는 34,573/34,586B(여유13B),
-point.row_load 34,381B다. B route 단계(row_route)는 7,536B다. C preflight는 여유184B 안이다.
-S1B Row arm frame은 scope4 structural arm 26,420B가 기존 phase 최대보다 커서 그 값으로 고정했다.
-`check`는 structural bank 관측과 ATT/Job scan을 각자 never-inline frame으로 나눴다. 모두
-source-value 회계이며 compiler stack/RSS 측정이 아니다.
+point.row_load 34,381B다. B route 단계(row_route)는 `route_row_step`이 품는 tree codec까지 세어
+cursor 7,737B, point 7,545B다. C preflight는 여유184B, reserve는 여유499B 안이다. 예약 D는
+`typed_leaf` 아래에서 돌지 않으므로 transition의 leaf·delete·reserve 단계는 D를 단계 frame의
+callee로 센다. S1B Row arm frame은 scope4 structural arm 26,420B가 기존 phase 최대보다 커서 그
+값으로 고정했다. `check`는 structural bank 관측과 ATT/Job scan을 각자 never-inline frame으로
+나눴고, 두 frame 모두 receiver·Profile·prefix 인자를 센다. 모두 source-value 회계이며 compiler
+stack/RSS 측정이 아니다.
 
 | ID | 고정 경계와 판정 |
 | --- | --- |
@@ -923,6 +926,7 @@ source-value 회계이며 compiler stack/RSS 측정이 아니다.
 | SPL-J03 | 7..10 commit·RootSplit 뒤 DELETE 7·UPDATE 10→100 상태에서 오른쪽 leaf ChildSplit(1/1), rollback이 둘을 복원(drain9). 같은 변경의 Commit q3, DeletePrune·UpdatePrune(drain11), INSERT q4는 가장 오른쪽 leaf. 재시작 q4가8,9,100,11을 읽음 |
 | SPL-J04 | split tree에서 승자 DELETE 8 Commit(정리 전)과 다른 Status의 패자 DELETE 7·UPDATE 9·INSERT 11, 그 옆 ChildSplit 뒤 파일 채취. 재시작이 승자 Prune과 패자 CLR3을 route한 leaf에서 실행, READY q3·Row Job0, cursor가7,9,10을 읽음 |
 | SPL-J05 | table의 CREATE Catalog Job이 남아 있으면 split은 무효과 Unsupported. WAL·bank·Jobs 불변, fence 없음, B가 네 행을 읽음 |
+| SPL-B01 | B driver의 literal 두 leaf(10,20 / 30,40, separator 30). cursor가 20 뒤 왼쪽 leaf의 upper bound로 오른쪽 leaf를 route해 30·40을 돌려주고 끝남. 범위가 separator에서 끝나면 오른쪽 leaf를 route하지 않고 끝남 |
 | SMO-E01 | 기존 Active·Commit 후 거절 단언을 위 admission에 맞춰 제거. 깨끗한 leaf의 Root→Child 효과 검산은 그대로 |
 
 이 절은08-1을 완료로 적립하지 않는다. 빈 leaf unlink·root shrink·retirement와 Capacity 시 A의

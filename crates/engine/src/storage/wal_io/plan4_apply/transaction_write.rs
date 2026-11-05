@@ -425,9 +425,15 @@ fn caller_bytes<O>() -> usize {
 
 pub(in super::super) fn source_bytes() -> usize {
     use std::mem::size_of;
-    // The ledger scan's own values (its descriptors, Jobs, scalars, the
-    // aggregate and the encoded references) beside one decoder at a time.
-    let scan = 2 * size_of::<obligation::DescriptorSpec>()
+    // The ledger scan's own values in its own frame (`control::catalog::scan`):
+    // the receiver, Profile and prefix arguments, its descriptors, Jobs,
+    // scalars, the aggregate and the encoded references, beside one decoder
+    // at a time. Its Result is the caller's `Result<(u64, u64)>` pair below.
+    let scan = size_of::<(
+        &(),
+        crate::storage::control::Profile,
+        crate::storage::wal_io::WalPrefix,
+    )>() + 2 * size_of::<obligation::DescriptorSpec>()
         + 2 * size_of::<Result<obligation::DescriptorSpec>>()
         + 3 * size_of::<queue::JobView<'_>>()
         + 2 * size_of::<Result<queue::JobView<'_>>>()

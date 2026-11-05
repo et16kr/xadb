@@ -1490,7 +1490,11 @@ impl<W: WriterNamespace> ReadPort<'_, '_, '_, '_, '_, '_, '_, '_, W> {
                             >()
                             + n::<usize>(),
                     )
-                    .max(tree_page::search::route_step_source_bytes())
+                    // `route_row_step` with the tree codec it nests.
+                    .max(
+                        tree_page::search::route_step_source_bytes()
+                            + crate::storage::semantic_row::transition::tree_source_bytes(),
+                    )
                     .max(
                         2 * n::<anchor::TreeAnchor>()
                             + 2 * n::<

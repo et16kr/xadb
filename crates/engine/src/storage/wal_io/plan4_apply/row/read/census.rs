@@ -73,7 +73,11 @@ pub(super) fn nonload<W: WriterNamespace>() -> [usize; 7] {
         + physical::catalog_source_bytes::<W>()
             .max(semantic_catalog::catalog_read_codec_bytes())
             .max(dirty_frame::target_set_call_bytes::<3>())
-            .max(crate::storage::tree_page::search::route_step_source_bytes());
+            // `route_row_step` with the tree codec it nests.
+            .max(
+                crate::storage::tree_page::search::route_step_source_bytes()
+                    + transition::tree_source_bytes(),
+            );
     // The schema and actual record views survive the pin registration. Count
     // both the capture_row tuple and its caller extraction conservatively.
     let capture = n::<RowSearchPage<'_, '_, '_, '_, '_, '_, '_>>()
