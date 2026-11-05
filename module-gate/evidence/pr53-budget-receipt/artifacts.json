@@ -1,0 +1,33 @@
+{
+  "location": "/workspace/.xadb-env/logs/pr53-actions-20261105",
+  "sha256": {
+    "local/build-green.log": "f9fded4354f0aed80a1dac06e542a3328e627637ccc842514756f0f2fd785ff6",
+    "local/build-red.log": "9fcb9f1cb8048c637e4cb2e00ba082b3f404c08d8c929c890b535c54610a047b",
+    "local/green/receipt/f4-budget-rollback-memory-15321-0.log": "82e8a9d35160b8009f0b792e6aa26a6b1b93218e9921493ff95bc39d64e56dee",
+    "local/green/receipt/f4-budget-rollback-memory-15321-1.log": "82e8a9d35160b8009f0b792e6aa26a6b1b93218e9921493ff95bc39d64e56dee",
+    "local/green/receipt/f4-budget-rollback-native-15321-0.log": "d2883b5d45b8d82388f1cd6efb290fe5bc8ecb99b3be00b6d853308f9cc54829",
+    "local/green/receipt/f4-budget-rollback-native-15321-1.log": "d2883b5d45b8d82388f1cd6efb290fe5bc8ecb99b3be00b6d853308f9cc54829",
+    "local/green-identity.json": "90505bbb6a8ee31f605a799b4f4b5c75542d88a94047ba4898a3c1e0f0a5019c",
+    "local/green-source.sha256": "81e9f851621b4a299d8aa64c3d4e02ca007b2b5bd7639ab2484dca8f32c47924",
+    "local/green.log": "b4b70862d984b263f9fc65c2d7a8dd92f4e33d5c1996f0efd1a872516657722c",
+    "local/green.patch": "218cc41714928e7a3d19d9f39e21330b809bee247962898929b0f74955184b56",
+    "local/receipt-check.json": "9bf751b9755b15cb7110e20c39e8faa9a8eb8fe744087876954c476d14c39768",
+    "local/red/receipt/f4-budget-rollback-memory-14907.log": "82e8a9d35160b8009f0b792e6aa26a6b1b93218e9921493ff95bc39d64e56dee",
+    "local/red/receipt/f4-budget-rollback-native-14907.log": "d2883b5d45b8d82388f1cd6efb290fe5bc8ecb99b3be00b6d853308f9cc54829",
+    "local/red-identity.json": "d82d64178a99524bd8a24c74da8a2637d0cd8921c1a1eafaa5a76e5136a310ce",
+    "local/red-source.sha256": "438c945f28354fcebe7877a54d3d08c183c43e6808fbc7e5a13e08323ab7f8d9",
+    "local/red.log": "8a033abd05f09e3fd95fb83f54ed2d0efb6c475838b6e45a2e9f079cdf273f93",
+    "local/red.patch": "134665a71ef4886de6297f31f41dce5323b2710b3950a83cb0999fcac145587a",
+    "local/run.py": "90bac07f7aee5d5c07872d90bb864415aa8b787a6a5bc1638f7863cff44f02e6",
+    "local/selection.json": "a5e00a2123021057178b2a5d8c29139c0171b77eadb8af983567a56bcdf2eef4",
+    "original/export-a-build.log": "48bec1312a2a8ca4da501b71e74f856ddb3f6a086cb56db381e7c8e0303826f2",
+    "original/export-b-build.log": "72993a4aaf692402a2beea1e3c72d0b6628d8863c0b7657f1c41d97d8d0c2f52",
+    "original/f4-budget-rollback-memory-4263.log": "3ef117382f3f4ccbb8f9d69776416857f6171e69b5ac2307262c17b4582a53b2",
+    "original/f4-budget-rollback-native-4263.log": "74be526526d884efab00a9b97570ed4e02010b2d68b4d954f98f671fe85fd072",
+    "original/f4-operation-census-memory.log": "daba1037a5072b427fd1e10da7b2cf8481d6e68c10265952f12c7482acf40265",
+    "original/f4-operation-census-native.log": "fc3af2b4dabd38fe66644daa747be74445b8e020c21459232bb13253de621610",
+    "original/head-build.log": "c2438fba89c142044f21a92156a53b6f448d46ba0e0d2a5a91d1c07f1aa73e4c",
+    "original/head-cases.log": "3fcbb2d15d42874d58c3eddd93996f177f902fd424da9230183af41ca1c4ccef",
+    "original/receipt.json": "85f2ef2949f002addeee6bdd5d17255bc393d1b808b173af2c47a0d5830e4241"
+  }
+}

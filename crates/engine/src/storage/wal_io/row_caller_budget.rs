@@ -59,14 +59,122 @@ pub(in crate::storage) fn record(label: &str, output: &str) {
         .map(|p| std::path::PathBuf::from(p).join("receipt"))
         .filter(|p| p.is_dir())
     {
-        use std::io::Write;
-        std::fs::OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(receipt.join(format!("f4-budget-{label}-{}.log", std::process::id())))
-            .expect("new budget evidence")
-            .write_all(format!("source={}\n{output}", env!("CARGO_MANIFEST_DIR")).as_bytes())
-            .expect("write budget evidence");
+        write_record(&receipt, label, output).expect("write budget evidence");
     }
     println!("{output}");
+}
+
+fn write_record(
+    receipt: &std::path::Path,
+    label: &str,
+    output: &str,
+) -> std::io::Result<std::path::PathBuf> {
+    use std::io::Write;
+    // Compatibility selectors can inspect the same budget in one process.
+    // Atomic create_new keeps every invocation, including concurrent writers
+    // and earlier receipts left by a reused PID. Retry only name collisions;
+    // other open errors and partial write failures must remain failures.
+    for sequence in 0..=u64::MAX {
+        let path = receipt.join(format!(
+            "f4-budget-{label}-{}-{sequence}.log",
+            std::process::id()
+        ));
+        let mut file = match std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&path)
+        {
+            Ok(file) => file,
+            Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => continue,
+            Err(error) => return Err(error),
+        };
+        file.write_all(format!("source={}\n{output}", env!("CARGO_MANIFEST_DIR")).as_bytes())?;
+        return Ok(path);
+    }
+    Err(std::io::Error::new(
+        std::io::ErrorKind::AlreadyExists,
+        "budget evidence suffixes exhausted",
+    ))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::write_record;
+    use std::{fs, path::PathBuf, sync::Barrier};
+
+    struct Receipt(PathBuf);
+    impl Receipt {
+        fn new() -> Self {
+            let nonce = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos();
+            let path = std::env::temp_dir().join(format!(
+                "xadb-budget-receipt-{}-{nonce}",
+                std::process::id()
+            ));
+            fs::create_dir(&path).unwrap();
+            Self(path)
+        }
+    }
+    impl Drop for Receipt {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.0);
+        }
+    }
+
+    #[test]
+    fn repeated_budget_labels_preserve_existing_evidence() {
+        let receipt = Receipt::new();
+        let original = receipt.0.join(format!(
+            "f4-budget-rollback-memory-{}-0.log",
+            std::process::id()
+        ));
+        fs::write(&original, "prior evidence").unwrap();
+        let first = write_record(&receipt.0, "rollback-memory", "first\n").unwrap();
+        let second = write_record(&receipt.0, "rollback-memory", "second\n").unwrap();
+        assert_ne!(first, second);
+        assert_eq!(fs::read_to_string(original).unwrap(), "prior evidence");
+        assert_eq!(fs::read_dir(&receipt.0).unwrap().count(), 3);
+        for (path, body) in [(first, "first\n"), (second, "second\n")] {
+            assert_eq!(
+                fs::read_to_string(path).unwrap(),
+                format!("source={}\n{body}", env!("CARGO_MANIFEST_DIR"))
+            );
+        }
+    }
+
+    #[test]
+    fn concurrent_budget_labels_keep_every_payload() {
+        let receipt = Receipt::new();
+        let start = Barrier::new(8);
+        std::thread::scope(|scope| {
+            for at in 0..8 {
+                let receipt = &receipt.0;
+                let start = &start;
+                scope.spawn(move || {
+                    start.wait();
+                    write_record(receipt, "rollback-native", &format!("sample={at}\n")).unwrap();
+                });
+            }
+        });
+        let mut actual: Vec<_> = fs::read_dir(&receipt.0)
+            .unwrap()
+            .map(|entry| fs::read_to_string(entry.unwrap().path()).unwrap())
+            .collect();
+        actual.sort();
+        let expected: Vec<_> = (0..8)
+            .map(|at| format!("source={}\nsample={at}\n", env!("CARGO_MANIFEST_DIR")))
+            .collect();
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn budget_receipt_propagates_noncollision_io_errors() {
+        let receipt = Receipt::new();
+        let error =
+            write_record(&receipt.0.join("missing"), "rollback-memory", "body").unwrap_err();
+        assert_eq!(error.kind(), std::io::ErrorKind::NotFound);
+        assert_eq!(fs::read_dir(&receipt.0).unwrap().count(), 0);
+    }
 }
