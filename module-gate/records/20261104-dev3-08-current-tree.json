@@ -1,0 +1,584 @@
+{
+  "schema": "XADB_MODULE_GATE_RECORD_V1",
+  "change": "DEV3 08-1: close Base4 current Row tree ownership and schema, follow moved RowIds and account typed Undo reservation per leaf",
+  "rust_tests": [
+    {
+      "paths": [
+        "crates/engine/src/storage/plan4_recovery_base/catalog/graph/relations.rs",
+        "crates/engine/src/storage/plan4_recovery_base/row.rs",
+        "crates/engine/src/storage/plan4_recovery_base/row/actor.rs",
+        "crates/engine/src/storage/plan4_recovery_base/row/current_tree.rs",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph.rs",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph/source.rs",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph/source_tests.rs",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph/structural_bank_tests.rs",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs",
+        "crates/engine/src/storage/tree_page/audit.rs",
+        "tests/fixtures/module-row-format/current-tree/actor-1-committed.xrb",
+        "tests/fixtures/module-row-format/current-tree/actor-1-compensated.xrb",
+        "tests/fixtures/module-row-format/current-tree/actor-1-reserved.xrb",
+        "tests/fixtures/module-row-format/current-tree/actor-2-committed.xrb",
+        "tests/fixtures/module-row-format/current-tree/actor-2-compensated.xrb",
+        "tests/fixtures/module-row-format/current-tree/actor-2-reserved.xrb",
+        "tests/fixtures/module-row-format/current-tree/author.py",
+        "tests/fixtures/module-row-format/current-tree/child-split.xrb",
+        "tests/fixtures/module-row-format/current-tree/delete-update-11-0.xrb",
+        "tests/fixtures/module-row-format/current-tree/delete-update-11-1.xrb",
+        "tests/fixtures/module-row-format/current-tree/delete-update-16-0.xrb",
+        "tests/fixtures/module-row-format/current-tree/delete-update-16-1.xrb",
+        "tests/fixtures/module-row-format/current-tree/delete-update.xrb",
+        "tests/fixtures/module-row-format/current-tree/inputs.sha256",
+        "tests/fixtures/module-row-format/current-tree/internal-root-split.xrb",
+        "tests/fixtures/module-row-format/current-tree/parents.sha256",
+        "tests/fixtures/module-row-format/current-tree/root-split.xrb",
+        "tests/fixtures/module-row-format/current-tree/state-compensated-writer.xrb",
+        "tests/fixtures/module-row-format/current-tree/state-ready-writer.xrb",
+        "tests/fixtures/module-row-format/current-tree/state-row-reserved.xrb"
+      ],
+      "reason": "New10 tests cover current tree root/child/internal split observations, range/alias/orphan/identity, moved retained rows, exact/over D by leaf after typed Undo, same-Catalog schema, retained-only LSN, actor-only Reserved/Releasing matrix and u64 max revision. Changed source census and bank-error-path tests ran once. Actual memory/native source caller2 ran locally with required SOURCE/ELF/INPUT identities and are excluded from plain CI libtest. Original FAIL and each source identity preserved; no whole suite rerun. Traversal helper bodies only gain source bounds; core traversal unchanged.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_accepts_root_child_split_with_moved_retained_rows",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/current-tree/actor-1-committed.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-1-compensated.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-1-reserved.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-2-committed.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-2-compensated.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-2-reserved.xrb",
+            "tests/fixtures/module-row-format/current-tree/author.py",
+            "tests/fixtures/module-row-format/current-tree/child-split.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update-11-0.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update-11-1.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update-16-0.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update-16-1.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update.xrb",
+            "tests/fixtures/module-row-format/current-tree/inputs.sha256",
+            "tests/fixtures/module-row-format/current-tree/internal-root-split.xrb",
+            "tests/fixtures/module-row-format/current-tree/parents.sha256",
+            "tests/fixtures/module-row-format/current-tree/root-split.xrb",
+            "tests/fixtures/module-row-format/current-tree/state-compensated-writer.xrb",
+            "tests/fixtures/module-row-format/current-tree/state-ready-writer.xrb",
+            "tests/fixtures/module-row-format/current-tree/state-row-reserved.xrb",
+            "tests/fixtures/module-row-format/base4-closure/genesis.xrb",
+            "tests/fixtures/module-row-format/base4-closure/aging.xrb",
+            "tests/fixtures/module-row-format/base4-closure/live.xrb",
+            "tests/fixtures/module-row-format/base4-closure/variants.bin",
+            "tests/fixtures/module-row-format/envelopes/profiles.bin",
+            "tests/fixtures/module-row-format/structural-bank/root.xod",
+            "tests/fixtures/module-row-format/structural-bank/child.xod"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_rejects_alias_range_identity_and_anchor_history",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/current-tree/actor-1-committed.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-1-compensated.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-1-reserved.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-2-committed.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-2-compensated.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-2-reserved.xrb",
+            "tests/fixtures/module-row-format/current-tree/author.py",
+            "tests/fixtures/module-row-format/current-tree/child-split.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update-11-0.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update-11-1.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update-16-0.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update-16-1.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update.xrb",
+            "tests/fixtures/module-row-format/current-tree/inputs.sha256",
+            "tests/fixtures/module-row-format/current-tree/internal-root-split.xrb",
+            "tests/fixtures/module-row-format/current-tree/parents.sha256",
+            "tests/fixtures/module-row-format/current-tree/root-split.xrb",
+            "tests/fixtures/module-row-format/current-tree/state-compensated-writer.xrb",
+            "tests/fixtures/module-row-format/current-tree/state-ready-writer.xrb",
+            "tests/fixtures/module-row-format/current-tree/state-row-reserved.xrb",
+            "tests/fixtures/module-row-format/base4-closure/genesis.xrb",
+            "tests/fixtures/module-row-format/base4-closure/aging.xrb",
+            "tests/fixtures/module-row-format/base4-closure/live.xrb",
+            "tests/fixtures/module-row-format/base4-closure/variants.bin",
+            "tests/fixtures/module-row-format/envelopes/profiles.bin",
+            "tests/fixtures/module-row-format/structural-bank/root.xod",
+            "tests/fixtures/module-row-format/structural-bank/child.xod"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_retained_current_leaf_cannot_precede_job_step",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/current-tree/actor-1-committed.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-1-compensated.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-1-reserved.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-2-committed.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-2-compensated.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-2-reserved.xrb",
+            "tests/fixtures/module-row-format/current-tree/author.py",
+            "tests/fixtures/module-row-format/current-tree/child-split.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update-11-0.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update-11-1.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update-16-0.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update-16-1.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update.xrb",
+            "tests/fixtures/module-row-format/current-tree/inputs.sha256",
+            "tests/fixtures/module-row-format/current-tree/internal-root-split.xrb",
+            "tests/fixtures/module-row-format/current-tree/parents.sha256",
+            "tests/fixtures/module-row-format/current-tree/root-split.xrb",
+            "tests/fixtures/module-row-format/current-tree/state-compensated-writer.xrb",
+            "tests/fixtures/module-row-format/current-tree/state-ready-writer.xrb",
+            "tests/fixtures/module-row-format/current-tree/state-row-reserved.xrb",
+            "tests/fixtures/module-row-format/base4-closure/genesis.xrb",
+            "tests/fixtures/module-row-format/base4-closure/aging.xrb",
+            "tests/fixtures/module-row-format/base4-closure/live.xrb",
+            "tests/fixtures/module-row-format/base4-closure/variants.bin",
+            "tests/fixtures/module-row-format/envelopes/profiles.bin",
+            "tests/fixtures/module-row-format/structural-bank/root.xod",
+            "tests/fixtures/module-row-format/structural-bank/child.xod"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_delete_update_distribute_typed_undo_reservations_by_leaf",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/current-tree/actor-1-committed.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-1-compensated.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-1-reserved.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-2-committed.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-2-compensated.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-2-reserved.xrb",
+            "tests/fixtures/module-row-format/current-tree/author.py",
+            "tests/fixtures/module-row-format/current-tree/child-split.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update-11-0.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update-11-1.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update-16-0.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update-16-1.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update.xrb",
+            "tests/fixtures/module-row-format/current-tree/inputs.sha256",
+            "tests/fixtures/module-row-format/current-tree/internal-root-split.xrb",
+            "tests/fixtures/module-row-format/current-tree/parents.sha256",
+            "tests/fixtures/module-row-format/current-tree/root-split.xrb",
+            "tests/fixtures/module-row-format/current-tree/state-compensated-writer.xrb",
+            "tests/fixtures/module-row-format/current-tree/state-ready-writer.xrb",
+            "tests/fixtures/module-row-format/current-tree/state-row-reserved.xrb",
+            "tests/fixtures/module-row-format/base4-closure/genesis.xrb",
+            "tests/fixtures/module-row-format/base4-closure/aging.xrb",
+            "tests/fixtures/module-row-format/base4-closure/live.xrb",
+            "tests/fixtures/module-row-format/base4-closure/variants.bin",
+            "tests/fixtures/module-row-format/envelopes/profiles.bin",
+            "tests/fixtures/module-row-format/structural-bank/root.xod",
+            "tests/fixtures/module-row-format/structural-bank/child.xod"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_typed_undo_and_same_catalog_schema_are_required",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/current-tree/actor-1-committed.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-1-compensated.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-1-reserved.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-2-committed.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-2-compensated.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-2-reserved.xrb",
+            "tests/fixtures/module-row-format/current-tree/author.py",
+            "tests/fixtures/module-row-format/current-tree/child-split.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update-11-0.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update-11-1.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update-16-0.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update-16-1.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update.xrb",
+            "tests/fixtures/module-row-format/current-tree/inputs.sha256",
+            "tests/fixtures/module-row-format/current-tree/internal-root-split.xrb",
+            "tests/fixtures/module-row-format/current-tree/parents.sha256",
+            "tests/fixtures/module-row-format/current-tree/root-split.xrb",
+            "tests/fixtures/module-row-format/current-tree/state-compensated-writer.xrb",
+            "tests/fixtures/module-row-format/current-tree/state-ready-writer.xrb",
+            "tests/fixtures/module-row-format/current-tree/state-row-reserved.xrb",
+            "tests/fixtures/module-row-format/base4-closure/genesis.xrb",
+            "tests/fixtures/module-row-format/base4-closure/aging.xrb",
+            "tests/fixtures/module-row-format/base4-closure/live.xrb",
+            "tests/fixtures/module-row-format/base4-closure/variants.bin",
+            "tests/fixtures/module-row-format/envelopes/profiles.bin",
+            "tests/fixtures/module-row-format/structural-bank/root.xod",
+            "tests/fixtures/module-row-format/structural-bank/child.xod"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_preserves_reserved_absence_and_ready_releasing_states",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/current-tree/actor-1-committed.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-1-compensated.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-1-reserved.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-2-committed.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-2-compensated.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-2-reserved.xrb",
+            "tests/fixtures/module-row-format/current-tree/author.py",
+            "tests/fixtures/module-row-format/current-tree/child-split.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update-11-0.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update-11-1.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update-16-0.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update-16-1.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update.xrb",
+            "tests/fixtures/module-row-format/current-tree/inputs.sha256",
+            "tests/fixtures/module-row-format/current-tree/internal-root-split.xrb",
+            "tests/fixtures/module-row-format/current-tree/parents.sha256",
+            "tests/fixtures/module-row-format/current-tree/root-split.xrb",
+            "tests/fixtures/module-row-format/current-tree/state-compensated-writer.xrb",
+            "tests/fixtures/module-row-format/current-tree/state-ready-writer.xrb",
+            "tests/fixtures/module-row-format/current-tree/state-row-reserved.xrb",
+            "tests/fixtures/module-row-format/base4-closure/genesis.xrb",
+            "tests/fixtures/module-row-format/base4-closure/aging.xrb",
+            "tests/fixtures/module-row-format/base4-closure/live.xrb",
+            "tests/fixtures/module-row-format/base4-closure/variants.bin",
+            "tests/fixtures/module-row-format/envelopes/profiles.bin",
+            "tests/fixtures/module-row-format/structural-bank/root.xod",
+            "tests/fixtures/module-row-format/structural-bank/child.xod"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_rejects_orphan_and_global_logical_duplicate",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/current-tree/actor-1-committed.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-1-compensated.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-1-reserved.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-2-committed.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-2-compensated.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-2-reserved.xrb",
+            "tests/fixtures/module-row-format/current-tree/author.py",
+            "tests/fixtures/module-row-format/current-tree/child-split.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update-11-0.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update-11-1.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update-16-0.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update-16-1.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update.xrb",
+            "tests/fixtures/module-row-format/current-tree/inputs.sha256",
+            "tests/fixtures/module-row-format/current-tree/internal-root-split.xrb",
+            "tests/fixtures/module-row-format/current-tree/parents.sha256",
+            "tests/fixtures/module-row-format/current-tree/root-split.xrb",
+            "tests/fixtures/module-row-format/current-tree/state-compensated-writer.xrb",
+            "tests/fixtures/module-row-format/current-tree/state-ready-writer.xrb",
+            "tests/fixtures/module-row-format/current-tree/state-row-reserved.xrb",
+            "tests/fixtures/module-row-format/base4-closure/genesis.xrb",
+            "tests/fixtures/module-row-format/base4-closure/aging.xrb",
+            "tests/fixtures/module-row-format/base4-closure/live.xrb",
+            "tests/fixtures/module-row-format/base4-closure/variants.bin",
+            "tests/fixtures/module-row-format/envelopes/profiles.bin",
+            "tests/fixtures/module-row-format/structural-bank/root.xod",
+            "tests/fixtures/module-row-format/structural-bank/child.xod"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_revision_bound_accepts_maximum_high_water_without_wrap",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/current-tree/actor-1-committed.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-1-compensated.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-1-reserved.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-2-committed.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-2-compensated.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-2-reserved.xrb",
+            "tests/fixtures/module-row-format/current-tree/author.py",
+            "tests/fixtures/module-row-format/current-tree/child-split.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update-11-0.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update-11-1.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update-16-0.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update-16-1.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update.xrb",
+            "tests/fixtures/module-row-format/current-tree/inputs.sha256",
+            "tests/fixtures/module-row-format/current-tree/internal-root-split.xrb",
+            "tests/fixtures/module-row-format/current-tree/parents.sha256",
+            "tests/fixtures/module-row-format/current-tree/root-split.xrb",
+            "tests/fixtures/module-row-format/current-tree/state-compensated-writer.xrb",
+            "tests/fixtures/module-row-format/current-tree/state-ready-writer.xrb",
+            "tests/fixtures/module-row-format/current-tree/state-row-reserved.xrb",
+            "tests/fixtures/module-row-format/base4-closure/genesis.xrb",
+            "tests/fixtures/module-row-format/base4-closure/aging.xrb",
+            "tests/fixtures/module-row-format/base4-closure/live.xrb",
+            "tests/fixtures/module-row-format/base4-closure/variants.bin",
+            "tests/fixtures/module-row-format/envelopes/profiles.bin",
+            "tests/fixtures/module-row-format/structural-bank/root.xod",
+            "tests/fixtures/module-row-format/structural-bank/child.xod"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_moved_delete_update_reserved_and_release_presence",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/current-tree/actor-1-committed.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-1-compensated.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-1-reserved.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-2-committed.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-2-compensated.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-2-reserved.xrb",
+            "tests/fixtures/module-row-format/current-tree/author.py",
+            "tests/fixtures/module-row-format/current-tree/child-split.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update-11-0.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update-11-1.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update-16-0.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update-16-1.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update.xrb",
+            "tests/fixtures/module-row-format/current-tree/inputs.sha256",
+            "tests/fixtures/module-row-format/current-tree/internal-root-split.xrb",
+            "tests/fixtures/module-row-format/current-tree/parents.sha256",
+            "tests/fixtures/module-row-format/current-tree/root-split.xrb",
+            "tests/fixtures/module-row-format/current-tree/state-compensated-writer.xrb",
+            "tests/fixtures/module-row-format/current-tree/state-ready-writer.xrb",
+            "tests/fixtures/module-row-format/current-tree/state-row-reserved.xrb",
+            "tests/fixtures/module-row-format/base4-closure/genesis.xrb",
+            "tests/fixtures/module-row-format/base4-closure/aging.xrb",
+            "tests/fixtures/module-row-format/base4-closure/live.xrb",
+            "tests/fixtures/module-row-format/base4-closure/variants.bin",
+            "tests/fixtures/module-row-format/envelopes/profiles.bin",
+            "tests/fixtures/module-row-format/structural-bank/root.xod",
+            "tests/fixtures/module-row-format/structural-bank/child.xod"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_accepts_internal_root_split_and_checks_off_path_internal",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/current-tree/actor-1-committed.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-1-compensated.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-1-reserved.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-2-committed.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-2-compensated.xrb",
+            "tests/fixtures/module-row-format/current-tree/actor-2-reserved.xrb",
+            "tests/fixtures/module-row-format/current-tree/author.py",
+            "tests/fixtures/module-row-format/current-tree/child-split.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update-11-0.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update-11-1.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update-16-0.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update-16-1.xrb",
+            "tests/fixtures/module-row-format/current-tree/delete-update.xrb",
+            "tests/fixtures/module-row-format/current-tree/inputs.sha256",
+            "tests/fixtures/module-row-format/current-tree/internal-root-split.xrb",
+            "tests/fixtures/module-row-format/current-tree/parents.sha256",
+            "tests/fixtures/module-row-format/current-tree/root-split.xrb",
+            "tests/fixtures/module-row-format/current-tree/state-compensated-writer.xrb",
+            "tests/fixtures/module-row-format/current-tree/state-ready-writer.xrb",
+            "tests/fixtures/module-row-format/current-tree/state-row-reserved.xrb",
+            "tests/fixtures/module-row-format/base4-closure/genesis.xrb",
+            "tests/fixtures/module-row-format/base4-closure/aging.xrb",
+            "tests/fixtures/module-row-format/base4-closure/live.xrb",
+            "tests/fixtures/module-row-format/base4-closure/variants.bin",
+            "tests/fixtures/module-row-format/envelopes/profiles.bin",
+            "tests/fixtures/module-row-format/structural-bank/root.xod",
+            "tests/fixtures/module-row-format/structural-bank/child.xod"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/source_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::source::tests::base4_closure_source_bound_covers_measured_frames",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/structural_bank_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::structural_bank_tests::structural_bank_alone_does_not_validate_inconsistent_current_tree",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/structural-bank/child.xod",
+            "tests/fixtures/module-row-format/structural-bank/child.xrb",
+            "tests/fixtures/module-row-format/structural-bank/inputs.sha256",
+            "tests/fixtures/module-row-format/structural-bank/live-child.xrb",
+            "tests/fixtures/module-row-format/structural-bank/live-root.xrb",
+            "tests/fixtures/module-row-format/structural-bank/make_inputs.py",
+            "tests/fixtures/module-row-format/structural-bank/root.xod",
+            "tests/fixtures/module-row-format/structural-bank/root.xrb",
+            "tests/fixtures/module-row-format/envelopes/profiles.bin",
+            "tests/fixtures/module-row-format/base4-closure/genesis.xrb",
+            "tests/fixtures/module-row-format/base4-closure/live.xrb"
+          ]
+        }
+      ]
+    }
+  ],
+  "reviews": [
+    {
+      "id": "dev3-08-current-tree-d2-d1",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/plan4_recovery_base/catalog/graph/relations.rs": "93d631ef9a92482342e91044557cfe93f4cc4235",
+        "crates/engine/src/storage/plan4_recovery_base/row.rs": "2acad43c56f163d3a271cce8f8cac626dd728a81",
+        "crates/engine/src/storage/plan4_recovery_base/row/actor.rs": "2fc1bdc42b743e1aab79bc422abe801b75e1cfc4",
+        "crates/engine/src/storage/plan4_recovery_base/row/current_tree.rs": "3d1a9ff37b2e2fb75652e470c505504f78719820",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph.rs": "c6a75d82589c1c46e67dba1cc5cd243d29565b3c",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs": "8ed5c804899b54bdffe311d0f894733b057449a6",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph/source.rs": "0d2da1ad11973613c9586ae37d9522283c7e8cb0",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph/source_tests.rs": "8e35a0d8e8e2708eddf59391167b7cd6f3e03445",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph/structural_bank_tests.rs": "147280647ce578a4942315175e17d08fb31ff529",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs": "07f851a077bd8f2a8d6b67f38d2931b5fbcc6d5e",
+        "crates/engine/src/storage/tree_page/audit.rs": "d3fa98d7c24d15c1f5c1eda03ed3473dc128402e",
+        "crates/engine/src/storage/tree_page/search.rs": "d5be9246b15d170d449d98893e239ce724f99204",
+        "devdoc/contracts/dev3-row-delete.md": "e6a7f9d21bb22d080147f23a869770bdc5dd62a3",
+        "devdoc/contracts/dev3-row-update.md": "3978911431e9bd4917ff7bf17b56cb45ac82a6cf",
+        "devdoc/contracts/dev3-tree-smo.md": "b48b121c8b7ddb29043138c51c064c54abd14bf1",
+        "devdoc/evidence/dev3-tree-structure-20261104.md": "8b2e50db95593a0619949bad66fca9de07c31568",
+        "devdoc/implementation/dev3-implementation.md": "b0d347ca4668946a64e60b686c26e88a7f106752",
+        "tests/fixtures/module-row-format/base4-closure/aging.xrb": "96f6e6c9a382261af99f0f5570711d3593ea5cb2",
+        "tests/fixtures/module-row-format/base4-closure/genesis.xrb": "951b35dbd98dfaf18f438390bcc016edb0b6448e",
+        "tests/fixtures/module-row-format/base4-closure/live.xrb": "08867fa718cd237e2fe45f7b2e2e7e366b22af71",
+        "tests/fixtures/module-row-format/base4-closure/variants.bin": "d7ac715378f0225934e413cf6497d92084329070",
+        "tests/fixtures/module-row-format/current-tree/actor-1-committed.xrb": "4ad9b1980572f48e81f290589405c5f82c3026d9",
+        "tests/fixtures/module-row-format/current-tree/actor-1-compensated.xrb": "89c11cfaf57ee616abc7fe99ee31abe694142418",
+        "tests/fixtures/module-row-format/current-tree/actor-1-reserved.xrb": "67292f379ce056557c41010ee105edfc378c29f4",
+        "tests/fixtures/module-row-format/current-tree/actor-2-committed.xrb": "9ee2735d8e0c204399b1fae8bd173484d558917e",
+        "tests/fixtures/module-row-format/current-tree/actor-2-compensated.xrb": "41b1fb525e610e737f4b78d22545c257b03dfd30",
+        "tests/fixtures/module-row-format/current-tree/actor-2-reserved.xrb": "919f8c7c329bada1061cf1e13604ad821aecf3b8",
+        "tests/fixtures/module-row-format/current-tree/author.py": "74b7490c56e62d2ea3c193a8fee67ba83c5c7797",
+        "tests/fixtures/module-row-format/current-tree/child-split.xrb": "7aa5283df0911132a9365d685625d0f19ff6f2c8",
+        "tests/fixtures/module-row-format/current-tree/delete-update-11-0.xrb": "fc792dd9c7176a382a9d1c86c5ad46553b4b3b6a",
+        "tests/fixtures/module-row-format/current-tree/delete-update-11-1.xrb": "f8b1c5070455d34e1ae0bade4874b075a7ed2fcf",
+        "tests/fixtures/module-row-format/current-tree/delete-update-16-0.xrb": "7bd045a056d61cf74f8f93caa940bfcde1c8cb1e",
+        "tests/fixtures/module-row-format/current-tree/delete-update-16-1.xrb": "65c21c4531018a9f2384ebb20be72df23fa6156b",
+        "tests/fixtures/module-row-format/current-tree/delete-update.xrb": "5044a19095ef459eb7d034bde1a105363c89fa53",
+        "tests/fixtures/module-row-format/current-tree/inputs.sha256": "02d89773d86c1f0a650ae67fe0994e4efa5f16d1",
+        "tests/fixtures/module-row-format/current-tree/internal-root-split.xrb": "d7e96bd3f3393c4eeff8d4ee4c7ae78f3554e626",
+        "tests/fixtures/module-row-format/current-tree/parents.sha256": "bead1ef914b7cdab2195d336fed3aaa31f472993",
+        "tests/fixtures/module-row-format/current-tree/root-split.xrb": "b667b403466ee69de55ef918dd706da9103944b3",
+        "tests/fixtures/module-row-format/current-tree/state-compensated-writer.xrb": "7aaaf1b3a36d30feb63818981c606e424632e4d3",
+        "tests/fixtures/module-row-format/current-tree/state-ready-writer.xrb": "73985d10057e5a5e58ce8b8d9dd0a47e9e9f598f",
+        "tests/fixtures/module-row-format/current-tree/state-row-reserved.xrb": "6839f2ff46f6f5593fbe6281cf7fc985f9e32b34",
+        "tests/fixtures/module-row-format/envelopes/profiles.bin": "721736fc0e2edafa27e9eb43278ab33d2edb4b34",
+        "tests/fixtures/module-row-format/structural-bank/child.xod": "5ae61557238c9fb5a6b75609646c8960cb301b0e",
+        "tests/fixtures/module-row-format/structural-bank/child.xrb": "bdf215cdcbb9c0ec2a82dd0ade7630d8a3f9759d",
+        "tests/fixtures/module-row-format/structural-bank/inputs.sha256": "0b6a533474576be63190911dc7c7f6331d9b8d38",
+        "tests/fixtures/module-row-format/structural-bank/live-child.xrb": "53b415217d74b6e219335ce1bfa0ff18205b5e41",
+        "tests/fixtures/module-row-format/structural-bank/live-root.xrb": "cfd6e9284d9f340c172670196868c2ab1103fa69",
+        "tests/fixtures/module-row-format/structural-bank/make_inputs.py": "dacf52c7342b89e7f6e86705bf694f83efb86038",
+        "tests/fixtures/module-row-format/structural-bank/root.xod": "05d1e6139a9dd201d5062ed1afbd281b54a88b5c",
+        "tests/fixtures/module-row-format/structural-bank/root.xrb": "5be3685267239bf34edafc24b74f0f2476ba1ec6"
+      },
+      "log": "module-gate/evidence/dev3-08-current-tree/review.md (sha256 37f27a651decb9fcf50c93d055c324f3dc7ca10355ce443914789f9349d920d2)"
+    },
+    {
+      "id": "dev3-08-scope4-replay-overlap-d2-d1",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/tree_page/audit.rs": "6ab216f59799b34b3300664976bcf2a25283187d",
+        "devdoc/contracts/dev3-tree-smo.md": "919a718f8af4a8539dedb609809039901a92604d",
+        "devdoc/evidence/dev3-tree-structure-20261104.md": "407150a873e6edec70881c2677ccd5b074970671",
+        "devdoc/implementation/dev3-implementation.md": "dba512153d196d4938753649856d743d844ee0bc"
+      },
+      "log": "module-gate/evidence/dev3-08-scope4-replay/review.md (sha256 2a39d85aadb8513bea28d051226c800aad689f902668809681b711c29df1c15f)"
+    },
+    {
+      "id": "dev3-08-live-prepare-d2-d1-overlap",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "devdoc/evidence/dev3-tree-structure-20261104.md": "651347811cca9f197d482b935334cba8d7bf206b",
+        "devdoc/contracts/dev3-tree-smo.md": "8857b485a202d469c5e6d69b2de9b763795a4642",
+        "devdoc/implementation/dev3-implementation.md": "34aed4a7876e914d07529fdb9807b81b0d4aa951"
+      },
+      "log": "module-gate/evidence/dev3-08-live-prepare/review.md (sha256 a3e3c1ad6f8917646d8be488cf6818d39703367849d00f495746cd16f5eba0f8)"
+    },
+    {
+      "id": "dev3-08-admission-d2-d1-overlap",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "devdoc/contracts/dev3-tree-smo.md": "57dcb8748372f0ba77cb3a586e4382958999b95c",
+        "devdoc/implementation/dev3-implementation.md": "22408ecdd877035407531b1cd2ec0227bdaae4fb",
+        "devdoc/evidence/dev3-tree-structure-20261104.md": "8f9d862e429220cfb20998dfd5836503eae59880"
+      },
+      "log": "module-gate/evidence/dev3-08-admission/review.md (sha256 7f4b4306fbd465ac91cfd5ce8d213d2506ac89fc25f086651b1f5f15690dc390)"
+    },
+    {
+      "id": "dev3-08-effect-final-overlap",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "devdoc/contracts/dev3-tree-smo.md": "e60ff6fbfcf0d52fccce95425f9d9913c2560164",
+        "devdoc/evidence/dev3-tree-structure-20261104.md": "3cbf4621b4adb6745467aeb6ed9837248a16c255",
+        "devdoc/implementation/dev3-implementation.md": "b14ea8e13f962830e23c45279dd1cca602e3efc5"
+      },
+      "log": "module-gate/evidence/dev3-08-effect/review.md (sha256 5c0f1ecbb805aad6300bdb7e4d93eaba1d05e0709a3bb3c69a9a7a44cbe49d1f)"
+    },
+    {
+      "id": "pr53-route-refactor-20261105",
+      "class": "D2",
+      "scopes": [
+        "common",
+        "joint"
+      ],
+      "author": "/root",
+      "reviewer": "/root/independent_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/tree_page/search.rs": "80ff87958aae2953546f846272f816286faf05de",
+        "devdoc/contracts/dev3-tree-smo.md": "5db50935899a2a5817baf3ac78254241e639db90"
+      },
+      "log": "module-gate/evidence/dev3-08-1-pr53-refactor/review.md (sha256 0ad5f1b1e0fa3ebebf8f30142e989d67f3a5c09953c8a1b7f913961b1ef9c865)"
+    }
+  ]
+}

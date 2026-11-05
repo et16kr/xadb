@@ -1,0 +1,1 @@
+Only previous failed 3 new current-tree cases after correcting independent fixture frame/initial digest slots, plus new current-tree cases for multi-leaf typed Undo/D boundaries, Reserved/Ready/compensated states, orphan/global logical duplicates, u64 max revision. Source-bound and bank expectation passed r0; production changes since r0 only unused imports, so no repeat.

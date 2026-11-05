@@ -154,6 +154,11 @@ pub(in super::super) fn system_initial_claims(
         }
         let source = crate::storage::allocation_page::SystemWorkRef::decode(&bytes[128..176])
             .map_err(RetentionCause::Allocation)?;
+        match source.kind() {
+            crate::storage::allocation_page::SystemWorkKind::AllocationMaintenance => {}
+            crate::storage::allocation_page::SystemWorkKind::StructuralChange => continue,
+            _ => return Err(invalid()),
+        }
         if source.id() == high_water {
             if found.is_some() {
                 return Err(invalid());

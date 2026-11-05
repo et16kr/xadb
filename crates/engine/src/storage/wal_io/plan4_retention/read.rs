@@ -67,10 +67,17 @@ pub(super) fn membership<W: WriterNamespace>(
 ) -> Result<()> {
     let index = usize::try_from(request.identity.page.page_no)
         .map_err(|_| unchanged(RetentionPhase::Census, RetentionCause::Membership))?;
+    // A RowInternal page of a split Row tree has its level 1..=15, as the
+    // pool registers it (dev3-tree-smo.md#current-leaf-consumers); every
+    // other page is level 0.
     if !(1..64).contains(&index)
         || request.identity.database != allocator.identity.database
         || request.identity.page.file != allocator.identity.page.file
-        || request.level != 0
+        || if request.kind == crate::storage::page::PageKind::RowInternal {
+            !(1..=15).contains(&request.level)
+        } else {
+            request.level != 0
+        }
     {
         return Err(unchanged(
             RetentionPhase::Census,

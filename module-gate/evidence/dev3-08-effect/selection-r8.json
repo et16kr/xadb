@@ -1,0 +1,15 @@
+{
+  "scope": "Three failed fault oracles corrected to retain exact fatal source charge; three new actual error tests. E04 and E01/source unchanged and excluded. New cfg(test) seams only.",
+  "filters": [
+    "structural_effect_unwind_at_install_publication_and_finish_boundaries",
+    "structural_effect_replay_checked_return_failure_keeps_pending",
+    "structural_effect_guardless_durable_wait_blocks_ordinary_paths_and_io_failure",
+    "structural_effect_changed_selection_and_before_cancel_without_wal",
+    "structural_effect_flush_admission_and_failed_cancel_lease",
+    "structural_effect_actual_stage_history_and_replay_errors_are_fatal"
+  ],
+  "cases": 6,
+  "build_timeout_seconds": 300,
+  "runtime_timeout_seconds": 480,
+  "per_variant_seconds": 90
+}

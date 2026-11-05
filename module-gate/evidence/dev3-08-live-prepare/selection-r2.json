@@ -1,0 +1,8 @@
+{
+  "source": "source-r1.sha256",
+  "elf": "elf-r1.sha256",
+  "input": "input-r0.sha256",
+  "case": "structural_prepare_original_live_two_rows_preserves_state_and_binds_stamps",
+  "reason": "r1 compiled but failed before setup because required execution context env was absent; retry same ELF with real hashes",
+  "timeout_seconds": 200
+}

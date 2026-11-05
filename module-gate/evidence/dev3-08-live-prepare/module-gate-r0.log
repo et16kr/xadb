@@ -1,0 +1,5 @@
+XADB module gate: NOTE crates/engine/src/storage/wal_io/plan4_apply.rs defines what disk re-exports (or re-exports it on the way, or adds an impl to it): D2 common review
+XADB module gate: NOTE crates/engine/src/storage/wal_io/plan4_apply/transaction_write.rs defines what disk re-exports (or re-exports it on the way, or adds an impl to it): D2 common review
+XADB module gate: NOTE crates/engine/src/storage/wal_io/plan4_pages.rs defines what disk re-exports (or re-exports it on the way, or adds an impl to it): D2 common review
+XADB module gate: NOTE crates/engine/src/storage/wal_io/plan4_retention/catalog_live.rs defines what disk re-exports (or re-exports it on the way, or adds an impl to it): D2 common review
+XADB module gate: PASS (0 error(s), 0 pending)

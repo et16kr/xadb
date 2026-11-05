@@ -1,0 +1,5 @@
+8335423a65c2870d4c3d115ef5011e3c82d2fc2b4341e7e10d5b7321ec5a3934  tests/fixtures/module-row-format/scope3/profile3.bin
+117c95529b018f5615b9fc95c01a720066a95812139fb7509cbea1b1aeb0d1a5  tests/fixtures/module-row-format/transition-delete/blobs.bin
+ee9448b69a95c752fec501fe891f247af73f1c34cc34158c57473fc6d6be8a83  tests/fixtures/module-row-format/transition-delete/index.tsv
+1000e3aebcebf9d1afe21eba9c685889786b0a62d31d4ec3c75d082a379eb395  tests/fixtures/module-row-format/transition-update/blobs.bin
+91f5b1e3b772bd41bde71905a2d11c01bee66daf8c95edc0044cd8b37efaa2c6  tests/fixtures/module-row-format/transition-update/index.tsv

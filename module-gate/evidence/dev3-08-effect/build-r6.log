@@ -1,0 +1,51 @@
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+error[E0277]: `storage::semantic_row::structure::frame::Observation` doesn't implement `Debug`
+   --> crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_effect/faults.rs:161:22
+    |
+161 |                     .unwrap_err();
+    |                      ^^^^^^^^^^ the trait `Debug` is not implemented for `storage::semantic_row::structure::frame::Observation`
+    |
+    = note: add `#[derive(Debug)]` to `storage::semantic_row::structure::frame::Observation` or manually `impl Debug for storage::semantic_row::structure::frame::Observation`
+note: required by a bound in `std::result::Result::<T, E>::unwrap_err`
+   --> /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/core/src/result.rs:1324:4
+help: consider annotating `storage::semantic_row::structure::frame::Observation` with `#[derive(Debug)]`
+   --> crates/engine/src/storage/semantic_row/structure/frame.rs:22:1
+    |
+ 22 + #[derive(Debug)]
+ 23 | pub(crate) struct Observation {
+    |
+
+error[E0277]: `storage::semantic_row::structure::frame::Observation` doesn't implement `Debug`
+   --> crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_effect/faults.rs:322:39
+    |
+322 |                     assert_eq!(result.unwrap_err().effect, Effect::CallerMustResolve);
+    |                                       ^^^^^^^^^^ the trait `Debug` is not implemented for `storage::semantic_row::structure::frame::Observation`
+    |
+    = note: add `#[derive(Debug)]` to `storage::semantic_row::structure::frame::Observation` or manually `impl Debug for storage::semantic_row::structure::frame::Observation`
+note: required by a bound in `std::result::Result::<T, E>::unwrap_err`
+   --> /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/core/src/result.rs:1324:4
+help: consider annotating `storage::semantic_row::structure::frame::Observation` with `#[derive(Debug)]`
+   --> crates/engine/src/storage/semantic_row/structure/frame.rs:22:1
+    |
+ 22 + #[derive(Debug)]
+ 23 | pub(crate) struct Observation {
+    |
+
+error[E0277]: `storage::semantic_row::structure::frame::Observation` doesn't implement `Debug`
+   --> crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_effect/faults.rs:386:43
+    |
+386 |                         assert_eq!(result.unwrap_err().effect, Effect::CallerMustResolve);
+    |                                           ^^^^^^^^^^ the trait `Debug` is not implemented for `storage::semantic_row::structure::frame::Observation`
+    |
+    = note: add `#[derive(Debug)]` to `storage::semantic_row::structure::frame::Observation` or manually `impl Debug for storage::semantic_row::structure::frame::Observation`
+note: required by a bound in `std::result::Result::<T, E>::unwrap_err`
+   --> /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/core/src/result.rs:1324:4
+help: consider annotating `storage::semantic_row::structure::frame::Observation` with `#[derive(Debug)]`
+   --> crates/engine/src/storage/semantic_row/structure/frame.rs:22:1
+    |
+ 22 + #[derive(Debug)]
+ 23 | pub(crate) struct Observation {
+    |
+
+For more information about this error, try `rustc --explain E0277`.
+error: could not compile `xadb-engine` (lib test) due to 3 previous errors

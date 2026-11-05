@@ -336,4 +336,5 @@ pub(in crate::storage) fn layout_source_bytes() -> usize {
         + 32 * size_of::<&[u8]>()
         + 32 * size_of::<u64>()
         + catalog::source_bytes()
+        + super::image_records::provenance_source_bytes()
 }

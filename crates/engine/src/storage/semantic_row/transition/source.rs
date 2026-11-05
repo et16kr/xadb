@@ -5,7 +5,8 @@
 //! every return boundary (`returned`). A `max` joins completed calls; their
 //! still-live parent values are added outside it. Page/status codecs are the
 //! Catalog scope2 census terms over the same codecs; the Undo codec and the
-//! tree terms repeat its `undo_codec`/`tree_codec`/`leaf_edit` inventories, so
+//! leaf-edit terms repeat its `undo_codec`/`leaf_edit` inventories; both owners
+//! delegate tree decode/search terms to tree_page::codec_source_bytes, so
 //! neither owner charges a smaller codec (the Undo one without the
 //! CatalogValue before parse a Row target cannot reach, see `undo_row_codec`).
 //! `slack` is the repo's standard scalar allowance
@@ -125,22 +126,9 @@ pub(super) fn undo_row_codec() -> usize {
         + canonical_codec()
 }
 
-/// Tree page decode, `validate_cells`, search and entry parsing (the
-/// `semantic_catalog::resources::tree_codec` inventory).
+/// Tree-owned decode/search inventory with the shared page envelope cost.
 pub(super) fn tree_codec() -> usize {
-    let (key, key_result, layout, layout_result) = tree_page::catalog_source_carrier_bytes();
-    page_codec()
-        + 3 * key // lower_bound query/current; validate_cells previous
-        + 2 * key_result
-        + layout
-        + layout_result
-        + returned::<TreePageView<'_>, TreeError>()
-        + returned::<TreeEntry<'_>, TreeError>()
-        + returned::<SearchPosition, TreeError>()
-        + size_of::<(TreeExpectation, PageHeader, Option<PageRef>, Option<&[u8]>)>()
-        + size_of::<([usize; 8], bool, u8)>()
-        + size_of::<(&[u8], &[u8], &[u8], &[u8])>()
-        + 3 * size_of::<CodecResult<(), TreeError>>()
+    tree_page::codec_source_bytes(page_codec())
 }
 
 /// `prepare_leaf_edit` and the plan's encode (`resources::leaf_edit`). The
@@ -383,7 +371,8 @@ fn anchor() -> usize {
         + before_page()
 }
 
-/// `LeafSource`: expectation, schema, before image and the reservation D.
+/// `LeafSource`: expectation, schema, before image and the typed entries'
+/// bytes.
 type LeafSource<'a> = (
     TreeExpectation,
     RowSchemaInput<'a>,
@@ -391,9 +380,8 @@ type LeafSource<'a> = (
     usize,
 );
 
-/// Every row of the RowLeaf typed (`typed_leaf`) against the caller's leaf
-/// reservation D with its running sum, over the anchor proof, a page proof,
-/// the tree codec or a record decode.
+/// Every row of the RowLeaf typed (`typed_leaf`) with its running sum, over
+/// the anchor proof, a page proof, the tree codec or a record decode.
 fn typed() -> usize {
     size_of::<(TableSource<'_>, PageRef, TreeExpectation, TreePageView<'_>)>()
         + size_of::<(usize, usize)>()
@@ -407,10 +395,10 @@ fn typed() -> usize {
             .max(row_codec())
 }
 
-/// The leaf reservation D (`cells::leaf_reservation`, each leaf step's
-/// first call), then every row of the RowLeaf typed (`typed_leaf`), then
-/// search/edit/record work of `prepare_leaf` (Forward/CLR/Prune) or
-/// `reserve_leaf`.
+/// Every row of the RowLeaf typed (`typed_leaf`), then the leaf reservation D
+/// over the step's decoded view (`leaf_reserved!`, a callee of the step's
+/// frame, which holds the view, D and its Result), then search/edit/record
+/// work of `prepare_leaf` (Forward/CLR/Prune) or `reserve_leaf`.
 pub(super) fn leaf() -> usize {
     let typed = typed();
     let edit = size_of::<LeafSource<'_>>()
@@ -435,7 +423,8 @@ pub(super) fn leaf() -> usize {
         + returned::<LeafEditPlan<'_, '_>, LeafEditError>()
         + returned::<&[u8], TreeError>()
         + returned::<(Option<u16>, Option<u16>, [u8; 32], [u8; 32]), Error>()
-        + returned::<usize, Error>();
+        + returned::<usize, Error>()
+        + size_of::<usize>();
     edit + reservation()
         .max(typed)
         .max(leaf_edit())
@@ -456,7 +445,8 @@ fn delete_material() -> usize {
 /// `value_source`: the typed leaf, its search, the target's record and
 /// projection, the row's triple (a Forward's old row or UPDATE's new one,
 /// with the effect/payload pair UPDATE's CLR and Prune match), over the typed
-/// leaf, the tree codec, the record codec or a projection.
+/// leaf, the tree codec, the record codec or a projection. D is the caller's
+/// (`value_reserved`).
 fn value_source() -> usize {
     type Old<'a> = Option<(VersionStamp, LogicalRowVersion, &'a [u8])>;
     size_of::<(&(), JobView<'_>, TxnRef, bool, usize)>()
@@ -575,8 +565,9 @@ fn delete_leaf() -> usize {
 /// the old row, the planned row (DELETE's tombstone, UPDATE's new row or
 /// replay's placeholder) it encodes
 /// into the record scratch and its projection, and UPDATE's fit: the planned
-/// cell, the edit scratch and its Replace plan. Over the typed leaf, the tree
-/// or record codec, a projection or the leaf edit.
+/// cell, the edit scratch and its Replace plan. Over the typed leaf, D over
+/// its decoded view (`leaf_reserved!`), the tree or record codec, a
+/// projection or the leaf edit.
 fn reserve_target() -> usize {
     size_of::<(
         &(),
@@ -607,8 +598,8 @@ fn reserve_target() -> usize {
         + returned::<usize, Error>()
         + returned::<&[u8], TreeError>()
         + returned::<LeafEditPlan<'_, '_>, LeafEditError>()
-        + reservation()
-            .max(typed())
+        + typed()
+            .max(reservation())
             .max(tree_codec())
             .max(row_codec())
             .max(projection())
@@ -618,8 +609,9 @@ fn reserve_target() -> usize {
 /// DELETE's and UPDATE's prepare callees: `prepare_value` (its arguments, the
 /// table, its reservation D and the D after (`room`), the leaf observation,
 /// the before triple, the after version and digest, UpdatePrune's kept triple
-/// and commit sequence, over the reservation scan, `value_source`, a DELETE
-/// U frame, `update_value`, `delete_leaf` or `current_version`) or the delete
+/// and commit sequence, over `value_source`, D of its leaf (`value_reserved`),
+/// a DELETE U frame, `update_value`, `delete_leaf` or `current_version`) or
+/// the delete
 /// or update RowReserve's `reserve_target` (dev3-row-delete.md#delete-states,
 /// dev3-row-update.md#update-states).
 pub(super) fn delete() -> usize {
@@ -650,8 +642,8 @@ pub(super) fn delete() -> usize {
         + returned::<RecordVersion, Error>()
         + returned::<[u8; 32], Error>()
         + size_of::<CodecResult<(), Error>>()
-        + reservation()
-            .max(value_source())
+        + value_source()
+            .max(value_reserved())
             .max(delete_undo())
             .max(update_value())
             .max(delete_leaf())
@@ -661,14 +653,32 @@ pub(super) fn delete() -> usize {
     prepare.max(reserve_target())
 }
 
-/// `cells::leaf_reservation`: the Jobs it scans, the sum, one decoded Job,
-/// over the Row census Job decode.
+/// `value_reserved` (dev3-tree-smo.md#current-leaf-consumers): its arguments,
+/// the typed leaf's view decoded again and its Result, the namespace, D and
+/// its Result, over the tree decode or `cells::leaf_reservation`.
+fn value_reserved() -> usize {
+    size_of::<(&(), ObjectHandle, &LeafSource<'_>, Namespace)>()
+        + returned::<TreePageView<'_>, TreeError>()
+        + 2 * returned::<usize, Error>()
+        + tree_codec().max(reservation())
+}
+
+/// `cells::leaf_reservation`: the Jobs it scans, the leaf it searches, the
+/// sum, one decoded Job with its RowId key and that key's search, over the
+/// Row census Job decode or the tree codec's `lower_bound`.
 fn reservation() -> usize {
-    size_of::<(&[[u8; JOB_BYTES]; JOB_COUNT], Namespace, ObjectHandle)>()
-        + size_of::<(usize, Iter<'_, [u8; JOB_BYTES]>, &[u8; JOB_BYTES])>()
+    size_of::<(
+        &[[u8; JOB_BYTES]; JOB_COUNT],
+        Namespace,
+        ObjectHandle,
+        &TreePageView<'_>,
+    )>() + size_of::<(usize, Iter<'_, [u8; JOB_BYTES]>, &[u8; JOB_BYTES])>()
         + returned::<JobView<'_>, RetentionError>()
         + returned::<usize, Error>()
-        + row::source_bytes()
+        + returned::<RowId, Error>()
+        + size_of::<[u8; 8]>()
+        + returned::<SearchPosition, TreeError>()
+        + row::source_bytes().max(tree_codec())
 }
 
 /// wal_frame envelope/redo codec (`resources::wal_codec` over the same types).

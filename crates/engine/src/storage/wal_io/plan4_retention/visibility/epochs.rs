@@ -454,18 +454,26 @@ pub(super) fn seed(
         )
         .map_err(|_| ())?;
         let root = anchor.root();
-        if root.tree != TreeKind::Row || root.level != 0 {
+        if root.tree != TreeKind::Row {
             return Err(());
         }
+        // The original replay validation already checked the complete current
+        // tree. Epoch activation rechecks its actual root, including a root
+        // created by a durable structural split.
+        let root_kind = if root.level == 0 {
+            PageKind::RowLeaf
+        } else {
+            PageKind::RowInternal
+        };
         tree_page::decode_tree_page(
-            checked_image(root.page, PageKind::RowLeaf)?,
+            checked_image(root.page, root_kind)?,
             TreeExpectation {
                 identity: PageIdentity {
                     page: root.page,
                     ..anchor_id
                 },
-                kind: PageKind::RowLeaf,
-                level: 0,
+                kind: root_kind,
+                level: root.level,
                 arity: 0,
             },
         )

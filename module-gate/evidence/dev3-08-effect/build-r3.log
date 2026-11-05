@@ -1,0 +1,22 @@
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+error[E0599]: no method named `catalog_test_wal_state` found for struct `plan4_pages::retention::MutationPort<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W>` in the current scope
+   --> crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_effect.rs:339:47
+    |
+339 |                     let expected_lsn = writer.catalog_test_wal_state().0.complete_lsn + 1;
+    |                                               ^^^^^^^^^^^^^^^^^^^^^^
+    |
+   ::: crates/engine/src/storage/wal_io/plan4_apply.rs:483:1
+    |
+483 | pub(crate) struct MutationPort<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> {
+    | -------------------------------------------------------------------------------------- method `catalog_test_wal_state` not found for this struct
+    |
+    = note: the full name for the type has been written to '/workspace/xadb/artifacts/dev3-08/target/debug/deps/engine-e4e141083d864921.long-type-15546331790349775476.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+help: there is a method `catalog_test_commit_state` with a similar name
+    |
+339 -                     let expected_lsn = writer.catalog_test_wal_state().0.complete_lsn + 1;
+339 +                     let expected_lsn = writer.catalog_test_commit_state().0.complete_lsn + 1;
+    |
+
+For more information about this error, try `rustc --explain E0599`.
+error: could not compile `xadb-engine` (lib test) due to 1 previous error

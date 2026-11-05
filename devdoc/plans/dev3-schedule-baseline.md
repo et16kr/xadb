@@ -36,7 +36,7 @@ ID는 모두 `D3-SCH-` 접두어를 갖는다. 아래는 보고용 기본 배치
 | 05 | 안정화·정리·거래 실행기 | 5 | E24–E28 | 5.81% | 32.56% | 완료 | 04 |
 | 06 | 첫 DELETE 제품 경로 | 2 | E29–E30 | 2.33% | 34.88% | 완료(PR #47 병합 시) | 05 |
 | 07 | UPDATE 제품 경로 | 3 | E31–E33 | 3.49% | 38.37% | 완료(PR #49 병합 시) | 06 |
-| 08 | 트리·overflow·cursor 및 일반 행 변경 | 7 | E34–E40 | 8.14% | 46.51% | 대기 | 05; 일반 행 변경 최종 닫기는 06·07 |
+| 08 | 트리·overflow·cursor 및 일반 행 변경 | 7 | E34–E40 | 8.14% | 46.51% | 진행(적립0) | 05; 일반 행 변경 최종 닫기는 06·07 |
 | 09 | 인덱스·PK/UNIQUE | 6 | E41–E46 | 6.98% | 53.49% | 대기 | 07·08 |
 | 10 | 일반 Catalog·DDL와 공급 잔여 | 4 | E47–E50 | 4.65% | 58.14% | 대기 | 09 |
 | 11 | 동시성·다중 객체 거래 통합 | 7 | E51–E57 | 8.14% | 66.28% | 대기 | 07·09·10 |
@@ -117,7 +117,7 @@ ID는 모두 `D3-SCH-` 접두어를 갖는다. 아래는 보고용 기본 배치
 | 07-2 | C 형식·전이(before/after 값, 크기 변화의 leaf 공간) | 1 | 완료(PR #49 병합 시) | PR #49, [2단계 구현 기록](../contracts/dev3-row-update.md#implementation-2) |
 | 07-3 | A/B 제품 경로와 Undo/CLR·읽기·reopen·복구(메모리 시험) | 1 | 완료(PR #49 병합 시) | PR #49, [3단계 구현 기록](../contracts/dev3-row-update.md#implementation-3) |
 | 07-4 | native fault cut | 0.5 | 완료(PR #49 병합 시) | PR #49, [4단계 구현 기록](../contracts/dev3-row-update.md#implementation-4) |
-| 08-1 | split/root SMO(system group)의 계약·구현·복구 | 2 | 대기 | — |
+| 08-1 | split/root SMO(system group)의 계약·구현·복구 | 2 | 진행(적립0) | [제한 split 효과](../evidence/dev3-tree-structure-20261104.md#structural-effect), [current-leaf 소비자 일반화](../contracts/dev3-tree-smo.md#current-leaf-consumers); unlink/root shrink/retirement·A 자동 split 호출자 잔여 |
 | 08-2 | SMO를 건너는 stable cursor/locator | 1 | 대기 | — |
 | 08-3 | overflow chain 쓰기·읽기·반환 | 2 | 대기 | — |
 | 08-4 | 일반 행 변경(own/repeated write·occupied-before·Undo chain·큰 행 복원) | 2 | 대기 | — |

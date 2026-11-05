@@ -1,5 +1,117 @@
 # DEV3 구현·검증 현황
 
+2026-11-04 [일정08 첫 구조 후보 공급](../evidence/dev3-tree-structure-20261104.md):
+부모 separator 삽입·child 제거, unary Collapse, leaf/internal 분할과 새 root의
+순수 이미지 후보를 구현했다. 신규 고유9개 선택 PASS·독립 D2/D1 ACCEPT다.
+기준은 UPDATE PR #49 병합 `23976330`이며, 아래 오래된 상태는 당시 기록으로 보존한다.
+실제 system WAL·SMO·복구, 08-2–08-4와 전체 DEV3/S5는 미완료다.
+
+이어 rollback 예약 가중치를 보존하는 leaf split 후보와 immutable image 집합의
+root→leaf 탐색을 공급했다. 각각 신규 고유4개 선택 PASS·독립 D2/D1 ACCEPT다.
+단일 분할로 pending 행을 수용할 수 없는 반례와 원 시험 실패를 보존했다.
+이 helper들은 실제 Undo 가중치 증명·live pin·WAL/복구 적용 권한이 아니며 일정 적립은 없다.
+
+canonical Row replay의 leaf 선택도 현재 anchor/RowId 탐색으로 연결했다. 신규 기능2·자원1과
+영향받는 기존 replay5개를 source별로 통과했고 독립 D2/D1 ACCEPT다. Prune의 typed read와
+탐색 중첩도 census에 포함했다. downstream level0 제한과 실제 SMO 미완료는 유지한다.
+
+[scope4 순수 형식 관측](../evidence/dev3-tree-structure-20261104.md#wire-observer)도 공급했다.
+RootSplit/ChildSplit의 Core/Layout·새 Structural 완료 descriptor·native/redo 대응을 새6개
+선택 시험과 독립 D2/D1으로 검증했다. 실제 canonical split·INIT 권한·원 pool 설치·복구는
+미완료이며 이 WIRE_ONLY 결과를 live SMO 인수로 세지 않는다.
+
+[전체 불변 tree 관측](../evidence/dev3-tree-structure-20261104.md#tree-audit)은 새6개 선택 시험과
+독립 D2/D1을 통과했다. root-reachable 전 페이지의 identity·범위·전역 주소 중복을 검산한다.
+allocator-owned 집합 대조와 실제 SMO/base 연결은 후속 의무이며, 높이16 시험은16page
+순회 뒤 capacity 거절 경계만 확인한다. 일정08 적립은 여전히0이다.
+
+원 pool의 [Structural claim metadata](../contracts/dev3-tree-smo.md#pool-claim-metadata)도
+추가했다. active1/2 INIT·exact5 target/pin·generation 검산, dynamic RowInternal 등록과
+등록 보존 single finish, 기존 ordinary 접근 gate를 신규8개로 확인했다. 실제 타입과
+공통 source 상한은 기존 크기를 유지한다. authority factory·실제 claim/SMO 설치·복구와
+전체 F05 완료는 아니다([원 증거](../evidence/dev3-tree-structure-20261104.md#pool-claim-metadata)).
+
+현재 inline profile의 [실제 Undo 가중치](../contracts/dev3-tree-smo.md#actual-undo-weights)도
+공급했다. Row/Job/allocator/실제 typed Undo를 결합해 현재 행과 복원 행의 큰 비용을
+계산한다. 신규 고유7개를 source별로 선택 검증했고 독립 D2/D1 ACCEPT다. 전체 canonical
+census·source 안정성·live 설치 권한·F05는 후속 의무다. 과거 leaf hint를 허용하는 이 순수
+관찰자 공급으로 일정08을 적립하지 않는다([원 증거](../evidence/dev3-tree-structure-20261104.md#actual-undo-weights)).
+
+이어 [다섯 이미지 후보](../contracts/dev3-tree-smo.md#five-image-candidate)를 공급했다.
+현재 Catalog/anchor와 전체 객체 소유 tree·실제 Undo 가중치에서 RootSplit/ChildSplit을
+재계산하고 전후 행 bytes를 비교한다. leaf/internal·소유 orphan·공간/epoch/오류 경계의 신규
+고유10개를 source별로 선택 검증했다. 실제 WAL 생산·관측/원 pool 설치·복구·F05는 아직
+연결하지 않았으며 이전 전체 closure의 단일 leaf 가정도 남는다.
+
+[scope4 생산·정본 비교](../contracts/dev3-tree-smo.md#scope4-producer)는 같은 호출에서
+후보를 재계산하고 immutable after를 private emitter로 빌린다. 독립 section writer와 신규
+고유6개를 source별 검증했다. 최초 internal RootSplit의 실제 후보 after를 반영한 뒤 과거
+epoch의 descriptor를 승계해 deeper leaf ChildSplit을 만드는 사례도 확인했다. 실제 WAL
+stage·설치·global closure·복구 수락과 전체 F05는 미완료다.
+
+[Base4 Structural birth 관측](../contracts/dev3-tree-smo.md#base-structural-claims)은 Profile3의
+RowInternal certificate·role5/6와 같은 birth LSN의 교차 검산을 추가한다. 현재 root와 역사
+role를 구분하고 퇴역 peer·다른 incarnation 재사용을 허용한다. 신규 고유9개와 수정된 기존
+source 시험1개를 source별 검증했고 독립 D1/D2 ACCEPT·Clippy PASS다. 원 실패와 한계는
+[기록](../evidence/dev3-tree-structure-20261104.md#base-structural-claims)에 남긴다.
+raw layout 수락은 원 INIT 증명이나 복구 수락이 아니고, mint·ledger·전체 tree 연결은 남는다.
+
+후속 [Finished split bank 인계](../contracts/dev3-tree-smo.md#structural-bank)는 완료 descriptor의
+소유자·cut/epoch·부채0과 최신 birth의 operation/WAL 비용을 검산한다. 원 RAM34의 admission,
+복구 seed·remaining·pack을 같은 observer로 연결하고 wire33과 high-water를 보존한다.
+신규15개·영향받은 기존4개를 실제 source별로 검증했으며 독립 D1/D2는 한정 ACCEPT다.
+원 FAIL은 보존했고 runtime 성공 사례의 반복은 없다. 전체 tree closure·scope4 수락·INIT mint와
+원 pool 설치는 여전히 후속 의무다([원 증거](../evidence/dev3-tree-structure-20261104.md#structural-bank)).
+
+후속 [현재 Row tree closure](../contracts/dev3-tree-smo.md#current-tree-closure)는 같은 Base4의
+Catalog ordinal→anchor→전체 tree를 검산하고, allocator 소유 집합과 도달 집합을 일치시킨다.
+RowId로 현재 leaf를 찾아 이전 Job hint의 이동을 허용하며 leaf별 DELETE/UPDATE 복원 공간을
+실제 typed Undo 검산 뒤 적립한다. 신규10개와 변경된 기존 source/bank2개, 실제 caller2개를
+source별 선택 검증했다. 원 실패·actor-only 상태 행렬의 범위·독립 인수는
+[기록](../evidence/dev3-tree-structure-20261104.md#current-tree-closure)을 따른다.
+전체 Base4 상한59,675B와 실제 recovery 한도를 유지한다. scope4 replay·INIT mint·원 pool의
+실제 SMO 및 retirement는 다음 연결이며 일정08-1 전체 완료를 뜻하지 않는다.
+
+이어 [분할 임시 공간](../contracts/dev3-tree-smo.md#split-source-bound)을 현재 Row byte 형식에
+맞춰 leaf weight87·reference406으로 한정했다. 최소 tombstone184B, nullable 행189B와
+internal separator40B 경계 및 parent 마지막 삽입/초과 거절을 검증했다. 후보 상한51,212B와
+frame 상한57,420B는 typed Undo wrapper·중첩 SHA·after-audit와 parser/emitter를 포함한다.
+새 밀도·source 시험과 직접 영향받는 후보/frame만 선택했고, 실제 replay/live caller의
+추가 수명과 F05는 다음 연결에서 검산한다. 원 로그·검토는
+[분할 source 기록](../evidence/dev3-tree-structure-20261104.md#split-source-bound)에 둔다.
+
+후속 [canonical scope4 replay](../evidence/dev3-tree-structure-20261104.md#scope4-replay)는 원
+arena·Job·Structural bank의 같은 cut에서 분할을 재계산하고 실제352B INIT를 발급한다.
+Root 두 INIT를 포함한 전체 준비가 끝난 뒤에만 원 상태를 갱신하며 analysis/home/Pending의
+RowInternal level을 보존한다. compact preorder·private build/after-audit 분리·allocator cell 복사로
+candidate20,940/frame23,116B로 줄여 실제 memory/native caller의 기존 cap3종을 유지했다.
+관련 고유30개와 실제 caller2개를 source별 검증했다. 잘못 재실행한 무변경1개와 실패 원본·
+raw Base/cursor 한계도 기록했다. 실제 원 pool SMO·selected WAL 효과 복구·native fault와
+unlink/root shrink/retirement는 계속08-1의 잔여이며 이번 단위에는 일정 적립을 하지 않는다.
+
+이어 [원 writer의 split 준비](../evidence/dev3-tree-structure-20261104.md#original-split-prepare)는
+실제 durable WAL replay와 같은 control cut에서 후보를 만들고, 원 pool의 기존3/4page를
+물리 순서로 읽어 canonical before·FrameStamp·allocator identity를 대조한다. 변경된 경로의
+고유4개와 실제 memory/native 자원 호출자2개를 source별로 검증했다. ChildSplit 사례는
+raw 입력을 적재한 별도 pool의 물리 읽기 helper에 한정한다. 실제 claim·stage·설치·내구성
+완료 권한은 아직 발급하지 않으며 전체 F02/F05와08-1의 남은 효과 연결은 계속 진행한다.
+실패 원본, Clippy와 독립 검토 결과는 같은 기록에 보존한다.
+
+[분할의 부채 보존·후보 선택](../evidence/dev3-tree-structure-20261104.md#structural-admission)은
+같은 replay cut의 XOI successor와 기존 전체 WAL/steps를 준비하고 용량·counter를 검사한다.
+실제 active Row의 원 bank를 raw 합산한 기대값과 exact fit/1byte 부족을 대조했다.
+원 pool의 별도 후보 선택은 신규1/2개에만 stamp/generation을 묶고 exact5 target을 제외한다.
+새7개와 변경된 source1개 및 실제 caller2개가 source별 PASS다. 후보 선택은 등록/claim을
+바꾸지 않으며 dirty 관측은 실제 flush 증거가 아니다. 원 effect 수명과08-1 잔여는 유지한다.
+
+[실제 split 효과](../evidence/dev3-tree-structure-20261104.md#structural-effect)는 원 writer의
+claim→stage→5page 설치→guard0 durable→canonical replay/INIT 검산→finish를 연결한다.
+prestage 취소는 소비한 generation tombstone을 보존하고, stage 이후 불명 결과와 반환 실패는
+fence한다. 대상 table의 모든 non-Free Job은 현재 거절하며 다른 table의 부채는 보존한다.
+복구 READY의 epoch seed도 검증된 RowInternal root를 수용한다. 실제 native cut과 후속 빈 거래
+Commit의 검증은 이 제한 단위에 속하며, 다단계 Row CRUD·unlink·root shrink·retirement 및
+전체 F05/08-1 완료를 뜻하지 않는다. 최신 사용자는 이 진행 중 수정의 commit·push까지 요청했다.
+
 <a id="catalog-remaining"></a>
 2026-10-26 [Catalog CREATE 남은 메모리 사례](../evidence/dev3-catalog-remaining-20261026.md): 남은 9개를 모두 source별로 PASS했다. lookup이 Live CREATE Undo를 초기 Free page로만 검증해 fence하던 결함을 고쳤고 Writer 준비 분리를 포함했다. 같은 epoch 두 번째 CREATE의 pair victim 준비를 [D3-CATALOG-CREATE-002](../contracts/dev3-catalog-create.md#sequential-create)로 보완해 MT02가 r36에서 통과했다. [검토 후 수정](../evidence/dev3-catalog-review-fix-20261026.md)에서 Profile에 맞는 Root/Jobs decoder를 연결하고 신규8개와 변경 source 계산2개를 통과했다. 첫 Row INSERT·runtime F05·DEV3/S5는 미완료다.
 

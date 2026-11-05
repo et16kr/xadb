@@ -14,6 +14,8 @@ use crate::storage::retention_page::row;
 
 #[path = "row/actor.rs"]
 pub(in crate::storage) mod actor;
+#[path = "row/current_tree.rs"]
+mod current_tree;
 #[path = "row/graph.rs"]
 mod graph;
 pub(in crate::storage) use graph::{
@@ -231,7 +233,62 @@ pub(in crate::storage) fn decode_layout(
     }
     let view = LayoutView { bytes, expected };
     validate_pairs(view)?;
+    validate_structural_groups(view, h.source_epoch)?;
     Ok(view)
+}
+
+fn validate_structural_groups(view: LayoutView<'_>, source_epoch: u32) -> Result<()> {
+    for ordinal in 9..64 {
+        let Some(provenance) = view.provenance(ordinal)? else {
+            continue;
+        };
+        let Some(birth) = provenance.structural() else {
+            continue;
+        };
+        if provenance.writer_epoch() > source_epoch {
+            return Err(Error::ProvenanceMismatch);
+        }
+        for other_ordinal in 9..64 {
+            let Some(other) = view.provenance(other_ordinal)? else {
+                continue;
+            };
+            // A currently live exact peer cannot belong to a different birth.
+            // A retired peer, including a reused address, need not be present.
+            if birth.peer() == Some(other.page()) && other.init_lsn() != provenance.init_lsn() {
+                return Err(Error::ProvenanceMismatch);
+            }
+            if other.init_lsn() != provenance.init_lsn() {
+                continue;
+            }
+            let other_birth = other.structural().ok_or(Error::ProvenanceMismatch)?;
+            if other.source() != provenance.source()
+                || other.writer_epoch() != provenance.writer_epoch()
+                || other.object() != provenance.object()
+                || other.frame_digest() != provenance.frame_digest()
+                || other_birth.anchor() != birth.anchor()
+                || other_birth.left() != birth.left()
+                || other_birth.operation() != birth.operation()
+                || other_birth.revisions() != birth.revisions()
+                || other_birth.core_digest() != birth.core_digest()
+            {
+                return Err(Error::ProvenanceMismatch);
+            }
+            if other_ordinal == ordinal {
+                continue;
+            }
+            if provenance.role() == other.role()
+                || birth.peer() != Some(other.page())
+                || other_birth.peer() != Some(provenance.page())
+                || (provenance.role() == 5
+                    && birth.level().checked_add(1) != Some(other_birth.level()))
+                || (provenance.role() == 6
+                    && other_birth.level().checked_add(1) != Some(birth.level()))
+            {
+                return Err(Error::ProvenanceMismatch);
+            }
+        }
+    }
+    Ok(())
 }
 
 fn validate_pairs(view: LayoutView<'_>) -> Result<()> {
@@ -337,6 +394,13 @@ pub(in crate::storage) fn layout_source_bytes() -> usize {
         + 32 * size_of::<&[u8]>()
         + 32 * size_of::<u64>()
         + catalog::source_bytes()
+        + super::image_records::provenance_source_bytes()
+        // validate_structural_groups holds two borrowed birth views, never
+        // an owned claim array. Accessor/codec temporaries are counted above.
+        + 2 * size_of::<super::StructuralInit<'_>>()
+        + 2 * size_of::<Option<super::StructuralInit<'_>>>()
+        + 2 * size_of::<LayoutView<'_>>()
+        + 2 * size_of::<std::ops::Range<usize>>()
 }
 
 #[cfg(test)]

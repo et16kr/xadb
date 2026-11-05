@@ -1,0 +1,316 @@
+{
+  "schema": "XADB_MODULE_GATE_RECORD_V1",
+  "change": "DEV3 08: derive immutable current-profile leaf split weights from actual typed Undo; canonical authority and effects remain open",
+  "rust_tests": [
+    {
+      "paths": [
+        "crates/engine/src/storage/semantic_row/structure.rs",
+        "crates/engine/src/storage/semantic_row/structure/weights.rs",
+        "crates/engine/src/storage/semantic_row/structure/weights/tests.rs"
+      ],
+      "reason": "Eight selected cases exercise new weight derivation and reused helpers. Existing helper bodies are unchanged; only visibility broadens. Literal native after cells supply inputs; independent row cell lengths supply expected costs. No prior unchanged transition suites are selected.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::structural_weights_use_real_delete_update_and_missing_before_cells",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/scope3/profile3.bin",
+            "tests/fixtures/module-row-format/transition-delete/blobs.bin",
+            "tests/fixtures/module-row-format/transition-delete/index.tsv",
+            "tests/fixtures/module-row-format/transition-update/blobs.bin",
+            "tests/fixtures/module-row-format/transition-update/index.tsv"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::structural_weights_allow_historical_leaf_hint_but_reject_reserved_and_aliases",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/scope3/profile3.bin",
+            "tests/fixtures/module-row-format/transition-delete/blobs.bin",
+            "tests/fixtures/module-row-format/transition-delete/index.tsv",
+            "tests/fixtures/module-row-format/transition-update/blobs.bin",
+            "tests/fixtures/module-row-format/transition-update/index.tsv"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::structural_weights_reject_real_undo_identity_edge_and_typed_before_mutations",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/scope3/profile3.bin",
+            "tests/fixtures/module-row-format/transition-delete/blobs.bin",
+            "tests/fixtures/module-row-format/transition-delete/index.tsv",
+            "tests/fixtures/module-row-format/transition-update/blobs.bin",
+            "tests/fixtures/module-row-format/transition-update/index.tsv"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::structural_weights_reject_current_version_projection_and_committed_tombstone",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/scope3/profile3.bin",
+            "tests/fixtures/module-row-format/transition-delete/blobs.bin",
+            "tests/fixtures/module-row-format/transition-delete/index.tsv",
+            "tests/fixtures/module-row-format/transition-update/blobs.bin",
+            "tests/fixtures/module-row-format/transition-update/index.tsv"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::structural_weights_check_capacity_cut_allocation_and_callback_error",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/scope3/profile3.bin",
+            "tests/fixtures/module-row-format/transition-delete/blobs.bin",
+            "tests/fixtures/module-row-format/transition-delete/index.tsv",
+            "tests/fixtures/module-row-format/transition-update/blobs.bin",
+            "tests/fixtures/module-row-format/transition-update/index.tsv"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::structural_weights_enforce_actual_plus_undo_capacity_at_exact_boundary",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/scope3/profile3.bin",
+            "tests/fixtures/module-row-format/transition-delete/blobs.bin",
+            "tests/fixtures/module-row-format/transition-delete/index.tsv",
+            "tests/fixtures/module-row-format/transition-update/blobs.bin",
+            "tests/fixtures/module-row-format/transition-update/index.tsv"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::structural_weights_reject_missing_predecessor_and_stale_or_future_images",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/scope3/profile3.bin",
+            "tests/fixtures/module-row-format/transition-delete/blobs.bin",
+            "tests/fixtures/module-row-format/transition-delete/index.tsv",
+            "tests/fixtures/module-row-format/transition-update/blobs.bin",
+            "tests/fixtures/module-row-format/transition-update/index.tsv"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::structural_weights_reject_reserved_jobs_of_other_tables",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/scope3/profile3.bin",
+            "tests/fixtures/module-row-format/transition-delete/blobs.bin",
+            "tests/fixtures/module-row-format/transition-delete/index.tsv",
+            "tests/fixtures/module-row-format/transition-update/blobs.bin",
+            "tests/fixtures/module-row-format/transition-update/index.tsv"
+          ]
+        }
+      ]
+    }
+  ],
+  "reviews": [
+    {
+      "id": "dev3-08-weights-d2-d1",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/semantic_row/structure.rs": "2c6d389f1c168da4c7a5d4c65d2fc4298a476595",
+        "crates/engine/src/storage/semantic_row/structure/weights.rs": "8374e2b36ed340cd5b3a19f44e0ab3acec9efbf8",
+        "crates/engine/src/storage/semantic_row/structure/weights/tests.rs": "f1777b91a7e8c68ceab3b223d157c503febdc4cd",
+        "crates/engine/src/storage/semantic_row/transition.rs": "01c8662a5f9c2ff3e9c3b92fdfb526f4645cbb58",
+        "crates/engine/src/storage/semantic_row/transition/cells.rs": "28a5e732da226b964d762ffea7af4629e568cf32",
+        "devdoc/contracts/dev3-tree-smo.md": "81163366a309cd53a51d3352aef8c364a6cd7fa6",
+        "tests/fixtures/module-row-format/scope3/profile3.bin": "c713f45e89c706c3b4bc742e57e9ea8acd8b8537",
+        "tests/fixtures/module-row-format/transition-delete/blobs.bin": "8f47189af0de5c6d8523ebdcc34c06a8279cfd8a",
+        "tests/fixtures/module-row-format/transition-delete/index.tsv": "e3964f427f7bce03744c23930a01b02d50a2005f",
+        "tests/fixtures/module-row-format/transition-update/blobs.bin": "ba303c13e8016eeb7ca75d572fb3dbc1ab77ea5f",
+        "tests/fixtures/module-row-format/transition-update/index.tsv": "848b500aca95c7483ec3fba42c8cc7055b08fa5a"
+      },
+      "log": "module-gate/evidence/dev3-08-weights/review.md (sha256 8d4ca7cb8485d114c2172ddbca6784720687977af438bd4b517c342caaae9951)"
+    },
+    {
+      "id": "dev3-08-weights-candidate-additions",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/semantic_row/structure.rs": "246d55e06431f3f4cc4a9221b0ec99a36869c103",
+        "crates/engine/src/storage/semantic_row/structure/weights/tests.rs": "e113f184c4f7c43b17a8e39bc79e2598ed89ab7e"
+      },
+      "log": "module-gate/evidence/dev3-08-candidate/review.md (sha256 5f7b2d00f471e2da180782e581e24e6c9063c89d2e3abea9fcc490d98d735f8a)"
+    },
+    {
+      "id": "dev3-08-weights-frame-modules",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/semantic_row/structure.rs": "d4bd9385cf1b438bfdca14e78b8557723ea3d637"
+      },
+      "log": "module-gate/evidence/dev3-08-frame/review.md (sha256 82cbef1f0666cc3001181a90d99c556d89f21ccfab9c5a116323f8d1f11d0a5d)"
+    },
+    {
+      "id": "dev3-08-bank-overlap-weights",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/semantic_row/structure.rs": "889935ca4daf4d5efbd4b101dffa00707f648bb5"
+      },
+      "log": "module-gate/evidence/dev3-08-bank/review.md (sha256 f0f76ca9ea646d2f9c41aade4ef6c019587d94d4e46ecc3c1b621131c287ad7a)"
+    },
+    {
+      "id": "dev3-08-split-source-current-20261104-dev3-08-weights",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/semantic_row/transition.rs": "aaabfa747ce61117d432acef5a19ef448d59efc6"
+      },
+      "log": "module-gate/evidence/dev3-08-split-source/review.md (sha256 00fa0006f3ebfa649e91e6bbe0990b97610e021b19ec4cfd345c71f578a54b4a)"
+    },
+    {
+      "id": "dev3-08-scope4-replay-overlap-d2-d1",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "devdoc/contracts/dev3-tree-smo.md": "919a718f8af4a8539dedb609809039901a92604d"
+      },
+      "log": "module-gate/evidence/dev3-08-scope4-replay/review.md (sha256 2a39d85aadb8513bea28d051226c800aad689f902668809681b711c29df1c15f)"
+    },
+    {
+      "id": "dev3-08-live-prepare-d2-d1-overlap",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "devdoc/contracts/dev3-tree-smo.md": "8857b485a202d469c5e6d69b2de9b763795a4642"
+      },
+      "log": "module-gate/evidence/dev3-08-live-prepare/review.md (sha256 a3e3c1ad6f8917646d8be488cf6818d39703367849d00f495746cd16f5eba0f8)"
+    },
+    {
+      "id": "dev3-08-admission-d2-d1-overlap",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "devdoc/contracts/dev3-tree-smo.md": "57dcb8748372f0ba77cb3a586e4382958999b95c"
+      },
+      "log": "module-gate/evidence/dev3-08-admission/review.md (sha256 7f4b4306fbd465ac91cfd5ce8d213d2506ac89fc25f086651b1f5f15690dc390)"
+    },
+    {
+      "id": "dev3-08-effect-final-overlap",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "devdoc/contracts/dev3-tree-smo.md": "e60ff6fbfcf0d52fccce95425f9d9913c2560164"
+      },
+      "log": "module-gate/evidence/dev3-08-effect/review.md (sha256 5c0f1ecbb805aad6300bdb7e4d93eaba1d05e0709a3bb3c69a9a7a44cbe49d1f)"
+    },
+    {
+      "id": "dev3-08-1-pr53-supplement",
+      "class": "D2",
+      "scopes": [
+        "common",
+        "joint"
+      ],
+      "author": "/root",
+      "reviewer": "/root/independent_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/row/read/driver/tests.rs": "16b5e8694018dd48a2e8ba29b73a19e68209e2dc",
+        "crates/engine/src/storage/semantic_row/structure/weights/tests.rs": "f6f50625997c84ad73501a6387f03896967533a3",
+        "crates/engine/src/storage/tree_page/search/tests.rs": "4d2c26889dc5a566228ed2ca172fa9590820c250",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/split_rows.rs": "989ac5bc2033d3252ac7caba4ca8f6c5d7fb0b54",
+        "crates/engine/src/storage/wal_io/plan4_retention/structural_effect.rs": "64c757a850d10bd31b762a9c0f96badd1396c58d",
+        "devdoc/contracts/dev3-tree-smo.md": "8d7980fc21b9c432c5cffa8a196c8494911ea912"
+      },
+      "log": "module-gate/evidence/dev3-08-1-pr53-review/review.md",
+      "log_sha256": "eee50d2c439a5c2d2eacbc063e2a2a55708ad1e5697591070afdead7bb04adb1"
+    },
+    {
+      "id": "pr53-route-refactor-20261105",
+      "class": "D2",
+      "scopes": [
+        "common",
+        "joint"
+      ],
+      "author": "/root",
+      "reviewer": "/root/independent_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/tree_page/search/tests.rs": "2113745a12294eef46d13faf2315166d34e2388c",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/split_rows.rs": "efb44ba9665d52032c63b9fb8321b36818057760",
+        "devdoc/contracts/dev3-tree-smo.md": "5db50935899a2a5817baf3ac78254241e639db90"
+      },
+      "log": "module-gate/evidence/dev3-08-1-pr53-refactor/review.md (sha256 0ad5f1b1e0fa3ebebf8f30142e989d67f3a5c09953c8a1b7f913961b1ef9c865)"
+    }
+  ]
+}

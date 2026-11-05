@@ -1,0 +1,6 @@
+{
+  "scope": "Only failed E02 clean Child variant after adding new split RowInternal to original flusher kind gate; original Root variant completed r13 and not repeated; macro equivalent empty-range lint fix",
+  "source": "bc9075e0f48d7c8d9d1b06fe3416111d109e57933f80ca7fd4bb695fda90ed49",
+  "filter": "structural_effect_original_clean_victim_stamp_change_child",
+  "build_seconds": 300
+}

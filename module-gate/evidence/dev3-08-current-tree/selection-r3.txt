@@ -1,0 +1,1 @@
+Only failed three MIXED cases with corrected fixture outputs. r2 author IndentationError did not regenerate inputs; shell continued erroneously and repeated the old failing input, therefore r2 is an invalid preparation attempt and NOT evidence of any new-source verification. Future pipeline uses set -e. Preserve r2 FAIL.

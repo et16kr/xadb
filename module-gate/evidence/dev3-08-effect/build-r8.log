@@ -1,0 +1,44 @@
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+error[E0433]: cannot find type `RetentionPhase` in this scope
+   --> crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_effect/faults.rs:408:30
+    |
+408 | ...                   (RetentionPhase::Durable, Effect::CallerMustResolve)
+    |                        ^^^^^^^^^^^^^^ use of undeclared type `RetentionPhase`
+    |
+help: an enum with a similar name exists
+    |
+408 -                             (RetentionPhase::Durable, Effect::CallerMustResolve)
+408 +                             (RetentionCause::Durable, Effect::CallerMustResolve)
+    |
+help: consider importing this enum through its public re-export
+    |
+  3 + use crate::storage::wal_io::disk_api::RetentionPhase;
+    |
+
+error[E0433]: cannot find `flush_io` in `wal_io`
+   --> crates/engine/src/storage/wal_io/plan4_retention/structural_effect.rs:349:37
+    |
+349 |             crate::storage::wal_io::flush_io::test_support::seed_headroom(
+    |                                     ^^^^^^^^ could not find `flush_io` in `wal_io`
+    |
+help: consider importing this module
+    |
+  3 + use crate::storage::wal_io::bootstrap::doublewrite_install::mutable_storage::flush_io::test_support;
+    |
+help: if you import `test_support`, refer to it directly
+    |
+349 -             crate::storage::wal_io::flush_io::test_support::seed_headroom(
+349 +             test_support::seed_headroom(
+    |
+
+error[E0609]: no field `ledger` on type `&'b mut plan4_pages::retention::control::RetentionLedger<'a, 'c, 's>`
+   --> crates/engine/src/storage/wal_io/plan4_retention/structural_effect.rs:489:30
+    |
+489 |                 self.control.ledger.bytes[34 * 1664 + 1536] ^= 1;
+    |                              ^^^^^^ unknown field
+    |
+    = note: available fields are: `bytes`, `issued_local`, `adopted_local`, `pending`, `durable` ... and 2 others
+
+Some errors have detailed explanations: E0433, E0609.
+For more information about an error, try `rustc --explain E0433`.
+error: could not compile `xadb-engine` (lib test) due to 3 previous errors

@@ -1,0 +1,5 @@
+04005aba7bb099975ccfea6f62351858342925b034ff02c94bdf214406773e15  crates/engine/src/storage/semantic_row/structure.rs
+f1af3f5f1a4af3333241790f6bb59ee9c738417e9653bb6cc425755f2a9e4f0e  crates/engine/src/storage/semantic_row/structure/weights.rs
+215dd35d2daf8b649443cfca9b4efd68bfc70bad413dc215174d6372c05be705  crates/engine/src/storage/semantic_row/structure/weights/tests.rs
+037d7f104ebab0dcac3075e0c476cad5a1061dd9097823558f68e99c157b8a65  crates/engine/src/storage/semantic_row/transition.rs
+3226c26f0eeed6ae651f211d57298f71c8b1e72c231c1ec0945b33908956b924  crates/engine/src/storage/semantic_row/transition/cells.rs

@@ -1,0 +1,49 @@
+   Compiling version_check v0.9.5
+   Compiling typenum v1.20.1
+   Compiling autocfg v1.5.1
+   Compiling libc v0.2.191
+   Compiling generic-array v0.14.7
+   Compiling cfg_aliases v0.2.2
+   Compiling memoffset v0.9.1
+   Compiling cfg-if v1.0.5
+   Compiling nix v0.30.1
+   Compiling cpufeatures v0.2.17
+   Compiling bitflags v2.13.2
+   Compiling crypto-common v0.1.7
+   Compiling block-buffer v0.10.4
+   Compiling digest v0.10.7
+   Compiling sha2 v0.10.9
+   Compiling xadb-foundation v0.1.0 (/workspace/xadb/crates/foundation)
+   Compiling xadb-platform v0.1.0 (/workspace/xadb/crates/platform)
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+error[E0603]: struct import `SelectedControl` is private
+   --> crates/engine/src/storage/wal_io/plan4_retention/recovery/structural_bank_tests.rs:29:24
+    |
+ 29 |         filemap: base::SelectedControl {
+    |         -------        ^^^^^^^^^^^^^^^ private struct import
+    |         |
+    |         while setting this field
+    |
+note: the struct import `SelectedControl` is defined here...
+   --> crates/engine/src/storage/plan4_recovery_base.rs:29:63
+    |
+ 29 |     control::{ControlError, ControlKind, ControlRef, Profile, SelectedControl},
+    |                                                               ^^^^^^^^^^^^^^^
+note: ...and refers to the struct `SelectedControl` which is defined here
+   --> crates/engine/src/storage/control.rs:409:1
+    |
+409 | pub(crate) struct SelectedControl {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: consider importing this struct through its public re-export instead
+    |
+ 29 -         filemap: base::SelectedControl {
+ 29 +         filemap: crate::storage::wal_io::bootstrap::SelectedControl {
+    |
+help: import `SelectedControl` through the re-export
+    |
+ 29 -         filemap: base::SelectedControl {
+ 29 +         filemap: control::SelectedControl {
+    |
+
+For more information about this error, try `rustc --explain E0603`.
+error: could not compile `xadb-engine` (lib test) due to 1 previous error

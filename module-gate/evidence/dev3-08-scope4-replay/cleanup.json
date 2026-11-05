@@ -1,0 +1,8 @@
+{
+  "commit": "37a04650434c07f5c4f75067c3d67cf68b9b3e5a",
+  "target": "/workspace/xadb/artifacts/dev3-08/target",
+  "removed_bytes": 4062560413,
+  "elf_sha256": "bdc74fa28b57b529234381afe0f72d196da0e99bb3032f3e34eba225ddac2e8a",
+  "gate_sha256": "9a78f32b501db53b287522c1e897a0cf78d135bc5dcbfd46f4ebff6a993a85b2",
+  "preserved": "raw logs, source/input/ELF hashes, selected cases and independent review; completed source cases are not rerun"
+}

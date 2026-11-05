@@ -1,0 +1,275 @@
+{
+  "schema": "XADB_MODULE_GATE_RECORD_V1",
+  "change": "DEV3 08: Profile3 structural birth observations in Base4; no mint, graph or replay authority",
+  "rust_tests": [
+    {
+      "paths": [
+        "crates/engine/src/storage/plan4_recovery_base.rs",
+        "crates/engine/src/storage/plan4_recovery_base/catalog.rs",
+        "crates/engine/src/storage/plan4_recovery_base/image_records.rs",
+        "crates/engine/src/storage/plan4_recovery_base/row.rs",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph/source.rs",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph/source_tests.rs",
+        "crates/engine/src/storage/plan4_recovery_base/row_tests.rs",
+        "crates/engine/src/storage/plan4_recovery_base/row_structural_tests.rs"
+      ],
+      "reason": "Nine new birth/layout cases and one changed source inventory case. Legacy helper/test bodies are unchanged; parent additions only declare the new API/module. Original source-specific FAIL/PASS receipts are preserved.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row_structural_tests.rs",
+          "case": "storage::plan4_recovery_base::row::tests::structural::structural_base_certificate_levels_and_profile_isolation",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/base4/initial.xrb",
+            "tests/fixtures/module-row-format/base4/active.xrb",
+            "tests/fixtures/module-row-format/envelopes/profiles.bin"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row_structural_tests.rs",
+          "case": "storage::plan4_recovery_base::row::tests::structural::structural_base_birth_roles_and_borrowed_observations",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/base4/initial.xrb",
+            "tests/fixtures/module-row-format/base4/active.xrb",
+            "tests/fixtures/module-row-format/envelopes/profiles.bin"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row_structural_tests.rs",
+          "case": "storage::plan4_recovery_base::row::tests::structural::structural_base_rejects_scalar_role_and_physical_alias_mutations",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/base4/initial.xrb",
+            "tests/fixtures/module-row-format/base4/active.xrb",
+            "tests/fixtures/module-row-format/envelopes/profiles.bin"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row_structural_tests.rs",
+          "case": "storage::plan4_recovery_base::row::tests::structural::structural_base_preserves_legacy_birth_rules",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/base4/initial.xrb",
+            "tests/fixtures/module-row-format/base4/active.xrb",
+            "tests/fixtures/module-row-format/envelopes/profiles.bin"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row_structural_tests.rs",
+          "case": "storage::plan4_recovery_base::row::tests::structural::structural_base_layout_accepts_historical_nonroot_and_retired_peers",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/base4/initial.xrb",
+            "tests/fixtures/module-row-format/base4/active.xrb",
+            "tests/fixtures/module-row-format/envelopes/profiles.bin"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row_structural_tests.rs",
+          "case": "storage::plan4_recovery_base::row::tests::structural::structural_base_rejects_cross_class_birth_collision",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/base4/initial.xrb",
+            "tests/fixtures/module-row-format/base4/active.xrb",
+            "tests/fixtures/module-row-format/envelopes/profiles.bin"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row_structural_tests.rs",
+          "case": "storage::plan4_recovery_base::row::tests::structural::structural_base_groups_bind_same_lsn_even_with_changed_owner",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/base4/initial.xrb",
+            "tests/fixtures/module-row-format/base4/active.xrb",
+            "tests/fixtures/module-row-format/envelopes/profiles.bin"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row_structural_tests.rs",
+          "case": "storage::plan4_recovery_base::row::tests::structural::structural_base_raw_digest_is_observation_only",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/base4/initial.xrb",
+            "tests/fixtures/module-row-format/base4/active.xrb",
+            "tests/fixtures/module-row-format/envelopes/profiles.bin"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row_structural_tests.rs",
+          "case": "storage::plan4_recovery_base::row::tests::structural::structural_base_source_bound_covers_new_typed_carriers",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/base4/initial.xrb",
+            "tests/fixtures/module-row-format/base4/active.xrb",
+            "tests/fixtures/module-row-format/envelopes/profiles.bin"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/source_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::source::tests::base4_closure_source_bound_covers_measured_frames",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        }
+      ]
+    }
+  ],
+  "reviews": [
+    {
+      "id": "dev3-08-base-claims-d2-d1",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/plan4_recovery_base.rs": "2f21097b171f11fd26f056ccffdc8e682bc9d48b",
+        "crates/engine/src/storage/plan4_recovery_base/catalog.rs": "aa4520524c9174cd987902c349c72c67ce710126",
+        "crates/engine/src/storage/plan4_recovery_base/image_records.rs": "29d0a07337494bc8ee0612ca2f5b92866cc6c625",
+        "crates/engine/src/storage/plan4_recovery_base/row.rs": "06eb06a7357c351388f6ff89ba214483921e79ec",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph/source.rs": "3f3a4999b72c6b7b3e2b7ea9da6b417f951fc734",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph/source_tests.rs": "887b740a99f5696c0908237726c0f56a605f850e",
+        "crates/engine/src/storage/plan4_recovery_base/row_tests.rs": "441e4a7a2e6b4f1407420aa1c6de7c4356de34d6",
+        "crates/engine/src/storage/plan4_recovery_base/row_structural_tests.rs": "23aa9513562e9de7b3ac7e36b65bfe40699745c5",
+        "tests/fixtures/module-row-format/base4/initial.xrb": "d4573fd4c29f24ccdb28b603446411dddc072938",
+        "tests/fixtures/module-row-format/base4/active.xrb": "856db9c6eb0529756200f2a96c9988451d5341d4",
+        "tests/fixtures/module-row-format/envelopes/profiles.bin": "721736fc0e2edafa27e9eb43278ab33d2edb4b34",
+        "devdoc/contracts/dev3-tree-smo.md": "9007460823b0ca316a997d0dea88d93deae0a2c8"
+      },
+      "log": "module-gate/evidence/dev3-08-base-claims/review.md (sha256 58f14d9bbe7b812499dc1c8375477a306a2dbc73ec133169d993f826a75076da)"
+    },
+    {
+      "id": "dev3-08-bank-overlap-base-claims",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/plan4_recovery_base.rs": "290f035ec4bad2c8b7c1170f4a28637a30f33998",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph/source.rs": "28bb594755220885c426e976b9a4158e86aa71f4",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph/source_tests.rs": "9f35007f1d0109a404dbb62d9c7d042201d0e1b8"
+      },
+      "log": "module-gate/evidence/dev3-08-bank/review.md (sha256 f0f76ca9ea646d2f9c41aade4ef6c019587d94d4e46ecc3c1b621131c287ad7a)"
+    },
+    {
+      "id": "dev3-08-current-tree-followup-20261104-dev3-08-base-claims",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/plan4_recovery_base/row.rs": "2acad43c56f163d3a271cce8f8cac626dd728a81",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph/source.rs": "0d2da1ad11973613c9586ae37d9522283c7e8cb0",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph/source_tests.rs": "8e35a0d8e8e2708eddf59391167b7cd6f3e03445"
+      },
+      "log": "module-gate/evidence/dev3-08-current-tree/review.md (sha256 37f27a651decb9fcf50c93d055c324f3dc7ca10355ce443914789f9349d920d2)"
+    },
+    {
+      "id": "dev3-08-scope4-replay-overlap-d2-d1",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "devdoc/contracts/dev3-tree-smo.md": "919a718f8af4a8539dedb609809039901a92604d"
+      },
+      "log": "module-gate/evidence/dev3-08-scope4-replay/review.md (sha256 2a39d85aadb8513bea28d051226c800aad689f902668809681b711c29df1c15f)"
+    },
+    {
+      "id": "dev3-08-live-prepare-d2-d1-overlap",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "devdoc/contracts/dev3-tree-smo.md": "8857b485a202d469c5e6d69b2de9b763795a4642"
+      },
+      "log": "module-gate/evidence/dev3-08-live-prepare/review.md (sha256 a3e3c1ad6f8917646d8be488cf6818d39703367849d00f495746cd16f5eba0f8)"
+    },
+    {
+      "id": "dev3-08-admission-d2-d1-overlap",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "devdoc/contracts/dev3-tree-smo.md": "57dcb8748372f0ba77cb3a586e4382958999b95c"
+      },
+      "log": "module-gate/evidence/dev3-08-admission/review.md (sha256 7f4b4306fbd465ac91cfd5ce8d213d2506ac89fc25f086651b1f5f15690dc390)"
+    },
+    {
+      "id": "dev3-08-effect-final-overlap",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "devdoc/contracts/dev3-tree-smo.md": "e60ff6fbfcf0d52fccce95425f9d9913c2560164"
+      },
+      "log": "module-gate/evidence/dev3-08-effect/review.md (sha256 5c0f1ecbb805aad6300bdb7e4d93eaba1d05e0709a3bb3c69a9a7a44cbe49d1f)"
+    },
+    {
+      "id": "pr53-route-refactor-20261105",
+      "class": "D2",
+      "scopes": [
+        "common",
+        "joint"
+      ],
+      "author": "/root",
+      "reviewer": "/root/independent_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "devdoc/contracts/dev3-tree-smo.md": "5db50935899a2a5817baf3ac78254241e639db90"
+      },
+      "log": "module-gate/evidence/dev3-08-1-pr53-refactor/review.md (sha256 0ad5f1b1e0fa3ebebf8f30142e989d67f3a5c09953c8a1b7f913961b1ef9c865)"
+    }
+  ]
+}

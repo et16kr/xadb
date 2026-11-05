@@ -8,6 +8,14 @@ use crate::storage::{
 };
 use std::sync::LockResult;
 
+#[path = "dirty_init/structural.rs"]
+mod structural;
+pub(super) use structural::source_observation as structural_source_observation;
+pub(in crate::storage) use structural::structural_effect_pool_source_bytes;
+pub(in crate::storage) use structural::{
+    CompletedStructural, StructuralClaimKey, StructuralWriteTargets,
+};
+
 #[path = "dirty_init/tx_pair.rs"]
 mod tx_pair;
 pub(in crate::storage) use tx_pair::source_census as tx_pair_source_census;
@@ -31,6 +39,11 @@ struct InitClaimRecord {
 enum InitClaimIdentity {
     System(InitClaimRecord),
     TxPair(tx_pair::TxPairClaimRecord),
+    #[allow(
+        dead_code,
+        reason = "constructed by the original SMO authority when its effect is connected"
+    )]
+    Structural(structural::StructuralClaimRecord),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -39,10 +52,13 @@ pub(super) struct InitClaimSlot {
     pub(super) initializer_pins_held: bool,
 }
 impl InitClaimSlot {
-    /// Ordinary callers cannot acquire a new pin/load/capture while CREATE
-    /// owns the original pair claim. System INIT keeps its existing policy.
+    /// CREATE and Structural claims exclude ordinary pin/load/capture until
+    /// their original completion owner finishes. System INIT keeps its policy.
     pub(super) fn blocks_ordinary(&self) -> bool {
-        matches!(&self.identity, InitClaimIdentity::TxPair(_))
+        matches!(
+            &self.identity,
+            InitClaimIdentity::TxPair(_) | InitClaimIdentity::Structural(_)
+        )
     }
     #[cfg(test)]
     pub(super) fn diagnostic_registration(&self, index: usize) -> Option<Registration> {
@@ -59,19 +75,22 @@ impl InitClaimSlot {
             }
             InitClaimIdentity::System(_) => None,
             InitClaimIdentity::TxPair(record) => record.diagnostic_registration(index),
+            InitClaimIdentity::Structural(record) => record.diagnostic_registration(index),
         }
     }
     fn system(&self) -> Option<&InitClaimRecord> {
         match &self.identity {
             InitClaimIdentity::System(record) => Some(record),
-            InitClaimIdentity::TxPair(_) => None,
+            InitClaimIdentity::TxPair(_) | InitClaimIdentity::Structural(_) => None,
         }
     }
     #[cfg(test)]
     fn system_mut(&mut self) -> &mut InitClaimRecord {
         match &mut self.identity {
             InitClaimIdentity::System(record) => record,
-            InitClaimIdentity::TxPair(_) => panic!("expected original System claim"),
+            InitClaimIdentity::TxPair(_) | InitClaimIdentity::Structural(_) => {
+                panic!("expected original System claim")
+            }
         }
     }
     fn matches_system(&self, identity: &InitClaimRecord) -> bool {
@@ -83,6 +102,7 @@ impl InitClaimSlot {
                 index == 0 || index == record.payload_index || request.same_address(&record.payload)
             }
             InitClaimIdentity::TxPair(record) => record.blocks_load(index, request),
+            InitClaimIdentity::Structural(record) => record.blocks_load(index, request),
         }
     }
     pub(super) fn owns_unpublished_pin(&self, index: usize) -> bool {
@@ -90,6 +110,7 @@ impl InitClaimSlot {
             && match &self.identity {
                 InitClaimIdentity::System(record) => record.payload_index == index,
                 InitClaimIdentity::TxPair(record) => record.indices().contains(&index),
+                InitClaimIdentity::Structural(record) => record.owns_index(index),
             }
     }
 }
@@ -409,6 +430,10 @@ impl<'c, 's, 'p, 'd> SharedPool<'c, 's, 'p, 'd> {
                             || (pins.counts[0] != 0 && pins.counts[identity.payload_index] != 0))
                 }
                 InitClaimIdentity::TxPair(identity) => {
+                    identity.valid_in(self, pins)
+                        && (!slot.initializer_pins_held || identity.held_pins_valid(pins))
+                }
+                InitClaimIdentity::Structural(identity) => {
                     identity.valid_in(self, pins)
                         && (!slot.initializer_pins_held || identity.held_pins_valid(pins))
                 }
@@ -1066,12 +1091,33 @@ pub(in crate::storage) mod test_support {
         PairFirstRegistered,
         PairBothRegisteredBeforeGate,
         PairGatePublished,
+        StructuralSelected,
+        StructuralClaimed,
+        StructuralStageEntered,
+        StructuralStaged,
+        StructuralFirstImage,
+        StructuralImages,
+        StructuralControl,
+        StructuralDpt,
+        StructuralPublished,
+        StructuralHistoryInstalling,
+        StructuralHistoryInstalled,
+        StructuralReleased,
+        StructuralDurable,
+        StructuralReplayReturning,
+        StructuralReplayChecked,
+        StructuralFinishChecked,
+        StructuralCancelChecking,
         LoadResidentObserved,
         LoadCleanSelected,
         LoadFlushSelected,
     }
     pub(in crate::storage) fn stage_owned(pool: &SharedPool<'_, '_, '_, '_>) {
         hit(pool, InitPoint::StageOwned);
+    }
+    /// Deterministic observation/panic hook only; no authority is created.
+    pub(in crate::storage) fn structural_hit(pool: &SharedPool<'_, '_, '_, '_>, point: InitPoint) {
+        hit(pool, point);
     }
     pub(in crate::storage) fn install_init_pause(
         pool: &SharedPool<'_, '_, '_, '_>,
@@ -1450,6 +1496,44 @@ pub(in crate::storage) mod test_support {
             .lock()
             .unwrap_or_else(|error| error.into_inner());
         (pins.init_claim.is_some(), pins.total)
+    }
+    /// Read the original directory's generation tombstones, including slots
+    /// whose cancelled INIT never became a published registration.
+    pub(in crate::storage) fn retention_generations(
+        pool: &SharedPool<'_, '_, '_, '_>,
+    ) -> [Option<u64>; MAX_FRAMES] {
+        let registry = pool.registry.lock().unwrap_or_else(|e| e.into_inner());
+        std::array::from_fn(|at| registry.directory.next_retention_generation(at))
+    }
+    /// Deliberately advance one original unused victim's generation after its
+    /// observation. No claim, registration, page, or authority is fabricated.
+    pub(in crate::storage) fn advance_selected_tombstone(
+        pool: &SharedPool<'_, '_, '_, '_>,
+        selected: &super::super::StructuralCandidates<'_, '_, '_>,
+    ) {
+        let at = selected.slots[0].index;
+        let mut state = pool.registry.lock().unwrap();
+        assert!(state.directory.resolve(pool.frames, at).is_none());
+        let next = state.directory.next_retention_generation(at).unwrap();
+        state.directory.prepare_retention_slot(at, next);
+        state.directory.retire_retention(at);
+    }
+    /// Damage the last active original clean resident after selection. The
+    /// directory generation and content bytes remain unchanged.
+    pub(in crate::storage) fn advance_selected_clean_counter(
+        pool: &SharedPool<'_, '_, '_, '_>,
+        selected: &super::super::StructuralCandidates<'_, '_, '_>,
+    ) {
+        let victim = selected.slots[usize::from(selected.count) - 1];
+        let expected = victim.frame.expect("actual resident victim");
+        assert!(
+            expected.page_lsn.0 > 0 && expected.modification_counter > 0,
+            "original flushed resident"
+        );
+        let mut content = pool.frames[victim.index].content.write().unwrap();
+        assert!(!content.dirty);
+        assert_eq!(content.modification_counter, expected.modification_counter);
+        content.modification_counter += 1;
     }
     pub(in crate::storage) fn init_layout() -> [(&'static str, usize); 15] {
         use std::mem::size_of;

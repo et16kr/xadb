@@ -1,0 +1,62 @@
+
+running 2 tests
+P4_RECOVERY_CONTEXT	P4-REC-ST01	f097e518518187826d07afce94e7cab904e33de8412e83d7363429e8afdd89ed	35f9bd9cd91be780478a543f611131e682c04966a8c89772e7fa5c38bdeedc37	b44fad56d3e1a8dfaab0e88fea2ca157927d65dfbec01e6a447ce5655c856878
+P4_RECOVERY_BEGIN	P4-REC-ST01
+P4_RECOVERY_CONTEXT	P4-REC-ST02	f097e518518187826d07afce94e7cab904e33de8412e83d7363429e8afdd89ed	35f9bd9cd91be780478a543f611131e682c04966a8c89772e7fa5c38bdeedc37	b44fad56d3e1a8dfaab0e88fea2ca157927d65dfbec01e6a447ce5655c856878
+P4_RECOVERY_BEGIN	P4-REC-ST02
+P4_RECOVERY_CENSUS	actual-native	RecoverySourceCensus { owner: 1592, runtime: 1976, acquire: 8856, selection: 63611, selection_decode: 63611, analysis: 69484, analysis_decode: 62827, base_capture: 64211, capture_encode: 64211, physical: 21296, epoch: 63363, handoff: 63291, handoff_decode: 63291, handoff_return: 11864, bind: 56123, bind_pages: 45323, bind_conversion: 56123, bind_return: 54859, retained_live: 20024, split: 45512, live: 84117, peak: 84117, metadata: 104160, whole: 169696, caller_maintenance: 12582912, caller_wal: 1048576, caller_dwb: 4194304, temporary_files: 2, codec_deep: 59675, codec_other: 59675, facade: 17224 }
+P4_RECOVERY_LIVE_CENSUS	actual-native	RetentionSourceCensus { original_owner: 864, original_core: 824, retained: 18648, split_ports: 192, split: 24824, conversion: 54264, conversion_preflight: 50564, conversion_return: 54264, semantic_producer: 41856, population_producer: 35280, population_replay: 24327, recovered_seed: 25439, recovered_conversion: 54360, recovered_ledger: 24831, recovered_cleanup: 24175, recovered_verify: 13522, history_outer: 2648, history_metadata: 786, history_hashing: 2320, history_initialize: 26460, history_returning: 4384, history_retention: 24239, history_population: 25743, history_rollback: 24239, history_closure: 20951, history_frame_return: 14532, history_row: 25739, recovery_frame: 46252, producer: 41856, installation: 14318, replay: 51172, load: 53156, flush: 52308, catalog_lookup: 54378, catalog_commit: 58830, catalog_binding: 52436, catalog_live: 63021, catalog_recovery_cleanup: 63901, peak: 82741, metadata: 205749, whole: 271285, caller_control: 196608, caller_isolation: 4160, caller_writer_replay: 1572864, caller_operation: 114688, caller_dwb: 4194304, caller_dwb_replay: 1572864 }
+P4_RECOVERY_BIND_CENSUS	actual-native	Plan4SourceCensus { owner: 864, bound: 13872, original_core: 824, retained: 15560, bind_nested: 36192, load_nested: 30428, catalog_nested: 32500, queue_nested: 33644, set3_nested: 31788, set4_nested: 31852, peak: 49204, whole: 114740, old_common_delta: 512, old_common_growth: 0, caller_operation: 114688, caller_flush: 4194304, temporary_files: 2 }
+P4_RECOVERY_CENSUS	actual-memory	RecoverySourceCensus { owner: 1584, runtime: 1968, acquire: 8832, selection: 63603, selection_decode: 63603, analysis: 69476, analysis_decode: 62819, base_capture: 64203, capture_encode: 64203, physical: 21288, epoch: 63355, handoff: 63283, handoff_decode: 63283, handoff_return: 11824, bind: 56115, bind_pages: 45315, bind_conversion: 56115, bind_return: 54851, retained_live: 20016, split: 45504, live: 84109, peak: 84109, metadata: 104152, whole: 169688, caller_maintenance: 12582912, caller_wal: 1048576, caller_dwb: 4194304, temporary_files: 2, codec_deep: 59675, codec_other: 59675, facade: 17224 }
+P4_RECOVERY_LIVE_CENSUS	actual-memory	RetentionSourceCensus { original_owner: 856, original_core: 824, retained: 18640, split_ports: 192, split: 24824, conversion: 54256, conversion_preflight: 50556, conversion_return: 54256, semantic_producer: 41856, population_producer: 35280, population_replay: 24327, recovered_seed: 25439, recovered_conversion: 54352, recovered_ledger: 24831, recovered_cleanup: 24175, recovered_verify: 13522, history_outer: 2648, history_metadata: 786, history_hashing: 2320, history_initialize: 26460, history_returning: 4384, history_retention: 24239, history_population: 25743, history_rollback: 24239, history_closure: 20951, history_frame_return: 14532, history_row: 25739, recovery_frame: 46252, producer: 41856, installation: 14318, replay: 51172, load: 53156, flush: 52308, catalog_lookup: 54378, catalog_commit: 58830, catalog_binding: 52436, catalog_live: 63021, catalog_recovery_cleanup: 63901, peak: 82733, metadata: 205741, whole: 271277, caller_control: 196608, caller_isolation: 4160, caller_writer_replay: 1572864, caller_operation: 114688, caller_dwb: 4194304, caller_dwb_replay: 1572864 }
+P4_RECOVERY_BIND_CENSUS	actual-memory	Plan4SourceCensus { owner: 856, bound: 13872, original_core: 824, retained: 15552, bind_nested: 36192, load_nested: 30428, catalog_nested: 32500, queue_nested: 33644, set3_nested: 31788, set4_nested: 31852, peak: 49196, whole: 114732, old_common_delta: 512, old_common_growth: 0, caller_operation: 114688, caller_flush: 4194304, temporary_files: 2 }
+P4_RECOVERY_CODEC_PHASES	actual-memory	deep=59332	other=53323
+P4_RECOVERY_CODEC_PHASES	actual-native	deep=59332	other=53323
+P4_RECOVERY_TYPE	actual-memory	Writer	8
+P4_RECOVERY_TYPE	actual-native	Writer	16
+P4_RECOVERY_TYPE	actual-memory	File	32
+P4_RECOVERY_TYPE	actual-memory	Runtime	1968
+P4_RECOVERY_TYPE	actual-native	File	32
+P4_RECOVERY_TYPE	actual-memory	ClosedFacade	17224
+P4_RECOVERY_TYPE	actual-native	Runtime	1976
+P4_RECOVERY_TYPE	actual-memory	LiveOwner	16960
+P4_RECOVERY_TYPE	actual-native	ClosedFacade	17224
+P4_RECOVERY_TYPE	actual-memory	Phase	1
+P4_RECOVERY_TYPE	actual-native	LiveOwner	16960
+P4_RECOVERY_TYPE	actual-memory	Observation	224
+P4_RECOVERY_TYPE	actual-memory	Binding	96
+P4_RECOVERY_TYPE	actual-native	Phase	1
+P4_RECOVERY_TYPE	actual-memory	VerifiedBase	280
+P4_RECOVERY_TYPE	actual-native	Observation	224
+P4_RECOVERY_TYPE	actual-memory	SelectedEpoch	352
+P4_RECOVERY_TYPE	actual-native	Binding	96
+P4_RECOVERY_TYPE	actual-native	VerifiedBase	280
+P4_RECOVERY_TYPE	actual-memory	RuntimeResult	1968
+P4_RECOVERY_TYPE	actual-memory	LiveHandoffResult	17224
+P4_RECOVERY_TYPE	actual-native	SelectedEpoch	352
+P4_RECOVERY_TYPE	actual-native	RuntimeResult	1976
+P4_RECOVERY_TYPE	actual-native	LiveHandoffResult	17224
+P4_RECOVERY_COMPONENT	actual-memory	base=64772	pool=7048	home=8644	flush=9121
+P4_RECOVERY_EFFECTS	actual-memory	adapter_construct=0	acquire=0	read=0	write=0	sync=0	spawn=0
+P4_RECOVERY_COMPONENT	actual-native	base=64772	pool=7048	home=8644	flush=9121
+P4_RECOVERY_EFFECTS	actual-native	adapter_construct=0	acquire=0	read=0	write=0	sync=0	spawn=0
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_source_native' (37969) panicked at crates/engine/src/storage/wal_io/plan4_recovery/tests.rs:130:5:
+assertion failed: resources::fits::<W>()
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_source_memory' (37968) panicked at crates/engine/src/storage/wal_io/plan4_recovery/tests.rs:130:5:
+assertion failed: resources::fits::<W>()
+P4_RECOVERY_FAIL	P4-REC-ST01
+P4_RECOVERY_FAIL	P4-REC-ST02
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_source_memory ... FAILED
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_source_native ... FAILED
+
+failures:
+
+failures:
+    storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_source_memory
+    storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_source_native
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 2295 filtered out; finished in 0.00s
+

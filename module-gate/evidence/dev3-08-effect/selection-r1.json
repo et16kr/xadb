@@ -1,0 +1,10 @@
+{
+  "scope": "new source census; first original Root+Child effect and active/committed debt refusals; E01 remains NOT_RUN until census reviewed",
+  "filters": [
+    "structural_effect_source_phases_fit_original_admission_and_callers",
+    "structural_effect_original_root_then_child_and_target_debt_refusal"
+  ],
+  "runtime_completed": 0,
+  "build_timeout_seconds": 300,
+  "runtime_timeout_seconds": 200
+}

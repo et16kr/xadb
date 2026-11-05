@@ -1337,3 +1337,8 @@ mod base;
 #[cfg(target_os = "linux")]
 #[path = "update_native.rs"]
 mod native;
+
+/// SPL-J: INSERT, DELETE and UPDATE beside the original RootSplit and
+/// ChildSplit (dev3-tree-smo.md#current-leaf-consumers).
+#[path = "split_rows.rs"]
+mod split_rows;

@@ -1,9 +1,10 @@
 //! Canonical complete-prefix analysis. The actual home is used solely as a
 //! physical before-image to classify; it never seeds a semantic before state.
 use super::super::plan4_pages::{
-    observe_recovery_frame, retention_replay_bank, retention_replay_cells, retention_replay_digest,
-    retention_replay_image, retention_replay_losers, retention_replay_provenance,
-    retention_replay_row_scope, seed_recovery_replay,
+    observe_recovery_frame, observe_structural_bank_row, retention_replay_bank,
+    retention_replay_cells, retention_replay_digest, retention_replay_image,
+    retention_replay_losers, retention_replay_provenance, retention_replay_row_scope,
+    seed_recovery_replay,
 };
 use super::*;
 use crate::storage::{
@@ -23,6 +24,7 @@ const BANK_BYTES: usize = 65_536;
 const RAM_ROW: usize = 1664;
 const RAM_AGING: usize = 32;
 const RAM_ALLOCATION: usize = 33;
+const RAM_STRUCTURAL: usize = 34;
 
 pub(super) fn u64_at(bytes: &[u8], at: usize) -> u64 {
     u64::from_le_bytes(
@@ -76,6 +78,7 @@ fn request_for_kind(
     index: usize,
     incarnation: Generation,
     kind: PageKind,
+    level: u8,
     owner: ObjectId,
     owner_generation: Generation,
 ) -> Result<TargetRequest> {
@@ -90,6 +93,7 @@ fn request_for_kind(
             PageKind::TransactionStatus => owner.get() == 2,
             PageKind::Undo => owner.get() == 3,
             PageKind::TreeAnchor | PageKind::RowLeaf => owner.get() >= 6,
+            PageKind::RowInternal => profile.format() == 3 && owner.get() >= 6,
             _ => false,
         };
         if !valid {
@@ -98,9 +102,18 @@ fn request_for_kind(
         req.kind = kind;
         req.identity.owner = owner;
     }
-    if req.kind != kind || req.identity.owner != owner || owner_generation.get() != 1 {
+    if req.kind != kind
+        || req.identity.owner != owner
+        || owner_generation.get() != 1
+        || if kind == PageKind::RowInternal {
+            !(1..=15).contains(&level)
+        } else {
+            level != 0
+        }
+    {
         return Err(error(p, Plan4RecoveryCause::IdentityMismatch));
     }
+    req.level = level;
     Ok(req)
 }
 fn canonical_request(
@@ -116,10 +129,18 @@ fn canonical_request(
         .map_err(|_| error(p, Plan4RecoveryCause::IdentityMismatch))?;
     let owner_generation = Generation::new(u64_at(image, 56))
         .map_err(|_| error(p, Plan4RecoveryCause::IdentityMismatch))?;
-    let req = request_for_kind(profile, index, incarnation, kind, owner, owner_generation)?;
+    let req = request_for_kind(
+        profile,
+        index,
+        incarnation,
+        kind,
+        image[7],
+        owner,
+        owner_generation,
+    )?;
     let view = page::decode_page(image, req.identity, req.kind)
         .map_err(|e| error(p, Plan4RecoveryCause::Page(e)))?;
-    if view.header().level != 0 {
+    if view.header().level != req.level {
         return Err(error(p, Plan4RecoveryCause::IdentityMismatch));
     }
     Ok(req)
@@ -143,8 +164,15 @@ pub(super) fn target_record(
         ));
     }
     let at = index * TARGET_BYTES;
-    let role = u8::try_from(u64_at(bytes, at + 48))
-        .map_err(|_| error(Plan4RecoveryPhase::Verify, Plan4RecoveryCause::Invariant))?;
+    let word = u64_at(bytes, at + 48);
+    if word >> 16 != 0 {
+        return Err(error(
+            Plan4RecoveryPhase::Verify,
+            Plan4RecoveryCause::Invariant,
+        ));
+    }
+    let role = word as u8;
+    let level = (word >> 8) as u8;
     let kind = PageKind::from_byte(role)
         .map_err(|e| error(Plan4RecoveryPhase::Verify, Plan4RecoveryCause::Page(e)))?;
     let incarnation = Generation::new(u64_at(bytes, at + 8))
@@ -155,6 +183,7 @@ pub(super) fn target_record(
             index,
             incarnation,
             kind,
+            level,
             ObjectId::new(u64_at(bytes, at + 56)).map_err(|_| {
                 error(
                     Plan4RecoveryPhase::Verify,
@@ -175,11 +204,21 @@ pub(super) fn target_record(
 fn note_target(table: &mut [u8], request: TargetRequest, image: &[u8; PAGE_BYTES]) -> Result<()> {
     let view = page::decode_page(image, request.identity, request.kind)
         .map_err(|e| error(Plan4RecoveryPhase::Analysis, Plan4RecoveryCause::Page(e)))?;
+    if view.header().level != request.level || request.identity.page.page_no >= 64 {
+        return Err(error(
+            Plan4RecoveryPhase::Analysis,
+            Plan4RecoveryCause::IdentityMismatch,
+        ));
+    }
     let at = request.identity.page.page_no as usize * TARGET_BYTES;
     put64(table, at, view.header().lsn.0);
     put64(table, at + 8, request.identity.page.incarnation.get());
     table[at + 16..at + 48].copy_from_slice(&content_digest(image));
-    put64(table, at + 48, request.kind as u64);
+    put64(
+        table,
+        at + 48,
+        request.kind as u64 | (u64::from(request.level) << 8),
+    );
     put64(table, at + 56, request.identity.owner.get());
     put64(table, at + 64, request.identity.owner_generation.get());
     Ok(())
@@ -239,7 +278,7 @@ fn observe_home(
     }
     match page::decode_page(home, req.identity, req.kind) {
         Ok(view) => {
-            if view.header().level != 0 {
+            if view.header().level != req.level {
                 return Err(error(p, Plan4RecoveryCause::IdentityMismatch));
             }
             if at_base {
@@ -535,6 +574,7 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
                                 index,
                                 req.identity.page.incarnation,
                                 req.kind,
+                                req.level,
                                 req.identity.owner,
                                 req.identity.owner_generation,
                             )?
@@ -648,8 +688,19 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
             &tail[TARGETS - REPLAY_END..TARGETS - REPLAY_END + 64 * TARGET_BYTES],
         )?;
         let bank = retention_replay_bank(replay);
-        let (remaining_wal, remaining_steps) =
-            remaining(profile, bank, retention_replay_image(replay, 1))?;
+        let epoch = self
+            .source
+            .as_ref()
+            .map(|source| source.epoch)
+            .or_else(|| inherited_facts.as_ref().map(|facts| facts.epoch))
+            .ok_or_else(|| error(p, Plan4RecoveryCause::Invariant))?;
+        let (remaining_wal, remaining_steps) = remaining(
+            profile,
+            bank,
+            retention_replay_image(replay, 1),
+            previous,
+            epoch,
+        )?;
         let state_digest = retention_replay_digest(replay);
         let mut status_mask = 0;
         for index in 9..64 {
@@ -764,7 +815,10 @@ fn remaining(
     profile: Profile,
     bank: &[u8; BANK_BYTES],
     root: &[u8; PAGE_BYTES],
+    cut: u64,
+    epoch: u32,
 ) -> Result<(u64, u64)> {
+    check_structural_bank(profile, bank, cut, epoch, Plan4RecoveryPhase::Analysis)?;
     let p = Plan4RecoveryPhase::Analysis;
     let mut wal = 0u64;
     let mut steps = 0u64;
@@ -807,7 +861,7 @@ fn decode_ram_descriptor(
             TxnRef::decode(&bank[slot * RAM_ROW + 1576..slot * RAM_ROW + 1624])
                 .map_err(|e| error(p, Plan4RecoveryCause::Page(e)))?,
         )
-    } else if slot == RAM_ALLOCATION {
+    } else if slot == RAM_ALLOCATION || (slot == RAM_STRUCTURAL && profile.format() == 3) {
         ReservationOwner::System(
             SystemWorkRef::decode(&raw[24..72])
                 .map_err(|_| error(p, Plan4RecoveryCause::Invariant))?,
@@ -821,6 +875,26 @@ fn decode_ram_descriptor(
     };
     obligation::decode_descriptor(raw, owner, reference)
         .map_err(|_| error(p, Plan4RecoveryCause::Invariant))
+}
+
+fn check_structural_bank(
+    profile: Profile,
+    bank: &[u8; BANK_BYTES],
+    cut: u64,
+    epoch: u32,
+    phase: Plan4RecoveryPhase,
+) -> Result<()> {
+    let row = &bank[RAM_STRUCTURAL * RAM_ROW..(RAM_STRUCTURAL + 1) * RAM_ROW];
+    if profile.format() != 3 {
+        return if row.iter().all(|byte| *byte == 0) {
+            Ok(())
+        } else {
+            Err(error(phase, Plan4RecoveryCause::Unsupported))
+        };
+    }
+    observe_structural_bank_row(profile, cut, epoch, row)
+        .map(|_| ())
+        .map_err(|cause| error(phase, Plan4RecoveryCause::Retention(cause)))
 }
 
 fn add_remaining(total: &mut [RemainingBudget; 5], next: &[RemainingBudget; 5]) -> Result<()> {
@@ -864,9 +938,12 @@ fn pack_bank(
     bank: &[u8; BANK_BYTES],
     out: &mut [u8; base::DESCRIPTOR_BYTES],
     root: &[u8; PAGE_BYTES],
+    cut: u64,
+    epoch: u32,
 ) -> Result<(u32, u32, [RemainingBudget; 5])> {
     use crate::storage::transaction_record::TxnRef;
     let p = Plan4RecoveryPhase::Rebase;
+    check_structural_bank(profile, bank, cut, epoch, p)?;
     out.fill(0);
     let mut used = 0u32;
     let mut transactions = 0u32;
@@ -902,7 +979,7 @@ fn pack_bank(
         transactions += 1;
     }
     let mut systems = 0u32;
-    for (ram, wire) in [(RAM_ALLOCATION, 32), (RAM_AGING, 34)] {
+    for (ram, wire) in [(RAM_ALLOCATION, 32), (RAM_STRUCTURAL, 33), (RAM_AGING, 34)] {
         let raw = &bank[ram * RAM_ROW..ram * RAM_ROW + 1536];
         if raw.iter().all(|v| *v == 0) {
             continue;
@@ -1062,8 +1139,14 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
         let packed: &mut [u8; base::DESCRIPTOR_BYTES] = (&mut pack[..base::DESCRIPTOR_BYTES])
             .try_into()
             .expect("packed bank");
-        let (transactions, systems, remaining) =
-            pack_bank(profile, bank, packed, retention_replay_image(replay, 1))?;
+        let (transactions, systems, remaining) = pack_bank(
+            profile,
+            bank,
+            packed,
+            retention_replay_image(replay, 1),
+            facts.lsn,
+            facts.epoch,
+        )?;
         let (_status, packing) = packing.split_at_mut(STATUS_END - STATUS_START);
         let (certs, packing) = packing.split_at_mut(CERT_END - CERT_START);
         let (inventory, _) = packing.split_at_mut(PAGE_BYTES);
@@ -1114,7 +1197,7 @@ impl<W: WriterNamespace> RecoveryState<'_, '_, '_, W> {
             source_local: facts.adopted_local,
             system_high_water: [
                 u64_at(bank, RAM_ALLOCATION * RAM_ROW + 1536),
-                0,
+                u64_at(bank, RAM_STRUCTURAL * RAM_ROW + 1536),
                 u64::from(root.aging().is_some()),
                 0,
             ],
@@ -1160,6 +1243,14 @@ pub(super) fn packing_source_bytes() -> usize {
             outer
                 + crate::storage::retention_obligation::row::source_bytes()
                     .max(queue::source_bytes())
+                    .max(super::super::plan4_pages::structural_bank_source_bytes())
                     .max(hash),
         )
 }
+
+#[cfg(test)]
+#[path = "analysis/structural_bank_tests.rs"]
+mod structural_bank_tests;
+#[cfg(test)]
+#[path = "analysis/structural_level_tests.rs"]
+mod structural_level_tests;

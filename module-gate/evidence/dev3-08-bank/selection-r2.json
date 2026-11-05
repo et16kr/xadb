@@ -1,0 +1,14 @@
+{
+  "reason": "Two changed graph fixtures; two recovery census bodies previously blocked before execution by missing evidence environment. Fifteen completed unchanged tests excluded.",
+  "filters": [
+    "structural_bank_latest_claim_binds_operation_owner_and_monotonic_epoch",
+    "structural_bank_does_not_open_unimplemented_structural_tree_closure",
+    "recovery_source_memory",
+    "recovery_source_native"
+  ],
+  "identity": {
+    "source": "ad1180613d5af40b39d93bd7e74273b4e75bd863bdd2107e18159e1c28f49352",
+    "elf": "991c20d2073fdb70364c2b47ac102419a3435a86e9866ddfbf75638030439516",
+    "input": "b44fad56d3e1a8dfaab0e88fea2ca157927d65dfbec01e6a447ce5655c856878"
+  }
+}

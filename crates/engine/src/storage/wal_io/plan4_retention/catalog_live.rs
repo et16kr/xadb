@@ -31,6 +31,9 @@ pub(in super::super) mod row_preflight;
 mod targets;
 use targets::CatalogTargetAccess;
 
+#[path = "structural_prepare.rs"]
+pub(in super::super) mod structural;
+
 const PRIVATE_BYTES: usize = semantic_catalog::PRIVATE_BYTES;
 const BANK_END: usize = 65_536;
 const JOB_END: usize = 131_072;
@@ -2189,9 +2192,13 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
             .max(scalar + wide.outer + wide.inventory)
             .max(scalar + wide.outer + wide.assembled)
             .max(ledger);
+    // The residency LOAD steps, or a Prune's route of its current RowLeaf
+    // (dev3-tree-smo.md#current-leaf-consumers) before them.
     let row_cleanup_residency = scalar
         + lifecycle::row::retire::residency_source_bytes()
-        + super::super::lookup_load::source_bytes::<W>();
+        + lifecycle::row::retire::route_carrier_bytes()
+        + super::super::lookup_load::source_bytes::<W>()
+            .max(lifecycle::row::retire::route_callee_bytes());
     let row_cleanup_install = lifecycle::application_carrier_bytes::<W>()
         + scalar
         + lifecycle::row::retire::install_source_bytes(wide.control, physical);

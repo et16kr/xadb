@@ -1,0 +1,22 @@
+
+running 1 test
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::refusals::structural_effect_original_clean_victim_stamp_change_rejects_before_claim ... CATALOG_MEMORY_CONTEXT	SMO-E02-clean-false	c1d892f917631e1547506cd85ba89f9342de1c66c229d728b47e253533d02358	38706753dd4265d18c156a725c5bc699508c503d6d2782aafaebb6ec1731a45c	9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	SMO-E02-clean-false
+SMO_E02 clean victim child=false original stamp/unchanged generations/reentry
+CATALOG_MEMORY_PASS	SMO-E02-clean-false
+CATALOG_MEMORY_CONTEXT	SMO-E02-clean-true	c1d892f917631e1547506cd85ba89f9342de1c66c229d728b47e253533d02358	38706753dd4265d18c156a725c5bc699508c503d6d2782aafaebb6ec1731a45c	9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	SMO-E02-clean-true
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::refusals::structural_effect_original_clean_victim_stamp_change_rejects_before_claim' (59673) panicked at crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_effect/faults/refusals.rs:11:17:
+called `Result::unwrap()` on an `Err` value: RetentionError { phase: Flush, cause: Membership, effect: Unchanged }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+CATALOG_MEMORY_FAIL	SMO-E02-clean-true
+FAILED
+
+failures:
+
+failures:
+    storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::refusals::structural_effect_original_clean_victim_stamp_change_rejects_before_claim
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 2325 filtered out; finished in 42.09s
+

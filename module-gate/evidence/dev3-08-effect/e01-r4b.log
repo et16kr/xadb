@@ -1,0 +1,18 @@
+
+running 1 test
+CATALOG_MEMORY_CONTEXT	SMO-E01	93cf137084a014b547a5d92f509903d15490616327026b32cb69c15afd4da59d	6a97ec19ebf731da0c23b2af7aa8763c386c53cdd17799b44b04bc2175fddd30	9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	SMO-E01
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::structural_effect_original_root_then_child_and_target_debt_refusal' (52572) panicked at crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_effect.rs:343:26:
+called `Result::unwrap()` on an `Err` value: RetentionError { phase: Prepare, cause: Unsupported, effect: Unchanged }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+CATALOG_MEMORY_FAIL	SMO-E01
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::structural_effect_original_root_then_child_and_target_debt_refusal ... FAILED
+
+failures:
+
+failures:
+    storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::structural_effect_original_root_then_child_and_target_debt_refusal
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 2315 filtered out; finished in 9.86s
+

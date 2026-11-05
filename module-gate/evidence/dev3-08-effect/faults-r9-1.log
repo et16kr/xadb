@@ -1,0 +1,12 @@
+
+running 1 test
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_replay_checked_return_failure_keeps_pending ... CATALOG_MEMORY_CONTEXT	SMO-E09-return-false	dc89cbbad6fa569056fbd3c56c4e548dffcf70bbb7525e9a08b00b636a2d6096	5b5deec7c127a715d34154c3902398b12062aeed159bcfc0c5394cc6fe3bb3c1	9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	SMO-E09-return-false
+CATALOG_MEMORY_PASS	SMO-E09-return-false
+CATALOG_MEMORY_CONTEXT	SMO-E09-return-true	dc89cbbad6fa569056fbd3c56c4e548dffcf70bbb7525e9a08b00b636a2d6096	5b5deec7c127a715d34154c3902398b12062aeed159bcfc0c5394cc6fe3bb3c1	9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	SMO-E09-return-true
+CATALOG_MEMORY_PASS	SMO-E09-return-true
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2322 filtered out; finished in 19.65s
+

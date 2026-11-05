@@ -55,6 +55,13 @@ pub(in crate::storage) use plan4_residency::test_support as plan4_load_test_supp
 pub(in crate::storage) use retention_residency::CatalogPairCandidates;
 pub(in crate::storage) use retention_residency::entry_source_phases as retention_entry_source_phases;
 pub(in crate::storage) use retention_residency::source_census as retention_core_census;
+#[allow(
+    unused_imports,
+    reason = "original Structural claim consumes this selection next"
+)]
+pub(in crate::storage) use retention_residency::{
+    StructuralCandidates, structural_selection_source_bytes,
+};
 pub(in crate::storage) use status_residency::StatusLoadSnapshot as Plan4LoadSnapshot;
 mod residency;
 mod status_pressure;
@@ -81,6 +88,10 @@ mod flush;
 pub(in crate::storage) use flush::{CapturedPage, FinalizedPage};
 #[path = "dirty_init.rs"]
 mod init;
+pub(in crate::storage) use init::structural_effect_pool_source_bytes;
+pub(in crate::storage) use init::{
+    CompletedStructural, StructuralClaimKey, StructuralWriteTargets,
+};
 #[allow(unused_imports)]
 pub(in crate::storage) use init::{
     CompletedTxPair, TxPairClaimKey, TxPairWriteTargets, tx_pair_source_census,

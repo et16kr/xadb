@@ -2662,6 +2662,16 @@
       "path": "evidence/dev4-merge-review-20261026.json",
       "role": "evidence",
       "title": "DEV4 병합 전 리뷰의 source별 선택 실행 기록"
+    },
+    "dev3-tree-structure-20261104.md": {
+      "path": "evidence/dev3-tree-structure-20261104.md",
+      "role": "evidence",
+      "title": "DEV3 일정08 첫 트리 구조 후보 구현·선택 검증"
+    },
+    "dev3-tree-smo.md": {
+      "path": "contracts/dev3-tree-smo.md",
+      "role": "contracts",
+      "title": "DEV3 tree SMO — 완결 structural group 연결 설계"
     }
   }
 }

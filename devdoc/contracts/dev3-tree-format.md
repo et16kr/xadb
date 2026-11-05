@@ -124,3 +124,217 @@ F05: 원 page 최대1011 entry에 Insert 하나를 더한 후보는 metadata 포
 실행 전 동결한 generator는 D3-TREE-EDIT-G1이다. seed1..64(최종1..256), state=seed, 매 draw `state=state*6364136223846793005+1 mod2^64`, 값=high32다. operation별 action=draw%3, ordinal=draw%31+1, value 길이=draw%97 순서로 소비한다. value byte는 step%251이며 각 history는 빈 leaf에서 시작한다. 세 family마다 같은 stream을 실행한다. 동결 시험 source SHA-256 `bf3d0421238eea56afd670921638f79d039b9cda9549da715824b0d209076e60`, 원 source·binary·입력은 [실행 증거](../evidence/dev3-leaf-edit-20261025.md)에 보존한다.
 
 실제 x86_64 typed 크기는 TreePageView128, LeafEdit24, LeafEditPlan104, Result104 bytes다. 신규5개/생성24576 operation, compiler7, 도구3개가 source별 PASS다. 전체 transaction/CLR F05·실제 I/O/행 거래는 이 결과에 포함되지 않는다.
+
+<a id="structural-candidates"></a>
+## D3-TREE-STRUCTURE-001 — 부모 편집·분할 이미지 후보
+
+2026-11-04 · **D2/D1 독립 검토 ACCEPT·필수 지적0 / 신규 고유9개 선택 PASS / 실제 SMO 미연결**.
+기준 `23976330`, 작업·계약·통합 `/root`, 독립 검토 `/root/dev3_08_review`.
+일정 08-1의 선행 표현 공급이다. 08-1의 실제 system WAL·INIT·anchor 공개·retirement·복구를
+대신하지 않으며 08-2–08-4 및 일정 적립은 미완료로 유지한다.
+
+`tree_page::structure`는 기존 XBT1·비교·byte-balanced split을 재사용한다.
+별도 tree/writer/pool, 새 wire 형식, heap allocation, page-size stack image를 만들지 않는다.
+기존 leaf 편집에서 같은 split 후보를 소비하며 row/index/catalog 세 family를 지원한다.
+
+- `prepare_internal_edit`: Insert는 canonical separator/right-child cell과 분할 전 exact left child를 받는다.
+  separator 중복은 `SeparatorExists`, 해당 구간의 child 또는 incarnation 변화는 `ChildChanged`다.
+  RemoveChild는 exact child만 제거하며 첫 child 제거는 leftmost를 다음 child로 옮긴다.
+  남은 child가 하나면 `Collapse { survivor }`를 반환한다. zero-separator internal을 encode하지 않는다.
+  빈 child 증명·root 축소·retirement는 실제 owner의 원자적 그룹 의무다. root는 anchor의
+  level을 낮출 수 있지만 non-root에서 survivor를 바로 parent로 연결하면 level−1 규칙을
+  깨뜨린다. non-root Collapse는 별도로 검증된 level 보존 ancestor 재구성을 요구한다.
+- 오류와 Collapse는 caller metadata32B와 reference scratch를 보존한다. Page 성공은 필요한
+  scratch prefix만 갱신하고 immutable source·cell·metadata를 대여한다. 단일 페이지 capacity를
+  넘는 후보도 기존 `C+H`까지 받아 다음 부모 split에 전달한다.
+- `SplitCandidate`는 기존 split boundary와 입력 참조만 소유한다. sibling은 source나 기존 어느
+  child와도 물리 주소가 같을 수 없다(incarnation을 바꿔도 거절). leaf separator는 오른쪽에 남고,
+  internal pivot은 두 자식에서 빠지며 그 right-child가 새 right leftmost가 된다.
+- `encode_side`는 caller metadata·reference scratch를 작업 공간으로 쓰며, 오류 시 output은
+  전부 보존한다. scratch는 오류 시 변경될 수 있다. 두 이미지 중 하나만 설치할 권한이 아니다.
+  `encode_new_root`는 같은 family·arity의 한 separator parent를 만든다. level15에서의 증가,
+  기존 source/sibling/child 주소의 root 재사용은 거절한다. stable anchor의 identity·revision
+  증가와 root 설치는 실제 owner가 별도로 같은 그룹에서 검산한다.
+- leaf 편집의 `split_images`에는 아직 사용자 변경이 들어 있을 수 있다. 이를 redo-only system
+  그룹으로 그대로 설치하면 안 된다. 실제 SMO는 원 행들의 논리 identity를 보존하고 사용자
+  변경·Undo는 별도 행 그룹에서 수행해야 한다.
+
+자원: reference scratch는 호출자가 count에 맞춰 공급한다. 기존 최대 leaf 후보1013참조
+(64-bit에서16,208B)이 충분하며 internal candidate는 그보다 작다. metadata는 호출자32B,
+internal 준비의 국소 metadata는32B다. output은 호출자가 예약한16KiB page이며 새 root cell은
+최대1060B(4+최대 physical key1032+PageRef24)다. 이 표현 비용은 live F05 admission 증명이 아니다.
+실제 SMO의 동시 target·WAL·rollback·중첩 호출 상한은 live 연결 전에 별도 동결한다.
+
+최초 선택 시험은 새 `tree_page::structure::tests`의 다음7개다. 기존 무변경 tree/leaf 시험을 재실행하지 않는다.
+원 source와 기대 page는 테스트의 독립 XDP1/XBT1 literal 조립으로 만들며 product encoder를 쓰지 않는다.
+
+| 사례 | 고정 입력·판정 |
+| --- | --- |
+| internal_insert_and_unlink_match_independent_pages | 3 family, 4 insert 위치·4 unlink 위치, 완성 page bytes와 child 순서 대조 |
+| internal_collapse_preserves_scratch_and_selects_survivor | 3 family×level1/15×양쪽 child 제거, unary 표현 금지·survivor·scratch 보존 |
+| internal_rejections_preserve_both_scratch_buffers | 중복 separator·오래된 child/incarnation·중복/self 주소·부재 child·scratch 부족, 오류 시 무변경 |
+| split_images_preserve_entries_and_promote_internal_pivot | 3 family leaf 편향 비용과 internal level1/14/15, 양쪽 page·pivot·새 root의 전체 bytes |
+| split_rejects_aliases_and_preserves_failed_output | source·leftmost·pivot·다른 child 주소 alias, incarnation 변경, root alias, scratch/output 부족 |
+| overflowing_parent_insert_splits_with_all_children_preserved | capacity 직전 internal에 추가, 단일 encode 거절·부모 split·모든 child 보존 |
+| leaf_edit_split_images_include_exact_pending_value | 꽉 찬 leaf 사이 Insert, byte 균형 boundary와 오른쪽 page의 독립 bytes |
+
+시험 실행 한도는 이7개 libtest의1회 선택 실행·총180초, 디버그 build 최대4 jobs다.
+실패 시 원 로그를 보존하고 수정 영향 사례만 재실행한다. native는 실제 effect가 없는 이 공급에
+적용하지 않으며 후속 실제 SMO의 필수 fault/reopen 의무를 면제하지 않는다.
+
+독립 검토 후 `internal_success_preserves_tail_and_truncated_cell_preserves_workspace`와
+`new_root_short_cell_and_output_preserve_output`을 추가하고 기존
+`overflowing_parent_insert_splits_with_all_children_preserved`가 실제 InternalCandidate의
+양쪽 이미지를 검산하도록 보강했다. 최초7개 PASS 뒤 이 변경·신규3개만 실행해 PASS했다.
+고유9개이며 완료된 무변경6개는 반복하지 않았다. 원 compile 실패와 source별 결과는
+[실행 기록](../evidence/dev3-tree-structure-20261104.md)에 보존한다.
+
+<a id="weighted-split-candidate"></a>
+### D3-TREE-STRUCTURE-002 — rollback 공간을 보존하는 leaf split 후보
+
+2026-11-04 · **독립 D2/D1 ACCEPT / 고유4개 선택 PASS / live owner 미연결**.
+08-1의 실제 SMO 연결 준비다. 기존 001 byte-only 후보의 의미는 유지한다.
+
+현재 행별 cell+slot 비용을 `c(r)`, 아직 rollback으로 복원 가능한 이력의 최대 cell+slot
+비용을 `b(r)`라 하면 `w(r)=max(c(r),b(r))`, leaf의 예약은 `D=Σ(w−c)`다.
+같은 RowId의 반복 이력 차액을 더하는 대신 실제 도달 가능한 복원 상태의 최댓값을 쓴다.
+**이 helper는 Undo·rollback owner·cut 상태에서 b를 증명하지 않는다.** 실제 C와 replay는
+그 증명을 같은 원 그래프에서 계산해야 하며, 호출자가 넘긴 숫자를 권한으로 받을 수 없다.
+기존 Row Job·CLR·retirement 의미를 이 표현 helper만으로 바꾸지 않는다.
+
+`TreePageView::prepare_leaf_split(weights, pending, right, scratch)`는 각 현재 cell 순서의
+weight가 `c≤w≤8094`, 현재 합이 `≤16188`임을 검산한다. pending은 후속 변경의 key와
+canonical cell+slot 비용이며, 새 key이면 그 비용을, 기존 key이면 `max(0,c_pending−w)`를
+분할 후 해당 key를 찾을 쪽의 요구량에 더한다. 축소 UPDATE는 이전 rollback 예약을 줄이지 않는다.
+requested 비용은 canonical key 길이+8 이상,8094 이하다.
+
+후보 boundary는 **현재 행 사이**만 고른다(1..N−1). pending row는 설치하지 않으며
+현재 모든 행 bytes·version을 그대로 두 page로 나눈다. 각 쪽의 예약 포함 비용이16188 이하인
+boundary 중 양쪽 비용의 최댓값을 최소화하고 동률이면 작은 boundary를 택한다. separator는
+기존 오른쪽 첫 key다. 기존 byte-only 최소화 함수로 예약 계산을 대체하지 않는다.
+오류 시 scratch를 보존하고, 성공 시 source의 metadata 포함 reference prefix만 채운다.
+
+최초 선택 검증은 신규3개로 고정했다. 아래 검토 반례1개를 추가해 고유4개다.
+완료된 001의9개는 반복하지 않았다.
+
+| 사례 | 입력과 독립 판정 |
+| --- | --- |
+| weighted_split_preserves_rollback_space_without_installing_pending_edit | 3 family×6 고정 weight/request, 축소·증가·새 key, 양쪽 전체 page bytes에 pending 변경이 없음을 검산 |
+| weighted_split_rejects_invalid_reservations_without_scratch_changes | 개수·과소/과대 weight·총량·비정규 key·request 비용·alias·scratch 부족에서 무변경 |
+| weighted_split_matches_exhaustive_boundary_oracle | seed1..64×128=8192 입력. LCG 6364136223846793005·+1,2..8행, typed 숫자 key, 모든 boundary 열거 후 `(최대 비용,boundary)` 정렬 oracle와 대조 |
+
+각 선택 실행은 build 포함180초,4 jobs다. F05는 caller weight 배열 최대1011×8=8088B와
+reference scratch를 동시에 센다. 새 helper의 실제 live admission·Undo 최댓값 증명·SMO fault
+인수는 후속이며, 이 공급도 일정08-1을 완료하지 않는다.
+
+독립 검토가 유효한 weight `[5000,8000,3000]`, key `[10,20,30]`, 신규 key25/cost8094에서
+단일 boundary가 없음을 지적했다. 첫 시험의 oracle는 항상 boundary가 있다고 잘못 가정하여
+FAIL했고 제품은 `NotSplittable`을 안전하게 반환했다. oracle를 후보 없음까지 대조하게 고쳤다.
+새 `weighted_split_without_single_boundary_retries_structure_before_pending_edit`는 이 반례의
+scratch 보존과 pending 없이 먼저 분할→현재 오른쪽에서 두 번째 분할을 확인한다.
+`NotSplittable`은 이 요청을 한 번에 수용하는 boundary가 없다는 뜻이며 intrinsic RowTooLarge가
+아니다. live owner는 pending 없는 구조 split 후 재탐색·필요한 추가 split을 수행하고, 그 동안의
+완료 SMO와 실제 Capacity 거절을 구분해야 한다. 이 후속 실행은 실패 oracle와 신규 반례2개만 선택한다.
+
+<a id="immutable-tree-search"></a>
+### D3-TREE-SEARCH-001 — immutable image 집합의 bounded path 탐색
+
+2026-11-04 · **독립 D2/D1 ACCEPT / 고유4개 선택 PASS / live pin·SMO 미연결**.
+계약·구현은 `/root`, 독립 검토는 `/root/dev3_08_review`다. 기존 D2 위임 안의 내부 공급이며
+root 한 page라는 현재 소비자 가정을 걷어내기 위한 준비다. wire 형식은 바꾸지 않는다.
+
+`find_leaf_in_images(root, query, image)`는 호출 중 변하지 않는 canonical replay/recovery
+arena를 읽는다. root expectation은 소유자가 검증한 anchor/schema에서 오며, callback은
+각 exact expectation의 page bytes만 공급한다. page가 자기 header로 기대 identity를 정하지 않는다.
+최대 높이16의 root→leaf 경로에서 owner/generation·PageRef/incarnation·kind/level/arity를
+기존 decoder로 검증한다. 부모 separator와 같은 key는 오른쪽으로 간다.
+
+각 경로의 하한은 포함, 상한은 제외한다. 부모가 정한 범위를 자손으로 전달하고, 선택 page의
+정렬된 첫/마지막 key를 범위와 대조한다. leftmost/rightmost에서 새 경계가 없으면 조상 경계를
+유지한다. 선택 경로에서 이미 지난 물리 주소를 incarnation 변경 여부와 무관하게 다시 읽기
+전에 거절한다. level은 한 단계씩 감소하며 root level15이면 최대16회 image 호출이다.
+empty leaf도 정상 결과이며 부재 행 판정은 반환 leaf의 lower_bound가 소유한다.
+
+root shape·query가 잘못되면 image 호출 전에 `InvalidInput`이다. 범위 위반·경로 alias는
+`Corrupt`, page 및 callback 오류는 그대로 반환한다. 함수는 부재·손상을 서로 바꾸지 않는다.
+다른 child까지 감사하지 않으므로 whole-tree reachability·고아 page·중복 subtree 증명이 아니다.
+live pool의 pin/latch·anchor revision 재검증을 이 immutable 함수로 대신하지 않는다.
+
+재귀·heap·page scratch는 없다. 방문 PageRef16개와 두 borrowed 경계, view만 유지한다.
+부모 bytes의 경계가 자손 탐색 중 살아 있으므로 callback의 모든 반환 bytes는 같은 call lifetime에
+불변이어야 한다. live page를 그때그때 unpin하는 대안은 이 수명 조건을 만족하지 않아 별도다.
+함수의 실제 C 호출자 stack·arena 회계는 해당 연결의 F05에 포함한다.
+
+선택 시험은 신규4개, build 포함180초·4 jobs다. source page는 기존 검증 codec으로 조립하되
+기대 경로·행 존재 여부는 독립 typed key/page map으로 정한다. 기존 codec/structure 시험은 반복하지 않는다.
+
+| 사례 | 고정 입력·판정 |
+| --- | --- |
+| immutable_tree_search_matches_typed_points_and_exact_path | Row/Catalog/Index 3 family, 높이3·leaf6·행12, query1..120의 존재와 exact path·family/level/arity |
+| immutable_tree_search_rejects_inherited_range_violations | family별 leaf 하한·상한, internal 조상 하한·상한, leftmost 전파 상한, rightmost의 조상 상한 유지 위반6개 |
+| immutable_tree_search_rejects_wrong_child_and_ancestor_alias | 다른 정상 leaf로 대체 거절, 조상 주소의 동일/다른 incarnation을 세 번째 load 전에 거절, 중간 callback 오류의 동일 전파·추가 load 없음 |
+| immutable_tree_search_bounds_height_and_rejects_bad_input_before_loading | family별 높이16 정상·호출16회, level16·RowId0의 load 전 거절, empty root leaf |
+
+이 공급은 실제 SMO·cursor 인수가 아니며 일정08 적립은 없다. 소비자를 연결할 때 live source
+안정성이나 full-tree audit가 필요한 경우 이 API 경계와 시험 범위를 다시 검토한다.
+
+#### canonical Row replay의 첫 선택 연결
+
+`history::row::table_source`는 canonical arena의 Catalog handle·anchor를 검산한 뒤,
+Job RowId의 BE key를 현재 anchor에서 재탐색한다. Job pair[0]의 anchor 결합은 유지하고
+pair[1]은 현재 위치의 증거로 사용하지 않는다. callback의 ordinal lookup 뒤에는 항상
+검색기의 exact identity·family·level·범위 검산이 따른다. arena가 원 accepted-source에서
+온다는 기존 replay 소유 의무는 그대로며 이 선택 함수가 allocator/INIT 증명을 발급하지 않는다.
+
+이 첫 연결에서는 downstream Row transition의 level0 제한을 유지한다. 따라서 multi-level
+선택을 시험했다고 실제 multi-level Forward/CLR/recovery를 지원한다고 표시하지 않는다.
+F05 source census는 Catalog/anchor 관측과 검색의 visited16·기대값·경계·중첩 decoder를 합산한다.
+
+신규 선택 시험3개는 `row_replay_tree_selector_`로 실행한다(build 포함180초,4 jobs).
+기존 h-501의 anchor/leaf/Job·Profile fixture에서 level0 선택을 대조하고, 해당 행 bytes를
+두 leaf와 새 root로 직접 배치해 stale hint 대신 현재 anchor의 오른쪽 leaf를 고르는지 확인한다.
+잘못된 identity·하한 위반·Catalog anchor 불일치·retired table은 거절하고 입력을 보존한다.
+세 번째 시험은 변경된 source 계산이 원 owner admission 한도 안에 드는지 확인한다.
+이 fixture는 selector-only이며 full allocation/base graph의 유효 상태를 주장하지 않는다.
+
+이후 기존 Row replay의 실제 변경 호출을 검증하기 위해
+`s1b_row_arm_replays_n1_and_a_literals`, `rdl_j_row_arm_replays_history_d`,
+`rup_r_row_arm_replays_history_u`, `s1b_row_arm_refuses_mutations_without_effect`,
+`s1g_row_reserve_refuses_without_effect`만 선택한다. INSERT/DELETE/UPDATE·CLR/Prune와
+Reserve가 변경된 `table_source`를 호출하므로 해당 연결의 검증이며, 하위 무변경 codec 시험은
+선택하지 않는다. build 포함180초·4 jobs, 실패는 원 결과 보존 뒤 영향 사례만 다시 검증한다.
+
+<a id="immutable-tree-audit"></a>
+### D3-TREE-AUDIT-001 — root에서 도달하는 전체 불변 tree 관찰
+
+일정08의 SMO·base 검산을 위한 순수 공급이다. `tree_page::audit::audit_tree_in_images`
+입력은 stabilized root expectation, caller의 `Option<TreeExpectation>` scratch slice,
+호출 중 불변 image callback이다. 성공은 pre-order의 exact expectation 목록 길이를 반환하고
+뒤의 scratch는None이다. 오류 때 scratch는 부분 prefix일 수 있으며 accepted tree가 아니다.
+root shape와 빈 workspace를 callback 전에 검사하고, 실제 읽기 횟수는 workspace 길이 이하,
+각 물리 주소는 최대1회다. callback 오류는 그대로 전달하고 추가 load를 하지 않는다.
+
+내부16 frame DFS와 전체 visited 목록을 사용해 각 page의 identity/incarnation/family/level/arity,
+정렬된 key extrema의 상속 범위 `[lower,upper)`, 정확 level−1 child, 전역 물리 중복을 검산한다.
+다른 incarnation으로 같은 주소를 다시 참조하거나 두 부모가 같은 child를 가리키면 재load 전에
+거절한다. root leaf·빈 leaf는 허용하고, internal은 기존 형식처럼 separator가1개 이상이어야 한다.
+root에서 도달하지 않는 page는 이 helper만으로 검출하지 못한다. 원 canonical owner는 반환
+집합과 allocator의 해당 tree owned 집합을 대조하여 orphan·외부 소유 page를 추가로 거절해야 한다.
+live pin/INIT/adoption 권한·실제 row/Undo grammar·rollback weight·F05 완료는 제공하지 않는다.
+
+기존 point-search와 그 소비자의 source census를 변경하지 않기 위해 짧은 extrema 검산을
+새 관찰자 안에 둔다. 공통 range 의미는 같은 정본을 따르며 추후 양쪽 의미가 바뀔 때 함께 검토한다.
+새 전체-tree 검산을 선택-path 검사로 대체하거나 결과를 live 권한으로 확대할 때 D2 재검토한다.
+
+사전 선택 시험6개는 새 helper만 대상으로 한다: 3family 전체10page·정확 preorder,
+off-path 범위/identity/level 손상, 다른 가지의 공유 child·조상/새inc alias,
+높이16의 leftmost16page 뒤 capacity 거절·empty root·unary 거절, capacity 경계/입력 전검사/callback 오류,
+orphan은 별도 owned 집합 대조 의무라는 관측 한계. 입력 page는 기존 codec으로 준비하되
+typed tree topology·기대 traversal/오류/호출 수는 시험에서 별도로 정한다. build 포함180초,
+4jobs·새6개만 실행하고 source별 로그/ELF hash를 보존한다. 기존 검색·codec 시험은 반복하지 않는다.
+독립 D2/D1과 실제 source별 실행 결과는 [08 증거](../evidence/dev3-tree-structure-20261104.md#tree-audit)에 기록한다.
+
+높이16 전체 정상 tree는 internal마다 최소2child여서 최소65,535page가 필요하다. 이번 작은
+시험은16단계 순회 뒤 다음 sibling의 callback 전 NoSpace를 확인하며 최대높이 전체 인수로
+표시하지 않는다. ancestor의 lower/upper 양방향 상속, lower equality 허용·upper equality 거절,
+같은page_no라도 다른file이면 다른주소라는 구분, 기존 garbage workspace의 성공 tail=None을 포함한다.

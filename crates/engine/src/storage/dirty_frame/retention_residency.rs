@@ -7,6 +7,10 @@ use crate::storage::wal_io::{RetentionLoadPermit, WalRequirement};
 #[path = "retention_residency_tests.rs"]
 mod tests;
 
+#[path = "structural_residency.rs"]
+mod structural;
+pub(in crate::storage) use structural::{StructuralCandidates, structural_selection_source_bytes};
+
 /// Copy-only selection tied to the original pool and exact observed victim
 /// generations. It reserves no quota and owns no replacement permission.
 pub(in crate::storage) struct CatalogPairCandidates<'b, 'c, 's> {
@@ -131,6 +135,7 @@ pub(in crate::storage) fn entry_source_phases() -> (usize, usize, usize) {
         + directory
             .max(system_init)
             .max(pair_init)
+            .max(init::structural_source_observation())
             .max(load)
             .max(flush)
             .max(dpt)

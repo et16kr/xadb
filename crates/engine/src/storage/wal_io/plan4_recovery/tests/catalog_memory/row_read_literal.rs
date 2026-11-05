@@ -148,7 +148,10 @@ fn s9b_r02_empty_table_and_r04_actual_capture_copy() {
                 // sequence exhaustion do not publish bytes or leak references.
                 let stale = {
                     let mut op = reader.row_operation(owner, &view, reader_private).unwrap();
-                    let page = match op.page(&table, &mut residency).unwrap() {
+                    let page = match op
+                        .page(&table, &mut residency, RowId::new(1).unwrap())
+                        .unwrap()
+                    {
                         ReadStep::Ready(p) => p,
                         _ => panic!("resident"),
                     };
@@ -175,7 +178,10 @@ fn s9b_r02_empty_table_and_r04_actual_capture_copy() {
                     let mut op = reader.row_operation(owner, &view, reader_private).unwrap();
                     assert!(op.copy_candidate(&stale, &mut output).is_err());
                     op.test_set_sequence(u64::MAX);
-                    let page = match op.page(&table, &mut residency).unwrap() {
+                    let page = match op
+                        .page(&table, &mut residency, RowId::new(1).unwrap())
+                        .unwrap()
+                    {
                         ReadStep::Ready(p) => p,
                         _ => panic!("resident"),
                     };
@@ -189,7 +195,10 @@ fn s9b_r02_empty_table_and_r04_actual_capture_copy() {
                     let mut second = reader
                         .row_operation(&mut other, &view, reader_private)
                         .unwrap();
-                    let second_page = match second.page(&table, &mut residency).unwrap() {
+                    let second_page = match second
+                        .page(&table, &mut residency, RowId::new(1).unwrap())
+                        .unwrap()
+                    {
                         ReadStep::Ready(page) => page,
                         _ => panic!("resident"),
                     };
@@ -782,7 +791,14 @@ fn s9b_r05_r07_retiring_capture_and_corrupt_undo() {
                 let mut residency = Plan4ResidencyCursor::new();
                 let mut op = reader.row_operation(owner, &view, reader_private).unwrap();
                 reader.row_test_with_retiring_undo(observation.undo(), || {
-                    let page = match op.page(&table, &mut residency).unwrap() {
+                    let page = match op
+                        .page(
+                            &table,
+                            &mut residency,
+                            foundation::identity::RowId::new(1).unwrap(),
+                        )
+                        .unwrap()
+                    {
                         ReadStep::Ready(page) => page,
                         _ => panic!("resident"),
                     };
@@ -798,7 +814,14 @@ fn s9b_r05_r07_retiring_capture_and_corrupt_undo() {
                     assert_eq!(reader.catalog_test_references(), ((0, 0, 0), true));
                     assert!(!fence.is_fenced());
                 });
-                let page = match op.page(&table, &mut residency).unwrap() {
+                let page = match op
+                    .page(
+                        &table,
+                        &mut residency,
+                        foundation::identity::RowId::new(1).unwrap(),
+                    )
+                    .unwrap()
+                {
                     ReadStep::Ready(page) => page,
                     _ => panic!("resident"),
                 };

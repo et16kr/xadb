@@ -775,10 +775,11 @@ pub(in crate::storage) use bootstrap::{
     AppliedRetirement, BoundVisibility, CapturedCatalogRefs, CatalogLookupLoan, CatalogSource,
     HorizonObservation, InstalledFrontier, ReferenceLease, RetirementIntent, RetirementReject,
     RetirementScope, RollbackSource, SnapshotGuard, SnapshotReservation, SourceFrontier,
-    StagedRetirement, TxPairAuthority, TxPairCancelKind, TxPairCancelPermit, TxPairControlCommit,
-    TxPairInstallPermit, TxPairRetirePermit, TxPairStageRejection, TxnPin, UndoPin,
-    VISIBILITY_BYTES, VerifiedRetirement, VisibilityCause, VisibilityError, VisibilityLoan,
-    VisibilityResult,
+    StagedRetirement, StructuralAuthority, StructuralCancelPermit, StructuralControlCommit,
+    StructuralInstallPermit, StructuralStageRejection, TxPairAuthority, TxPairCancelKind,
+    TxPairCancelPermit, TxPairControlCommit, TxPairInstallPermit, TxPairRetirePermit,
+    TxPairStageRejection, TxnPin, UndoPin, VISIBILITY_BYTES, VerifiedRetirement, VisibilityCause,
+    VisibilityError, VisibilityLoan, VisibilityResult,
 };
 
 pub(in crate::storage) use bootstrap::{

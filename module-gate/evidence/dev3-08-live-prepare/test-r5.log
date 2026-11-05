@@ -1,0 +1,10 @@
+
+running 1 test
+CATALOG_MEMORY_CONTEXT	SMO-P01	53ce8508fde71b7cecab5fdbe8d76875351045ead98f0eded2266f2ece50bf10	d9d251a46f64e851e7e834667a2bef75950c709687e0f72c434d64f907db1420	9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	SMO-P01
+SMO_P01 actual replay; existing3 exact stamps; Busy and fenced cleanup; no WAL/control effect
+CATALOG_MEMORY_PASS	SMO-P01
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_prepare::structural_prepare_original_live_two_rows_preserves_state_and_binds_stamps ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2306 filtered out; finished in 4.36s
+

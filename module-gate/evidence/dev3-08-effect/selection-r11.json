@@ -1,0 +1,5 @@
+{
+  "scope": "r10 compile fixes and independent E10 oracle corrections; additional four E08 write failure variants only; retain completed r9 tests unchanged",
+  "source": "c3c78d3846c9eb89eb4b831f9154d8cb69503cae8860107129fceea4721b05ec",
+  "build_seconds": 300
+}

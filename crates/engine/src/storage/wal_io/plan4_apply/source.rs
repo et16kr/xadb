@@ -139,6 +139,7 @@ impl CatalogProgressCharge {
             .max(bodies.reserve)
             .max(bodies.forward)
             .max(bodies.cancel)
+            .max(create_pair::catalog_live::structural::effect::source_bytes::<W>())
             .max(transaction::catalog::check_source_bytes());
         // RowProgress reserves this same charge (exclusive under one control,
         // ROW-BEGIN-001 "자원"). The Row lifecycle body is checked against it

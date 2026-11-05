@@ -1,0 +1,17 @@
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 32s
+     Running unittests src/lib.rs (artifacts/dev3-08/target/debug/deps/engine-e4e141083d864921)
+
+running 8 tests
+STRUCTURAL_LAYOUT actual=[216, 216, 224, 232, 232, 13616] structural=216 claim_source=2083 entry_phases=(80, 3307, 76)
+test storage::dirty_frame::init::structural::tests::structural_claim_preserves_prior_layout_and_entry_budget ... ok
+test storage::dirty_frame::init::structural::tests::structural_directory_allows_only_dynamic_row_internal_levels ... ok
+test storage::dirty_frame::init::structural::tests::structural_ordinary_gate_blocks_original_pin_load_and_capture ... ok
+test storage::dirty_frame::init::structural::tests::structural_claim_rejects_wrong_closed_state_and_published_identity ... ok
+test storage::dirty_frame::init::structural::tests::structural_claim_accepts_root_child_shapes_and_all_active_pins ... ok
+test storage::dirty_frame::init::structural::tests::structural_claim_rejects_malformed_count_identity_and_mask_without_panics ... ok
+test storage::dirty_frame::init::tx_pair::tests::pair_and_system_dispatch_keep_their_existing_claim_policy ... ok
+test storage::dirty_frame::init::structural::tests::structural_single_finish_preserves_resident_and_consumed_generation ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 2220 filtered out; finished in 0.01s
+

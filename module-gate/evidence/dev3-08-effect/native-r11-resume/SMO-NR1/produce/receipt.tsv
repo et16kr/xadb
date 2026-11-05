@@ -1,0 +1,12 @@
+case	SMO-NR1
+phase	produce
+pid	58497
+source	d7d1273823abe7d764f09146ae212ccc5054af0b2b093077bd1cb7b43880e2a7
+elf	8fef9896e6f6bafe77eb857bf62a90da1c7e3531352315cd63acf0f41c3c91f5
+input	6fdc98d39ba23ad745048bdd2d54d334ceb4b4dda67e486b83465e67982536c1
+child	0
+cut	stage_before
+result	cut
+q	2
+wal_bytes	3173206
+wal_sha256	9518797791aac36a1ca5c4741ffcce8e3355dce157b70f4a7b1a8de1138e341c

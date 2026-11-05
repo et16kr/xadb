@@ -1,0 +1,232 @@
+{
+  "schema": "XADB_MODULE_GATE_RECORD_V1",
+  "change": "PR53 follow-up: stream B Row routes across LOAD with one replaceable tree frame; share typed path policy and tree-owned source inventory; preserve fixed charges and global admission.",
+  "rust_tests": [
+    {
+      "paths": [
+        "crates/engine/src/storage/semantic_catalog/resources.rs",
+        "crates/engine/src/storage/semantic_row/transition/source.rs",
+        "crates/engine/src/storage/tree_page.rs",
+        "crates/engine/src/storage/tree_page/search.rs",
+        "crates/engine/src/storage/tree_page/search/tests.rs",
+        "crates/engine/src/storage/wal_io/plan4_apply/row/read.rs",
+        "crates/engine/src/storage/wal_io/plan4_apply/row/read/census.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/split_rows.rs",
+        "crates/engine/src/storage/wal_io/plan4_retention/history/row.rs",
+        "crates/engine/src/storage/wal_io/plan4_retention/row_preflight.rs"
+      ],
+      "reason": "Search cases cover all three key families, inherited bounds and heights 0..15; SPL-J07 reproduces the old cold level-2 Busy with actual splits/pins and proves point/cursor completion; J03/J04/J06 cover current-leaf CLR/Prune/recovery; read error cases cover flush retry/corruption. Independent codec, B/C write/rollback/recovery source inventories cover the moved/added terms without raising charges.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/semantic_catalog/catalog3_tests.rs",
+          "case": "storage::semantic_catalog::catalog3_tests::profile3_source_census_keeps_type_sizes_and_reports_delta",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/candidate/source_tests.rs",
+          "case": "storage::semantic_row::structure::candidate::source_tests::structural_split_source_inventory_includes_retained_after_audit_and_frame_view",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+          "case": "storage::semantic_row::transition::tests::n1_transition_source_bounds_cover_measured_frames",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/tree_page/search/tests.rs",
+          "case": "storage::tree_page::search::tests::immutable_tree_search_bounds_height_and_rejects_bad_input_before_loading",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/tree_page/search/tests.rs",
+          "case": "storage::tree_page::search::tests::immutable_tree_search_rejects_inherited_range_violations",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/tree_page/search/tests.rs",
+          "case": "storage::tree_page::search::tests::immutable_tree_search_rejects_wrong_child_and_ancestor_alias",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/tree_page/search/tests.rs",
+          "case": "storage::tree_page::search::tests::row_route_steps_match_partition_model_and_inherited_bounds",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c01_row_write_phase_census_memory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/tree_page/search/tests.rs",
+          "case": "storage::tree_page::search::tests::immutable_tree_search_matches_typed_points_and_exact_path",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/rollback_budget_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::rollback::budget_census::f4_c_rollback_budget_memory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c02_row_write_phase_census_native",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/rollback_budget_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::rollback::budget_census::f4_c_rollback_budget_native",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/write_operation_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::write_operation_tests::f4_row_operation_census_memory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/write_operation_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::write_operation_tests::f4_row_operation_census_native",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_census.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_read_census::s5r_c01_memory_source_inventory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_census.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_read_census::s5r_c02_native_source_inventory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_source_native",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_source_memory",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/split_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::spl_j03_delete_update_beside_child_split_roll_back_then_commit",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/split_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::spl_j04_restart_prunes_the_winner_and_compensates_the_loser_across_leaves",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/split_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::spl_j06_restart_prunes_committed_rows_moved_after_commit",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/split_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::spl_j07_cold_deep_route_progresses_with_one_tree_frame",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_live.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_read_live::s5r_r08_corrupt_row_tree_fences_and_preserves_cause",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_live.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_read_live::s5r_r03_dirty_victim_flush_retries_the_same_snapshot",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    }
+  ],
+  "reviews": [
+    {
+      "id": "pr53-route-refactor-20261105",
+      "class": "D2",
+      "scopes": [
+        "common",
+        "joint"
+      ],
+      "author": "/root",
+      "reviewer": "/root/independent_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/semantic_catalog/resources.rs": "cd40faf135c09af98507d5f03de7cdcbd4b8fee7",
+        "crates/engine/src/storage/semantic_row/transition/source.rs": "50b56ac03470b12ac9cb384d41889652f2f8e704",
+        "crates/engine/src/storage/tree_page.rs": "03bc7b092ff1f282f7c3a734076341a43e00fd0e",
+        "crates/engine/src/storage/tree_page/search.rs": "80ff87958aae2953546f846272f816286faf05de",
+        "crates/engine/src/storage/tree_page/search/tests.rs": "2113745a12294eef46d13faf2315166d34e2388c",
+        "crates/engine/src/storage/wal_io/plan4_apply/row/read.rs": "a0f7b356abfb4ee7c0386123c246eb0b2e7f7867",
+        "crates/engine/src/storage/wal_io/plan4_apply/row/read/census.rs": "0d7e49070199e4df317874dc202dbc57f10e3dec",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/split_rows.rs": "efb44ba9665d52032c63b9fb8321b36818057760",
+        "crates/engine/src/storage/wal_io/plan4_retention/history/row.rs": "39a5fae69de9b3190d4800b4c40bb1a3bdce44b6",
+        "crates/engine/src/storage/wal_io/plan4_retention/row_preflight.rs": "09d3b9704f49c249e675328dfd9246f7e888cbd9",
+        "devdoc/contracts/dev3-tree-smo.md": "5db50935899a2a5817baf3ac78254241e639db90",
+        "crates/engine/src/storage/semantic_catalog/catalog3_tests.rs": "ff12110b46e742b4e4b3959200962baadfdd8e8b",
+        "crates/engine/src/storage/semantic_row/structure/candidate/source_tests.rs": "dde87d420ee0f66893a397c7a3dab8027034ac80",
+        "crates/engine/src/storage/semantic_row/transition_tests.rs": "ca8110e61fc24433496b596fd3fb2d70bb3832cb",
+        "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs": "e174719c2ab4d8df3be253950de2a6f4ad18c7fc",
+        "crates/engine/src/storage/wal_io/plan4_apply/row/rollback_budget_tests.rs": "a0ce511e06ad3155eb4a1c0104825a1ef55cbc7d",
+        "crates/engine/src/storage/wal_io/plan4_apply/row/write_operation_tests.rs": "6d4f1549177da5e993a111a5a5b652c1715d5c69",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_census.rs": "23eb2fb1953edc10fa240f7515e8acbd8ce6cab3",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests.rs": "9260df57a540f768154085f8d787262b940c2a93",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_live.rs": "b0c150bf36920c516025956917790d4b74fc6c01"
+      },
+      "log": "module-gate/evidence/dev3-08-1-pr53-refactor/review.md (sha256 0ad5f1b1e0fa3ebebf8f30142e989d67f3a5c09953c8a1b7f913961b1ef9c865)"
+    }
+  ]
+}

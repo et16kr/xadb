@@ -8,7 +8,7 @@ use super::*;
 use crate::storage::{
     allocation_page::{AllocationError, AllocationPage, ExtentAddress, SystemWorkRef},
     anchor::TreeAnchor,
-    catalog_record::{CatalogRecordView, TableDefinitionView},
+    catalog_record::CatalogRecordView,
     control::{ControlRef, Profile},
     obligation::{RemainingBudget, SystemProgress},
     ownership::InventoryExpected,
@@ -109,9 +109,138 @@ fn certificate_chain() -> usize {
         + size_of::<Certificate>()
         + object_result()
         + size_of::<Native<Option<Certificate>, BaseError>>()
+        + size_of::<(Profile, u16, std::ops::RangeInclusive<u8>, &u8, bool)>()
+        + page_reference_decode()
+}
+
+/// Identity constructors and scalar/slice decoders nested under wire identities.
+/// Exclusive constructor arms are summed; these values are not just the outer
+/// Result that the caller retained. Error construction is included explicitly.
+fn identity_decode() -> usize {
+    use crate::api::DatabaseId;
+    size_of::<(
+        u64,
+        Option<std::num::NonZeroU64>,
+        Generation,
+        foundation::Error,
+    )>() + generation_result()
+        + size_of::<(
+            [u8; 16],
+            DatabaseId,
+            crate::Error,
+            Native<DatabaseId, crate::Error>,
+        )>()
+        + size_of::<(
+            u64,
+            crate::storage::page::FileId,
+            Native<crate::storage::page::FileId, PageError>,
+        )>()
+        + size_of::<(&[u8], usize, [u8; 8], u64, std::slice::Iter<'_, u8>, bool)>()
+}
+
+fn page_reference_decode() -> usize {
+    size_of::<(&[u8], PageRef, Native<PageRef, PageError>)>()
+        + size_of::<Native<crate::storage::page::FileId, PageError>>()
+        + generation_result()
+        + identity_decode()
+}
+
+fn source_owner_decode() -> usize {
+    use crate::storage::allocation_page::SystemWorkKind;
+    let system = size_of::<(&[u8], [u8; 16], Namespace, SystemWorkKind, Generation)>()
+        + size_of::<Native<SystemWorkKind, AllocationError>>()
+        + size_of::<Native<Generation, AllocationError>>()
+        + size_of::<(Namespace, SystemWorkKind, u64, Generation, SystemWorkRef)>()
+        + 2 * size_of::<Native<SystemWorkRef, AllocationError>>();
+    let transaction = size_of::<(&[u8], TxnId, Generation, Native<TxnId, PageError>)>()
+        + size_of::<(&[u8], [u8; 16], [u8; 4], TxnId, Native<TxnId, PageError>)>()
+        + size_of::<(TxnId, Generation, TxnRef, bool)>()
+        + 2 * size_of::<Native<TxnRef, PageError>>();
+    system.max(transaction) + identity_decode()
+}
+
+fn birth_accessors() -> usize {
+    use crate::storage::plan4_recovery_base::{StructuralInit, image_records::StructuralOperation};
+    // Both comparison results may coexist while the second accessor decodes.
+    size_of::<(InitProvenance<'_>, StructuralInit<'_>, StructuralOperation)>()
+        + 2 * size_of::<ReservationOwner>()
+        + 2 * size_of::<Option<ObjectHandle>>()
+        + 2 * size_of::<Option<PageRef>>()
+        + 2 * size_of::<[u64; 2]>()
+        + size_of::<(&[u8; 32], Native<&[u8; 32], TryFromSliceError>)>()
+        + source_owner_decode().max(page_reference_decode()).max(
+            size_of::<(
+                ObjectHandle,
+                ObjectId,
+                Generation,
+                foundation::identity::SchemaEpoch,
+            )>() + object_result()
+                + generation_result()
+                + identity_decode(),
+        )
+}
+
+/// validate_provenance -> validate_structural and the independent group pass.
+fn birth_chains() -> (usize, usize) {
+    use crate::storage::plan4_recovery_base::{INIT_BYTES, StructuralInit};
+    type Refs<'a> = std::iter::Enumerate<std::iter::Copied<std::slice::Iter<'a, Option<PageRef>>>>;
+    type Prefix<'a> = std::iter::Flatten<std::slice::Iter<'a, Option<PageRef>>>;
+    let common = size_of::<(&[u8; INIT_BYTES], Certificate, Expected, PageRef)>()
+        + size_of::<Native<(), BaseError>>();
+    let structural = size_of::<(
+        &[u8; INIT_BYTES],
+        Certificate,
+        Expected,
+        SystemWorkRef,
+        PageRef,
+        PageRef,
+        u64,
+        Option<PageRef>,
+    )>() + size_of::<[Option<PageRef>; 4]>()
+        + size_of::<(Refs<'_>, usize, Option<PageRef>, PageRef, Prefix<'_>)>()
+        + size_of::<(
+            &PageRef,
+            &PageRef,
+            PageRef,
+            Range<u64>,
+            std::ops::RangeInclusive<u8>,
+            bool,
+        )>()
+        + size_of::<(Profile, crate::storage::control::ProfileSpec, u16)>()
+        + 3 * size_of::<Native<PageRef, PageError>>()
+        + size_of::<Native<SystemWorkRef, AllocationError>>()
+        + size_of::<Native<(), BaseError>>();
+    let legacy = size_of::<(
+        SystemWorkRef,
+        TxnRef,
+        [PageRef; 2],
+        std::slice::Iter<'_, PageRef>,
+    )>() + size_of::<(Profile, crate::storage::control::ProfileSpec)>()
+        + size_of::<Native<SystemWorkRef, AllocationError>>()
+        + size_of::<Native<TxnRef, PageError>>()
+        + 2 * size_of::<Native<PageRef, PageError>>()
+        + size_of::<Native<(), BaseError>>();
+    let grammar =
+        common + structural.max(legacy) + source_owner_decode().max(page_reference_decode());
+    let groups = size_of::<(
+        LayoutView<'_>,
+        u32,
+        Range<usize>,
+        usize,
+        Range<usize>,
+        usize,
+    )>() + 2 * size_of::<(
+        InitProvenance<'_>,
+        Option<InitProvenance<'_>>,
+        Native<Option<InitProvenance<'_>>, BaseError>,
+    )>() + 2 * size_of::<(StructuralInit<'_>, Option<StructuralInit<'_>>)>()
+        + size_of::<Native<StructuralInit<'_>, BaseError>>()
+        + size_of::<Native<(), BaseError>>()
+        + provenance_read().max(birth_accessors());
+    (grammar, groups)
 }
 /// decode_layout (or encode_layout, which ends in it) with the shared
-/// certificate/provenance matchers charged as the certificate chain.
+/// certificate/provenance matchers and both historical group passes.
 fn layout_measured() -> usize {
     use crate::storage::plan4_recovery_base::INIT_BYTES;
     type Sections4 = (usize, usize, usize, usize);
@@ -141,13 +270,16 @@ fn layout_measured() -> usize {
         + size_of::<(Option<[PageRef; 2]>, [PageRef; 2], PageRef)>()
         + size_of::<Native<(), BaseError>>()
         + provenance_read();
+    let (birth_grammar, birth_groups) = birth_chains();
     let decode_chain = decode
         + header_chain()
             .max(digest())
             .max(certificate_chain())
             .max(page_codec())
             .max(row_codec())
-            .max(pairs);
+            .max(pairs)
+            .max(birth_grammar)
+            .max(birth_groups);
     let encode = size_of::<(Header, Expected, Sections<'_>, &mut [u8; BASE_BYTES])>()
         + size_of::<Native<(), BaseError>>()
         + size_of::<(usize, Sections4, usize)>()
@@ -246,7 +378,7 @@ fn record_for_measured() -> usize {
 }
 /// Graph::row.
 fn row_measured() -> usize {
-    size_of::<(&Graph<'_>, &Table<'_>, usize)>()
+    size_of::<(&Graph<'_>, &Table<'_>, &TreePageView<'_>, usize)>()
         + size_of::<(TreeEntry<'_>, Native<TreeEntry<'_>, TreeError>)>()
         + key()
         + row_result()
@@ -261,27 +393,97 @@ fn row_measured() -> usize {
         + size_of::<(RecordVersion, Result<RecordVersion>)>()
         + record_codec()
 }
-/// Graph::table: its record, the anchor's pair and the RowLeaf decoder.
+/// Graph::table wrapper; the nested observer has its own source inventory.
 fn table_measured() -> usize {
-    let frame = size_of::<(&Graph<'_>, usize)>()
-        + size_of::<(Record<'_>, Result<Record<'_>>)>()
-        + size_of::<(CatalogDefinitionView<'_>, TableDefinitionView<'_>, PageRef)>()
-        + size_of::<Native<usize, TryFromIntError>>()
-        + size_of::<BaseResult<Option<InitProvenance<'_>>>>()
+    size_of::<(&Graph<'_>, usize)>()
+        + size_of::<(Table<'_>, BaseResult<Table<'_>>, Result<Table<'_>>)>()
+        + current_tree_measured()
+}
+fn leaf_reservation_measured() -> usize {
+    size_of::<(&Graph<'_>, &Table<'_>, &TreePageView<'_>, ObjectHandle)>()
+        + 2 * size_of::<(usize, Range<usize>, usize)>()
         + size_of::<(
-            Option<InitProvenance<'_>>,
-            Option<[PageRef; 2]>,
-            [PageRef; 2],
+            TreeEntry<'_>,
+            Native<TreeEntry<'_>, TreeError>,
+            EntryPayload<'_>,
         )>()
-        + size_of::<(Pages<'_>, Result<Pages<'_>>)>()
-        + size_of::<TreeExpectation>()
+        + size_of::<(JobView<'_>, BaseResult<JobView<'_>>)>()
+        + size_of::<(Option<RowId>, RowId, [u8; 8], SearchPosition)>()
+        + size_of::<Native<SearchPosition, TreeError>>()
+        + size_of::<(row::RowEffect, usize, Result<()>)>()
+        + job_measured().max(record_codec())
+}
+/// Inventory from current_tree::observe, with read, DFS, search and codec
+/// phases. The external traversal helpers separately charge their private
+/// stack and checked-key values, never the caller's visited or closure.
+fn current_tree_measured() -> usize {
+    let read = size_of::<(LayoutView<'_>, TreeExpectation, PageRef)>()
+        + size_of::<(
+            Option<Certificate>,
+            Certificate,
+            BaseResult<Option<Certificate>>,
+        )>()
+        + size_of::<BaseResult<&[u8; PAGE_BYTES]>>()
+        + certificate_chain();
+    let frame = size_of::<(LayoutView<'_>, usize, Expected, Namespace)>()
         + size_of::<(TreePageView<'_>, Native<TreePageView<'_>, TreeError>)>()
-        + size_of::<Result<Table<'_>>>();
+        + size_of::<(
+            TreeEntry<'_>,
+            Native<TreeEntry<'_>, TreeError>,
+            EntryPayload<'_>,
+        )>()
+        + key()
+        + object_result()
+        + size_of::<(
+            ObjectId,
+            CatalogExpectation,
+            CatalogRecordView<'_>,
+            CatalogHeader,
+        )>()
+        + size_of::<Native<CatalogRecordView<'_>, CatalogError>>()
+        + size_of::<(
+            TreeExpectation,
+            &[u8; PAGE_BYTES],
+            BaseResult<&[u8; PAGE_BYTES]>,
+        )>()
+        + size_of::<(
+            TreeAnchor,
+            Native<TreeAnchor, PageError>,
+            crate::storage::anchor::AnchorRoot,
+        )>()
+        + size_of::<(u64, Header, u128, Option<Certificate>, Certificate)>()
+        + size_of::<BaseResult<Option<Certificate>>>()
+        + size_of::<TreeExpectation>()
+        + size_of::<[Option<TreeExpectation>; 64]>()
+        + size_of::<(usize, Native<usize, TreeError>, u64, u64)>()
+        + size_of::<(LayoutView<'_>, TreeExpectation, Native<&[u8], TreeError>)>()
+        + size_of::<(
+            AllocationPage<'_>,
+            Native<AllocationPage<'_>, AllocationError>,
+        )>()
+        + size_of::<(
+            u64,
+            Range<usize>,
+            usize,
+            AllocationEntry,
+            Native<AllocationEntry, AllocationError>,
+        )>()
+        + size_of::<(ObjectId, Generation, PageKind, Generation)>()
+        + size_of::<(InitProvenance<'_>, BaseResult<Option<InitProvenance<'_>>>)>()
+        + size_of::<(
+            Option<crate::storage::plan4_recovery_base::StructuralInit<'_>>,
+            crate::storage::plan4_recovery_base::StructuralInit<'_>,
+        )>()
+        + size_of::<(Table<'_>, BaseResult<Table<'_>>)>()
+        + 8 * size_of::<BaseResult<()>>();
+    let nested = crate::storage::tree_page::audit::frame_source_bytes()
+        .max(crate::storage::tree_page::search::frame_source_bytes())
+        + read.max(record_codec());
     frame
-        + record_measured()
+        + nested
+            .max(header_chain())
+            .max(allocation_decode())
             .max(provenance_read())
-            .max(page_measured())
-            .max(record_codec())
 }
 /// Graph::each_row with a visitor of `captures` bytes running `inner`.
 fn each_row_measured(captures: usize, inner: usize) -> usize {
@@ -289,6 +491,12 @@ fn each_row_measured(captures: usize, inner: usize) -> usize {
         + captures
         + size_of::<(Range<usize>, usize)>()
         + size_of::<(TreePageView<'_>, BaseResult<TreePageView<'_>>)>()
+        + size_of::<(
+            Range<usize>,
+            usize,
+            TreePageView<'_>,
+            BaseResult<TreePageView<'_>>,
+        )>()
         + size_of::<(Table<'_>, Result<Table<'_>>)>()
         + size_of::<(Range<usize>, usize)>()
         + size_of::<(RecordVersion, Result<RecordVersion>)>()
@@ -364,6 +572,12 @@ fn tables_measured() -> [(&'static str, usize); 5] {
         + size_of::<(CatalogHeader, TxnId, Range<usize>)>()
         + size_of::<(JobView<'_>, BaseResult<JobView<'_>>, Option<TxnRef>)>()
         + size_of::<(Table<'_>, Result<Table<'_>>)>()
+        + size_of::<(
+            Range<usize>,
+            usize,
+            TreePageView<'_>,
+            BaseResult<TreePageView<'_>>,
+        )>()
         + size_of::<u32>()
         + refs(3)
         + refs(1)
@@ -410,6 +624,7 @@ fn tables_measured() -> [(&'static str, usize); 5] {
             .max(catalog_measured())
             .max(record_measured())
             .max(table_measured())
+            .max(leaf_reservation_measured())
             .max(job_measured());
     [
         ("tables_direct", direct),
@@ -750,7 +965,8 @@ fn active_measured() -> usize {
         + descriptor_measured()
 }
 /// The shared ATT/System pass: rows, reverse, System provenance/allocation.
-fn ledger_measured() -> [(&'static str, usize); 4] {
+fn ledger_measured() -> [(&'static str, usize); 5] {
+    use crate::storage::semantic_row::structure::bank;
     let rows = size_of::<(&Graph<'_>, Header, usize, usize)>()
         + layout_copies()
         + size_of::<Option<(u32, u64, u64)>>()
@@ -802,6 +1018,34 @@ fn ledger_measured() -> [(&'static str, usize); 4] {
         + size_of::<(Profile, u64, u8)>()
         + size_of::<Native<(), crate::storage::wal_io::CatalogAllocationError>>()
         + size_of::<BaseResult<()>>();
+    let structural = size_of::<(&Graph<'_>, Header, Range<usize>, usize)>()
+        + layout_copies()
+        + size_of::<(Option<DescriptorSpec>, BaseResult<Option<DescriptorSpec>>)>()
+        + size_of::<(
+            Option<bank::FinishedSplit>,
+            Native<Option<bank::FinishedSplit>, semantic_row::Error>,
+        )>()
+        + size_of::<(
+            &DescriptorSpec,
+            Native<bank::FinishedSplit, semantic_row::Error>,
+        )>()
+        + size_of::<(InitProvenance<'_>, BaseResult<Option<InitProvenance<'_>>>)>()
+        + size_of::<(
+            crate::storage::plan4_recovery_base::StructuralInit<'_>,
+            Option<crate::storage::plan4_recovery_base::StructuralInit<'_>>,
+        )>()
+        + size_of::<(bank::FinishedSplit, SystemWorkRef, ReservationOwner)>()
+        + size_of::<(
+            semantic_row::structure::Operation,
+            crate::storage::plan4_recovery_base::StructuralOperation,
+        )>()
+        + size_of::<BaseResult<()>>()
+        + header_chain()
+            .max(descriptor_measured())
+            .max(provenance_read())
+            .max(source_owner_decode())
+            .max(birth_accessors())
+            .max(bank::validation_source_bytes());
     [
         (
             "ledger_rows",
@@ -810,6 +1054,10 @@ fn ledger_measured() -> [(&'static str, usize); 4] {
                 .max(terminal_measured())
                 .max(home_measured())
                 .max(hook)
+                .max(
+                    bank::validation_source_bytes()
+                        + size_of::<Native<bank::FinishedSplit, semantic_row::Error>>(),
+                )
                 .max(budget),
         ),
         (
@@ -824,6 +1072,7 @@ fn ledger_measured() -> [(&'static str, usize); 4] {
                     .max(certificate_chain())
                     .max(provenance_read()),
         ),
+        ("ledger_structural_provenance", allocation + structural),
         (
             "ledger_system_allocation",
             allocation
@@ -907,6 +1156,28 @@ fn inventory_measured() -> [(&'static str, usize); 3] {
 #[test]
 fn base4_closure_source_bound_covers_measured_frames() {
     let census = source_census();
+    let (birth_grammar, birth_groups) = birth_chains();
+    let birth_bound = crate::storage::plan4_recovery_base::image_records::provenance_source_bytes();
+    let group_bound = birth_bound
+        + 2 * size_of::<crate::storage::plan4_recovery_base::StructuralInit<'_>>()
+        + 2 * size_of::<Option<crate::storage::plan4_recovery_base::StructuralInit<'_>>>()
+        + 2 * size_of::<LayoutView<'_>>()
+        + 2 * size_of::<Range<usize>>();
+    println!(
+        "ROW_BASE_BIRTH_SOURCE grammar={birth_grammar} grammar_bound={birth_bound} groups={birth_groups} group_bound={group_bound} certificate={} certificate_bound={}",
+        certificate_chain(),
+        certificate_read()
+    );
+    assert!(birth_grammar <= birth_bound);
+    assert!(birth_groups <= group_bound);
+    assert!(certificate_chain() <= certificate_read());
+    println!(
+        "ROW_BASE_CURRENT_TREE_SOURCE measured={} bound={}",
+        current_tree_measured(),
+        current_tree::source_bytes()
+    );
+    assert!(current_tree_measured() <= current_tree::source_bytes());
+    assert!(leaf_reservation_measured() <= leaf_reservation_chain());
     let outer = decode_frame().max(encode_frame()) + validate_frame();
     let graph = new_frame() + row_codec();
     let mut chains = vec![

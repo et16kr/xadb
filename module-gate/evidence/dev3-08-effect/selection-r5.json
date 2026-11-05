@@ -1,0 +1,9 @@
+{
+  "scope": "E01 r4b failed before first effect: CREATE Catalog RootRetained still present. Correct fixture by actual Catalog Prune/three ReleaseRole/RootFree/TerminalFinish; product and source census unchanged; completed source-only case not repeated",
+  "filters": [
+    "structural_effect_original_root_then_child_and_target_debt_refusal"
+  ],
+  "cases": 1,
+  "build_timeout_seconds": 300,
+  "runtime_timeout_seconds": 200
+}

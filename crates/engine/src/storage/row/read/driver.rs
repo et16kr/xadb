@@ -76,7 +76,12 @@ trait ReadSource {
     type Page<'g>: SearchPage<Candidate = Self::Candidate>
     where
         Self: 'g;
-    fn page(&mut self) -> Result<Step<Self::Page<'_>, Self::Target>, RetentionError>;
+    /// The table's current RowLeaf that routes `key`
+    /// (dev3-tree-smo.md#current-leaf-consumers).
+    fn page(&mut self, key: RowId) -> Result<Step<Self::Page<'_>, Self::Target>, RetentionError>;
+    /// The exclusive upper key bound of the leaf `page` last issued: the
+    /// first key of the next leaf in key order, None for the rightmost leaf.
+    fn upper(&self) -> Option<RowId>;
     fn status(
         &mut self,
         candidate: &Self::Candidate,
@@ -402,7 +407,7 @@ fn capture_point<S: ReadSource>(
     row: RowId,
     candidate: &mut Option<S::Candidate>,
 ) -> Result<Step<Option<SeekPosition>, S::Target>, RowReadError> {
-    let page = match source.page()? {
+    let page = match source.page(row)? {
         Step::Ready(page) => page,
         Step::FlushRequired { target } => {
             return Ok(Step::FlushRequired { target });
@@ -561,6 +566,12 @@ impl<'r, V: ReadView + 'r, T: 'r> RowCursor<'r, V, T> {
         }
     }
 
+    /// The next key's leaf, routed by the full last examined key (or the
+    /// range start), then each following leaf by its left neighbour's upper
+    /// bound while a leaf has no next key in the range
+    /// (dev3-tree-smo.md#current-leaf-consumers). Every bound is above the
+    /// keys of the leaf before it, so the route key strictly increases and
+    /// the walk visits each leaf of the operation's one tree at most once.
     #[inline(never)]
     fn capture_next<S: ReadSource>(
         &self,
@@ -569,14 +580,25 @@ impl<'r, V: ReadView + 'r, T: 'r> RowCursor<'r, V, T> {
         cancel: &Cancellation,
         candidate: &mut Option<S::Candidate>,
     ) -> Result<Step<Option<SeekPosition>, S::Target>, RowReadError> {
-        let page = match source.page()? {
-            Step::Ready(page) => page,
-            Step::FlushRequired { target } => {
-                return Ok(Step::FlushRequired { target });
+        let mut key = self.progress.route_key();
+        loop {
+            let page = match source.page(key)? {
+                Step::Ready(page) => page,
+                Step::FlushRequired { target } => {
+                    return Ok(Step::FlushRequired { target });
+                }
+            };
+            if let Some(at) = self.capture_next_page(page, revision, cancel, candidate)? {
+                return Ok(Step::Ready(Some(at)));
             }
-        };
-        self.capture_next_page(page, revision, cancel, candidate)
-            .map(Step::Ready)
+            // No next key in this leaf: the next leaf starts at its upper
+            // bound, while the range still contains it.
+            match source.upper() {
+                Some(upper) if upper <= key => return Err(ReadError::InvalidProgress.into()),
+                Some(upper) if self.progress.continues_at(upper) => key = upper,
+                _ => return Ok(Step::Ready(None)),
+            }
+        }
     }
 
     #[inline(never)]

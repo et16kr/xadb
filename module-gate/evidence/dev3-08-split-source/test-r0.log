@@ -1,0 +1,37 @@
+   Compiling version_check v0.9.5
+   Compiling typenum v1.20.1
+   Compiling autocfg v1.5.1
+   Compiling libc v0.2.191
+   Compiling generic-array v0.14.7
+   Compiling cfg-if v1.0.5
+   Compiling memoffset v0.9.1
+   Compiling cfg_aliases v0.2.2
+   Compiling cpufeatures v0.2.17
+   Compiling nix v0.30.1
+   Compiling bitflags v2.13.2
+   Compiling block-buffer v0.10.4
+   Compiling crypto-common v0.1.7
+   Compiling digest v0.10.7
+   Compiling sha2 v0.10.9
+   Compiling xadb-foundation v0.1.0 (/workspace/xadb/crates/foundation)
+   Compiling xadb-platform v0.1.0 (/workspace/xadb/crates/platform)
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 57s
+     Running unittests src/lib.rs (artifacts/dev3-08/target/debug/deps/engine-e4e141083d864921)
+
+running 10 tests
+candidate outer 26312/31776 audit 12132/17468 weights 10012/13852 parent 9341/15257 table 5068/7612 side 14493 previous 10831 peak 49244
+frame outer 2112/6208 layout 17495 body 16799 candidate 49244 peak 55452
+test storage::semantic_row::structure::candidate::source_tests::structural_split_source_inventory_includes_retained_after_audit_and_frame_view ... ok
+test storage::semantic_row::structure::weights::tests::candidate::density::structural_candidate_overdense_untyped_leaf_rejects_without_output ... ok
+test storage::semantic_row::structure::weights::tests::candidate::density::structural_candidate_tombstone_ceiling_includes_shortest_supported_record ... ok
+test storage::semantic_row::structure::weights::tests::candidate::density::structural_candidate_dense_nullable_rows_fit_reduced_scratch_and_preserve_all_bytes ... ok
+test storage::semantic_row::structure::weights::tests::candidate::structural_candidate_child_leaf_revises_anchor_and_preserves_current_root ... ok
+test storage::semantic_row::structure::weights::tests::candidate::structural_candidate_leaf_root_preserves_literal_rows_and_actual_undo_costs ... ok
+test storage::semantic_row::structure::weights::tests::candidate::structural_candidate_internal_root_and_child_promote_pivot_once ... ok
+test storage::semantic_row::structure::weights::tests::candidate::structural_candidate_local_parent_capacity_rejects_before_output ... ok
+test storage::semantic_row::structure::weights::tests::candidate::density::structural_candidate_local_parent_last_separator_fits_reduced_scratch ... ok
+test storage::semantic_row::structure::weights::tests::candidate::frame::structural_frame_matches_independent_sections_for_all_four_splits ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 2280 filtered out; finished in 0.11s
+

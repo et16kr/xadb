@@ -15,6 +15,7 @@ use super::catalog::{image, raw_descriptor, row_actor};
 use super::*;
 use crate::storage::{
     allocation_page::ReservationOwner,
+    anchor::{self, TreeKind},
     catalog_record::{self, CatalogDefinitionView, CatalogExpectation},
     obligation,
     page::{FileId, PageRef},
@@ -167,9 +168,11 @@ fn undo_allocated(
     }
     Ok(())
 }
-/// The Job's table: its anchor/leaf images and the canonical Catalog schema
+/// The Job's table: its current anchor/leaf images and canonical Catalog schema
 /// from the fixed CatalogLeaf (page 8). The record must be the Job's live
 /// table handle with the Job's anchor; a retired table has no Row replay.
+/// The leaf hint is historical. Select the RowId from the immutable canonical
+/// tree; this selector does not relax downstream operation/profile limits.
 pub(in super::super) fn table_source<'a>(
     arena: &'a [u8],
     profile: Profile,
@@ -228,13 +231,69 @@ pub(in super::super) fn table_source<'a>(
     if header.identity != handle || header.anchor != pair[0] {
         return Err(invalid());
     }
+    let row = job.row_id().ok_or_else(invalid)?;
+    let leaf = current_leaf(arena, profile, handle, pair[0], row)?;
+    let anchor_image = image(arena, pair[0])?;
     Ok(TableSource {
         handle,
         anchor: pair[0],
-        anchor_image: image(arena, pair[0])?,
-        leaf_image: Some(image(arena, pair[1])?),
+        anchor_image,
+        leaf_image: Some(image(arena, leaf)?),
         schema: RowSchemaInput::Catalog(schema),
     })
+}
+
+/// The current RowLeaf of `row` in the canonical arena
+/// (dev3-tree-smo.md#current-leaf-consumers): the table anchor's level0 root,
+/// or the leaf its RowInternal path routes `row` to. Every live Row selection
+/// that read its path from the pool compares its leaf with this one at the
+/// same `validate_live` cut. A non-Row anchor is Unsupported.
+pub(in super::super) fn current_leaf(
+    arena: &[u8],
+    profile: Profile,
+    handle: ObjectHandle,
+    anchor: PageRef,
+    row: RowId,
+) -> ObservationResult<PageRef> {
+    let namespace = profile.spec().namespace;
+    let identity = PageIdentity {
+        database: namespace.database,
+        page: anchor,
+        owner: handle.object,
+        owner_generation: handle.generation,
+    };
+    let root = anchor::decode_anchor(image(arena, anchor)?, identity)
+        .map_err(RetentionCause::Page)?
+        .root();
+    if root.tree != TreeKind::Row {
+        return Err(RetentionCause::Unsupported);
+    }
+    let key = row.get().to_be_bytes();
+    let leaf = tree_page::search::find_leaf_in_images(
+        TreeExpectation {
+            identity: PageIdentity {
+                page: root.page,
+                ..identity
+            },
+            kind: if root.level == 0 {
+                PageKind::RowLeaf
+            } else {
+                PageKind::RowInternal
+            },
+            level: root.level,
+            arity: 0,
+        },
+        &key,
+        |expected| {
+            // Only the original canonical arena supplies these bytes. The
+            // search decoder checks the full identity, not just this ordinal.
+            image(arena, expected.identity.page)
+                .map(|bytes| bytes.as_slice())
+                .map_err(|_| tree_page::TreeError::Corrupt)
+        },
+    )
+    .map_err(RetentionCause::Tree)?;
+    Ok(leaf.header().identity.page)
 }
 
 /// A CLR's statement boundary from its actor's Status home: a statement
@@ -955,15 +1014,7 @@ pub(in super::super) fn source_bytes() -> SourceCensus {
                 + 2 * size_of::<ObservationResult<StatusHome>>()
                 + semantic_catalog_status(),
         )
-        .max(
-            size_of::<tree_page::TreePageView<'_>>()
-                + size_of::<tree_page::TreeEntry<'_>>()
-                + size_of::<catalog_record::CatalogRecordView<'_>>()
-                + size_of::<catalog_record::CatalogHeader>()
-                + 2 * size_of::<ObservationResult<TableSource<'_>>>()
-                + transition::tree_source_bytes()
-                    .max(crate::storage::semantic_catalog::catalog_read_codec_bytes()),
-        )
+        .max(table_source_bytes())
         .max(
             2 * size_of::<allocation_page::AllocationPage<'_>>()
                 + 2 * size_of::<ObservationResult<PageIdentity>>()
@@ -1009,4 +1060,49 @@ pub(in super::super) fn source_bytes() -> SourceCensus {
 }
 fn semantic_catalog_status() -> usize {
     crate::storage::semantic_catalog::status_read_codec_bytes()
+}
+
+/// Catalog/anchor observations stay live across the bounded immutable search.
+/// The visited path is one fixed array, not sixteen nested search frames.
+pub(in super::super) fn table_source_bytes() -> usize {
+    use crate::storage::tree_page::{TreeEntry, TreePageView};
+    use std::mem::size_of;
+    let selected = size_of::<TreePageView<'_>>()
+        + size_of::<TreeEntry<'_>>()
+        + size_of::<catalog_record::CatalogRecordView<'_>>()
+        + size_of::<catalog_record::CatalogHeader>()
+        + size_of::<catalog_record::TableDefinitionView<'_>>()
+        + 2 * size_of::<ObservationResult<TableSource<'_>>>()
+        + size_of::<anchor::TreeAnchor>()
+        + size_of::<anchor::AnchorRoot>()
+        + size_of::<PageIdentity>()
+        + size_of::<[u8; 8]>()
+        + 16 * size_of::<&[u8]>()
+        + 16 * size_of::<u64>();
+    selected
+        + (current_leaf_frame_bytes()
+            + tree_page::search::frame_source_bytes()
+            + transition::tree_source_bytes()
+                .max(crate::storage::semantic_catalog::catalog_read_codec_bytes()))
+}
+
+/// `current_leaf` (dev3-tree-smo.md#current-leaf-consumers): its arguments,
+/// the anchor's identity, root and the key beside the bounded immutable
+/// search, whose visited path is one fixed array.
+pub(in super::super) fn current_leaf_bytes() -> usize {
+    current_leaf_frame_bytes()
+        + tree_page::search::frame_source_bytes()
+        + transition::tree_source_bytes()
+}
+
+/// Only the observation/anchor frame belongs to history. Traversal and
+/// codec inventories are owned by tree_page, including helper evolution.
+fn current_leaf_frame_bytes() -> usize {
+    use std::mem::size_of;
+    size_of::<(&[u8], Profile, ObjectHandle, PageRef, RowId)>()
+        + 2 * size_of::<ObservationResult<PageRef>>()
+        + size_of::<PageIdentity>()
+        + size_of::<anchor::AnchorRoot>()
+        + 2 * size_of::<std::result::Result<anchor::TreeAnchor, crate::storage::page::PageError>>()
+        + size_of::<[u8; 8]>()
 }

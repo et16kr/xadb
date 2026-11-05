@@ -1,0 +1,50 @@
+[
+  {
+    "case": "SMO-NR2",
+    "phase": "produce",
+    "exit": 0,
+    "seconds": 11.11
+  },
+  {
+    "case": "SMO-NR2",
+    "phase": "recover",
+    "exit": 0,
+    "seconds": 1.22
+  },
+  {
+    "case": "SMO-NR2",
+    "phase": "reenter",
+    "exit": 0,
+    "seconds": 0.57
+  },
+  {
+    "case": "SMO-NR3",
+    "phase": "produce",
+    "exit": 0,
+    "seconds": 11.6
+  },
+  {
+    "case": "SMO-NR3",
+    "phase": "recover",
+    "exit": 0,
+    "seconds": 1.12
+  },
+  {
+    "case": "SMO-NR3",
+    "phase": "reenter",
+    "exit": 0,
+    "seconds": 0.52
+  },
+  {
+    "case": "SMO-NR4",
+    "phase": "produce",
+    "exit": 0,
+    "seconds": 11.31
+  },
+  {
+    "case": "SMO-NR4",
+    "phase": "recover",
+    "exit": 101,
+    "seconds": 1.02
+  }
+]

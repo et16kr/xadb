@@ -1,0 +1,8 @@
+{
+  "head": "dfe555330fc01a36e91699c4a5ac6bd05b612945",
+  "removed": "artifacts/dev3-08/target",
+  "bytes": 4094416554,
+  "elf_sha256": "160a10fb820a727ad8e7ee8fe3973651fe9b9485704ee22cd8222b52540fda9e",
+  "evidence_preserved": "module-gate/evidence/dev3-08-admission",
+  "gate": "PASS 0 errors 0 pending"
+}

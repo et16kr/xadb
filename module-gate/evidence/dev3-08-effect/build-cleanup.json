@@ -1,0 +1,20 @@
+{
+  "result": "PASS",
+  "targets": [
+    {
+      "directory": "/workspace/xadb/artifacts/dev3-08/target",
+      "bytes_before": 3602838694,
+      "elf_sha256": "5c883107d9d5a7e48c3d87beb7d139eb555a9075a504d87ac573669e31a1b647",
+      "identity": "elf-r15.sha256",
+      "absent": true
+    },
+    {
+      "directory": "/workspace/xadb/artifacts/dev3-08/native-target",
+      "bytes_before": 3916493258,
+      "elf_sha256": "38706753dd4265d18c156a725c5bc699508c503d6d2782aafaebb6ec1731a45c",
+      "identity": "elf-r13.sha256",
+      "absent": true
+    }
+  ],
+  "retained": "all source/ELF/input hash manifests, raw logs and native DB/input snapshots; no test result rewritten"
+}

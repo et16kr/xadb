@@ -1,0 +1,185 @@
+{
+  "schema": "XADB_MODULE_GATE_RECORD_V1",
+  "change": "DEV3 08: original-pool Structural metadata, narrow RowInternal registration, single finish and unchanged layout/common source bound; live SMO remains open",
+  "rust_tests": [
+    {
+      "paths": [
+        "crates/engine/src/storage/dirty_init.rs",
+        "crates/engine/src/storage/dirty_init/structural.rs",
+        "crates/engine/src/storage/dirty_init/structural/tests.rs",
+        "crates/engine/src/storage/dirty_init/tx_pair_tests.rs",
+        "crates/engine/src/storage/dirty_frame/registration.rs",
+        "crates/engine/src/storage/dirty_frame/retention_residency.rs"
+      ],
+      "reason": "Eight new cases exercise the added Structural metadata and changed shared dispatch/directory/census; no prior unchanged helpers are selected. Original pre-change layout diagnostic and r0 compile failure are preserved separately.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/dirty_init/structural/tests.rs",
+          "case": "storage::dirty_frame::init::structural::tests::structural_claim_preserves_prior_layout_and_entry_budget",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/dirty_init/structural/tests.rs",
+          "case": "storage::dirty_frame::init::structural::tests::structural_claim_accepts_root_child_shapes_and_all_active_pins",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/dirty_init/structural/tests.rs",
+          "case": "storage::dirty_frame::init::structural::tests::structural_claim_rejects_malformed_count_identity_and_mask_without_panics",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/dirty_init/structural/tests.rs",
+          "case": "storage::dirty_frame::init::structural::tests::structural_claim_rejects_wrong_closed_state_and_published_identity",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/dirty_init/structural/tests.rs",
+          "case": "storage::dirty_frame::init::structural::tests::structural_single_finish_preserves_resident_and_consumed_generation",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/dirty_init/structural/tests.rs",
+          "case": "storage::dirty_frame::init::structural::tests::structural_directory_allows_only_dynamic_row_internal_levels",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/dirty_init/structural/tests.rs",
+          "case": "storage::dirty_frame::init::structural::tests::structural_ordinary_gate_blocks_original_pin_load_and_capture",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/dirty_init/tx_pair_tests.rs",
+          "case": "storage::dirty_frame::init::tx_pair::tests::pair_and_system_dispatch_keep_their_existing_claim_policy",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        }
+      ]
+    }
+  ],
+  "reviews": [
+    {
+      "id": "dev3-08-claim-d2-d1",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/dirty_init.rs": "f3d02b66081dc6f9d9d66f05ccfd4cfa9f2f5a3c",
+        "crates/engine/src/storage/dirty_init/structural.rs": "7918746004bb31160caf4cdf0a754c8f4f08d412",
+        "crates/engine/src/storage/dirty_init/structural/tests.rs": "b5d989f88963359b16591fb93d911157bae7e43c",
+        "crates/engine/src/storage/dirty_init/tx_pair_tests.rs": "6d8d246b9391264980a6c45fb4e8af717d11342d",
+        "crates/engine/src/storage/dirty_frame/registration.rs": "aabb16e5b281156a31cf3ea940ca16aab3b0975b",
+        "crates/engine/src/storage/dirty_frame/retention_residency.rs": "ef721b87b9cf921dd307815bfe87ac0ab0188172",
+        "devdoc/contracts/dev3-tree-smo.md": "30b3425d42682ed5c278b3381f84d0f9311b5c53"
+      },
+      "log": "module-gate/evidence/dev3-08-claim/review.md (sha256 acc9e9452b699a81564195292c68613add16f95221fdbe69252be29e6e51017a)"
+    },
+    {
+      "id": "dev3-08-scope4-replay-overlap-d2-d1",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "devdoc/contracts/dev3-tree-smo.md": "919a718f8af4a8539dedb609809039901a92604d"
+      },
+      "log": "module-gate/evidence/dev3-08-scope4-replay/review.md (sha256 2a39d85aadb8513bea28d051226c800aad689f902668809681b711c29df1c15f)"
+    },
+    {
+      "id": "dev3-08-live-prepare-d2-d1-overlap",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "devdoc/contracts/dev3-tree-smo.md": "8857b485a202d469c5e6d69b2de9b763795a4642"
+      },
+      "log": "module-gate/evidence/dev3-08-live-prepare/review.md (sha256 a3e3c1ad6f8917646d8be488cf6818d39703367849d00f495746cd16f5eba0f8)"
+    },
+    {
+      "id": "dev3-08-admission-d2-d1-overlap",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "devdoc/contracts/dev3-tree-smo.md": "57dcb8748372f0ba77cb3a586e4382958999b95c",
+        "crates/engine/src/storage/dirty_frame/retention_residency.rs": "b1b9bfd785b8c22a177f3e82833c073797abcac4"
+      },
+      "log": "module-gate/evidence/dev3-08-admission/review.md (sha256 7f4b4306fbd465ac91cfd5ce8d213d2506ac89fc25f086651b1f5f15690dc390)"
+    },
+    {
+      "id": "dev3-08-effect-final-overlap",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/dirty_init.rs": "5b99c0f583bcbc02b8fba51d61455ac54379e460",
+        "crates/engine/src/storage/dirty_init/structural.rs": "5d7c821f369e1928f3c6c236575eff2590cce8f9",
+        "devdoc/contracts/dev3-tree-smo.md": "e60ff6fbfcf0d52fccce95425f9d9913c2560164"
+      },
+      "log": "module-gate/evidence/dev3-08-effect/review.md (sha256 5c0f1ecbb805aad6300bdb7e4d93eaba1d05e0709a3bb3c69a9a7a44cbe49d1f)"
+    },
+    {
+      "id": "pr53-route-refactor-20261105",
+      "class": "D2",
+      "scopes": [
+        "common",
+        "joint"
+      ],
+      "author": "/root",
+      "reviewer": "/root/independent_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "devdoc/contracts/dev3-tree-smo.md": "5db50935899a2a5817baf3ac78254241e639db90"
+      },
+      "log": "module-gate/evidence/dev3-08-1-pr53-refactor/review.md (sha256 0ad5f1b1e0fa3ebebf8f30142e989d67f3a5c09953c8a1b7f913961b1ef9c865)"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "reason": "New 87/406 candidate arrays and source closure: new density4 + source1, changed candidate root/child leaf/internal + parent full + frame four shapes. No unchanged weights/wire/bank/Base4 suite.",
+  "tests": [
+    "structural_split_source_inventory_includes_retained_after_audit_and_frame_view",
+    "structural_candidate_dense_nullable_rows_fit_reduced_scratch_and_preserve_all_bytes",
+    "structural_candidate_tombstone_ceiling_includes_shortest_supported_record",
+    "structural_candidate_overdense_untyped_leaf_rejects_without_output",
+    "structural_candidate_local_parent_last_separator_fits_reduced_scratch",
+    "structural_candidate_leaf_root_preserves_literal_rows_and_actual_undo_costs",
+    "structural_candidate_child_leaf_revises_anchor_and_preserves_current_root",
+    "structural_candidate_internal_root_and_child_promote_pivot_once",
+    "structural_candidate_local_parent_capacity_rejects_before_output",
+    "structural_frame_matches_independent_sections_for_all_four_splits"
+  ]
+}

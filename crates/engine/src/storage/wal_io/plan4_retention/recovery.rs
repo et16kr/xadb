@@ -26,6 +26,12 @@ mod format_tests;
 #[cfg(test)]
 #[path = "recovery/row_tests.rs"]
 mod row_tests;
+#[cfg(test)]
+#[path = "recovery/structural_bank_tests.rs"]
+mod structural_bank_tests;
+#[cfg(test)]
+#[path = "recovery/structural_replay_tests.rs"]
+mod structural_replay_tests;
 
 type ObservationResult<T> = std::result::Result<T, RetentionCause>;
 
@@ -356,6 +362,30 @@ pub(super) fn seed_replay_slice(
     replay.fill(0);
     seed_base_images(&view, replay)?;
     history::refresh_jobs(profile, replay).map_err(|_| RetentionCause::Invariant)?;
+    seed_descriptor_bank(profile, &view, replay)?;
+    let allocation = population::ReplayAllocation::from_verified_base(
+        profile,
+        seed,
+        &mut replay[history::JOB_END..history::BANK_END],
+    )?;
+    history::validate_bijection(profile, replay).map_err(|_| RetentionCause::Invariant)?;
+    Ok(RetentionReplayCursor {
+        allocation,
+        adopted_local: 0,
+        previous_lsn: view.header().capture_lsn,
+        epoch: None,
+        predecessor_epoch: view.header().source_epoch,
+        base_seeded: true,
+    })
+}
+
+/// Reconstruct byte observations from a checked current-state view. Only the
+/// caller's original VerifiedPlan4Base can supply the separate history witness.
+fn seed_descriptor_bank(
+    profile: Profile,
+    view: &crate::storage::plan4_recovery_base::row::RowBaseView<'_>,
+    replay: &mut [u8],
+) -> ObservationResult<()> {
     for slot in 0..36 {
         let Some(descriptor) = view
             .descriptor(slot)
@@ -381,6 +411,7 @@ pub(super) fn seed_replay_slice(
             OwnerState::System(progress) => {
                 let destination = match progress.reference.kind() {
                     SystemWorkKind::AllocationMaintenance if slot == 32 => control::ALLOCATION_SLOT,
+                    SystemWorkKind::StructuralChange if slot == 33 => control::STRUCTURAL_SLOT,
                     SystemWorkKind::Aging if slot == 34 => control::AGING_SLOT,
                     _ => return Err(RetentionCause::Invariant),
                 };
@@ -389,25 +420,25 @@ pub(super) fn seed_replay_slice(
                     destination,
                 );
                 row[..1536].copy_from_slice(raw);
+                if destination == control::STRUCTURAL_SLOT {
+                    row[1536..1544]
+                        .copy_from_slice(&view.header().system_high_water[1].to_le_bytes());
+                }
                 row[control::PHASE] = control::STABLE;
             }
             _ => return Err(RetentionCause::Invariant),
         }
     }
-    let allocation = population::ReplayAllocation::from_verified_base(
+    control::observe_structural_bank_row(
         profile,
-        seed,
-        &mut replay[history::JOB_END..history::BANK_END],
+        view.header().capture_lsn,
+        view.header().source_epoch,
+        control::row(
+            &replay[history::JOB_END..history::BANK_END],
+            control::STRUCTURAL_SLOT,
+        ),
     )?;
-    history::validate_bijection(profile, replay).map_err(|_| RetentionCause::Invariant)?;
-    Ok(RetentionReplayCursor {
-        allocation,
-        adopted_local: 0,
-        previous_lsn: view.header().capture_lsn,
-        epoch: None,
-        predecessor_epoch: view.header().source_epoch,
-        base_seeded: true,
-    })
+    Ok(())
 }
 
 /// Copy only from the original selected witness. The immutable v4 view already
@@ -545,6 +576,12 @@ pub(super) fn apply_frame(
                     .expect("Row loan"),
                 &mut cursor.adopted_local,
             )?
+        }
+        4 => {
+            if cursor.allocation.reserved() {
+                return Err(RetentionCause::Invariant);
+            }
+            history::structure::apply(profile, expected, input, arena, cells, bank, after, claims)?
         }
         1 => {
             // Any Reserved Job3 root (either scope) excludes a System frame.
@@ -1313,13 +1350,15 @@ pub(super) fn phase_source_bytes<W: WriterNamespace>() -> RecoveryPhaseCensus {
     let seed = seed_outer
         + image
             .max(descriptor)
+            .max(views + small + control::structural_bank_source_bytes())
             .max(history::catalog::source_bytes().closure);
     // allows_actor's sealed ATT lookup is nested while check_ledger retains
     // the current descriptor; no live producer/installer exists at this point.
-    let ledger = descriptor
+    let ledger = (descriptor
         + 2 * size_of::<DescriptorSpec>()
         + 2 * size_of::<TxnRef>()
-        + 2 * size_of::<StatusSlotRef>();
+        + 2 * size_of::<StatusSlotRef>())
+    .max(views + small + control::structural_bank_source_bytes());
     let legacy_cleanup = descriptor
         + 2 * size_of::<Cleanup>()
         + 2 * size_of::<Result<Cleanup>>()
@@ -1381,6 +1420,22 @@ fn restored_credits(
 
 #[cfg(test)]
 impl<W: WriterNamespace> Plan4Retention<'_, '_, '_, '_, '_, '_, '_, '_, W> {
+    /// Test-only copy of the original recovered canonical arena. No page is
+    /// registered, pinned or granted INIT/load authority by this observation.
+    pub(in crate::storage) fn recovery_test_structural_arena(&mut self) -> Result<Vec<u8>> {
+        if self.recovery_binding.is_none() {
+            return Err(unchanged(
+                RetentionPhase::Prepare,
+                RetentionCause::WrongState,
+            ));
+        }
+        self.refresh_recovered()?;
+        Ok(self.history.exclusive()?[..64 * PAGE_BYTES].to_vec())
+    }
+    #[cfg(test)]
+    pub(in crate::storage) fn recovery_test_structural_provenance(&self) -> Vec<u8> {
+        self.history.test_structural_provenance()
+    }
     /// An expected target copied from the original validated replay. This is
     /// not a pin/reservation; normal consumers still revalidate membership.
     pub(in crate::storage) fn recovery_test_expected_target(

@@ -1,0 +1,9 @@
+{
+  "filters": [
+    "recovery_source_memory",
+    "recovery_source_native"
+  ],
+  "reason": "Structural preparation now includes XOI/progress and larger immutable result; original census consumers verify unchanged full caps",
+  "source": "source-r2.sha256",
+  "elf": "elf-r2.sha256"
+}

@@ -1,0 +1,21 @@
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 39.24s
+     Running unittests src/lib.rs (artifacts/dev3-08/target/debug/deps/engine-e4e141083d864921)
+
+running 3 tests
+test storage::semantic_row::structure::weights::tests::candidate::structural_candidate_old_epoch_descriptor_and_partial_error_output ... ok
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::structural_replay_tests::structural_replay_reserved_allocation_guard_precedes_frame_observation ... ok
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::structural_replay_tests::structural_replay_minted_claims_pass_full_base_and_reject_semantic_tampering' (39586) panicked at crates/engine/src/storage/wal_io/plan4_retention/recovery/structural_replay_tests.rs:424:17:
+source 11 mutation 0
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::structural_replay_tests::structural_replay_minted_claims_pass_full_base_and_reject_semantic_tampering ... FAILED
+
+failures:
+
+failures:
+    storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::structural_replay_tests::structural_replay_minted_claims_pass_full_base_and_reject_semantic_tampering
+
+test result: FAILED. 2 passed; 1 failed; 0 ignored; 0 measured; 2300 filtered out; finished in 0.08s
+
+error: test failed, to rerun pass `-p xadb-engine --lib`

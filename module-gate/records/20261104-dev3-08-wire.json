@@ -1,0 +1,240 @@
+{
+  "schema": "XADB_MODULE_GATE_RECORD_V1",
+  "change": "DEV3 08 partial: pure Row-tree scope4 Core/Layout observer; no canonical split or live/recovery authority",
+  "rust_tests": [
+    {
+      "paths": [
+        "crates/engine/src/storage/semantic_row.rs",
+        "crates/engine/src/storage/semantic_row/structure.rs",
+        "crates/engine/src/storage/semantic_row/structure/tests.rs"
+      ],
+      "reason": "New isolated scope4 framing, owner/debt and native-redo grammar; six new tests only, existing scope3 decoding unchanged.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/tests.rs",
+          "case": "storage::semantic_row::structure::tests::structural_wire_independent_root_child_leaf_internal_frames",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/scope3/profile3.bin",
+            "tests/fixtures/module-row-format/envelopes/profiles.bin"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/tests.rs",
+          "case": "storage::semantic_row::structure::tests::structural_wire_rejects_core_identity_alias_and_scalar_mutations",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/scope3/profile3.bin",
+            "tests/fixtures/module-row-format/envelopes/profiles.bin"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/tests.rs",
+          "case": "storage::semantic_row::structure::tests::structural_wire_rejects_owner_chain_and_self_consistent_finished_debt",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/scope3/profile3.bin",
+            "tests/fixtures/module-row-format/envelopes/profiles.bin"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/tests.rs",
+          "case": "storage::semantic_row::structure::tests::structural_wire_rejects_native_redo_bijection_and_init_corruption",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/scope3/profile3.bin",
+            "tests/fixtures/module-row-format/envelopes/profiles.bin"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/tests.rs",
+          "case": "storage::semantic_row::structure::tests::structural_wire_rejects_truncation_lengths_reserved_and_unsupported",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/scope3/profile3.bin",
+            "tests/fixtures/module-row-format/envelopes/profiles.bin"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/tests.rs",
+          "case": "storage::semantic_row::structure::tests::structural_wire_accepts_exact_scalar_limits_and_predecessor_commitment",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "tests/fixtures/module-row-format/scope3/profile3.bin",
+            "tests/fixtures/module-row-format/envelopes/profiles.bin"
+          ]
+        }
+      ]
+    }
+  ],
+  "reviews": [
+    {
+      "id": "dev3-08-wire-d2",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/semantic_row.rs": "da4b39defec544e825618d14767e4c6c7261cc59",
+        "crates/engine/src/storage/semantic_row/structure.rs": "546ae76ac5108de0753b906de9a88290e95f09b5",
+        "crates/engine/src/storage/semantic_row/structure/tests.rs": "c75fbd0655f6df8312fbb857ab6f71285a33d87b",
+        "tests/fixtures/module-row-format/scope3/profile3.bin": "c713f45e89c706c3b4bc742e57e9ea8acd8b8537",
+        "tests/fixtures/module-row-format/envelopes/profiles.bin": "721736fc0e2edafa27e9eb43278ab33d2edb4b34",
+        "devdoc/contracts/dev3-tree-smo.md": "f3df700a07618ee91e3f1efd624f855cc31d1afb"
+      },
+      "log": "module-gate/evidence/dev3-08-wire/review.md (sha256 b828fb1fcc538ff659afe0fde0985046c728021412ceac1729f611608ccb8668)"
+    },
+    {
+      "id": "dev3-08-wire-weights-module-followup",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/semantic_row/structure.rs": "2c6d389f1c168da4c7a5d4c65d2fc4298a476595"
+      },
+      "log": "module-gate/evidence/dev3-08-weights/review.md (sha256 8d4ca7cb8485d114c2172ddbca6784720687977af438bd4b517c342caaae9951)"
+    },
+    {
+      "id": "dev3-08-wire-candidate-additions",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/semantic_row/structure.rs": "246d55e06431f3f4cc4a9221b0ec99a36869c103"
+      },
+      "log": "module-gate/evidence/dev3-08-candidate/review.md (sha256 5f7b2d00f471e2da180782e581e24e6c9063c89d2e3abea9fcc490d98d735f8a)"
+    },
+    {
+      "id": "dev3-08-wire-frame-modules",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/semantic_row/structure.rs": "d4bd9385cf1b438bfdca14e78b8557723ea3d637"
+      },
+      "log": "module-gate/evidence/dev3-08-frame/review.md (sha256 82cbef1f0666cc3001181a90d99c556d89f21ccfab9c5a116323f8d1f11d0a5d)"
+    },
+    {
+      "id": "dev3-08-bank-overlap-wire",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/semantic_row/structure.rs": "889935ca4daf4d5efbd4b101dffa00707f648bb5"
+      },
+      "log": "module-gate/evidence/dev3-08-bank/review.md (sha256 f0f76ca9ea646d2f9c41aade4ef6c019587d94d4e46ecc3c1b621131c287ad7a)"
+    },
+    {
+      "id": "dev3-08-scope4-replay-overlap-d2-d1",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "devdoc/contracts/dev3-tree-smo.md": "919a718f8af4a8539dedb609809039901a92604d"
+      },
+      "log": "module-gate/evidence/dev3-08-scope4-replay/review.md (sha256 2a39d85aadb8513bea28d051226c800aad689f902668809681b711c29df1c15f)"
+    },
+    {
+      "id": "dev3-08-live-prepare-d2-d1-overlap",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "devdoc/contracts/dev3-tree-smo.md": "8857b485a202d469c5e6d69b2de9b763795a4642"
+      },
+      "log": "module-gate/evidence/dev3-08-live-prepare/review.md (sha256 a3e3c1ad6f8917646d8be488cf6818d39703367849d00f495746cd16f5eba0f8)"
+    },
+    {
+      "id": "dev3-08-admission-d2-d1-overlap",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "devdoc/contracts/dev3-tree-smo.md": "57dcb8748372f0ba77cb3a586e4382958999b95c"
+      },
+      "log": "module-gate/evidence/dev3-08-admission/review.md (sha256 7f4b4306fbd465ac91cfd5ce8d213d2506ac89fc25f086651b1f5f15690dc390)"
+    },
+    {
+      "id": "dev3-08-effect-final-overlap",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "devdoc/contracts/dev3-tree-smo.md": "e60ff6fbfcf0d52fccce95425f9d9913c2560164"
+      },
+      "log": "module-gate/evidence/dev3-08-effect/review.md (sha256 5c0f1ecbb805aad6300bdb7e4d93eaba1d05e0709a3bb3c69a9a7a44cbe49d1f)"
+    },
+    {
+      "id": "pr53-route-refactor-20261105",
+      "class": "D2",
+      "scopes": [
+        "common",
+        "joint"
+      ],
+      "author": "/root",
+      "reviewer": "/root/independent_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "devdoc/contracts/dev3-tree-smo.md": "5db50935899a2a5817baf3ac78254241e639db90"
+      },
+      "log": "module-gate/evidence/dev3-08-1-pr53-refactor/review.md (sha256 0ad5f1b1e0fa3ebebf8f30142e989d67f3a5c09953c8a1b7f913961b1ef9c865)"
+    }
+  ]
+}

@@ -50,6 +50,8 @@ macro_rules! scope3 {
         ))
     };
 }
+#[path = "row_tests/tree_search.rs"]
+mod tree_search;
 const BLOBS: &[u8] = include_bytes!(concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/../../tests/fixtures/module-row-format/transition/blobs.bin"

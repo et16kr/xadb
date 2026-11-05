@@ -1,0 +1,42 @@
+   Compiling version_check v0.9.5
+   Compiling typenum v1.20.1
+   Compiling autocfg v1.5.1
+   Compiling libc v0.2.191
+   Compiling generic-array v0.14.7
+   Compiling memoffset v0.9.1
+   Compiling cfg-if v1.0.5
+   Compiling cfg_aliases v0.2.2
+   Compiling nix v0.30.1
+   Compiling cpufeatures v0.2.17
+   Compiling bitflags v2.13.2
+   Compiling block-buffer v0.10.4
+   Compiling crypto-common v0.1.7
+   Compiling digest v0.10.7
+   Compiling sha2 v0.10.9
+   Compiling xadb-foundation v0.1.0 (/workspace/xadb/crates/foundation)
+   Compiling xadb-platform v0.1.0 (/workspace/xadb/crates/platform)
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+error[E0502]: cannot borrow `meta` as immutable because it is also borrowed as mutable
+   --> crates/engine/src/storage/tree_page/structure/tests.rs:291:5
+    |
+286 |             &mut meta,
+    |             --------- mutable borrow occurs here
+...
+291 |     assert_eq!(meta, [0xa5; 32]);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ immutable borrow occurs here
+292 |     assert_eq!(refs, [&b"sentinel"[..]; 3]);
+    |     --------------------------------------- mutable borrow later used here
+
+error[E0502]: cannot borrow `meta` as immutable because it is also borrowed as mutable
+   --> crates/engine/src/storage/tree_page/structure/tests.rs:275:9
+    |
+273 |             matches!(view.prepare_internal_edit(edit,&mut meta,&mut refs),Err(actual) if actual==error)
+    |                                                      --------- mutable borrow occurs here
+274 |         );
+275 |         assert_eq!(meta, [0xa5; 32]);
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ immutable borrow occurs here
+276 |         assert_eq!(refs, [&b"sentinel"[..]; 5]);
+    |         --------------------------------------- mutable borrow later used here
+
+For more information about this error, try `rustc --explain E0502`.
+error: could not compile `xadb-engine` (lib test) due to 2 previous errors

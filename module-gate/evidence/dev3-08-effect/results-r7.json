@@ -1,0 +1,22 @@
+[
+  {
+    "case": "structural_effect_stage_capacity_cancels_and_reenters_root_child",
+    "exit": 0,
+    "seconds": 20.88
+  },
+  {
+    "case": "structural_effect_unwind_at_install_publication_and_finish_boundaries",
+    "exit": 101,
+    "seconds": 9.09
+  },
+  {
+    "case": "structural_effect_replay_checked_return_failure_keeps_pending",
+    "exit": 101,
+    "seconds": 9.54
+  },
+  {
+    "case": "structural_effect_guardless_durable_wait_blocks_ordinary_paths_and_io_failure",
+    "exit": 101,
+    "seconds": 9.49
+  }
+]

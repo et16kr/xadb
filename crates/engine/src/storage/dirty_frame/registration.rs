@@ -262,7 +262,11 @@ impl RegistrationDirectory {
     }
     pub(super) fn accepts_retention_payload(&self, request: TargetRequest) -> bool {
         self.retention_payloads()
-            && request.level == 0
+            && (if request.kind == PageKind::RowInternal {
+                (1..=15).contains(&request.level)
+            } else {
+                request.level == 0
+            })
             && request.identity.owner_generation.get() == 1
             && match request.identity.page.page_no {
                 1 => {
@@ -291,7 +295,12 @@ impl RegistrationDirectory {
                             (request.kind, request.identity.owner.get()),
                             (PageKind::TransactionStatus, 2)
                                 | (PageKind::Undo, 3)
-                                | (PageKind::TreeAnchor | PageKind::RowLeaf, 6..)
+                                | (
+                                    PageKind::TreeAnchor
+                                        | PageKind::RowLeaf
+                                        | PageKind::RowInternal,
+                                    6..
+                                )
                         )
                 }
                 _ => false,
@@ -316,6 +325,34 @@ impl RegistrationDirectory {
         self.entries[index].request.take();
         self.entries[index].generation = generation;
         self.closed_index = Some(index);
+    }
+
+    pub(super) fn closed_generation(&self) -> Option<u64> {
+        self.entries
+            .get(self.closed_index?)
+            .map(|slot| slot.generation)
+    }
+
+    /// The original Structural completion owner has checked the claim and
+    /// durable receipt. Preserve the published resident and generation.
+    #[allow(
+        dead_code,
+        reason = "consumed by the original ChildSplit completion path when connected"
+    )]
+    pub(super) fn finish_retention_slot(
+        &mut self,
+        index: usize,
+        registration: Registration,
+    ) -> bool {
+        if !self.retention_payloads()
+            || self.closed_pair.is_some()
+            || self.closed_index != Some(index)
+            || self.published() != Some(registration)
+        {
+            return false;
+        }
+        self.closed_index = None;
+        true
     }
 
     /// Exclusive caller has checked both clean frames and next generations.

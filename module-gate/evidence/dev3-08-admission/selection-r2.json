@@ -1,0 +1,11 @@
+{
+  "reason": "New original structural credit/XOI and metadata victim selection, changed source inventory; no old completed runtime selected; r0 compile failed five test-only visibility/PartialEq errors; corrected constant path and matches, valid clean counter fixture (LSN and counter together); r1 compile PASS but runtime not run; independently sum original XOD debt per D1, add shape case, reverse content release by named guards",
+  "filters": [
+    "structural_admission_",
+    "structural_selection_",
+    "structural_prepare_source_inventory_covers_read_decode_and_return"
+  ],
+  "cases": 8,
+  "build_timeout_seconds": 300,
+  "runtime_timeout_seconds": 200
+}

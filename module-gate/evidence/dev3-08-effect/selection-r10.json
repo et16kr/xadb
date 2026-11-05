@@ -1,0 +1,18 @@
+{
+  "scope": "New E10 worker/controller, ten frozen Root/Child native cut histories; compile only until independent oracle review; r9 memory runs retain separate immutable target",
+  "native_cases": [
+    "SMO-NR1",
+    "SMO-NR2",
+    "SMO-NR3",
+    "SMO-NR4",
+    "SMO-NR5",
+    "SMO-NC1",
+    "SMO-NC2",
+    "SMO-NC3",
+    "SMO-NC4",
+    "SMO-NC5"
+  ],
+  "build_timeout_seconds": 300,
+  "process_timeout_seconds": 180,
+  "target": "/workspace/xadb/artifacts/dev3-08/native-target"
+}

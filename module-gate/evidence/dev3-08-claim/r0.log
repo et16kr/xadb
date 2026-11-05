@@ -1,0 +1,37 @@
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+error[E0433]: cannot find type `OwnerRole` in this scope
+   --> crates/engine/src/storage/dirty_init/structural/tests.rs:421:49
+    |
+421 |             let mut owner = pool.core.try_owner(OwnerRole::Foreground).unwrap();
+    |                                                 ^^^^^^^^^ use of undeclared type `OwnerRole`
+    |
+help: consider importing this enum
+    |
+  3 + use crate::transaction::concurrency::OwnerRole;
+    |
+
+error[E0433]: cannot find type `OwnerRole` in this scope
+   --> crates/engine/src/storage/dirty_init/structural/tests.rs:437:51
+    |
+437 |             let mut flusher = pool.core.try_owner(OwnerRole::DedicatedFlusher).unwrap();
+    |                                                   ^^^^^^^^^ use of undeclared type `OwnerRole`
+    |
+help: consider importing this enum
+    |
+  3 + use crate::transaction::concurrency::OwnerRole;
+    |
+
+error[E0599]: no method named `claim_load` found for reference `&storage::dirty_frame::SharedPool<'_, '_, '_, '_>` in the current scope
+   --> crates/engine/src/storage/dirty_init/structural/tests.rs:430:30
+    |
+430 |             let error = pool.claim_load(&mut owner, record.init[0]).err().unwrap();
+    |                              ^^^^^^^^^^
+    |
+help: there is a method `claim_allocator_load` with a similar name
+    |
+430 |             let error = pool.claim_allocator_load(&mut owner, record.init[0]).err().unwrap();
+    |                                    ++++++++++
+
+Some errors have detailed explanations: E0433, E0599.
+For more information about an error, try `rustc --explain E0433`.
+error: could not compile `xadb-engine` (lib test) due to 3 previous errors

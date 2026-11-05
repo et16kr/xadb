@@ -41,6 +41,36 @@ pub(super) fn check(
     if profile.format() != 3 || bank.pending.is_some() || bank.adopted_local > bank.issued_local {
         return Err(bad());
     }
+    structural(bank, profile, prefix)?;
+    scan(bank, profile, prefix)
+}
+
+/// The Finished structural bank row, observed in its own frame before the
+/// scan, so its decoder never sits beside the scan's descriptors, Jobs and
+/// aggregate (transaction_write `source_bytes`).
+#[inline(never)]
+fn structural(
+    bank: &RetentionLedger<'_, '_, '_>,
+    profile: crate::storage::control::Profile,
+    prefix: WalPrefix,
+) -> Result<()> {
+    observe_structural_bank_row(
+        profile,
+        prefix.complete_lsn,
+        prefix.stream.writer_epoch,
+        bank.row(STRUCTURAL_SLOT),
+    )
+    .map(|_| ())
+    .map_err(|cause| unchanged(RetentionPhase::Census, cause))
+}
+
+/// The ATT rows, the Jobs and the Aging row against the bank's debt.
+#[inline(never)]
+fn scan(
+    bank: &RetentionLedger<'_, '_, '_>,
+    profile: crate::storage::control::Profile,
+    prefix: WalPrefix,
+) -> Result<(u64, u64)> {
     let mut wal = 0u64;
     let mut steps = 0u64;
     for i in 0..ATT_SLOTS {

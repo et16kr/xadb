@@ -263,6 +263,20 @@ impl CursorProgress {
         seek_next(leaf, self.range, self.last_examined)
     }
 
+    /// The key a scan step routes its first leaf by: the full last examined
+    /// key, else the range start, else the smallest RowId.
+    fn route_key(&self) -> RowId {
+        self.last_examined
+            .or(self.range.start)
+            .unwrap_or(RowId::new(1).expect("nonzero"))
+    }
+
+    /// Whether a leaf whose keys all lie below `upper` can end the range:
+    /// the next leaf starts at `upper`, which the range must still contain.
+    fn continues_at(&self, upper: RowId) -> bool {
+        !self.exhausted && self.range.contains(upper)
+    }
+
     fn check_advance(&self, row: RowId, revision: u64) -> Result<(), ReadError> {
         self.check_revision(revision)?;
         if self.exhausted

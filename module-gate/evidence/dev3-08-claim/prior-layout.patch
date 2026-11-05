@@ -1,0 +1,27 @@
+diff --git a/crates/engine/src/storage/dirty_init.rs b/crates/engine/src/storage/dirty_init.rs
+index a751842c..97427a3d 100644
+--- a/crates/engine/src/storage/dirty_init.rs
++++ b/crates/engine/src/storage/dirty_init.rs
+@@ -1,6 +1,22 @@
+ //! One closed payload slot, its linear initializer claim, and whole-set install.
+ //! The upper producer alone seals reserve/stage/completion authority. No I/O.
+ 
++#[cfg(test)]
++#[test]
++fn structural_claim_prior_layout_measurement() {
++    use std::mem::size_of;
++    println!(
++        "STRUCTURAL_PRIOR_LAYOUT pointer={} system={} tx_pair={} identity={} slot={} optional_slot={} registry={}",
++        size_of::<usize>(),
++        size_of::<InitClaimRecord>(),
++        size_of::<tx_pair::TxPairClaimRecord>(),
++        size_of::<InitClaimIdentity>(),
++        size_of::<InitClaimSlot>(),
++        size_of::<Option<InitClaimSlot>>(),
++        size_of::<PoolRegistry<'_>>()
++    );
++}
++
+ use super::*;
+ use crate::storage::{
+     allocation_page::{SystemWorkKind, SystemWorkRef},

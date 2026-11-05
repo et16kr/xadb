@@ -1205,23 +1205,23 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         // the Jobs the recompute just proved; a DELETE has none and frees
         // space. An UPDATE needs its growth over the target's cell C.
         if let Some(input) = input {
+            let leaf_at = role_position(cut.roles, RowSourceRole::RowLeaf)
+                .filter(|at| *at < count)
+                .ok_or_else(invariant)?;
             let old_cell = match cut.target {
-                Some(row) => {
-                    let leaf_at = role_position(cut.roles, RowSourceRole::RowLeaf)
-                        .filter(|at| *at < count)
-                        .ok_or_else(invariant)?;
-                    Some(
-                        delete_input(&before[leaf_at], targets[leaf_at], table.handle, row)
-                            .map_err(|cause| fatal(storage, RetentionPhase::Census, cause))?
-                            .0,
-                    )
-                }
+                Some(row) => Some(
+                    delete_input(&before[leaf_at], targets[leaf_at], table.handle, row)
+                        .map_err(|cause| fatal(storage, RetentionPhase::Census, cause))?
+                        .0,
+                ),
                 None => None,
             };
+            // D of this RowLeaf only (dev3-tree-smo.md#current-leaf-consumers).
             let reserved = row_group::leaf_reservation(
                 self.control.jobs(),
                 profile.spec().namespace,
                 table.handle,
+                (&before[leaf_at], targets[leaf_at].identity),
             )
             .map_err(|error| {
                 fatal(

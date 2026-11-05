@@ -1,0 +1,26 @@
+
+running 4 tests
+CATALOG_MEMORY_CONTEXT	SMO-P01	5397ffafc74cca828fa9b67774f2d9d8a10b72c7d20c10cf0f03605fa23d1602	3be1d8bb35a26e674211ea779035291e88239792e6dc810ff4acd57b9619450f	9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	SMO-P01
+CATALOG_MEMORY_CONTEXT	SMO-P02	5397ffafc74cca828fa9b67774f2d9d8a10b72c7d20c10cf0f03605fa23d1602	3be1d8bb35a26e674211ea779035291e88239792e6dc810ff4acd57b9619450f	9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611	f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb	4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181
+CATALOG_MEMORY_BEGIN	SMO-P02
+STRUCTURAL_PREPARE_SOURCE SourceCensus { outer: 1176, scope: 376, allocation: 4866, semantic: 24580, physical: 10650, cleanup: 6168, replay: 31556, returning: 9296, peak: 33372 } independent_decoder=3914 physical=6802 returned=6312
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::structural::tests::structural_prepare_source_inventory_covers_read_decode_and_return ... ok
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::structural::tests::structural_prepare_second_destination_and_inactive_child_are_bounded ... ok
+SMO_P02 raw physical fixture read4; parent role4 level2; no source/claim authority
+CATALOG_MEMORY_PASS	SMO-P02
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_prepare::structural_prepare_child_reads_four_raw_fixture_images_and_parent_stamp ... ok
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_prepare::structural_prepare_original_live_two_rows_preserves_state_and_binds_stamps' (42670) panicked at crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_prepare.rs:233:77:
+called `Result::unwrap()` on an `Err` value: ConcurrencyError { cause: Fenced, effect: CallerMustResolve }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+CATALOG_MEMORY_FAIL	SMO-P01
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_prepare::structural_prepare_original_live_two_rows_preserves_state_and_binds_stamps ... FAILED
+
+failures:
+
+failures:
+    storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_prepare::structural_prepare_original_live_two_rows_preserves_state_and_binds_stamps
+
+test result: FAILED. 3 passed; 1 failed; 0 ignored; 0 measured; 2303 filtered out; finished in 3.91s
+

@@ -1,0 +1,8 @@
+{
+  "cases": [
+    "structural_prepare_original_live_two_rows_preserves_state_and_binds_stamps"
+  ],
+  "reason": "new original-source structural preparation and exact physical before checks; actual CREATE/INSERT/drain used as setup, no completed lower cases rerun",
+  "timeout_seconds": 240,
+  "jobs": 4
+}

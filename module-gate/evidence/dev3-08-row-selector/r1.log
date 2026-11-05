@@ -1,0 +1,30 @@
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 33.61s
+     Running unittests src/lib.rs (artifacts/dev3-08/target/debug/deps/engine-e4e141083d864921)
+
+running 3 tests
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::tree_search::row_replay_tree_selector_uses_current_anchor_instead_of_job_hint' (6585) panicked at crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests/tree_search.rs:25:5:
+assertion `left == right` failed
+  left: 7
+ right: 2
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::tree_search::row_replay_tree_selector_rejects_wrong_identity_range_and_catalog_binding' (6584) panicked at crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests/tree_search.rs:25:5:
+assertion `left == right` failed
+  left: 7
+ right: 2
+tree selector source: row semantic=24323, owner peak=64016, metadata=187024, whole=252560
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::tree_search::row_replay_tree_selector_uses_current_anchor_instead_of_job_hint ... FAILED
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::tree_search::row_replay_tree_selector_rejects_wrong_identity_range_and_catalog_binding ... FAILED
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::tree_search::row_replay_tree_selector_fits_existing_source_admission ... ok
+
+failures:
+
+failures:
+    storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::tree_search::row_replay_tree_selector_rejects_wrong_identity_range_and_catalog_binding
+    storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::tree_search::row_replay_tree_selector_uses_current_anchor_instead_of_job_hint
+
+test result: FAILED. 1 passed; 2 failed; 0 ignored; 0 measured; 2205 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p xadb-engine --lib`

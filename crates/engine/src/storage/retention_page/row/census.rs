@@ -260,9 +260,13 @@ fn verify_pair(
         .zip(b.object())
         .is_some_and(|(a, b)| a.object == b.object);
     if same_object {
+        // One table's Jobs name one anchor. pair[1] is the RowLeaf each
+        // Reserve found current, a hint once a split moves rows
+        // (dev3-tree-smo.md#current-leaf-consumers), so two Jobs of one
+        // table may name different leaves.
         if a.object() != b.object()
             || a.scope() == Some(JobScope::Catalog) && b.scope() == Some(JobScope::Catalog)
-            || a.pair().zip(b.pair()).is_some_and(|(a, b)| a != b)
+            || a.pair().zip(b.pair()).is_some_and(|(a, b)| a[0] != b[0])
         {
             return Err(RetentionError::IdentityMismatch);
         }

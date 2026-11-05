@@ -78,6 +78,22 @@ pub(in super::super::super) struct RowTableSource {
     pub(in super::super::super) anchor: PageIdentity,
 }
 
+/// A Row table's tree: its handle and anchor, the part of a `RowTableSource`
+/// a current-leaf route reads (dev3-tree-smo.md#current-leaf-consumers).
+#[derive(Clone, Copy)]
+pub(in super::super::super) struct RowTree {
+    pub(in super::super::super) handle: ObjectHandle,
+    pub(in super::super::super) anchor: PageIdentity,
+}
+impl RowTableSource {
+    pub(in super::super::super) fn tree(self) -> RowTree {
+        RowTree {
+            handle: self.handle,
+            anchor: self.anchor,
+        }
+    }
+}
+
 /// The selected Free Undo container: its request (the page incarnation is the
 /// allocator entry generation) and the slot0 Free record's generation.
 #[derive(Clone, Copy)]
@@ -168,6 +184,39 @@ impl RowSources {
         self.queued -= 1;
         self.resident = self.resident.min(self.queued);
         self.roles |= 0xF << (4 * role.index());
+    }
+    /// Queues a route's RowInternal page (`RowRouteCursor::internal`) so the
+    /// next LOAD step makes it resident beside, and protecting, the sources
+    /// so far. It takes no role and leaves again (`unqueue_route`) before
+    /// the next source is queued, so it never joins T. A page another
+    /// source already names is a census contradiction, as in `queue`.
+    fn queue_route<W: WriterNamespace>(
+        &mut self,
+        storage: &MutableStorageOwner<'_, '_, W>,
+        request: TargetRequest,
+    ) -> Result<()> {
+        let page_no = request.identity.page.page_no;
+        if self.queued == self.requests.len()
+            || page_no == self.allocator.identity.page.page_no
+            || self
+                .queued()
+                .iter()
+                .any(|queued| queued.identity.page.page_no == page_no)
+        {
+            return Err(fatal(
+                storage,
+                RetentionPhase::Census,
+                RetentionCause::Invariant,
+            ));
+        }
+        self.requests[self.queued] = request;
+        self.queued += 1;
+        Ok(())
+    }
+    /// Drops the route page `queue_route` queued last.
+    fn unqueue_route(&mut self) {
+        self.queued -= 1;
+        self.resident = self.resident.min(self.queued);
     }
 }
 
@@ -384,10 +433,77 @@ pub(super) fn free_slot0(bytes: &[u8; PAGE_BYTES], identity: PageIdentity) -> Op
     undo_record::decode_free_undo_record(cell, generation).ok()
 }
 
-/// What `row_shape` reads from Root and the table anchor.
+/// What `row_shape` reads from Root and the table anchor: the RootJob and the
+/// route of the RowId the RowLeaf is found by (an INSERT's `row_high+1`, a
+/// DELETE's or UPDATE's target row) from the anchor's current root.
 struct RowShape {
     root_job: usize,
-    leaf: TargetRequest,
+    route: RowRouteCursor,
+}
+
+/// A current-leaf route in progress (dev3-tree-smo.md#current-leaf-consumers):
+/// the next page on `key`'s path from the anchor root, its level and the key
+/// bounds the parents above it give it. The caller makes each RowInternal
+/// resident through its own LOAD steps (`RowSources::queue_route`) and then
+/// reads it with `route_step`, so no LOAD runs under a route frame. Levels
+/// strictly decrease, so a route reads at most the root's level of pages.
+#[derive(Clone, Copy)]
+pub(in super::super::super) struct RowRouteCursor {
+    page: PageRef,
+    level: u8,
+    key: RowId,
+    bounds: tree_page::search::RowRouteBounds,
+}
+impl RowRouteCursor {
+    /// `key`'s route from the anchor's current `root`; None for a root that
+    /// is not a page of this table's Row tree.
+    pub(in super::super::super) fn start(
+        tree: RowTree,
+        root: anchor::AnchorRoot,
+        key: RowId,
+    ) -> Option<Self> {
+        (root.tree == TreeKind::Row && root.level < 16 && table_tree_page(tree, root.page)).then(
+            || Self {
+                page: root.page,
+                level: root.level,
+                key,
+                bounds: tree_page::search::RowRouteBounds::default(),
+            },
+        )
+    }
+    pub(in super::super::super) fn key(&self) -> RowId {
+        self.key
+    }
+    /// The RowInternal page to make resident and read next; None once the
+    /// route has reached its RowLeaf.
+    pub(in super::super::super) fn internal(&self, tree: RowTree) -> Option<TargetRequest> {
+        (self.level != 0).then_some(TargetRequest {
+            identity: PageIdentity {
+                page: self.page,
+                ..tree.anchor
+            },
+            kind: PageKind::RowInternal,
+            level: self.level,
+        })
+    }
+    /// The RowLeaf the route reached (once `internal` is None).
+    pub(in super::super::super) fn leaf(&self, tree: RowTree) -> TargetRequest {
+        request(
+            PageIdentity {
+                page: self.page,
+                ..tree.anchor
+            },
+            PageKind::RowLeaf,
+        )
+    }
+}
+
+/// A table-owned dynamic page apart from the anchor: the anchor root and each
+/// page a route names (`cells::dynamic` of the transition layer).
+fn table_tree_page(tree: RowTree, page: PageRef) -> bool {
+    page.file == tree.anchor.page.file
+        && (9..64).contains(&page.page_no)
+        && page.page_no != tree.anchor.page.page_no
 }
 
 /// What the observation under the replay checkout returns.
@@ -442,11 +558,28 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         if let Some(target) = self.make_resident(owner, &mut sources, &mut cursor, lanes.scratch)? {
             return Ok(RowPreflightOutcome::FlushRequired(target));
         }
-        // The RootJob and Terminal Jobs pages, Status, the RowLeaf and the
-        // head's Undo.
+        // The RootJob and the route key, then the current RowLeaf routed from
+        // the anchor's root (dev3-tree-smo.md#current-leaf-consumers): each
+        // RowInternal of the path made resident beside the sources so far,
+        // then read for its child. Then the RootJob and Terminal Jobs pages,
+        // Status, the RowLeaf and the head's Undo.
         let status = preparation.catalog_status_request(status);
-        let root_job =
-            self.queue_row_sources(owner, &mut sources, table, (head, terminal, status))?;
+        let mut shape = self.row_shape(owner, table, target.map(|(row, _)| row))?;
+        while let Some(internal) = shape.route.internal(table.tree()) {
+            sources.queue_route(storage, internal)?;
+            if let Some(target) =
+                self.make_resident(owner, &mut sources, &mut cursor, lanes.scratch)?
+            {
+                return Ok(RowPreflightOutcome::FlushRequired(target));
+            }
+            self.route_step(owner, table.tree(), internal, &mut shape.route)?;
+            sources.unqueue_route();
+        }
+        let root_job = self.queue_row_sources(
+            &mut sources,
+            (shape.root_job, shape.route.leaf(table.tree())),
+            (head, terminal, status),
+        )?;
         if let Some(target) = self.make_resident(owner, &mut sources, &mut cursor, lanes.scratch)? {
             return Ok(RowPreflightOutcome::FlushRequired(target));
         }
@@ -488,7 +621,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             statement,
             prefix,
             &sources,
-            (slot0, root_job, table, target),
+            (slot0, root_job, table, target, shape.route.key()),
             &mut lanes,
         )
         .map(RowPreflightOutcome::Ready)
@@ -605,29 +738,21 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         )
     }
 
-    /// With Root and the anchor resident: the RootJob the RowReserve will
-    /// lease and the RowLeaf, then queues the RootJob and Terminal Jobs
-    /// pages, Status, the RowLeaf and the head's Undo. Returns the RootJob.
+    /// Queues the RootJob the RowReserve will lease and the Terminal Jobs
+    /// pages, Status, the routed RowLeaf and the head's Undo. Returns the
+    /// RootJob.
     fn queue_row_sources(
         &self,
-        owner: &mut Owner<'c, 's>,
         sources: &mut RowSources,
-        table: RowTableSource,
+        (root_job, leaf): (usize, TargetRequest),
         (head, terminal, status): (Option<UndoRef>, usize, TargetRequest),
     ) -> Result<u8> {
         let storage = self.storage;
-        let root = target_from_source(storage, Plan4Page::Root)?.request;
-        let shape = self.row_shape(
-            owner,
-            root,
-            request(table.anchor, PageKind::TreeAnchor),
-            table,
-        )?;
-        let root_job = u8::try_from(shape.root_job)
+        let selected = u8::try_from(root_job)
             .map_err(|_| unchanged(RetentionPhase::Prepare, RetentionCause::Invariant))?;
         sources.queue(
             storage,
-            self.jobs_request(shape.root_job)?,
+            self.jobs_request(root_job)?,
             RowSourceRole::RootJob,
         )?;
         sources.queue(
@@ -636,12 +761,113 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             RowSourceRole::TerminalJob,
         )?;
         sources.queue(storage, status, RowSourceRole::Status)?;
-        sources.queue(storage, shape.leaf, RowSourceRole::RowLeaf)?;
+        sources.queue(storage, leaf, RowSourceRole::RowLeaf)?;
         if let Some(head) = head {
             let previous = undo_request(sources.allocator.identity, head.page());
             sources.queue(storage, previous, RowSourceRole::PreviousUndo)?;
         }
-        Ok(root_job)
+        Ok(selected)
+    }
+
+    /// The table anchor's current root under a brief typed read of the
+    /// resident anchor, for a selection that routes a Job's row
+    /// (dev3-tree-smo.md#current-leaf-consumers). A non-Row anchor or one
+    /// that does not decode is the resident page's contradiction (Fatal).
+    pub(in super::super::super) fn table_root(
+        &self,
+        owner: &mut Owner<'c, 's>,
+        tree: RowTree,
+    ) -> Result<anchor::AnchorRoot> {
+        let storage = self.storage;
+        let read = CatalogTargetAccess::Ordinary
+            .read(
+                self.pool,
+                owner,
+                &[request(tree.anchor, PageKind::TreeAnchor)],
+            )
+            .map_err(|e| frame(RetentionPhase::Prepare, e))?;
+        let root = (|| {
+            let bytes = read
+                .bytes(0)
+                .map_err(|e| frame(RetentionPhase::Prepare, e))?;
+            let root = anchor::decode_anchor(bytes, tree.anchor)
+                .map_err(|e| fatal(storage, RetentionPhase::Census, RetentionCause::Page(e)))?
+                .root();
+            if root.tree != TreeKind::Row || !table_tree_page(tree, root.page) {
+                return Err(fatal(
+                    storage,
+                    RetentionPhase::Census,
+                    RetentionCause::Invariant,
+                ));
+            }
+            Ok(root)
+        })();
+        merge(
+            root,
+            read.release_checked()
+                .map_err(|e| frame(RetentionPhase::Prepare, e)),
+        )
+    }
+
+    /// One route step (dev3-tree-smo.md#current-leaf-consumers) under a
+    /// brief typed read of the resident RowInternal `internal`, the route's
+    /// `internal` page: `route_row_step` checks its keys within the bounds
+    /// its parents give it and names the child that routes the key, which
+    /// must be one level down and a page of the same table's tree. Every
+    /// caller compares the RowLeaf it reaches with the canonical arena's
+    /// route (`history::row::current_leaf`) under its own `validate_live`; a
+    /// page that does not decode or route here is the pool's contradiction
+    /// (Fatal).
+    #[inline(never)]
+    pub(in super::super::super) fn route_step(
+        &self,
+        owner: &mut Owner<'c, 's>,
+        tree: RowTree,
+        internal: TargetRequest,
+        route: &mut RowRouteCursor,
+    ) -> Result<()> {
+        let storage = self.storage;
+        let invariant = || fatal(storage, RetentionPhase::Census, RetentionCause::Invariant);
+        let read = CatalogTargetAccess::Ordinary
+            .read(self.pool, owner, &[internal])
+            .map_err(|e| frame(RetentionPhase::Prepare, e))?;
+        let child = (|| {
+            let bytes = read
+                .bytes(0)
+                .map_err(|e| frame(RetentionPhase::Prepare, e))?;
+            tree_page::search::route_row_step(
+                bytes,
+                TreeExpectation {
+                    identity: internal.identity,
+                    kind: PageKind::RowInternal,
+                    level: route.level,
+                    arity: 0,
+                },
+                &route.key.get().to_be_bytes(),
+                &mut route.bounds,
+            )
+            .map_err(|e| fatal(storage, RetentionPhase::Census, RetentionCause::Tree(e)))?
+            .ok_or_else(invariant)
+        })();
+        let child = merge(
+            child,
+            read.release_checked()
+                .map_err(|e| frame(RetentionPhase::Prepare, e)),
+        )?;
+        if internal.level != route.level
+            || child.level + 1 != route.level
+            || child.identity
+                != (PageIdentity {
+                    page: child.identity.page,
+                    ..tree.anchor
+                })
+            || !table_tree_page(tree, child.identity.page)
+        {
+            return Err(invariant());
+        }
+        route.page = child.identity.page;
+        route.level = child.level;
+        Ok(())
     }
 
     /// The Jobs page of a Job ordinal, as Row Begin and AbortEnd select it.
@@ -661,11 +887,12 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         statement: &RowStatementView<'_, '_, 'a, 'c, 's>,
         prefix: WalPrefix,
         sources: &RowSources,
-        (slot0, root_job, table, target): (
+        (slot0, root_job, table, target, key): (
             Generation,
             u8,
             RowTableSource,
             Option<(RowId, job3::RowEffect)>,
+            RowId,
         ),
         lanes: &mut PreflightLanes<'_>,
     ) -> Result<RowPreflightCut> {
@@ -681,7 +908,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             prefix,
             sources.catalog(),
             &targets,
-            (slot0, root_job, table),
+            (slot0, root_job, table, key),
             lanes,
         )?;
         let current = storage
@@ -762,15 +989,18 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     }
 
     /// The RootJob RowReserve will lease (from Root and the live Jobs, as the
-    /// producer selects it) and the RowLeaf the table anchor names.
+    /// producer selects it), the table anchor's current root and the route
+    /// key: `target`, or an INSERT's `row_high+1` from the same Root
+    /// (dev3-tree-smo.md#current-leaf-consumers).
     fn row_shape(
         &self,
         owner: &mut Owner<'c, 's>,
-        root: TargetRequest,
-        anchor: TargetRequest,
         table: RowTableSource,
+        target: Option<RowId>,
     ) -> Result<RowShape> {
         let storage = self.storage;
+        let root = target_from_source(storage, Plan4Page::Root)?.request;
+        let anchor = request(table.anchor, PageKind::TreeAnchor);
         let mut sources = [root, anchor];
         sources.sort_unstable_by_key(|request| target_rank(*request));
         let (root_at, anchor_at) = if sources[0] == root { (0, 1) } else { (1, 0) };
@@ -781,57 +1011,57 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             let root = read
                 .bytes(root_at)
                 .map_err(|e| frame(RetentionPhase::Prepare, e))?;
+            let namespace = storage.profile().spec().namespace;
             // No Free Job is the producer's own refusal and changes nothing;
             // a Root or Job that does not decode is the resident page's or
             // the control's corruption, Fatal as a deep check's decode.
-            let root_job = row_group::reserve_job(
-                root,
-                self.control.jobs(),
-                storage.profile().spec().namespace,
-            )
-            .map_err(|e| match e {
-                crate::storage::semantic_row::Error::BudgetMismatch => {
-                    unchanged(RetentionPhase::Prepare, RetentionCause::RowSemantic(e))
+            let root_job = row_group::reserve_job(root, self.control.jobs(), namespace).map_err(
+                |e| match e {
+                    crate::storage::semantic_row::Error::BudgetMismatch => {
+                        unchanged(RetentionPhase::Prepare, RetentionCause::RowSemantic(e))
+                    }
+                    _ => fatal(
+                        storage,
+                        RetentionPhase::Census,
+                        RetentionCause::RowSemantic(e),
+                    ),
+                },
+            )?;
+            let key = match target {
+                Some(row) => row,
+                None => {
+                    let (_, root) = job3::decode_root_page(root, namespace).map_err(|e| {
+                        fatal(
+                            storage,
+                            RetentionPhase::Census,
+                            RetentionCause::Retention(e),
+                        )
+                    })?;
+                    root.row_high()
+                        .checked_add(1)
+                        .and_then(|row| RowId::new(row).ok())
+                        .ok_or_else(|| {
+                            unchanged(RetentionPhase::Prepare, RetentionCause::Capacity)
+                        })?
                 }
-                _ => fatal(
-                    storage,
-                    RetentionPhase::Census,
-                    RetentionCause::RowSemantic(e),
-                ),
-            })?;
+            };
             let anchor = read
                 .bytes(anchor_at)
                 .map_err(|e| frame(RetentionPhase::Prepare, e))?;
             let decoded = anchor::decode_anchor(anchor, table.anchor)
                 .map_err(|e| fatal(storage, RetentionPhase::Census, RetentionCause::Page(e)))?
                 .root();
-            if decoded.tree != TreeKind::Row || decoded.level != 0 {
+            if decoded.tree != TreeKind::Row {
                 return Err(unchanged(
                     RetentionPhase::Prepare,
                     RetentionCause::Unsupported,
                 ));
             }
-            if decoded.page == table.anchor.page
-                || decoded.page.file != table.anchor.page.file
-                || !(9..64).contains(&decoded.page.page_no)
-            {
-                return Err(fatal(
-                    storage,
-                    RetentionPhase::Census,
-                    RetentionCause::Invariant,
-                ));
-            }
             Ok(RowShape {
                 root_job,
-                leaf: request(
-                    PageIdentity {
-                        database: table.anchor.database,
-                        page: decoded.page,
-                        owner: table.handle.object,
-                        owner_generation: table.handle.generation,
-                    },
-                    PageKind::RowLeaf,
-                ),
+                route: RowRouteCursor::start(table.tree(), decoded, key).ok_or_else(|| {
+                    fatal(storage, RetentionPhase::Census, RetentionCause::Invariant)
+                })?,
             })
         })();
         merge(
@@ -973,7 +1203,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         prefix: WalPrefix,
         catalog: TargetRequest,
         targets: &RowTargets,
-        selected: (Generation, u8, RowTableSource),
+        selected: (Generation, u8, RowTableSource, RowId),
         lanes: &mut PreflightLanes<'_>,
     ) -> Result<Observed> {
         let storage = self.storage;
@@ -1003,8 +1233,9 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     /// Under one typed read of the Catalog leaf and T (`N` = |T| + 1): copy
     /// the leaf into the schema range and T into the before range in before
     /// order, compare each T page with the replay arena, prove allocator
-    /// membership, recheck the table record and the Free Undo, measure the
-    /// RowLeaf and fold the commitment.
+    /// membership, recheck the table record and the Free Undo, compare the
+    /// RowLeaf with the arena's route of `key`, measure the RowLeaf and fold
+    /// the commitment.
     #[allow(
         clippy::too_many_arguments,
         reason = "one const-N body over the borrowed sources and loans"
@@ -1015,7 +1246,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         prefix: WalPrefix,
         catalog: TargetRequest,
         targets: &RowTargets,
-        (slot0, root_job, table): (Generation, u8, RowTableSource),
+        (slot0, root_job, table, key): (Generation, u8, RowTableSource, RowId),
         arena: &[u8],
         lanes: &mut PreflightLanes<'_>,
     ) -> Result<Observed> {
@@ -1068,6 +1299,14 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             )?;
             let schema = self.check_table_record(lanes.schema, catalog.identity, table)?;
             let leaf_at = targets.at(RowSourceRole::RowLeaf).ok_or_else(invariant)?;
+            // The routed RowLeaf is the canonical arena's route of the key at
+            // this cut (dev3-tree-smo.md#current-leaf-consumers): the anchor
+            // in T equals its arena page above, so a differing leaf is a pool
+            // RowInternal page that contradicts the arena.
+            if self.arena_leaf(arena, table.tree(), key)? != targets.before()[leaf_at].identity.page
+            {
+                return Err(invariant());
+            }
             let leaf_free = self.leaf_free(&lanes.before[leaf_at], targets.before()[leaf_at])?;
             let undo_at = targets.at(RowSourceRole::Undo).ok_or_else(invariant)?;
             let undo = FreeUndo {
@@ -1154,6 +1393,20 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         let storage = self.storage;
         table_value(schema, identity, table, storage.profile().spec().namespace)
             .map(content_digest)
+            .map_err(|cause| fatal(storage, RetentionPhase::Census, cause))
+    }
+
+    /// The canonical arena's current RowLeaf of `key` in `table`
+    /// (`history::row::current_leaf`). The arena was just validated, so any
+    /// cause is Fatal.
+    pub(in super::super::super) fn arena_leaf(
+        &self,
+        arena: &[u8],
+        tree: RowTree,
+        key: RowId,
+    ) -> Result<PageRef> {
+        let storage = self.storage;
+        history::row::current_leaf(arena, storage.profile(), tree.handle, tree.anchor.page, key)
             .map_err(|cause| fatal(storage, RetentionPhase::Census, cause))
     }
 
@@ -1537,12 +1790,16 @@ pub(in super::super::super) struct RowPreflightBody {
     /// One `make_resident`: its source, step Results and the retention LOAD
     /// body. The protected list is the source list itself, never copied.
     pub(in super::super::super) load: usize,
-    /// `queue_row_sources`' own values beside `row_shape` (the Root/anchor
-    /// typed read, `reserve_job` and the anchor decode), the Jobs requests
-    /// and the queue steps.
+    /// `queue_row_sources`' own values beside the Jobs requests and the
+    /// queue steps.
     pub(in super::super::super) select: usize,
-    /// `row_shape` alone.
+    /// `row_shape` (the Root/anchor typed read, `reserve_job`, the Root
+    /// decode of the INSERT key and the anchor decode).
     pub(in super::super::super) shape: usize,
+    /// One `route_step` (dev3-tree-smo.md#current-leaf-consumers): a
+    /// one-target typed read of a resident RowInternal and `route_row_step`.
+    /// Its LOAD is the body's own `load` step, from `frame`.
+    pub(in super::super::super) route: usize,
     /// The Free Undo steps other than its LOAD: the allocator copy, the Job
     /// scan, the candidate scan of the allocator copy and the slot0 read.
     pub(in super::super::super) undo_scan: usize,
@@ -1564,8 +1821,8 @@ pub(in super::super::super) struct RowPreflightBody {
     pub(in super::super::super) register: usize,
     /// `finish_frame + max(T, observe, register)`.
     pub(in super::super::super) finish: usize,
-    /// `shell + frame + max(lease_check, check, load, select, undo_scan,
-    /// delete, finish)`.
+    /// `shell + frame + max(lease_check, check, load, shape, route, select,
+    /// undo_scan, delete, finish)`.
     pub(in super::super::super) body: usize,
 }
 
@@ -1610,6 +1867,15 @@ pub(in super::super) fn row_preflight_body<W: WriterNamespace>(
         + size_of::<(Option<UndoRef>, usize, TargetRequest)>()
         + 2 * size_of::<Result<Option<Plan4Target>>>()
         + 2 * size_of::<Result<u8>>()
+        // The shape (its RowRouteCursor), the route key's target, the route
+        // loop's internal request and its queue and step Results, and the
+        // routed leaf's argument tuple.
+        + size_of::<RowShape>()
+        + 2 * size_of::<Result<RowShape>>()
+        + size_of::<Option<RowId>>()
+        + size_of::<Option<TargetRequest>>()
+        + 2 * size_of::<Result<()>>()
+        + size_of::<(usize, TargetRequest)>()
         // The allocator's request step, the leased pages, the scan position,
         // the candidate and its slot0.
         + 2 * size_of::<dirty_frame::Result<TargetRequest>>()
@@ -1625,6 +1891,7 @@ pub(in super::super) fn row_preflight_body<W: WriterNamespace>(
             u8,
             RowTableSource,
             Option<(RowId, job3::RowEffect)>,
+            RowId,
         )>()
         + 2 * size_of::<Result<RowPreflightCut>>()
         // The DELETE or UPDATE target, its classification and the zero-row
@@ -1650,15 +1917,36 @@ pub(in super::super) fn row_preflight_body<W: WriterNamespace>(
         + 2 * size_of::<anchor::AnchorRoot>()
         + 2 * size_of::<std::result::Result<anchor::TreeAnchor, PageError>>()
         + super::super::super::read::undo_decode_source_bytes();
+    // The INSERT key: the Root decode, its view and the checked successor.
+    let key_decode = size_of::<(crate::storage::page::PageHeader, job3::RootView<'_>)>()
+        + 2 * size_of::<
+            std::result::Result<
+                (crate::storage::page::PageHeader, job3::RootView<'_>),
+                crate::storage::retention_page::RetentionError,
+            >,
+        >()
+        + 2 * size_of::<Result<RowId>>()
+        + 2 * size_of::<Option<u64>>()
+        + job3::root_decode_source_bytes();
     let shape = size_of::<[TargetRequest; 2]>()
+        + 2 * size_of::<TargetRequest>()
+        + 2 * size_of::<Result<Plan4Target>>()
         + 2 * size_of::<usize>()
+        + size_of::<Option<RowId>>()
+        + size_of::<RowTableSource>()
         + targets::call_bytes::<2>().max(
             size_of::<Read<'_, 2>>()
                 + 2 * size_of::<Result<RowShape>>()
                 + 2 * size_of::<dirty_frame::Result<&[u8; PAGE_BYTES]>>()
-                + 4 * reference
-                + row_group::reserve_job_source_bytes().max(anchor_decode),
+                + size_of::<usize>()
+                + size_of::<RowId>()
+                + size_of::<crate::api::Namespace>()
+                + 6 * reference
+                + row_group::reserve_job_source_bytes()
+                    .max(anchor_decode)
+                    .max(key_decode),
         );
+    let route = route_step_source_bytes();
     let copy_allocator = targets::call_bytes::<1>().max(
         size_of::<Read<'_, 1>>()
             + 2 * size_of::<dirty_frame::Result<FrameStamp>>()
@@ -1693,20 +1981,16 @@ pub(in super::super) fn row_preflight_body<W: WriterNamespace>(
         + 2 * size_of::<std::slice::Iter<'_, TargetRequest>>()
         + size_of::<RetentionError>()
         + 4 * reference;
-    let select = size_of::<TargetRequest>()
-        + 2 * size_of::<Result<Plan4Target>>()
-        + size_of::<RowShape>()
-        + 2 * size_of::<Result<RowShape>>()
+    let select = size_of::<(usize, TargetRequest)>()
         + size_of::<u8>()
         + 2 * size_of::<Result<TargetRequest>>()
         // The head's Undo.
         + size_of::<TargetRequest>()
         + size_of::<(Option<UndoRef>, usize, TargetRequest)>()
-        + size_of::<RowTableSource>()
         + 2 * size_of::<Result<()>>()
         + 4 * size_of::<RetentionError>()
         + 6 * reference
-        + shape.max(queue).max(
+        + queue.max(
             // jobs_request: the index and the source's Plan4Target.
             size_of::<u8>() + 2 * size_of::<Result<Plan4Target>>() + 2 * reference,
         );
@@ -1791,6 +2075,7 @@ pub(in super::super) fn row_preflight_body<W: WriterNamespace>(
             u8,
             RowTableSource,
             Option<(RowId, job3::RowEffect)>,
+            RowId,
         )>()
         + 4 * size_of::<RetentionError>()
         + 8 * reference;
@@ -1831,12 +2116,18 @@ pub(in super::super) fn row_preflight_body<W: WriterNamespace>(
             + 2 * size_of::<std::result::Result<u16, RetentionCause>>(),
     )
     .max(super::super::super::read::undo_decode_source_bytes())
+    // The arena's route of the key (`arena_leaf`).
+    .max(
+        history::row::current_leaf_bytes()
+            + size_of::<(&[u8], RowTree, RowId)>()
+            + 2 * size_of::<Result<PageRef>>(),
+    )
     // ControlCut::capture and the commitment: hashers, the pinned SHA block
     // closure and the digests.
     .max(2 * size_of::<ContentHasher>() + 1536 + 24 + 4 * size_of::<[u8; 32]>());
     let observe = scope_carriers
         + size_of::<WalPrefix>()
-        + size_of::<(Generation, u8, RowTableSource)>()
+        + size_of::<(Generation, u8, RowTableSource, RowId)>()
         + 2 * size_of::<Result<Observed>>()
         + 6 * reference
         + (history_peak + 2 * size_of::<Result<()>>()).max(
@@ -1849,6 +2140,8 @@ pub(in super::super) fn row_preflight_body<W: WriterNamespace>(
         + lease_check
             .max(check)
             .max(load)
+            .max(shape)
+            .max(route)
             .max(select)
             .max(undo_scan)
             .max(delete)
@@ -1861,6 +2154,7 @@ pub(in super::super) fn row_preflight_body<W: WriterNamespace>(
         load,
         select,
         shape,
+        route,
         undo_scan,
         delete,
         finish_frame,
@@ -1869,6 +2163,57 @@ pub(in super::super) fn row_preflight_body<W: WriterNamespace>(
         finish,
         body,
     }
+}
+
+/// `route_step` (dev3-tree-smo.md#current-leaf-consumers): its arguments,
+/// the expectation, the key bytes and the child beside a one-target typed
+/// read and `route_row_step`. The caller's LOAD of the RowInternal is the
+/// caller's own `load` term, never under this frame.
+pub(in super::super::super) fn route_step_source_bytes() -> usize {
+    use std::mem::size_of;
+    type Read<'a> = targets::CatalogRead<'a, 'a, 'a, 'a, 'a, 'a, 'a, 1>;
+    let reference = size_of::<&()>();
+    size_of::<(RowTree, TargetRequest)>()
+        + size_of::<TreeExpectation>()
+        + size_of::<[u8; 8]>()
+        + 2 * size_of::<Result<TreeExpectation>>()
+        + size_of::<RetentionError>()
+        + 6 * reference
+        + targets::call_bytes::<1>().max(
+            size_of::<Read<'_>>()
+                + 2 * size_of::<dirty_frame::Result<&[u8; PAGE_BYTES]>>()
+                + 2 * size_of::<std::result::Result<Option<TreeExpectation>, tree_page::TreeError>>(
+                )
+                // `route_row_step` with the tree codec it nests.
+                + tree_page::search::route_step_source_bytes(crate::storage::semantic_catalog::page_read_codec_bytes()),
+        )
+}
+
+/// `table_root`: the anchor request and root beside a one-target typed read
+/// and the anchor decode (one page decode as the Undo decode term counts it).
+pub(in super::super::super) fn table_root_source_bytes() -> usize {
+    use crate::storage::page::PageError;
+    use std::mem::size_of;
+    type Read<'a> = targets::CatalogRead<'a, 'a, 'a, 'a, 'a, 'a, 'a, 1>;
+    size_of::<[TargetRequest; 1]>()
+        + size_of::<RowTree>()
+        + 2 * size_of::<Result<anchor::AnchorRoot>>()
+        + 4 * size_of::<&()>()
+        + targets::call_bytes::<1>().max(
+            size_of::<Read<'_>>()
+                + 2 * size_of::<dirty_frame::Result<&[u8; PAGE_BYTES]>>()
+                + 2 * size_of::<anchor::TreeAnchor>()
+                + 2 * size_of::<anchor::AnchorRoot>()
+                + 2 * size_of::<std::result::Result<anchor::TreeAnchor, PageError>>()
+                + super::super::super::read::undo_decode_source_bytes(),
+        )
+}
+
+/// A caller's own values for one route (`RowRouteCursor` and its loop): the
+/// cursor, the internal request, the queue and step Results.
+pub(in super::super::super) fn route_carrier_bytes() -> usize {
+    use std::mem::size_of;
+    size_of::<RowRouteCursor>() + size_of::<Option<TargetRequest>>() + 2 * size_of::<Result<()>>()
 }
 
 #[cfg(test)]

@@ -1,0 +1,18 @@
+{
+  "SMO-NR1": {
+    "result": "PASS",
+    "pids": [
+      "58497",
+      "58547",
+      "58549"
+    ],
+    "expected": {
+      "case": "SMO-NR1",
+      "child": "0",
+      "cut": "stage_before",
+      "partitions": "4",
+      "new_pages": "0",
+      "level": "0"
+    }
+  }
+}

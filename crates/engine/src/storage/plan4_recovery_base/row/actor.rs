@@ -2,9 +2,8 @@
 //! This is not the full base closure, an INIT witness, or a live capability.
 //! Descriptor/inventory/history and other actors remain the caller's duties.
 use super::super::{Error as BaseError, one};
-use super::LayoutView;
+use super::{LayoutView, current_tree};
 use crate::storage::{
-    anchor::{self, TreeKind},
     catalog_record::{self, CatalogDefinitionView, CatalogExpectation},
     page::{self, PAGE_BYTES, PageHeader, PageKind, PageRef},
     retention_page::{
@@ -21,10 +20,7 @@ use crate::storage::{
         UndoRecordState, UndoTargetKind, UndoTargetView,
     },
 };
-use foundation::{
-    codec::ContentHasher,
-    identity::{ObjectId, RowId},
-};
+use foundation::{codec::ContentHasher, identity::RowId};
 
 #[derive(Debug, PartialEq, Eq)]
 pub(in crate::storage) enum Error {
@@ -321,40 +317,10 @@ impl<'a, 'j> Graph<'a, 'j> {
         let namespace = self.layout.expected.profile.spec().namespace;
         let mut transaction_rows = 0;
         for index in 0..catalog.len() {
-            let entry = catalog.entry(index)?;
-            let key: [u8; 8] = entry.key.try_into().map_err(|_| Error::Identity)?;
-            let object = ObjectId::new(u64::from_be_bytes(key)).map_err(|_| Error::Identity)?;
-            let EntryPayload::Value(value) = entry.payload else {
-                return Err(Error::Unsupported);
-            };
-            let record = catalog_record::decode_catalog_record(
-                value,
-                CatalogExpectation { namespace, object },
-            )?;
+            let tree = current_tree::observe(self.layout, index)?;
+            let record = tree.record();
             let h = record.header();
-            let CatalogDefinitionView::Table(schema) = record.definition() else {
-                return Err(Error::Unsupported);
-            };
-            if h.retired || h.identity.generation != one() {
-                return Err(Error::Unsupported);
-            }
-            let (bytes, header) = self.page(h.anchor, PageKind::TreeAnchor, object.get())?;
-            let anchor = anchor::decode_anchor(bytes, header.identity)?;
-            if anchor.root().tree != TreeKind::Row || anchor.root().level != 0 {
-                return Err(Error::Unsupported);
-            }
-            let (leaf_bytes, leaf_header) =
-                self.page(anchor.root().page, PageKind::RowLeaf, object.get())?;
-            anchor.decode_root(leaf_bytes)?;
-            let leaf = tree_page::decode_tree_page(
-                leaf_bytes,
-                TreeExpectation {
-                    identity: leaf_header.identity,
-                    kind: PageKind::RowLeaf,
-                    level: 0,
-                    arity: 0,
-                },
-            )?;
+            let schema = tree.schema();
             for ordinal in 0..JOB_COUNT {
                 let job = self.job(ordinal)?;
                 if job.source() != Some(self.actor)
@@ -368,6 +334,10 @@ impl<'a, 'j> Graph<'a, 'j> {
                     return Err(Error::Identity);
                 }
                 let row = job.row_id().ok_or(Error::Identity)?;
+                let leaf = tree.find(row)?;
+                if job.state() == JobState::RootRetained && leaf.header().lsn.0 < job.last_step() {
+                    return Err(Error::Order);
+                }
                 let position = leaf.lower_bound(&row.get().to_be_bytes())?;
                 // An INSERT root's key exists while Retained or after its
                 // Prune; a DELETE root's until its Prune
@@ -439,91 +409,99 @@ impl<'a, 'j> Graph<'a, 'j> {
             // Reverse check every actual row stamped by this actor, including
             // keys absent from the selected Job set. RootFree committed rows
             // survive normally and must not be required to retain a Job.
-            for at in 0..leaf.len() {
-                let entry = leaf.entry(at)?;
-                let key: [u8; 8] = entry.key.try_into().map_err(|_| Error::Identity)?;
-                let row = RowId::new(u64::from_be_bytes(key)).map_err(|_| Error::Identity)?;
-                let EntryPayload::Value(bytes) = entry.payload else {
-                    return Err(Error::Unsupported);
-                };
-                let decoded = row_record::decode_row_record_with_schema(
-                    bytes,
-                    RecordExpectation { namespace, row },
-                    RowSchemaInput::Catalog(schema),
-                )?;
-                // A tombstone is always `Transaction(T)` with its U.
-                let tombstone = match decoded.payload() {
-                    RowPayload::Inline(_) => false,
-                    RowPayload::Deleted
-                        if matches!(decoded.version().stamp, VersionStamp::Transaction(_))
-                            && decoded.version().undo.is_some() =>
-                    {
-                        true
-                    }
-                    RowPayload::Deleted => return Err(Error::Identity),
-                    RowPayload::Overflow(_) => return Err(Error::Unsupported),
-                };
-                let version = decoded.version();
-                if version.logical.transaction() != self.actor.id() {
+            for leaf_ordinal in 9..64 {
+                if !tree.has_leaf(leaf_ordinal) {
                     continue;
                 }
-                if row.get() > self.row_high {
-                    return Err(Error::Order);
-                }
-                self.unique_row(&catalog, index, at, version)?;
-                for ordinal in 0..JOB_COUNT {
-                    let job = self.job(ordinal)?;
-                    if job.source() == Some(self.actor)
-                        && job.state().is_root()
-                        && (job.row_id() == Some(row)
-                            || job.mutation() == version.logical.mutation_sequence())
-                        && (job.object() != Some(h.identity)
-                            || job.row_id() != Some(row)
-                            || job.mutation() != version.logical.mutation_sequence())
-                    {
-                        return Err(Error::Identity);
+                let leaf = tree.leaf(leaf_ordinal)?;
+                for at in 0..leaf.len() {
+                    let entry = leaf.entry(at)?;
+                    let key: [u8; 8] = entry.key.try_into().map_err(|_| Error::Identity)?;
+                    let row = RowId::new(u64::from_be_bytes(key)).map_err(|_| Error::Identity)?;
+                    let EntryPayload::Value(bytes) = entry.payload else {
+                        return Err(Error::Unsupported);
+                    };
+                    let decoded = row_record::decode_row_record_with_schema(
+                        bytes,
+                        RecordExpectation { namespace, row },
+                        RowSchemaInput::Catalog(schema),
+                    )?;
+                    // A tombstone is always `Transaction(T)` with its U.
+                    let tombstone = match decoded.payload() {
+                        RowPayload::Inline(_) => false,
+                        RowPayload::Deleted
+                            if matches!(decoded.version().stamp, VersionStamp::Transaction(_))
+                                && decoded.version().undo.is_some() =>
+                        {
+                            true
+                        }
+                        RowPayload::Deleted => return Err(Error::Identity),
+                        RowPayload::Overflow(_) => return Err(Error::Unsupported),
+                    };
+                    let version = decoded.version();
+                    if version.logical.transaction() != self.actor.id() {
+                        continue;
                     }
-                }
-                match version.stamp {
-                    VersionStamp::Transaction(actor) => {
-                        if actor != self.actor {
-                            return Err(Error::Identity);
-                        }
-                        // An Inline row pairs with one Retained INSERT or
-                        // UPDATE root (whose cell C' the forward check
-                        // above binds), a tombstone with one Retained
-                        // DELETE root.
-                        let mut matches = 0;
-                        for ordinal in 0..JOB_COUNT {
-                            let job = self.job(ordinal)?;
-                            let paired = match job.effect() {
-                                row::RowEffect::Insert | row::RowEffect::Update => !tombstone,
-                                row::RowEffect::Delete => tombstone,
-                            };
-                            matches += usize::from(
-                                job.source() == Some(self.actor)
-                                    && job.state() == JobState::RootRetained
-                                    && paired
-                                    && job.row_id() == Some(row)
-                                    && job.object() == Some(h.identity)
-                                    && job.undo() == version.undo,
-                            );
-                        }
-                        if matches != 1 {
-                            return Err(Error::Identity);
-                        }
-                        transaction_rows += 1;
+                    if row.get() > self.row_high {
+                        return Err(Error::Order);
                     }
-                    VersionStamp::Committed(_) if tombstone => return Err(Error::Identity),
-                    VersionStamp::Committed(q) => {
-                        let TransactionStatusCell::Occupied(status) = self.home.core() else {
-                            return Err(Error::Identity);
-                        };
-                        if status.state()
-                            != crate::storage::transaction_record::TransactionState::Committed(q)
-                            || version.undo.is_some()
+                    self.unique_row(index, leaf_ordinal * page::MAX_PAGE_SLOTS + at, version)?;
+                    for ordinal in 0..JOB_COUNT {
+                        let job = self.job(ordinal)?;
+                        if job.source() == Some(self.actor)
+                            && job.state().is_root()
+                            && (job.row_id() == Some(row)
+                                || job.mutation() == version.logical.mutation_sequence())
+                            && (job.object() != Some(h.identity)
+                                || job.row_id() != Some(row)
+                                || job.mutation() != version.logical.mutation_sequence())
                         {
                             return Err(Error::Identity);
+                        }
+                    }
+                    match version.stamp {
+                        VersionStamp::Transaction(actor) => {
+                            if actor != self.actor {
+                                return Err(Error::Identity);
+                            }
+                            // An Inline row pairs with one Retained INSERT or
+                            // UPDATE root (whose cell C' the forward check
+                            // above binds), a tombstone with one Retained
+                            // DELETE root.
+                            let mut matches = 0;
+                            for ordinal in 0..JOB_COUNT {
+                                let job = self.job(ordinal)?;
+                                let paired = match job.effect() {
+                                    row::RowEffect::Insert | row::RowEffect::Update => !tombstone,
+                                    row::RowEffect::Delete => tombstone,
+                                };
+                                matches += usize::from(
+                                    job.source() == Some(self.actor)
+                                        && job.state() == JobState::RootRetained
+                                        && paired
+                                        && job.row_id() == Some(row)
+                                        && job.object() == Some(h.identity)
+                                        && job.undo() == version.undo,
+                                );
+                            }
+                            if matches != 1 {
+                                return Err(Error::Identity);
+                            }
+                            transaction_rows += 1;
+                        }
+                        VersionStamp::Committed(_) if tombstone => return Err(Error::Identity),
+                        VersionStamp::Committed(q) => {
+                            let TransactionStatusCell::Occupied(status) = self.home.core() else {
+                                return Err(Error::Identity);
+                            };
+                            if status.state()
+                                != crate::storage::transaction_record::TransactionState::Committed(
+                                    q,
+                                )
+                                || version.undo.is_some()
+                            {
+                                return Err(Error::Identity);
+                            }
                         }
                     }
                 }
@@ -673,60 +651,37 @@ impl<'a, 'j> Graph<'a, 'j> {
 
     fn unique_row(
         &self,
-        catalog: &TreePageView<'a>,
         table_index: usize,
         row_index: usize,
         current: row_record::RecordVersion,
     ) -> Result<()> {
         let namespace = self.layout.expected.profile.spec().namespace;
         for table_at in 0..=table_index {
-            let entry = catalog.entry(table_at)?;
-            let key: [u8; 8] = entry.key.try_into().map_err(|_| Error::Identity)?;
-            let object = ObjectId::new(u64::from_be_bytes(key)).map_err(|_| Error::Identity)?;
-            let EntryPayload::Value(bytes) = entry.payload else {
-                return Err(Error::Unsupported);
-            };
-            let table = catalog_record::decode_catalog_record(
-                bytes,
-                CatalogExpectation { namespace, object },
-            )?;
-            let CatalogDefinitionView::Table(schema) = table.definition() else {
-                return Err(Error::Unsupported);
-            };
-            let (bytes, header) =
-                self.page(table.header().anchor, PageKind::TreeAnchor, object.get())?;
-            let anchor = anchor::decode_anchor(bytes, header.identity)?;
-            let (bytes, header) = self.page(anchor.root().page, PageKind::RowLeaf, object.get())?;
-            anchor.decode_root(bytes)?;
-            let leaf = tree_page::decode_tree_page(
-                bytes,
-                TreeExpectation {
-                    identity: header.identity,
-                    kind: PageKind::RowLeaf,
-                    level: 0,
-                    arity: 0,
-                },
-            )?;
-            let limit = if table_at == table_index {
-                row_index
-            } else {
-                leaf.len()
-            };
-            for at in 0..limit {
-                let entry = leaf.entry(at)?;
-                let key: [u8; 8] = entry.key.try_into().map_err(|_| Error::Identity)?;
-                let row = RowId::new(u64::from_be_bytes(key)).map_err(|_| Error::Identity)?;
-                let EntryPayload::Value(bytes) = entry.payload else {
-                    return Err(Error::Unsupported);
-                };
-                let previous = row_record::decode_row_record_with_schema(
-                    bytes,
-                    RecordExpectation { namespace, row },
-                    RowSchemaInput::Catalog(schema),
-                )?
-                .version();
-                if row == current.row || previous.logical == current.logical {
-                    return Err(Error::Identity);
+            let tree = current_tree::observe(self.layout, table_at)?;
+            for ordinal in 9..64 {
+                if !tree.has_leaf(ordinal) {
+                    continue;
+                }
+                let leaf = tree.leaf(ordinal)?;
+                for at in 0..leaf.len() {
+                    if table_at == table_index && ordinal * page::MAX_PAGE_SLOTS + at >= row_index {
+                        break;
+                    }
+                    let entry = leaf.entry(at)?;
+                    let key: [u8; 8] = entry.key.try_into().map_err(|_| Error::Identity)?;
+                    let row = RowId::new(u64::from_be_bytes(key)).map_err(|_| Error::Identity)?;
+                    let EntryPayload::Value(bytes) = entry.payload else {
+                        return Err(Error::Unsupported);
+                    };
+                    let previous = row_record::decode_row_record_with_schema(
+                        bytes,
+                        RecordExpectation { namespace, row },
+                        RowSchemaInput::Catalog(tree.schema()),
+                    )?
+                    .version();
+                    if row == current.row || previous.logical == current.logical {
+                        return Err(Error::Identity);
+                    }
                 }
             }
         }

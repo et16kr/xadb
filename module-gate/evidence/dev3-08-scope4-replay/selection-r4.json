@@ -1,0 +1,9 @@
+{
+  "tests": [
+    "structural_replay_minted_claims_pass_full_base_and_reject_semantic_tampering",
+    "structural_candidate_old_epoch_descriptor_and_partial_error_output",
+    "structural_replay_reserved_allocation_guard_precedes_frame_observation"
+  ],
+  "reason": "two failed test expectations corrected to raw digest grammar and private build/verify boundary; new Reserved cursor via actual scope1 Reserve observation. No successful unchanged cases repeated.",
+  "timeout_seconds": 240
+}

@@ -1,0 +1,13 @@
+{
+  "tests": [
+    "structural_replay_minted_claims_pass_full_base_and_reject_semantic_tampering",
+    "structural_replay_scope_cut_epoch_and_reserved_row_guards_preserve_state",
+    "structural_replay_source_inventory_covers_compare_and_claim_mint_phases",
+    "structural_replay_rejects_rehashed_canonical_mutations_before_publication",
+    "structural_candidate_rejects_owned_orphans_and_wrong_canonical_selection",
+    "structural_candidate_old_epoch_descriptor_and_partial_error_output",
+    "structural_split_source_inventory_includes_retained_after_audit_and_frame_view"
+  ],
+  "reason": "new full Base with minted INIT, guard cases, independent replay source; wire-positive mutants; two changed-path cases requested by D1; adjusted compact wrapper source120B inventory",
+  "timeout_seconds": 240
+}

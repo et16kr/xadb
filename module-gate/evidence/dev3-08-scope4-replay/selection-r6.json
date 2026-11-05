@@ -1,0 +1,9 @@
+{
+  "tests": [
+    "structural_candidate_local_parent_last_separator_fits_reduced_scratch",
+    "structural_candidate_local_parent_capacity_rejects_before_output"
+  ],
+  "source": "source-r5.sha256",
+  "elf": "elf-r5.sha256",
+  "reason": "general parent now forwards to shared const-generic emitter; verify unchanged 406-reference full-page boundary after this real function change. These cases have not run since that change."
+}

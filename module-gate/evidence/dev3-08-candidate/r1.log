@@ -1,0 +1,17 @@
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 48s
+     Running unittests src/lib.rs (artifacts/dev3-08/target/debug/deps/engine-e4e141083d864921)
+
+running 9 tests
+test storage::semantic_row::structure::weights::tests::candidate::structural_candidate_internal_api_rejects_short_pages_and_child_alias ... ok
+test storage::semantic_row::structure::weights::tests::candidate::structural_candidate_child_leaf_revises_anchor_and_preserves_current_root ... ok
+test storage::semantic_row::structure::weights::tests::candidate::structural_candidate_leaf_root_preserves_literal_rows_and_actual_undo_costs ... ok
+test storage::semantic_row::structure::weights::tests::candidate::structural_candidate_internal_root_and_child_promote_pivot_once ... ok
+test storage::semantic_row::structure::weights::tests::candidate::structural_candidate_old_epoch_descriptor_and_partial_error_output ... ok
+test storage::semantic_row::structure::weights::tests::candidate::structural_candidate_rejects_reserved_and_missing_retained_row ... ok
+test storage::semantic_row::structure::weights::tests::candidate::structural_candidate_skips_exhausted_incarnations_and_rejects_capacity ... ok
+test storage::semantic_row::structure::weights::tests::candidate::structural_candidate_rejects_owned_orphans_and_wrong_canonical_selection ... ok
+test storage::semantic_row::structure::weights::tests::candidate::structural_candidate_local_parent_capacity_rejects_before_output ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 2235 filtered out; finished in 0.04s
+

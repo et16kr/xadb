@@ -337,10 +337,18 @@ fn target_membership(
     request: TargetRequest,
 ) -> bool {
     let page_no = request.identity.page.page_no;
+    // A Row route LOADs the RowInternal pages of a split tree at their own
+    // level (dev3-tree-smo.md#current-leaf-consumers); every other target
+    // is level 0. Index and Catalog internal pages are schedule 09/10's.
+    let level = if request.kind == PageKind::RowInternal {
+        request.kind.accepts_level(request.level)
+    } else {
+        request.level == 0
+    };
     if !(1..64).contains(&page_no)
         || request.identity.database != namespace.database
         || request.identity.page.file != allocator.page.file
-        || request.level != 0
+        || !level
     {
         return false;
     }

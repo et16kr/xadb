@@ -55,10 +55,25 @@ pub(crate) struct RowReadOperation<
     /// that Inline candidate may ask `value_before` (0: none).
     value_capture: u64,
     stopped: bool,
+    /// The last issued leaf's exclusive upper key bound from its parents:
+    /// the first key of the next leaf, None for the rightmost leaf
+    /// (dev3-tree-smo.md#current-leaf-consumers).
+    upper: Option<RowId>,
     schema_len: usize,
     table: Option<ObjectHandle>,
     source: OperationSourceAdmission<'b, 'a, 'c, 's>,
     progress: ReadOperationAdmission<'c, 's>,
+}
+
+/// Copied progress through the current Row tree. The operation read gate
+/// stabilizes its anchor revision across LOADs; no ancestor page is retained.
+/// Only level zero may be issued as a RowSearchPage.
+#[derive(Clone, Copy)]
+struct RowRoute {
+    page: crate::storage::page::PageRef,
+    revision: u64,
+    bounds: tree_page::search::RowRouteBounds,
+    level: u8,
 }
 
 /// The validated anchor/leaf/allocation set. Its guards reborrow the Owner for
@@ -285,6 +300,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             capture_sequence: 0,
             value_capture: 0,
             stopped: false,
+            upper: None,
             schema_len: 0,
             table: None,
             progress,
@@ -297,20 +313,29 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     RowReadOperation<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>
 {
     #[inline(never)]
+    /// The table's current RowLeaf that routes `key`
+    /// (dev3-tree-smo.md#current-leaf-consumers): the anchor's level0 root,
+    /// or the leaf reached through its RowInternal pages. Its upper key bound
+    /// (`upper`) lets a scan continue in the next leaf.
     pub(in crate::storage) fn page<'g>(
         &'g mut self,
         table: &CheckedTable<'c, 's>,
         residency: &mut Plan4ResidencyCursor,
+        key: RowId,
     ) -> Result<ReadStep<RowSearchPage<'g, 'b, 'a, 's, 'c, 'p, 'd>>> {
         if let ReadStep::FlushRequired { target } = self.load_catalog(table, residency)? {
             return Ok(ReadStep::FlushRequired { target });
         }
         self.capture_schema(table)?;
-        let leaf = match self.load_leaf(table, residency)? {
-            ReadStep::Ready(leaf) => leaf,
+        let route = match self.load_leaf(table, residency, key)? {
+            ReadStep::Ready(route) => route,
             ReadStep::FlushRequired { target } => return Ok(ReadStep::FlushRequired { target }),
         };
-        self.issue_page(table, leaf)
+        self.issue_page(table, route, key)
+    }
+    /// The upper key bound of the leaf `page` last issued.
+    pub(in crate::storage) fn upper(&self) -> Option<RowId> {
+        self.upper
     }
     #[inline(never)]
     fn check_table(&self, table: &CheckedTable<'c, 's>) -> Result<()> {
@@ -428,12 +453,13 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         self.table = Some(table.table);
         Ok(())
     }
+    /// The anchor's current root under a brief read with its membership.
     #[inline(never)]
-    fn row_leaf_request(
+    fn anchor_root(
         &mut self,
         table: &CheckedTable<'c, 's>,
         anchor_request: TargetRequest,
-    ) -> Result<TargetRequest> {
+    ) -> Result<anchor::AnchorRoot> {
         let bad = || {
             fatal(
                 self.backend.storage,
@@ -482,24 +508,145 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                 .release_checked()
                 .map_err(|e| frame(RetentionPhase::Source, e)),
         )?;
-        if root.tree != TreeKind::Row || root.level != 0 || root.revision != 1 {
+        if root.tree != TreeKind::Row {
             return Err(bad());
         }
-        Ok(TargetRequest {
-            identity: PageIdentity {
-                page: root.page,
-                ..table.anchor
-            },
-            kind: PageKind::RowLeaf,
-            level: 0,
+        Ok(root)
+    }
+    /// One route step under a brief read of the RowInternal page `internal`
+    /// with its membership: its keys lie in `bounds` and it names the child
+    /// that routes `key`, one level down in the same tree. None: the page is
+    /// not resident (the pool's unchanged MissingTarget), nothing was read.
+    #[inline(never)]
+    fn route_internal(
+        &mut self,
+        internal: TargetRequest,
+        key: &[u8; 8],
+        bounds: &mut tree_page::search::RowRouteBounds,
+    ) -> Result<Option<TreeExpectation>> {
+        let storage = self.backend.storage;
+        let allocator = self
+            .backend
+            .pool
+            .target_request(0)
+            .map_err(|e| frame(RetentionPhase::Source, e))?;
+        let guard = match self
+            .backend
+            .pool
+            .reserve_target_set(self.owner, &[allocator, internal])
+            .and_then(|set| set.try_read())
+        {
+            Ok(guard) => guard,
+            Err(crate::storage::dirty_frame::DirtyError {
+                cause: crate::storage::dirty_frame::Cause::MissingTarget,
+                effect: foundation::error::Effect::Unchanged,
+            }) => return Ok(None),
+            Err(e) => return Err(frame(RetentionPhase::Source, e)),
+        };
+        let child = (|| {
+            super::super::read::membership(
+                storage,
+                allocator,
+                guard
+                    .bytes(0)
+                    .map_err(|e| frame(RetentionPhase::Source, e))?,
+                internal,
+            )?;
+            let child = tree_page::search::route_row_step(
+                guard
+                    .bytes(1)
+                    .map_err(|e| frame(RetentionPhase::Source, e))?,
+                TreeExpectation {
+                    identity: internal.identity,
+                    kind: PageKind::RowInternal,
+                    level: internal.level,
+                    arity: 0,
+                },
+                key,
+                bounds,
+            )
+            .map_err(|e| fatal(storage, RetentionPhase::Source, RetentionCause::Tree(e)))?;
+            match child {
+                Some(child)
+                    if child.level + 1 == internal.level
+                        && child.identity
+                            == (PageIdentity {
+                                page: child.identity.page,
+                                ..internal.identity
+                            }) =>
+                {
+                    Ok(Some(child))
+                }
+                _ => Err(fatal(
+                    storage,
+                    RetentionPhase::Census,
+                    RetentionCause::Invariant,
+                )),
+            }
+        })();
+        merge(
+            child,
+            guard
+                .release_checked()
+                .map_err(|e| frame(RetentionPhase::Source, e)),
+        )
+    }
+    /// Copy the root while its brief read is held. The operation's read
+    /// gate keeps the revision stable after the guard is released.
+    #[inline(never)]
+    fn route_root(
+        &mut self,
+        table: &CheckedTable<'c, 's>,
+        anchor_request: TargetRequest,
+    ) -> Result<RowRoute> {
+        let root = self.anchor_root(table, anchor_request)?;
+        Ok(RowRoute {
+            page: root.page,
+            revision: root.revision,
+            bounds: tree_page::search::RowRouteBounds::default(),
+            level: root.level,
         })
     }
+    /// Consume one resident internal page, then return only copied progress.
+    /// route_internal checks exact identity and a strict one-level decrease.
+    #[inline(never)]
+    fn advance_route(
+        &mut self,
+        table: &CheckedTable<'c, 's>,
+        key: RowId,
+        mut route: RowRoute,
+    ) -> Result<RowRoute> {
+        let child = self
+            .route_internal(
+                TargetRequest {
+                    identity: PageIdentity {
+                        page: route.page,
+                        ..table.anchor
+                    },
+                    kind: PageKind::RowInternal,
+                    level: route.level,
+                },
+                &key.get().to_be_bytes(),
+                &mut route.bounds,
+            )?
+            // Another reader may evict this clean page after our LOAD,
+            // before the brief pin. Cache contention is retryable.
+            .ok_or_else(|| unchanged(RetentionPhase::Load, RetentionCause::Busy))?;
+        route.page = child.identity.page;
+        route.level = child.level;
+        Ok(route)
+    }
+    /// Load the anchor and walk each path page once. Copied bounds/revision
+    /// survive eviction of ancestors, so allocator + anchor + one replaceable
+    /// tree frame suffice. Levels strictly decrease from at most fifteen:
+    /// there are at most sixteen tree LOADs, including the final leaf.
     #[inline(never)]
     fn load_leaf(
         &mut self,
         table: &CheckedTable<'c, 's>,
         residency: &mut Plan4ResidencyCursor,
-    ) -> Result<ReadStep<TargetRequest>> {
+        key: RowId,
+    ) -> Result<ReadStep<RowRoute>> {
         let anchor_request = TargetRequest {
             identity: table.anchor,
             kind: PageKind::TreeAnchor,
@@ -512,28 +659,53 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             self.stopped = true;
             return Ok(ReadStep::FlushRequired { target });
         }
-        let leaf = self.row_leaf_request(table, anchor_request)?;
-        match self.backend.load_lookup_target(
-            self.owner,
-            leaf,
-            residency,
-            std::slice::from_ref(&anchor_request),
-            self.loader,
-        )? {
-            RetentionResidencyStep::FlushRequired { target, .. } => {
-                self.stopped = true;
-                return Ok(ReadStep::FlushRequired { target });
+        let mut route = self.route_root(table, anchor_request)?;
+        loop {
+            match self.backend.load_lookup_target(
+                self.owner,
+                TargetRequest {
+                    identity: PageIdentity {
+                        page: route.page,
+                        ..table.anchor
+                    },
+                    kind: if route.level == 0 {
+                        PageKind::RowLeaf
+                    } else {
+                        PageKind::RowInternal
+                    },
+                    level: route.level,
+                },
+                residency,
+                std::slice::from_ref(&anchor_request),
+                self.loader,
+            )? {
+                RetentionResidencyStep::FlushRequired { target, .. } => {
+                    self.stopped = true;
+                    return Ok(ReadStep::FlushRequired { target });
+                }
+                RetentionResidencyStep::Resident { .. } => {}
             }
-            RetentionResidencyStep::Resident { .. } => {}
+            if route.level == 0 {
+                return Ok(ReadStep::Ready(route));
+            }
+            route = self.advance_route(table, key, route)?;
         }
-        Ok(ReadStep::Ready(leaf))
     }
     #[inline(never)]
     fn issue_page<'g>(
         &'g mut self,
         table: &CheckedTable<'c, 's>,
-        leaf: TargetRequest,
+        route: RowRoute,
+        key: RowId,
     ) -> Result<ReadStep<RowSearchPage<'g, 'b, 'a, 's, 'c, 'p, 'd>>> {
+        let leaf = TargetRequest {
+            identity: PageIdentity {
+                page: route.page,
+                ..table.anchor
+            },
+            kind: PageKind::RowLeaf,
+            level: 0,
+        };
         let bad = || {
             fatal(
                 self.backend.storage,
@@ -602,36 +774,69 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                     RetentionCause::Page(e),
                 )
             })?;
-            if current.root().tree != TreeKind::Row
-                || current.root().page != leaf.identity.page
-                || current.root().level != 0
-                || current.root().revision != 1
-            {
+            // The anchor still has the root revision the route read: the
+            // read operation's gate keeps a structural change out between
+            // them, and every structural change advances the revision.
+            let root = current.root();
+            if root.tree != TreeKind::Row || root.revision != route.revision {
                 return Err(bad());
             }
-            current
-                .decode_root(
-                    source
-                        .bytes(2)
-                        .map_err(|e| frame(RetentionPhase::Source, e))?,
-                )
-                .map_err(|e| {
+            let bytes = source
+                .bytes(2)
+                .map_err(|e| frame(RetentionPhase::Source, e))?;
+            if root.level == 0 {
+                if root.page != leaf.identity.page {
+                    return Err(bad());
+                }
+                current.decode_root(bytes).map_err(|e| {
                     fatal(
                         self.backend.storage,
                         RetentionPhase::Source,
                         RetentionCause::Page(e),
                     )
                 })?;
-            Ok(())
+            } else {
+                // A routed leaf's keys lie within its parents' bounds.
+                let mut bounds = route.bounds;
+                let next = tree_page::search::route_row_step(
+                    bytes,
+                    TreeExpectation {
+                        identity: leaf.identity,
+                        kind: PageKind::RowLeaf,
+                        level: 0,
+                        arity: 0,
+                    },
+                    &key.get().to_be_bytes(),
+                    &mut bounds,
+                )
+                .map_err(|e| {
+                    fatal(
+                        self.backend.storage,
+                        RetentionPhase::Source,
+                        RetentionCause::Tree(e),
+                    )
+                })?;
+                if next.is_some() {
+                    return Err(bad());
+                }
+            }
+            route
+                .bounds
+                .upper
+                .map(|upper| RowId::new(u64::from_be_bytes(upper)).map_err(|_| bad()))
+                .transpose()
         })();
-        if let Err(error) = checked {
-            return merge(
-                Err(error),
-                source
-                    .release_checked()
-                    .map_err(|e| frame(RetentionPhase::Source, e)),
-            );
-        }
+        self.upper = match checked {
+            Ok(upper) => upper,
+            Err(error) => {
+                return merge(
+                    Err(error),
+                    source
+                        .release_checked()
+                        .map_err(|e| frame(RetentionPhase::Source, e)),
+                );
+            }
+        };
         Ok(ReadStep::Ready(RowSearchPage {
             source,
             lease: self.lease.as_mut().ok_or_else(bad)?,
@@ -1212,13 +1417,16 @@ impl<'s, 'c, W: WriterNamespace> ReadPort<'_, '_, 's, 'c, '_, '_, '_, '_, W> {
 impl<W: WriterNamespace> ReadPort<'_, '_, '_, '_, '_, '_, '_, '_, W> {
     /// Raw size observations, not an acceptance assertion or a replacement for
     /// the phase census. Loader and operation necessarily coexist at LOAD.
-    pub(in crate::storage) fn row_test_load_inventory() -> [usize; 12] {
+    pub(in crate::storage) fn row_test_load_inventory() -> [usize; 13] {
         use std::mem::size_of as n;
         let r = n::<&()>();
+        // page: the key and the route's Result
+        // (dev3-tree-smo.md#current-leaf-consumers).
         let page = 3 * r
             + n::<Result<()>>()
             + n::<Result<ReadStep<()>>>()
-            + n::<Result<ReadStep<TargetRequest>>>()
+            + n::<RowId>()
+            + n::<Result<ReadStep<RowRoute>>>()
             + n::<Result<ReadStep<RowSearchPage<'_, '_, '_, '_, '_, '_, '_>>>>();
         let catalog = 3 * r
             + n::<Result<()>>()
@@ -1226,11 +1434,85 @@ impl<W: WriterNamespace> ReadPort<'_, '_, '_, '_, '_, '_, '_, '_, W> {
             + n::<std::ops::Range<usize>>()
             + n::<usize>()
             + n::<Result<RetentionResidencyStep>>();
+        // load_leaf retains one copied route/result across LOAD. Root and
+        // advance return the same carrier in sequential calls. The LOAD's
+        // request is its own argument; no page guard crosses that call.
         let leaf = 3 * r
+            + n::<RowId>()
             + n::<TargetRequest>()
             + n::<Result<RetentionResidencyStep>>()
-            + n::<Result<TargetRequest>>()
+            + n::<Result<RowRoute>>()
             + n::<Result<RetentionResidencyStep>>();
+        // The two brief read helpers nest under route_root/advance_route,
+        // never under LOAD. Account their guard, membership and codec paths.
+        let read = |own: usize| {
+            own + n::<TargetRequest>()
+                + n::<ReadTargets<'_, '_, '_, '_, '_, '_, 2>>()
+                + n::<Result<ReadTargets<'_, '_, '_, '_, '_, '_, 2>>>()
+                + 2 * n::<Result<()>>()
+                + 2 * n::<RetentionError>()
+                + crate::storage::dirty_frame::target_set_call_bytes::<2>()
+                    .max(
+                        n::<crate::storage::allocation_page::AllocationPage<'_>>()
+                            + 2 * n::<
+                                std::result::Result<
+                                    crate::storage::allocation_page::AllocationPage<'_>,
+                                    crate::storage::allocation_page::AllocationError,
+                                >,
+                            >()
+                            + 2 * n::<
+                                std::result::Result<
+                                    crate::storage::allocation_page::AllocationEntry,
+                                    crate::storage::allocation_page::AllocationError,
+                                >,
+                            >()
+                            + n::<usize>(),
+                    )
+                    // `route_row_step` with the tree codec it nests.
+                    .max(tree_page::search::route_step_source_bytes(
+                        crate::storage::semantic_catalog::page_read_codec_bytes(),
+                    ))
+                    .max(
+                        2 * n::<anchor::TreeAnchor>()
+                            + 2 * n::<
+                                std::result::Result<
+                                    anchor::TreeAnchor,
+                                    crate::storage::page::PageError,
+                                >,
+                            >()
+                            + super::super::read::undo_decode_source_bytes(),
+                    )
+        };
+        let internal = read(
+            4 * r
+                + n::<TargetRequest>()
+                + n::<TreeExpectation>()
+                + 2 * n::<std::result::Result<Option<TreeExpectation>, tree_page::TreeError>>()
+                + 2 * n::<Result<Option<TreeExpectation>>>(),
+        );
+        let root = read(
+            3 * r
+                + n::<TargetRequest>()
+                + 2 * n::<anchor::AnchorRoot>()
+                + 2 * n::<Result<anchor::AnchorRoot>>(),
+        );
+        let route_root = 2 * r
+            + n::<TargetRequest>()
+            + n::<anchor::AnchorRoot>()
+            + 2 * n::<Result<anchor::AnchorRoot>>()
+            + n::<Result<RowRoute>>()
+            + root;
+        let advance = 2 * r
+            + n::<RowId>()
+            + n::<RowRoute>()
+            + n::<TargetRequest>()
+            + n::<[u8; 8]>()
+            + n::<TreeExpectation>()
+            + 2 * n::<Result<Option<TreeExpectation>>>()
+            + n::<Result<TreeExpectation>>()
+            + n::<Result<RowRoute>>()
+            + internal;
+        let route = route_root.max(advance);
         [
             page,
             catalog,
@@ -1277,6 +1559,7 @@ impl<W: WriterNamespace> ReadPort<'_, '_, '_, '_, '_, '_, '_, '_, W> {
                 + n::<Result<TargetRequest>>()
                 + n::<Result<RetentionResidencyStep>>()
                 + n::<Result<ReadStep<RowValueBefore>>>(),
+            route,
         ]
     }
     pub(in crate::storage) fn row_test_with_retiring_undo(

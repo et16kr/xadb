@@ -1,0 +1,80 @@
+{
+  "schema": "XADB_MODULE_GATE_RECORD_V1",
+  "change": "PR53 CI fix: preserve separate source-census receipts when compatibility selectors reuse a label/PID; do not overwrite or suppress errors.",
+  "rust_tests": [
+    {
+      "paths": [
+        "crates/engine/src/storage/wal_io/row_caller_budget.rs"
+      ],
+      "reason": "Three direct filesystem regressions plus four exact F4/S4 aliases exercise repeated/concurrent label collisions under CI receipt conditions and preserve noncollision errors.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/rollback_budget_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::rollback::budget_census::f4_c_rollback_budget_memory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/rollback_budget_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::rollback::budget_census::f4_c_rollback_budget_native",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/rollback_census_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::rollback::census::s4_c01_memory_rollback_census",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/rollback_census_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::rollback::census::s4_c01_native_rollback_census",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/row_caller_budget.rs",
+          "case": "storage::wal_io::row_caller_budget::tests::repeated_budget_labels_preserve_existing_evidence",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/row_caller_budget.rs",
+          "case": "storage::wal_io::row_caller_budget::tests::concurrent_budget_labels_keep_every_payload",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/row_caller_budget.rs",
+          "case": "storage::wal_io::row_caller_budget::tests::budget_receipt_propagates_noncollision_io_errors",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    }
+  ],
+  "reviews": [
+    {
+      "id": "pr53-budget-receipt-20261105",
+      "class": "D1",
+      "scopes": [],
+      "author": "/root",
+      "reviewer": "/root/independent_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/wal_io/row_caller_budget.rs": "69ae604de630d4019986346760357d52d255a1a2",
+        "crates/engine/src/storage/wal_io/plan4_apply/row/rollback_budget_tests.rs": "a0ce511e06ad3155eb4a1c0104825a1ef55cbc7d",
+        "crates/engine/src/storage/wal_io/plan4_apply/row/rollback_census_tests.rs": "4be043d6ec6f7f6e6b9c46f06a1b2729f03bbb64"
+      },
+      "log": "module-gate/evidence/pr53-budget-receipt/review.md (sha256 b019a0a5e0b810453fd3c0e75735ad73465c9d86da8b23ca832284050c417881)"
+    }
+  ]
+}

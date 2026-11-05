@@ -1,0 +1,63 @@
+   Compiling version_check v0.9.5
+   Compiling typenum v1.20.1
+   Compiling autocfg v1.5.1
+   Compiling libc v0.2.191
+   Compiling generic-array v0.14.7
+   Compiling cfg-if v1.0.5
+   Compiling memoffset v0.9.1
+   Compiling cfg_aliases v0.2.2
+   Compiling nix v0.30.1
+   Compiling cpufeatures v0.2.17
+   Compiling bitflags v2.13.2
+   Compiling block-buffer v0.10.4
+   Compiling crypto-common v0.1.7
+   Compiling digest v0.10.7
+   Compiling sha2 v0.10.9
+   Compiling xadb-foundation v0.1.0 (/workspace/xadb/crates/foundation)
+   Compiling xadb-platform v0.1.0 (/workspace/xadb/crates/platform)
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+warning: unused import: `StructuralWriteTargets`
+ --> crates/engine/src/storage/wal_io/plan4_retention/structural_effect.rs:6:60
+  |
+6 |     dirty_frame::{CompletedStructural, StructuralClaimKey, StructuralWriteTargets},
+  |                                                            ^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+error[E0308]: `?` operator has incompatible types
+  --> crates/engine/src/storage/dirty_init/structural/live.rs:50:40
+   |
+50 |         Ok(self.matches_pool_in(pool, &pool.entry_registry()?))
+   |                                        ^^^^^^^^^^^^^^^^^^^^^^ expected `PoolRegistry<'_>`, found `MutexGuard<'_, PoolRegistry<'_>>`
+   |
+   = note: `?` operator cannot convert from `std::sync::MutexGuard<'_, storage::dirty_frame::PoolRegistry<'_>>` to `storage::dirty_frame::PoolRegistry<'_>`
+   = note: expected struct `storage::dirty_frame::PoolRegistry<'_>`
+              found struct `std::sync::MutexGuard<'_, storage::dirty_frame::PoolRegistry<'_>>`
+
+error[E0382]: borrow of moved value: `durable`
+   --> crates/engine/src/storage/wal_io/plan4_retention/structural_effect.rs:430:57
+    |
+391 |             let durable = storage
+    |                 ------- move occurs because `durable` has type `storage::wal_io::DurableWal<'_>`, which does not implement the `Copy` trait
+...
+402 |             self.control.durable = Some(durable);
+    |                                         ------- value moved here
+...
+430 |                 .finish_structural(&mut key, completed, &durable)
+    |                                                         ^^^^^^^^ value borrowed here after move
+    |
+note: if `storage::wal_io::DurableWal<'_>` implemented `Clone`, you could clone the value
+   --> crates/engine/src/storage/wal_io.rs:372:1
+    |
+372 | pub(in crate::storage) struct DurableWal<'s> {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ consider implementing `Clone` for this type
+    |
+   ::: crates/engine/src/storage/wal_io/plan4_retention/structural_effect.rs:402:41
+    |
+402 |             self.control.durable = Some(durable);
+    |                                         ------- you could clone this value
+
+Some errors have detailed explanations: E0308, E0382.
+For more information about an error, try `rustc --explain E0308`.
+warning: `xadb-engine` (lib test) generated 1 warning
+error: could not compile `xadb-engine` (lib test) due to 2 previous errors; 1 warning emitted

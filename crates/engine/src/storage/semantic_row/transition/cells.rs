@@ -155,7 +155,7 @@ pub(super) fn undo_before(
 /// One-slot Undo page before image whose one cell is the last `len` bytes of
 /// the cell area: 432 is `INITIAL_UNDO_CELL`, a Live delete U is `432+L`
 /// (dev3-row-delete.md#delete-undo).
-pub(super) fn undo_cell(
+pub(in crate::storage::semantic_row) fn undo_cell(
     bytes: &[u8; PAGE_BYTES],
     namespace: Namespace,
     page: PageRef,
@@ -179,7 +179,7 @@ pub(super) fn undo_cell(
 /// The U cell of a Retained root: 432 for INSERT, `432+(C-180)` for DELETE
 /// and UPDATE, whose U holds the old row's value (dev3-row-update.md
 /// #update-undo).
-pub(super) fn live_undo_bytes(job: JobView<'_>) -> Result<usize> {
+pub(in crate::storage::semantic_row) fn live_undo_bytes(job: JobView<'_>) -> Result<usize> {
     Ok(match job.effect() {
         RowEffect::Insert => UNDO_RECORD_BYTES,
         RowEffect::Delete | RowEffect::Update => {
@@ -190,7 +190,7 @@ pub(super) fn live_undo_bytes(job: JobView<'_>) -> Result<usize> {
         }
     })
 }
-pub(super) fn page_lsn(bytes: &[u8; PAGE_BYTES]) -> u64 {
+pub(in crate::storage::semantic_row) fn page_lsn(bytes: &[u8; PAGE_BYTES]) -> u64 {
     u64::from_le_bytes(bytes[64..72].try_into().expect("page LSN"))
 }
 
@@ -272,7 +272,7 @@ pub(super) fn first_free(
 }
 
 /// Nearest older Retained root of the same actor (the census H).
-pub(super) fn predecessor<'a>(
+pub(in crate::storage::semantic_row) fn predecessor<'a>(
     jobs: JobCells<'a>,
     namespace: Namespace,
     actor: TxnRef,
@@ -291,7 +291,7 @@ pub(super) fn predecessor<'a>(
     }
     Ok(previous)
 }
-pub(super) fn link(job: JobView<'_>) -> Result<UndoLink> {
+pub(in crate::storage::semantic_row) fn link(job: JobView<'_>) -> Result<UndoLink> {
     Ok(UndoLink {
         reference: job.undo().ok_or(Error::IdentityMismatch)?,
         sequence: job.undo_sequence(),
@@ -310,7 +310,7 @@ pub(super) fn row_target(table: ObjectHandle, row: RowId) -> UndoTargetView<'sta
 }
 
 /// XRP1 projection of one Row presence (consumers.md row logical projection).
-pub(super) fn projection(
+pub(in crate::storage::semantic_row) fn projection(
     table: ObjectHandle,
     row: RowId,
     value: Option<&[u8]>,
@@ -378,7 +378,7 @@ pub(super) fn encode_material(
     Ok(())
 }
 /// The Undo expectation of a Row root's U: its reference and Row target.
-pub(super) fn expectation(
+pub(in crate::storage::semantic_row) fn expectation(
     namespace: Namespace,
     job: JobView<'_>,
 ) -> Result<UndoRecordExpectation<'static>> {
@@ -407,7 +407,7 @@ pub(super) fn check_material(
 /// its two incoming: INSERT's exact Missing material, or a delete or update
 /// U's outline through entry (b) (dev3-row-delete.md#previous-proof,
 /// dev3-row-update.md#previous-proof).
-pub(super) fn check_live(
+pub(in crate::storage::semantic_row) fn check_live(
     namespace: Namespace,
     job: JobView<'_>,
     edge: UndoEdge,
@@ -499,19 +499,36 @@ pub(super) fn delete_material<'a>(
 /// D of the leaf reservation (dev3-row-delete.md#leaf-reservation, widened
 /// by dev3-row-update.md#leaf-reservation): the bytes that the Retained roots
 /// of `table`, of every actor, must be able to restore without a split, each
-/// its `JobView::restore_bytes` (DELETE `C-180`, UPDATE `max(0, C-C')`).
+/// its `JobView::restore_bytes` (DELETE `C-180`, UPDATE `max(0, C-C')`),
+/// counting only the roots whose RowId is in `leaf`, the caller's decoded
+/// current RowLeaf (dev3-tree-smo.md#current-leaf-consumers). A Retained INSERT
+/// root restores nothing, and a Retained DELETE or UPDATE root's row (its
+/// tombstone or new row) stays in its current leaf, so a single-leaf tree
+/// keeps the whole-table sum. Only a Row-scope root restores bytes, and it
+/// names its RowId; a root that restores nothing (an INSERT, or another
+/// scope's root of the same object) is not looked up.
 pub(super) fn leaf_reservation(
     jobs: &[[u8; JOB_BYTES]; JOB_COUNT],
     namespace: Namespace,
     table: ObjectHandle,
+    leaf: &crate::storage::tree_page::TreePageView<'_>,
 ) -> Result<usize> {
     let mut total = 0usize;
     for cell in jobs {
         let job = row::decode_job(cell, namespace)?;
         if job.state() == JobState::RootRetained
+            && job.restore_bytes() != 0
             && job.object().is_some_and(|object| {
                 object.object == table.object && object.generation == table.generation
             })
+            && leaf
+                .lower_bound(
+                    &job.row_id()
+                        .ok_or(Error::IdentityMismatch)?
+                        .get()
+                        .to_be_bytes(),
+                )?
+                .equal
         {
             total = total
                 .checked_add(job.restore_bytes())

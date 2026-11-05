@@ -1,0 +1,12 @@
+{
+  "source": "d497c52d7b224c34186855e700294e5ad21a16a7842058da674fc0f288bcc4f7",
+  "elf": "d85bb55c17a450d7a4499b0d2069b2662c5876d42158b710ede878b06bd96f65",
+  "input": "9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611",
+  "filters": [
+    "structural_effect_stage_capacity_cancels_and_reenters_root_child",
+    "structural_effect_unwind_at_install_publication_and_finish_boundaries",
+    "structural_effect_replay_checked_return_failure_keeps_pending",
+    "structural_effect_guardless_durable_wait_blocks_ordinary_paths_and_io_failure"
+  ],
+  "timeout": 480
+}

@@ -41,6 +41,8 @@ pub(in crate::storage) struct RetentionSourceCensus {
     pub(in crate::storage) history_frame_return: usize,
     /// The scope3 Row arm, exclusive with the Catalog/System arms.
     pub(in crate::storage) history_row: usize,
+    /// The scope4 split arm, exclusive with the other arms of one frame.
+    pub(in crate::storage) history_structural: usize,
     pub(in crate::storage) recovery_frame: usize,
     pub(in crate::storage) producer: usize,
     pub(in crate::storage) installation: usize,
@@ -51,6 +53,8 @@ pub(in crate::storage) struct RetentionSourceCensus {
     pub(in crate::storage) catalog_commit: usize,
     pub(in crate::storage) catalog_binding: usize,
     pub(in crate::storage) catalog_live: usize,
+    pub(in crate::storage) structural_prepare: usize,
+    pub(in crate::storage) structural_effect: usize,
     pub(in crate::storage) catalog_recovery_cleanup: usize,
     pub(in crate::storage) peak: usize,
     pub(in crate::storage) metadata: usize,
@@ -230,6 +234,8 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
     let catalog_commit = source::commit_source_peak::<W>();
     let catalog_binding = visibility::binding_source_bytes::<W>();
     let catalog_live = create_pair::catalog_live::catalog_live_source_bytes::<W>().peak;
+    let structural_prepare = create_pair::catalog_live::structural::source_bytes::<W>();
+    let structural_effect = create_pair::catalog_live::structural::effect::source_bytes::<W>();
     // The recovery dispatcher retains selection, current Job/slot references,
     // private-loan arguments and its result while calling a live operation.
     // Selection/replay, residency, producer and verification are consecutive.
@@ -258,6 +264,8 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
         .max(catalog_commit)
         .max(catalog_binding)
         .max(catalog_live)
+        .max(structural_prepare)
+        .max(structural_effect)
         .max(catalog_recovery_cleanup)
         .max(transaction::source_bytes())
         .max(transaction::writable::source_bytes())
@@ -306,6 +314,7 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
         history_closure: history.closure,
         history_frame_return: history.frame_return,
         history_row: history.row,
+        history_structural: history.structural,
         recovery_frame: history.frame,
         producer,
         installation,
@@ -316,6 +325,8 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> RetentionSource
         catalog_commit,
         catalog_binding,
         catalog_live,
+        structural_prepare,
+        structural_effect,
         catalog_recovery_cleanup,
         peak,
         metadata,

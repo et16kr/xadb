@@ -1,0 +1,24 @@
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 36.40s
+     Running unittests src/lib.rs (artifacts/dev3-08/target/debug/deps/engine-e4e141083d864921)
+
+running 2 tests
+
+thread 'storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_accepts_internal_root_split_and_checks_off_path_internal' (32508) panicked at crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs:432:58:
+called `Result::unwrap()` on an `Err` value: Actor(Base(Tree(Corrupt)))
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_accepts_internal_root_split_and_checks_off_path_internal ... FAILED
+
+thread 'storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_moved_delete_update_reserved_and_release_presence' (32509) panicked at crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs:386:33:
+1/compensated: Queue(OrderMismatch)
+test storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_moved_delete_update_reserved_and_release_presence ... FAILED
+
+failures:
+
+failures:
+    storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_accepts_internal_root_split_and_checks_off_path_internal
+    storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_moved_delete_update_reserved_and_release_presence
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 2283 filtered out; finished in 0.05s
+
+error: test failed, to rerun pass `-p xadb-engine --lib`

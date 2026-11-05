@@ -11,13 +11,13 @@ use super::super::{
     InventoryObservation, PageHeader, PageKind, PageRef, TxnRef, get, get16,
 };
 use super::{
-    BASE_BYTES, DESCRIPTOR_BYTES, InitProvenance, LayoutView, Sections, actor, decode_layout,
-    encode_layout, image,
+    BASE_BYTES, DESCRIPTOR_BYTES, InitProvenance, LayoutView, Sections, actor, current_tree,
+    decode_layout, encode_layout, image,
 };
 use crate::{
     api::Namespace,
     storage::{
-        catalog_record::{self, CatalogDefinitionView, CatalogError, CatalogExpectation},
+        catalog_record::{self, CatalogError, CatalogExpectation},
         obligation::OwnerState,
         page::{PAGE_BYTES, PageView},
         retention_obligation,
@@ -39,7 +39,7 @@ use crate::{
 use foundation::identity::{Generation, ObjectHandle, ObjectId, RowId};
 
 #[path = "graph/source.rs"]
-mod source;
+pub(super) mod source;
 pub(in crate::storage) use source::source_bytes;
 
 #[derive(Debug, PartialEq, Eq)]
@@ -262,11 +262,7 @@ impl<'a> SeamLayout<'a> for LayoutView<'a> {
     }
 }
 
-/// One stable table: its Catalog schema and current RowLeaf.
-struct Table<'a> {
-    schema: catalog_record::TableDefinitionView<'a>,
-    leaf: TreePageView<'a>,
-}
+use super::current_tree::Table;
 
 struct Graph<'a> {
     layout: LayoutView<'a>,
@@ -306,33 +302,12 @@ impl<'a> Graph<'a> {
         )?;
         Ok((object, record))
     }
-    /// The schema and RowLeaf of a table whose anchor, pair and provenance the
-    /// shared Catalog body has already checked. A Job hint is never used.
+    /// The current whole owned tree and schema from this same Catalog cut.
     fn table(&self, index: usize) -> Result<Table<'a>> {
-        let (object, record) = self.record_at(index)?;
-        let CatalogDefinitionView::Table(schema) = record.definition() else {
-            return Err(Error::Unsupported);
-        };
-        let anchor = record.header().anchor.page_no;
-        let pair = self
-            .layout
-            .provenance(usize::try_from(anchor).map_err(|_| Error::Identity)?)?
-            .and_then(|provenance| provenance.pair())
-            .ok_or(Error::Identity)?;
-        let (bytes, header) = self.page(pair[1], PageKind::RowLeaf, object.get())?;
-        let leaf = tree_page::decode_tree_page(
-            bytes,
-            TreeExpectation {
-                identity: header.identity,
-                kind: PageKind::RowLeaf,
-                level: 0,
-                arity: 0,
-            },
-        )?;
-        Ok(Table { schema, leaf })
+        Ok(current_tree::observe(self.layout, index)?)
     }
-    fn row(&self, table: &Table<'a>, at: usize) -> Result<RecordVersion> {
-        let entry = table.leaf.entry(at)?;
+    fn row(&self, table: &Table<'a>, leaf: &TreePageView<'a>, at: usize) -> Result<RecordVersion> {
+        let entry = leaf.entry(at)?;
         let key: [u8; 8] = entry.key.try_into().map_err(|_| Error::Corrupt)?;
         let row = RowId::new(u64::from_be_bytes(key)).map_err(|_| Error::Identity)?;
         let EntryPayload::Value(bytes) = entry.payload else {
@@ -344,7 +319,7 @@ impl<'a> Graph<'a> {
                 namespace: self.namespace(),
                 row,
             },
-            RowSchemaInput::Catalog(table.schema),
+            RowSchemaInput::Catalog(table.schema()),
         )?;
         // A DELETE tombstone is always `Transaction(T)` with its U
         // (dev3-row-delete.md#recovery); a committed one is corruption.
@@ -360,14 +335,14 @@ impl<'a> Graph<'a> {
     }
     /// The leaf reservation (dev3-row-delete.md#leaf-reservation,
     /// dev3-row-update.md#leaf-reservation): each RowLeaf keeps
-    /// `TREE_ENTRY_CAPACITY - entry_bytes >= D`, D the sum over its table's
-    /// Retained roots of every actor of DELETE's `C-180` and UPDATE's
-    /// `max(0, C-C')`, from the Job's bytes.
-    fn leaf_reservation(&self, index: usize, table: &Table<'a>) -> Result<()> {
-        let object = self.record_at(index)?.1.header().identity;
+    /// `TREE_ENTRY_CAPACITY - entry_bytes >= D`, using only Retained RowIds
+    /// actually in this leaf. validate() completed every actor's typed Undo,
+    /// Job length and current-row proof before reaching this pass.
+    fn leaf_reservation(&self, table: &Table<'a>, leaf: &TreePageView<'a>) -> Result<()> {
+        let object = table.record().header().identity;
         let mut used = 0usize;
-        for at in 0..table.leaf.len() {
-            let EntryPayload::Value(value) = table.leaf.entry(at)?.payload else {
+        for at in 0..leaf.len() {
+            let EntryPayload::Value(value) = leaf.entry(at)?.payload else {
                 return Err(Error::Unsupported);
             };
             // The 12-byte cell head, the record and its 4-byte slot.
@@ -382,6 +357,10 @@ impl<'a> Graph<'a> {
             {
                 continue;
             }
+            let row = job.row_id().ok_or(Error::Identity)?;
+            if !leaf.lower_bound(&row.get().to_be_bytes())?.equal {
+                continue;
+            }
             let cell = job.cell_bytes() as usize;
             reserved += match job.effect() {
                 row::RowEffect::Insert => 0,
@@ -394,15 +373,26 @@ impl<'a> Graph<'a> {
         }
         Ok(())
     }
-    /// Visit every actual row of every table, in Catalog/key order.
+    /// Visit every actual row in Catalog/physical-leaf/cell order. The scalar
+    /// location is only an immutable-census identity, never a cursor or hint.
     fn each_row(
         &self,
         mut visit: impl FnMut(usize, usize, RecordVersion) -> Result<()>,
     ) -> Result<()> {
         for index in 0..self.catalog()?.len() {
             let table = self.table(index)?;
-            for at in 0..table.leaf.len() {
-                visit(index, at, self.row(&table, at)?)?;
+            for ordinal in 9..64 {
+                if !table.has_leaf(ordinal) {
+                    continue;
+                }
+                let leaf = table.leaf(ordinal)?;
+                for at in 0..leaf.len() {
+                    visit(
+                        index,
+                        ordinal * crate::storage::page::MAX_PAGE_SLOTS + at,
+                        self.row(&table, &leaf, at)?,
+                    )?;
+                }
             }
         }
         Ok(())
@@ -525,7 +515,11 @@ impl<'a> Graph<'a> {
                 }
             }
             let table = self.table(index)?;
-            self.leaf_reservation(index, &table)?;
+            for ordinal in 9..64 {
+                if table.has_leaf(ordinal) {
+                    self.leaf_reservation(&table, &table.leaf(ordinal)?)?;
+                }
+            }
         }
         let mut rows = 0;
         self.each_row(|table, at, version| {

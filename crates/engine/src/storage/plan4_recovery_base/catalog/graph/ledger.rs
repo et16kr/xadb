@@ -3,6 +3,9 @@ use super::super::super::{
     InventoryExpected, InventorySource, add_budget, ownership,
 };
 use super::*;
+use crate::storage::semantic_row::structure::{
+    Operation as SplitOperation, bank as structural_bank,
+};
 
 pub(super) fn raw<'a, L: SeamLayout<'a>>(layout: L, slot: usize) -> Result<&'a [u8; 1536]> {
     if slot >= 36 {
@@ -69,6 +72,15 @@ fn system_provenance<'a, G: Seam<'a>>(
         let ReservationOwner::System(source) = claim.source() else {
             continue;
         };
+        if source.kind() != crate::storage::allocation_page::SystemWorkKind::AllocationMaintenance {
+            if G::ROWS
+                && source.kind()
+                    == crate::storage::allocation_page::SystemWorkKind::StructuralChange
+            {
+                continue;
+            }
+            return Err(Error::ProvenanceMismatch);
+        }
         let spec = current.as_ref().ok_or(Error::ProvenanceMismatch)?;
         if source.id() == header.system_high_water[0] {
             if initialized.is_some()
@@ -108,6 +120,7 @@ fn system_provenance<'a, G: Seam<'a>>(
 }
 
 fn system_allocation<'a, G: Seam<'a>>(graph: &G, reserved: ReservedInventory) -> Result<()> {
+    structural_provenance(graph)?;
     let initialized = system_provenance(graph, reserved)?;
     let header = graph.layout().header();
     let raw = raw(graph.layout(), 32)?;
@@ -117,6 +130,52 @@ fn system_allocation<'a, G: Seam<'a>>(graph: &G, reserved: ReservedInventory) ->
         header.allocation_terminal.byte(),
         initialized,
     )
+}
+
+fn structural_provenance<'a, G: Seam<'a>>(graph: &G) -> Result<()> {
+    if !G::ROWS {
+        return Ok(());
+    }
+    let header = graph.layout().header();
+    let latest = descriptor(graph.layout(), 33)?;
+    let observed = latest
+        .as_ref()
+        .map(|spec| {
+            structural_bank::validate(
+                graph.layout().expected().profile,
+                header.capture_lsn,
+                header.source_epoch,
+                header.system_high_water[1],
+                spec,
+            )
+        })
+        .transpose()
+        .map_err(|_| Error::ProvenanceMismatch)?;
+    for ordinal in 9..64 {
+        let Some(claim) = graph.layout().provenance(ordinal)? else {
+            continue;
+        };
+        let Some(birth) = claim.structural() else {
+            continue;
+        };
+        let latest = observed.ok_or(Error::ProvenanceMismatch)?;
+        let ReservationOwner::System(source) = claim.source() else {
+            return Err(Error::ProvenanceMismatch);
+        };
+        if source.id() > latest.owner.id() || source.generation() > latest.owner.generation() {
+            return Err(Error::ProvenanceMismatch);
+        }
+        if source.id() == latest.owner.id() {
+            let operation = match birth.operation() {
+                super::super::super::StructuralOperation::RootSplit => SplitOperation::RootSplit,
+                super::super::super::StructuralOperation::ChildSplit => SplitOperation::ChildSplit,
+            };
+            if source != latest.owner || operation != latest.operation {
+                return Err(Error::ProvenanceMismatch);
+            }
+        }
+    }
+    Ok(())
 }
 
 fn validate_rows<'a, G: Seam<'a>>(graph: &G) -> Result<(usize, usize)> {
@@ -134,6 +193,7 @@ fn validate_rows<'a, G: Seam<'a>>(graph: &G) -> Result<(usize, usize)> {
         let Some(spec) = descriptor(graph.layout(), slot)? else {
             if slot < header.active_transactions as usize
                 || slot == 32 && header.system_high_water[0] != 0
+                || slot == 33 && header.system_high_water[1] != 0
                 || slot == 34 && graph.aging_active()
             {
                 return Err(Error::IdentityMismatch);
@@ -204,6 +264,22 @@ fn validate_rows<'a, G: Seam<'a>>(graph: &G) -> Result<(usize, usize)> {
             let OwnerState::System(progress) = spec.owner else {
                 return Err(Error::IdentityMismatch);
             };
+            if slot == 33 {
+                if !G::ROWS {
+                    return Err(Error::Unsupported);
+                }
+                structural_bank::validate(
+                    graph.layout().expected().profile,
+                    header.capture_lsn,
+                    header.source_epoch,
+                    header.system_high_water[1],
+                    &spec,
+                )
+                .map_err(|_| Error::IdentityMismatch)?;
+                // Finished split debt/items are exactly zero, checked before
+                // excluding this historical owner from active totals and XOI.
+                continue;
+            }
             if !matches!(slot, 32 | 34)
                 || progress.reference.kind() as usize != slot - 31
                 || progress.reference.namespace()
@@ -502,7 +578,20 @@ pub(in crate::storage::plan4_recovery_base) fn source_census<'a, G: Seam<'a>>() 
         + 2 * size_of::<TxnRef>()
         + size_of::<(u32, u64, u64)>()
         + G::transaction_source_bytes();
-    let rows = rows_outer + descriptor.max(transaction);
+    let structural = if G::ROWS {
+        2 * size_of::<DescriptorSpec>()
+            + 2 * size_of::<structural_bank::FinishedSplit>()
+            + 2 * size_of::<
+                std::result::Result<
+                    structural_bank::FinishedSplit,
+                    crate::storage::semantic_row::Error,
+                >,
+            >()
+            + structural_bank::validation_source_bytes()
+    } else {
+        0
+    };
+    let rows = rows_outer + descriptor.max(transaction).max(structural);
     let reverse = scalar
         + 2 * size_of::<G::Job>()
         + size_of::<Result<G::Job>>()
@@ -521,10 +610,32 @@ pub(in crate::storage::plan4_recovery_base) fn source_census<'a, G: Seam<'a>>() 
         + descriptor.max(G::codec_source_bytes());
     // system_provenance returns before the old allocation algebra starts, so
     // its owned last descriptor cannot overlap that validator's descriptors.
+    let structural_claims = if G::ROWS {
+        scalar
+            + size_of::<Header>()
+            + 2 * size_of::<Option<DescriptorSpec>>()
+            + 2 * size_of::<Result<Option<DescriptorSpec>>>()
+            + 2 * size_of::<Option<structural_bank::FinishedSplit>>()
+            + 2 * size_of::<
+                std::result::Result<
+                    Option<structural_bank::FinishedSplit>,
+                    crate::storage::semantic_row::Error,
+                >,
+            >()
+            + 2 * size_of::<InitProvenance<'_>>()
+            + 2 * size_of::<Result<Option<InitProvenance<'_>>>>()
+            + 2 * size_of::<super::super::super::StructuralInit<'_>>()
+            + 2 * size_of::<SystemWorkRef>()
+            + descriptor.max(structural_bank::validation_source_bytes())
+    } else {
+        0
+    };
     let system = scalar
         + size_of::<Header>()
         + 2 * size_of::<Option<(PageRef, PageKind, u64)>>()
-        + provenance.max(crate::storage::wal_io::plan4_system_base_allocation_source_bytes());
+        + provenance
+            .max(structural_claims)
+            .max(crate::storage::wal_io::plan4_system_base_allocation_source_bytes());
     let inventory_verify = scalar
         + size_of::<Header>()
         + 2 * size_of::<InventoryExpected>()

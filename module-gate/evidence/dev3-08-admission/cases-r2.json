@@ -1,0 +1,10 @@
+[
+  "storage::dirty_frame::retention_residency::structural::tests::structural_selection_freeze_detects_stamp_change_and_tracks_successor_generation",
+  "storage::dirty_frame::retention_residency::structural::tests::structural_selection_rejects_invalid_count_order_alias_and_missing_init_without_change",
+  "storage::dirty_frame::retention_residency::structural::tests::structural_selection_resident_stale_generation_exhaustion_and_busy_are_unchanged",
+  "storage::dirty_frame::retention_residency::structural::tests::structural_selection_root_two_child_one_preserves_registry_and_excludes_all_targets",
+  "storage::dirty_frame::retention_residency::structural::tests::structural_selection_source_covers_return_and_guarded_freeze",
+  "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::structural::admission_tests::structural_admission_lsn_each_existing_counter_and_root_revision_boundaries",
+  "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::structural::tests::structural_prepare_source_inventory_covers_read_decode_and_return",
+  "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_prepare::structural_admission_original_active_rows_preserves_debt_and_exact_wal_fit"
+]

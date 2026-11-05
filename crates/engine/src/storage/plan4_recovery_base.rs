@@ -13,6 +13,7 @@
 pub(super) mod catalog;
 #[path = "plan4_recovery_base/image_records.rs"]
 mod image_records;
+pub(in crate::storage) use image_records::{StructuralInit, StructuralOperation};
 #[path = "plan4_recovery_base/row.rs"]
 pub(super) mod row;
 
@@ -409,7 +410,8 @@ fn validate_header(h: Header, e: Expected) -> Result<()> {
         || h.root_revision == 0
         || h.doublewrite_generation == 0
         || h.physical_bytes > e.profile.owned_bytes()
-        || h.system_high_water[1] != 0
+        || (h.system_high_water[1] != 0 && h.format != BaseFormat::V4RowMissing)
+        || h.system_high_water[1] > h.capture_lsn
         || h.system_high_water[3] != 0
         || h.system_high_water[2] > 1
         || (h.format == BaseFormat::V1Status

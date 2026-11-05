@@ -1,0 +1,1 @@
+Only previous failed three MIXED cases after correcting independent fixture issuer/canceled/completed/Undo sequence observation. No product changes or repeated passed cases.

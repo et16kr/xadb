@@ -1,0 +1,291 @@
+{
+  "schema": "XADB_MODULE_GATE_RECORD_V1",
+  "change": "DEV3 08-1 partial: shared structural and rollback-weighted split candidates plus immutable selected-path search; no live SMO or schedule credit",
+  "rust_tests": [
+    {
+      "paths": [
+        "crates/engine/src/storage/tree_page.rs",
+        "crates/engine/src/storage/tree_page/edit.rs",
+        "crates/engine/src/storage/tree_page/structure.rs",
+        "crates/engine/src/storage/tree_page/structure/tests.rs"
+      ],
+      "reason": "New pure structural candidate entry points, error preservation, leaf edit integration and independently assembled expected page bytes",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/tree_page/structure/tests.rs",
+          "case": "storage::tree_page::structure::tests::internal_insert_and_unlink_match_independent_pages",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/tree_page/structure/tests.rs",
+          "case": "storage::tree_page::structure::tests::internal_collapse_preserves_scratch_and_selects_survivor",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/tree_page/structure/tests.rs",
+          "case": "storage::tree_page::structure::tests::internal_rejections_preserve_both_scratch_buffers",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/tree_page/structure/tests.rs",
+          "case": "storage::tree_page::structure::tests::split_images_preserve_entries_and_promote_internal_pivot",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/tree_page/structure/tests.rs",
+          "case": "storage::tree_page::structure::tests::split_rejects_aliases_and_preserves_failed_output",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/tree_page/structure/tests.rs",
+          "case": "storage::tree_page::structure::tests::overflowing_parent_insert_splits_with_all_children_preserved",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/tree_page/structure/tests.rs",
+          "case": "storage::tree_page::structure::tests::leaf_edit_split_images_include_exact_pending_value",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/tree_page/structure/tests.rs",
+          "case": "storage::tree_page::structure::tests::internal_success_preserves_tail_and_truncated_cell_preserves_workspace",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/tree_page/structure/tests.rs",
+          "case": "storage::tree_page::structure::tests::new_root_short_cell_and_output_preserve_output",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/tree_page.rs",
+        "crates/engine/src/storage/tree_page/structure.rs",
+        "crates/engine/src/storage/tree_page/structure/tests.rs"
+      ],
+      "reason": "New structure behavior and independently calculated boundary/path results; these tests do not claim live SMO or recovery.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/tree_page/structure/tests.rs",
+          "case": "storage::tree_page::structure::tests::weighted_split_preserves_rollback_space_without_installing_pending_edit",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/tree_page/structure/tests.rs",
+          "case": "storage::tree_page::structure::tests::weighted_split_rejects_invalid_reservations_without_scratch_changes",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/tree_page/structure/tests.rs",
+          "case": "storage::tree_page::structure::tests::weighted_split_matches_exhaustive_boundary_oracle",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/tree_page/structure/tests.rs",
+          "case": "storage::tree_page::structure::tests::weighted_split_without_single_boundary_retries_structure_before_pending_edit",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/tree_page.rs",
+        "crates/engine/src/storage/tree_page/search/tests.rs"
+      ],
+      "reason": "New search behavior and independently calculated boundary/path results; these tests do not claim live SMO or recovery.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/tree_page/search/tests.rs",
+          "case": "storage::tree_page::search::tests::immutable_tree_search_matches_typed_points_and_exact_path",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/tree_page/search/tests.rs",
+          "case": "storage::tree_page::search::tests::immutable_tree_search_rejects_inherited_range_violations",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/tree_page/search/tests.rs",
+          "case": "storage::tree_page::search::tests::immutable_tree_search_rejects_wrong_child_and_ancestor_alias",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/tree_page/search/tests.rs",
+          "case": "storage::tree_page::search::tests::immutable_tree_search_bounds_height_and_rejects_bad_input_before_loading",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/tree_page/search/tests.rs",
+          "case": "storage::tree_page::search::tests::row_route_steps_match_partition_model_and_inherited_bounds",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        }
+      ]
+    }
+  ],
+  "reviews": [
+    {
+      "id": "dev3-08-structure-d2",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/tree_page.rs": "332eb7a6d57f77bef338dfe3a26b5a6b183a6ebf",
+        "crates/engine/src/storage/tree_page/edit.rs": "91fbe2a8bb293a274b6f9a8a44f0f4a75eb13ac9",
+        "crates/engine/src/storage/tree_page/structure.rs": "6850a4f33e58855a8d0b763aa0c686ee598e378e",
+        "crates/engine/src/storage/tree_page/structure/tests.rs": "ae186624dd7c82f5a1575c23793a2d0eb0ef5d91",
+        "crates/engine/src/storage/tree_page/search.rs": "f1c7ddc3315c20ae9d2e3bf13d9a8e815f77aa7c",
+        "crates/engine/src/storage/tree_page/search/tests.rs": "8e2ac966071809757b7a38f46ecd673f91565761",
+        "devdoc/contracts/dev3-tree-format.md": "10c91f618da6ce51b16115a014c32d0d7cc1b68b"
+      },
+      "log": "module-gate/evidence/dev3-08-structure/review.md (sha256 54fdb24d67cc903250e7cf711eec8d9dbd840850848c969cdd13c259bae8516b); module-gate/evidence/dev3-08-search/review.md (sha256 fd577618f012ebf19d377c66362b033aa448026ef7b38ce58b843597701eeb8f); module-gate/evidence/dev3-08-row-selector/review.md (sha256 d912c602c63eb65c675c870a196c9dabfd1315d4889bbfc55db85a007a733b49)"
+    },
+    {
+      "id": "dev3-08-audit-shared-structure",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/tree_page.rs": "d642a8c5e7f1dd16dbdee8a171ff6f08ce241372",
+        "devdoc/contracts/dev3-tree-format.md": "c967552281c08b5b7608b84bb7c73640232d3d6e"
+      },
+      "log": "module-gate/evidence/dev3-08-audit/review.md (sha256 fa1aa51397fca3f7167318598ca39b124b728f9dbf47452ca0d3972ee016b7e9)"
+    },
+    {
+      "id": "dev3-08-structure-candidate-additions",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/tree_page/structure.rs": "305a83fc62a04d1287b86f51b909323eede0f703"
+      },
+      "log": "module-gate/evidence/dev3-08-candidate/review.md (sha256 5f7b2d00f471e2da180782e581e24e6c9063c89d2e3abea9fcc490d98d735f8a)"
+    },
+    {
+      "id": "dev3-08-current-tree-followup-20261104-dev3-08-structure",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "/root",
+      "reviewer": "/root/dev3_08_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/tree_page/search.rs": "d5be9246b15d170d449d98893e239ce724f99204"
+      },
+      "log": "module-gate/evidence/dev3-08-current-tree/review.md (sha256 37f27a651decb9fcf50c93d055c324f3dc7ca10355ce443914789f9349d920d2)"
+    },
+    {
+      "id": "dev3-08-1-pr53-supplement",
+      "class": "D2",
+      "scopes": [
+        "common",
+        "joint"
+      ],
+      "author": "/root",
+      "reviewer": "/root/independent_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/row/read/driver/tests.rs": "16b5e8694018dd48a2e8ba29b73a19e68209e2dc",
+        "crates/engine/src/storage/semantic_row/structure/weights/tests.rs": "f6f50625997c84ad73501a6387f03896967533a3",
+        "crates/engine/src/storage/tree_page/search/tests.rs": "4d2c26889dc5a566228ed2ca172fa9590820c250",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/split_rows.rs": "989ac5bc2033d3252ac7caba4ca8f6c5d7fb0b54",
+        "crates/engine/src/storage/wal_io/plan4_retention/structural_effect.rs": "64c757a850d10bd31b762a9c0f96badd1396c58d",
+        "devdoc/contracts/dev3-tree-smo.md": "8d7980fc21b9c432c5cffa8a196c8494911ea912"
+      },
+      "log": "module-gate/evidence/dev3-08-1-pr53-review/review.md",
+      "log_sha256": "eee50d2c439a5c2d2eacbc063e2a2a55708ad1e5697591070afdead7bb04adb1"
+    },
+    {
+      "id": "pr53-route-refactor-20261105",
+      "class": "D2",
+      "scopes": [
+        "common",
+        "joint"
+      ],
+      "author": "/root",
+      "reviewer": "/root/independent_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/tree_page.rs": "03bc7b092ff1f282f7c3a734076341a43e00fd0e",
+        "crates/engine/src/storage/tree_page/search.rs": "80ff87958aae2953546f846272f816286faf05de",
+        "crates/engine/src/storage/tree_page/search/tests.rs": "2113745a12294eef46d13faf2315166d34e2388c",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/split_rows.rs": "efb44ba9665d52032c63b9fb8321b36818057760",
+        "devdoc/contracts/dev3-tree-smo.md": "5db50935899a2a5817baf3ac78254241e639db90"
+      },
+      "log": "module-gate/evidence/dev3-08-1-pr53-refactor/review.md (sha256 0ad5f1b1e0fa3ebebf8f30142e989d67f3a5c09953c8a1b7f913961b1ef9c865)"
+    }
+  ]
+}

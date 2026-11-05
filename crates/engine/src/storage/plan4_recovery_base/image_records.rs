@@ -8,6 +8,46 @@ use super::{
 use crate::storage::allocation_page::SystemWorkKind;
 use foundation::identity::{Generation, ObjectHandle, ObjectId, SchemaEpoch};
 
+/// Historical birth shape only, never a current root or installation authority.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(in crate::storage) enum StructuralOperation {
+    RootSplit,
+    ChildSplit,
+}
+
+#[derive(Clone, Copy)]
+pub(in crate::storage) struct StructuralInit<'a> {
+    bytes: &'a [u8; INIT_BYTES],
+}
+impl<'a> StructuralInit<'a> {
+    pub(in crate::storage) fn level(self) -> u8 {
+        self.bytes[3]
+    }
+    pub(in crate::storage) fn anchor(self) -> PageRef {
+        PageRef::decode(&self.bytes[208..232]).expect("validated anchor")
+    }
+    pub(in crate::storage) fn left(self) -> PageRef {
+        PageRef::decode(&self.bytes[232..256]).expect("validated historical left")
+    }
+    pub(in crate::storage) fn peer(self) -> Option<PageRef> {
+        (self.operation() == StructuralOperation::RootSplit)
+            .then(|| PageRef::decode(&self.bytes[256..280]).expect("validated historical peer"))
+    }
+    pub(in crate::storage) fn operation(self) -> StructuralOperation {
+        match get(self.bytes, 280) {
+            1 => StructuralOperation::RootSplit,
+            2 => StructuralOperation::ChildSplit,
+            _ => unreachable!("validated structural operation"),
+        }
+    }
+    pub(in crate::storage) fn revisions(self) -> [u64; 2] {
+        [get(self.bytes, 288), get(self.bytes, 296)]
+    }
+    pub(in crate::storage) fn core_digest(self) -> &'a [u8; 32] {
+        self.bytes[304..336].try_into().expect("fixed field")
+    }
+}
+
 impl<'a> InitProvenance<'a> {
     pub(in crate::storage) fn bytes(self) -> &'a [u8; INIT_BYTES] {
         self.bytes
@@ -45,7 +85,7 @@ impl<'a> InitProvenance<'a> {
         }
     }
     pub(in crate::storage) fn object(self) -> Option<ObjectHandle> {
-        (self.bytes[4] == 2).then(|| ObjectHandle {
+        (self.bytes[4] == 2 || matches!(self.role(), 5 | 6)).then(|| ObjectHandle {
             object: ObjectId::new(get(self.bytes, 184)).expect("validated object"),
             generation: Generation::new(get(self.bytes, 192)).expect("validated generation"),
             schema_epoch: SchemaEpoch::new(get(self.bytes, 200)).expect("validated schema"),
@@ -58,6 +98,9 @@ impl<'a> InitProvenance<'a> {
                 PageRef::decode(&self.bytes[232..256]).expect("validated RowRoot"),
             ]
         })
+    }
+    pub(in crate::storage) fn structural(self) -> Option<StructuralInit<'a>> {
+        matches!(self.role(), 5 | 6).then_some(StructuralInit { bytes: self.bytes })
     }
 }
 
@@ -75,7 +118,6 @@ pub(super) fn decode_certificate(
     let kind = PageKind::from_byte(raw[1])?;
     let reference = PageRef::decode(&raw[8..32])?;
     if raw[0] != 1
-        || raw[2] != 0
         || !zero(&raw[3..8])
         || !zero(&raw[88..96])
         || reference.file != first_file()
@@ -87,6 +129,11 @@ pub(super) fn decode_certificate(
         return Err(Error::IdentityMismatch);
     }
     let object = get(raw, 32);
+    if (kind == PageKind::RowInternal && (e.profile.format() != 3 || !(1..=15).contains(&raw[2])))
+        || (kind != PageKind::RowInternal && raw[2] != 0)
+    {
+        return Err(Error::Unsupported);
+    }
     let valid_role = match ordinal {
         0 => kind == PageKind::Allocation && object == 1,
         1 => kind == PageKind::RetentionRoot && object == 4,
@@ -96,7 +143,7 @@ pub(super) fn decode_certificate(
         _ => match kind {
             PageKind::TransactionStatus => object == 2,
             PageKind::Undo => object == 3,
-            PageKind::TreeAnchor | PageKind::RowLeaf => object >= 6,
+            PageKind::TreeAnchor | PageKind::RowLeaf | PageKind::RowInternal => object >= 6,
             _ => false,
         },
     };
@@ -112,7 +159,7 @@ pub(super) fn decode_certificate(
                 owner_generation: one(),
             },
             kind,
-            level: 0,
+            level: raw[2],
             lsn: PageLsn(get(raw, 48)),
         },
         full_digest: hash(raw, 56),
@@ -131,6 +178,7 @@ pub(in crate::storage) fn encode_certificate(
     let mut record = [0; CERTIFICATE_BYTES];
     record[0] = 1;
     record[1] = header.kind as u8;
+    record[2] = header.level;
     header.identity.page.encode(&mut record[8..32])?;
     put(&mut record, 32, header.identity.owner.get());
     put(&mut record, 40, header.identity.owner_generation.get());
@@ -154,10 +202,9 @@ pub(super) fn validate_provenance(
     let page = cert.header.identity.page;
     if raw[0] != 1
         || raw[2] != cert.header.kind as u8
-        || raw[3] != 0
+        || raw[3] != cert.header.level
         || !zero(&raw[5..8])
         || !zero(&raw[60..64])
-        || !zero(&raw[256..])
         || PageRef::decode(&raw[8..32])? != page
         || get(raw, 32) != cert.header.identity.owner.get()
         || get(raw, 40) != 1
@@ -165,8 +212,13 @@ pub(super) fn validate_provenance(
         || get32(raw, 56) == 0
         || get(raw, 48) > cert.header.lsn.0
         || get(raw, 176) == 0
-        || get(raw, 176) >= get(raw, 48)
     {
+        return Err(Error::ProvenanceMismatch);
+    }
+    if matches!(raw[1], 5 | 6) {
+        return validate_structural(raw, cert, e);
+    }
+    if raw[3] != 0 || !zero(&raw[256..]) || get(raw, 176) >= get(raw, 48) {
         return Err(Error::ProvenanceMismatch);
     }
     match (raw[1], raw[4]) {
@@ -211,4 +263,90 @@ pub(super) fn validate_provenance(
         _ => return Err(Error::Unsupported),
     }
     Ok(())
+}
+
+fn dynamic(reference: PageRef) -> bool {
+    reference.file == first_file()
+        && (9..64).contains(&reference.page_no)
+        && reference.incarnation.get() >= 2
+}
+
+fn validate_structural(raw: &[u8; INIT_BYTES], cert: Certificate, e: Expected) -> Result<()> {
+    if e.profile.format() != 3 {
+        return Err(Error::Unsupported);
+    }
+    let source = SystemWorkRef::decode(&raw[128..176])?;
+    let anchor = PageRef::decode(&raw[208..232])?;
+    let left = PageRef::decode(&raw[232..256])?;
+    let operation = get(raw, 280);
+    let peer = match operation {
+        1 => Some(PageRef::decode(&raw[256..280])?),
+        2 if raw[1] == 5 && zero(&raw[256..280]) => None,
+        _ => return Err(Error::ProvenanceMismatch),
+    };
+    if raw[4] != 1
+        || source.namespace() != e.profile.spec().namespace
+        || source.kind() != SystemWorkKind::StructuralChange
+        || source.id() != get(raw, 48)
+        || source.generation().get() != u64::from(get32(raw, 56))
+        || get(raw, 176) != get(raw, 48)
+        || get(raw, 184) != cert.header.identity.owner.get()
+        || get(raw, 184) < 6
+        || get(raw, 192) != 1
+        || get(raw, 200) != 1
+        || get(raw, 288) == 0
+        || get(raw, 288).checked_add(1) != Some(get(raw, 296))
+        || !zero(&raw[336..])
+        || (raw[1] == 5
+            && !((cert.header.kind == PageKind::RowLeaf && raw[3] == 0)
+                || (cert.header.kind == PageKind::RowInternal && (1..=14).contains(&raw[3]))))
+        || (raw[1] == 6
+            && (cert.header.kind != PageKind::RowInternal || !(1..=15).contains(&raw[3])))
+    {
+        return Err(Error::ProvenanceMismatch);
+    }
+    // Aliasing is physical: changing only an incarnation must not hide it.
+    let references = [
+        Some(cert.header.identity.page),
+        Some(anchor),
+        Some(left),
+        peer,
+    ];
+    for (index, reference) in references.iter().copied().enumerate() {
+        let Some(reference) = reference else { continue };
+        if !dynamic(reference)
+            || references[..index]
+                .iter()
+                .flatten()
+                .any(|other| other.file == reference.file && other.page_no == reference.page_no)
+        {
+            return Err(Error::ProvenanceMismatch);
+        }
+    }
+    Ok(())
+}
+
+/// Shared provenance grammar plus its borrowed accessors. This is an explicit
+/// sum of both exclusive branches' typed carriers and codec results, not an ABI
+/// stack sample. The caller accounts for its own layout/group loop frames.
+pub(super) fn provenance_source_bytes() -> usize {
+    use crate::storage::{allocation_page::AllocationError, page::PageError};
+    use std::mem::size_of;
+    2 * size_of::<(&[u8; INIT_BYTES], Certificate, Expected)>()
+        + 2 * size_of::<SystemWorkRef>()
+        + 2 * size_of::<std::result::Result<SystemWorkRef, AllocationError>>()
+        + size_of::<TxnRef>()
+        + size_of::<std::result::Result<TxnRef, PageError>>()
+        + size_of::<[PageRef; 2]>()
+        + size_of::<[Option<PageRef>; 4]>()
+        + 8 * size_of::<PageRef>()
+        + 8 * size_of::<std::result::Result<PageRef, PageError>>()
+        + 4 * size_of::<Option<PageRef>>()
+        + 4 * size_of::<StructuralInit<'_>>()
+        + 4 * size_of::<InitProvenance<'_>>()
+        + 4 * size_of::<ReservationOwner>()
+        + 4 * size_of::<Option<ObjectHandle>>()
+        + 4 * size_of::<Result<()>>()
+        + 16 * size_of::<&[u8]>()
+        + 16 * size_of::<u64>()
 }

@@ -1,0 +1,11 @@
+{
+  "source_before": "source-r5.sha256",
+  "source_after": "source-r6.sha256",
+  "changes": [
+    "test-only tuple type alias; same underlying return type",
+    "8 * size_of::<usize>() to size_of::<[usize; 8]>; same byte size"
+  ],
+  "runtime_repeated": false,
+  "clippy_r0": "FAIL 2 lint diagnostics",
+  "clippy_r1": "PASS"
+}

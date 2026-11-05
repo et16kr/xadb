@@ -44,6 +44,27 @@ fn prune(operation: row_semantic::Operation) -> bool {
     )
 }
 
+/// The current RowLeaf of Job `ordinal`'s row in the canonical arena
+/// (`history::row::current_leaf`), for its Prune's leaf target.
+pub(in super::super::super::super::super) fn recovery_leaf(
+    arena: &[u8],
+    profile: Profile,
+    jobs: &[[u8; JOB_BYTES]; JOB_COUNT],
+    ordinal: usize,
+) -> Result<crate::storage::page::PageRef> {
+    let invalid = || unchanged(RetentionPhase::Prepare, RetentionCause::Invariant);
+    let job = job3::decode_job(
+        jobs.get(ordinal).ok_or_else(invalid)?,
+        profile.spec().namespace,
+    )
+    .map_err(queue_error)?;
+    let handle = job.object().ok_or_else(invalid)?;
+    let pair = job.pair().ok_or_else(invalid)?;
+    let row = job.row_id().ok_or_else(invalid)?;
+    history::row::current_leaf(arena, profile, handle, pair[0], row)
+        .map_err(|cause| unchanged(RetentionPhase::Prepare, cause))
+}
+
 /// The predecessor H of a Row root: the same actor's RootRetained root with
 /// the largest smaller Undo sequence (the producer's `cells::predecessor`).
 pub(in super::super::super::super::super) fn recovery_predecessor(
@@ -366,6 +387,27 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             {
                 let rejected = merge(Err(error), replay.return_checked());
                 return merge(rejected, audit.finish_checked());
+            }
+            // A split since a Prune's Reserve may have moved its row out of
+            // the pair[1] leaf hint: the RowLeaf is the arena's route of the
+            // row at this cut (dev3-tree-smo.md#current-leaf-consumers), the
+            // leaf `history::row::table_source` gives the producer.
+            if prune(operation) {
+                let leaf = recovery_leaf(replay.bytes(), profile, self.control.jobs(), ordinal);
+                match leaf {
+                    Ok(leaf) => {
+                        for (target, role) in &mut selected {
+                            if *role == row_group::LEAF as u8 {
+                                target.identity.page = leaf;
+                            }
+                        }
+                        selected.sort_unstable_by_key(|(target, _)| target_rank(*target));
+                    }
+                    Err(error) => {
+                        let rejected = merge(Err(error), replay.return_checked());
+                        return merge(rejected, audit.finish_checked());
+                    }
+                }
             }
             let requests: [TargetRequest; N] = std::array::from_fn(|i| selected[i].0);
             let mut stamps = [None; 9];

@@ -1,0 +1,7 @@
+{
+  "tests": [
+    "structural_replay_minted_claims_pass_full_base_and_reject_semantic_tampering"
+  ],
+  "reason": "replace erroneous initial_digest semantic assertion with actual source-tag grammar mutant; raw digest including zero is observation only; all completed other cases excluded",
+  "timeout_seconds": 240
+}

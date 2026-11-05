@@ -156,6 +156,12 @@ DeleteClr은 split 없이 `C−180` B를 되찾아야 한다. 그 사이 다른 
 
 > 각 RowLeaf에서 `TREE_ENTRY_CAPACITY − entry_bytes ≥ D`. 여기서 D는 같은 table의 **Retained** 효과1 root 전체(모든 actor)의 `Σ(C_j−180)`이다.
 
+위 식의 table 전체 합산은 첫 단일-leaf profile의 표현이다. DEV3 08-1의
+[현재 tree 일반화](dev3-tree-smo.md#current-tree-closure)부터 여러 leaf에서는 **현재 RowId가
+그 leaf에 존재하는 Retained root**만 합산한다. 같은 table의 다른 leaf 분량을 중복 적립하지
+않고, 실제 typed Undo before·Job 길이·현재 행의 결합을 먼저 검증한다. 구조 변경은 행과
+그 복원 의무를 함께 옮긴다. 단일 leaf의 값과 기존 Forward/CLR/Prune 산술은 같다.
+
 - INSERT Reserve(C preflight·`reserve_leaf`)는 새 cell을 넣은 뒤에도 불변식이 성립하는지 본다. 아니면 첫 효과 전 Capacity다.
 - INSERT Forward 관찰도 같은 식을 검산한다. Reserve→Forward는 한 gate 보유 안에서 이어지므로 여기서 어긋나면 Capacity가 아니라 손상이다.
 - DeleteForward는 여유와 D를 같은 양(`C−180`)만큼 늘리고, DeleteClr은 같은 양만큼 줄인다. DeletePrune은 D를 `C−180` 줄이고 tombstone entry 184 B를 비운다. INSERT CLR은 여유만 늘린다. 그래서 rollback·복구의 어떤 순서에서도 불변식이 유지된다.

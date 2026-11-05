@@ -1,0 +1,10 @@
+{
+  "scope": "source census only before effect execution; compile-r0/1 failures retained",
+  "filters": [
+    "structural_effect_source_phases_fit_original_admission_and_callers"
+  ],
+  "cases": 1,
+  "build_timeout_seconds": 300,
+  "runtime_timeout_seconds": 30,
+  "effect_runtime": "NOT_RUN pending independent census review"
+}

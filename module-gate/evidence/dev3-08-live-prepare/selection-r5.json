@@ -1,0 +1,4 @@
+{
+  "case": "structural_prepare_original_live_two_rows_preserves_state_and_binds_stamps",
+  "reason": "r4 root fixture wrongly called target_request on unregistered slots and fenced itself; use read-only registered_index census before typed getter; other3 r4 PASS cases not rerun"
+}

@@ -1,0 +1,285 @@
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 17.26s
+     Running unittests src/lib.rs (artifacts/dev3-08/target/debug/deps/engine-e4e141083d864921)
+
+running 7 tests
+S1B_REPLAYED	E-100	AgingStart	pages=[1]
+S1B_REPLAYED	H-502	RollbackStart	pages=[9]
+S1B_REFUSED	R-E-100-descriptor	Some(RowSemantic(Corrupt))
+S1B_REPLAYED	H-502	RollbackStart	pages=[9]
+S1B_REPLAYED	E-101	Begin	pages=[1, 2, 20]
+S1B_REPLAYED	H-503	Clr	pages=[1, 3, 9, 11, 13]
+S1B_REPLAYED	E-102	Commit	pages=[1, 2, 20]
+S1B_REPLAYED	E-100	AgingStart	pages=[1]
+S1B_REFUSED	R-E-101-job	Some(Retention(BudgetMismatch))
+S1B_REPLAYED	E-103	TerminalFinish	pages=[1, 2, 20]
+S1B_REPLAYED	H-504	StatementFinish	pages=[9]
+S1B_REPLAYED	H-503	Clr	pages=[1, 3, 9, 11, 13]
+S1B_REPLAYED	E-101	Begin	pages=[1, 2, 20]
+S1B_REFUSED	R-E-102-q	Some(RowSemantic(Corrupt))
+S1B_REPLAYED	E-104	Begin	pages=[1, 2, 20]
+S1B_REPLAYED	E-102	Commit	pages=[1, 2, 20]
+S1B_REPLAYED	H-505	Reserve	pages=[1, 3, 14]
+S1B_REPLAYED	E-105	RollbackStart	pages=[20]
+S1B_REPLAYED	H-504	StatementFinish	pages=[9]
+S1B_REPLAYED	E-103	TerminalFinish	pages=[1, 2, 20]
+S1B_REPLAYED	E-106	AbortEnd	pages=[1, 2, 20]
+S1B_REPLAYED	E-104	Begin	pages=[1, 2, 20]
+S1B_REPLAYED	E-107	TerminalFinish	pages=[1, 2, 20]
+S1B_REPLAYED	H-506	Cancel	pages=[1, 3]
+S1B_REPLAYED	E-105	RollbackStart	pages=[20]
+S1B_REPLAYED	N-302	RollbackStart	pages=[9]
+S1B_REPLAYED	H-505	Reserve	pages=[1, 3, 14]
+S1B_REPLAYED	E-106	AbortEnd	pages=[1, 2, 20]
+S1B_REFUSED	R-E-107-cursor	Some(RowSemantic(Corrupt))
+S1B_REPLAYED	N-303	Clr	pages=[1, 2, 9, 11, 13]
+S1B_REPLAYED	H-507	Reserve	pages=[1, 3, 14]
+S1B_REPLAYED	E-107	TerminalFinish	pages=[1, 2, 20]
+S1B_REFUSED	R-N-302-patch	Some(RowSemantic(Corrupt))
+S1B_REPLAYED	H-506	Cancel	pages=[1, 3]
+S1B_REPLAYED	N-304	AbortEnd	pages=[1, 2, 9]
+S1B_REPLAYED	N-302	RollbackStart	pages=[9]
+S1B_REPLAYED	N-305	ReleaseRole	pages=[1, 2, 11]
+S1B_REPLAYED	N-303	Clr	pages=[1, 2, 9, 11, 13]
+S1B_REPLAYED	H-508	Forward	pages=[1, 3, 9, 13, 14]
+S1B_REPLAYED	H-507	Reserve	pages=[1, 3, 14]
+S1B_REPLAYED	N-306	ReleaseRole	pages=[1, 2, 11]
+S1B_REPLAYED	N-304	AbortEnd	pages=[1, 2, 9]
+S1B_REPLAYED	N-307	ReleaseRole	pages=[1, 2, 11]
+S1B_REFUSED	R-N-305-undo	Some(RowSemantic(Corrupt))
+S1B_REPLAYED	H-509	Commit	pages=[1, 2, 9]
+S1B_REPLAYED	N-308	RootFree	pages=[1, 2, 11]
+S1B_REPLAYED	N-305	ReleaseRole	pages=[1, 2, 11]
+S1B_REPLAYED	H-508	Forward	pages=[1, 3, 9, 13, 14]
+S1B_REPLAYED	N-309	TerminalFinish	pages=[1, 2, 9]
+S1B_REPLAYED	N-306	ReleaseRole	pages=[1, 2, 11]
+S1B_REPLAYED	H-502	RollbackStart	pages=[9]
+S1B_REPLAYED	N-307	ReleaseRole	pages=[1, 2, 11]
+S1B_REPLAYED	H-510	Prune	pages=[1, 3, 9, 13, 14]
+S1B_REPLAYED	H-509	Commit	pages=[1, 2, 9]
+S1B_REPLAYED	H-503	Clr	pages=[1, 3, 9, 11, 13]
+S1B_REPLAYED	N-308	RootFree	pages=[1, 2, 11]
+S1B_REPLAYED	H-504	StatementFinish	pages=[9]
+S1B_REPLAYED	N-309	TerminalFinish	pages=[1, 2, 9]
+S1B_REPLAYED	H-502	RollbackStart	pages=[9]
+S1B_REPLAYED	H-511	Prune	pages=[1, 3, 9, 10, 13]
+S1B_REPLAYED	H-510	Prune	pages=[1, 3, 9, 13, 14]
+S1B_REPLAYED	H-505	Reserve	pages=[1, 3, 14]
+S1B_REPLAYED	H-503	Clr	pages=[1, 3, 9, 11, 13]
+S1B_REPLAYED	H-506	Cancel	pages=[1, 3]
+S1B_REPLAYED	H-512	ReleaseRole	pages=[1, 3, 11]
+S1B_REPLAYED	H-504	StatementFinish	pages=[9]
+S1B_REPLAYED	H-511	Prune	pages=[1, 3, 9, 10, 13]
+S1B_REPLAYED	H-507	Reserve	pages=[1, 3, 14]
+S1B_REFUSED	R-H-505-item	Some(RowSemantic(Corrupt))
+S1B_REPLAYED	H-508	Forward	pages=[1, 3, 9, 13, 14]
+S1B_REPLAYED	H-513	ReleaseRole	pages=[1, 3, 11]
+S1B_REPLAYED	H-505	Reserve	pages=[1, 3, 14]
+S1B_REPLAYED	H-512	ReleaseRole	pages=[1, 3, 11]
+S1B_REFUSED	R-H-506-sequence	Some(RowSemantic(Corrupt))
+S1B_REPLAYED	H-509	Commit	pages=[1, 2, 9]
+S1B_REPLAYED	H-506	Cancel	pages=[1, 3]
+S1B_REPLAYED	H-514	ReleaseRole	pages=[1, 3, 11]
+S1B_REPLAYED	H-513	ReleaseRole	pages=[1, 3, 11]
+S1B_REPLAYED	H-510	Prune	pages=[1, 3, 9, 13, 14]
+S1B_REPLAYED	H-507	Reserve	pages=[1, 3, 14]
+S1B_REPLAYED	H-511	Prune	pages=[1, 3, 9, 10, 13]
+S1B_REPLAYED	H-515	RootFree	pages=[1, 3, 11]
+S1B_REPLAYED	H-514	ReleaseRole	pages=[1, 3, 11]
+S1B_REPLAYED	H-508	Forward	pages=[1, 3, 9, 13, 14]
+S1B_REPLAYED	H-512	ReleaseRole	pages=[1, 3, 11]
+S1B_REFUSED	R-H-509-owner	Some(RowSemantic(Corrupt))
+S1B_REPLAYED	D-516	Begin	pages=[1, 3, 20]
+S1B_REPLAYED	H-513	ReleaseRole	pages=[1, 3, 11]
+S1B_REPLAYED	H-515	RootFree	pages=[1, 3, 11]
+S1B_REPLAYED	H-509	Commit	pages=[1, 2, 9]
+S1B_REFUSED	R-H-510-digest	Some(RowSemantic(Corrupt))
+S1B_REPLAYED	H-514	ReleaseRole	pages=[1, 3, 11]
+S1B_REPLAYED	D-517	ReleaseRole	pages=[1, 3, 10]
+S1B_REPLAYED	D-516	Begin	pages=[1, 3, 20]
+S1B_REPLAYED	H-515	RootFree	pages=[1, 3, 11]
+S1B_REPLAYED	H-510	Prune	pages=[1, 3, 9, 13, 14]
+S1B_REFUSED	R-H-511-count	Some(RowSemantic(Corrupt))
+S1B_REPLAYED	A-noh-301	Forward	pages=[1, 2, 9, 11, 13]
+S1B_REPLAYED	D-518	ReleaseRole	pages=[1, 3, 10]
+S1B_REPLAYED	D-517	ReleaseRole	pages=[1, 3, 10]
+S1B_REPLAYED	H-511	Prune	pages=[1, 3, 9, 10, 13]
+S1B_REPLAYED	H-512	ReleaseRole	pages=[1, 3, 11]
+S1B_REPLAYED	A-noh-303	Clr	pages=[1, 2, 9, 11, 13]
+S1B_REPLAYED	D-519	ReleaseRole	pages=[1, 3, 10]
+S1B_REPLAYED	H-513	ReleaseRole	pages=[1, 3, 11]
+S1B_REPLAYED	D-518	ReleaseRole	pages=[1, 3, 10]
+S1B_REPLAYED	H-514	ReleaseRole	pages=[1, 3, 11]
+S1B_REPLAYED	D-520	RootFree	pages=[1, 3, 10]
+S1B_REPLAYED	A-h-501	Forward	pages=[1, 3, 9, 11, 13]
+S1B_REFUSED	R-H-515-root	Some(RowSemantic(Corrupt))
+S1B_REPLAYED	D-519	ReleaseRole	pages=[1, 3, 10]
+S1B_REPLAYED	H-515	RootFree	pages=[1, 3, 11]
+S1B_REPLAYED	D-521	Reserve	pages=[1, 3, 11]
+S1B_REPLAYED	A-h-503	Clr	pages=[1, 3, 9, 11, 13]
+S1B_REFUSED	R-A-noh-301-count	Some(RowSemantic(Corrupt))
+S1B_REFUSED	R-A-noh-301-status	Some(RowSemantic(Corrupt))
+S1B_REPLAYED	A-ord-301	Forward	pages=[1, 2, 9, 13, 14]
+S1B_REPLAYED	D-520	RootFree	pages=[1, 3, 10]
+S1B_REPLAYED	D-522	Cancel	pages=[1, 3]
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1b_row_arm_replays_n1_and_a_literals ... ok
+S1B_REPLAYED	A-noh-301	Forward	pages=[1, 2, 9, 11, 13]
+S1B_REPLAYED	H-502	RollbackStart	pages=[9]
+S1B_REPLAYED	D-521	Reserve	pages=[1, 3, 11]
+S1B_REFUSED	R-A-noh-303-redo	Some(RowSemantic(Corrupt))
+S1B_REPLAYED	D-523	Reserve	pages=[1, 3, 11]
+S1B_REPLAYED	H-503	Clr	pages=[1, 3, 9, 11, 13]
+S1B_REPLAYED	A-noh-303	Clr	pages=[1, 2, 9, 11, 13]
+S1B_REPLAYED	H-504	StatementFinish	pages=[9]
+S1B_REPLAYED	D-522	Cancel	pages=[1, 3]
+S1B_REFUSED	R-H-505-item	Some(RowSemantic(Corrupt))
+S1B_REFUSED	R-A-h-501-edge	Some(RowSemantic(Corrupt))
+S1B_REPLAYED	D-524	DeleteForward	pages=[1, 3, 11, 13, 20]
+S1B_REFUSED	G-505-projection	Some(RowSemantic(Corrupt))
+S1B_REFUSED	R-A-h-501-item	Some(RowSemantic(Corrupt))
+S1B_REFUSED	G-505-c	Some(RowSemantic(Corrupt))
+S1B_REFUSED	G-505-c184	Some(Retention(Corrupt))
+S1B_REPLAYED	D-523	Reserve	pages=[1, 3, 11]
+S1B_REFUSED	G-505-c2229	Some(Retention(Corrupt))
+S1B_REPLAYED	A-h-501	Forward	pages=[1, 3, 9, 11, 13]
+S1B_REFUSED	G-505-budget	Some(RowSemantic(Corrupt))
+S1B_REPLAYED	D-525	Reserve	pages=[1, 3, 10]
+S1B_REFUSED	G-505-ordinal18	Some(RowSemantic(Corrupt))
+S1B_REFUSED	R-A-h-503-core	Some(RowSemantic(Corrupt))
+S1B_REPLAYED	D-524	DeleteForward	pages=[1, 3, 11, 13, 20]
+S1B_REFUSED	G-505-jobgen	Some(RowSemantic(Corrupt))
+S1B_REFUSED	R-A-h-503-descriptor	Some(RowSemantic(Corrupt))
+S1B_REFUSED	G-505-undogen	Some(RowSemantic(Corrupt))
+S1B_REFUSED	G-505-container9	Some(Retention(IdentityMismatch))
+S1B_REFUSED	G-505-container12	Some(Retention(IdentityMismatch))
+S1B_REFUSED	G-505-container13	Some(Retention(IdentityMismatch))
+S1B_REPLAYED	D-526	DeleteForward	pages=[1, 3, 10, 13, 20]
+S1B_REFUSED	G-505-container10	Some(RowSemantic(Undo(StateMismatch)))
+S1B_REFUSED	G-505-container15	Some(Invariant)
+S1B_REPLAYED	A-h-503	Clr	pages=[1, 3, 9, 11, 13]
+S1B_REFUSED	G-505-container-inc3	Some(Invariant)
+S1B_REFUSED	G-505-statement1	Some(RowSemantic(OrderMismatch))
+S1B_REFUSED	allocator-free14	Some(Invariant)
+S1B_REPLAYED	D-525	Reserve	pages=[1, 3, 10]
+S1B_REFUSED	allocator-inc14	Some(Invariant)
+S1B_REFUSED	catalog-missing	Some(Invariant)
+S1B_REFUSED	catalog-anchor	Some(Invariant)
+S1B_REPLAYED	D-527	RollbackStart	pages=[20]
+S1B_REFUSED	catalog-retired	Some(Invariant)
+S1B_REFUSED	catalog-index	Some(Invariant)
+S1B_REFUSED	actor-not-leased	Some(Invariant)
+S1B_REFUSED	leaf-full	Some(RowSemantic(OrderMismatch))
+S1B_REPLAYED	A-ord-301	Forward	pages=[1, 2, 9, 13, 14]
+S1B_REFUSED	leaf-key-present	Some(RowSemantic(IdentityMismatch))
+S1B_REFUSED	tail-dirty	Some(Invariant)
+S1B_REFUSED	tail0	Some(Invariant)
+S1B_REFUSED	tail9075	Some(Invariant)
+S1B_REFUSED	tail9076	Some(Invariant)
+S1B_REFUSED	tail10239	Some(Invariant)
+S1B_REFUSED	no-att-row	Some(Invariant)
+S1B_REFUSED	duplicate-reserved-root	Some(Invariant)
+S1B_REFUSED	catalog-retired	Some(Unsupported)
+S1B_REFUSED	catalog-missing	Some(Invariant)
+S1B_REFUSED	catalog-anchor	Some(Invariant)
+S1B_REFUSED	catalog-absent	Some(Tree(Page(Corrupt)))
+S1B_REPLAYED	D-526	DeleteForward	pages=[1, 3, 10, 13, 20]
+S1B_REPLAYED	H-505	Reserve	pages=[1, 3, 14]
+S1B_REPLAYED	D-528	DeleteClr	pages=[1, 3, 10, 13, 20]
+S1B_REFUSED	G-506-reserve2	Some(RowSemantic(OrderMismatch))
+S1B_REPLAYED	A-noh-301	Forward	pages=[1, 2, 9, 11, 13]
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1b_row_arm_refuses_mutations_without_effect ... ok
+S1B_REPLAYED	H-502	RollbackStart	pages=[9]
+S1B_REPLAYED	D-527	RollbackStart	pages=[20]
+S1B_REPLAYED	D-529	StatementFinish	pages=[20]
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::tree_search::row_replay_tree_selector_rejects_wrong_identity_range_and_catalog_binding ... ok
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::tree_search::row_replay_tree_selector_uses_current_anchor_instead_of_job_hint ... ok
+S1B_REFUSED	G-503-reserve-aborting	Some(RowSemantic(OrderMismatch))
+S1G_REFUSED_COUNT	28
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1g_row_reserve_refuses_without_effect ... ok
+S1B_REPLAYED	D-530	Reserve	pages=[1, 3, 15]
+S1B_REPLAYED	D-528	DeleteClr	pages=[1, 3, 10, 13, 20]
+S1B_REPLAYED	D-529	StatementFinish	pages=[20]
+S1B_REPLAYED	D-531	Forward	pages=[1, 3, 13, 15, 20]
+S1B_REPLAYED	D-530	Reserve	pages=[1, 3, 15]
+S1B_REPLAYED	D-532	Reserve	pages=[1, 3, 16]
+S1B_REPLAYED	D-531	Forward	pages=[1, 3, 13, 15, 20]
+S1B_REPLAYED	D-533	DeleteForward	pages=[1, 3, 13, 16, 20]
+S1B_REPLAYED	D-532	Reserve	pages=[1, 3, 16]
+S1B_REPLAYED	D-534	Commit	pages=[1, 3, 20]
+S1B_REPLAYED	D-533	DeleteForward	pages=[1, 3, 13, 16, 20]
+S1B_REPLAYED	D-535	DeletePrune	pages=[1, 3, 13, 16, 20]
+S1B_REPLAYED	D-534	Commit	pages=[1, 3, 20]
+S1B_REPLAYED	D-536	Prune	pages=[1, 3, 13, 15, 20]
+S1B_REPLAYED	D-535	DeletePrune	pages=[1, 3, 13, 16, 20]
+S1B_REPLAYED	D-537	DeletePrune	pages=[1, 3, 11, 13, 20]
+S1B_REPLAYED	D-536	Prune	pages=[1, 3, 13, 15, 20]
+S1B_REPLAYED	D-538	ReleaseRole	pages=[1, 3, 11]
+S1B_REPLAYED	D-537	DeletePrune	pages=[1, 3, 11, 13, 20]
+S1B_REPLAYED	D-539	ReleaseRole	pages=[1, 3, 11]
+S1B_REPLAYED	D-538	ReleaseRole	pages=[1, 3, 11]
+S1B_REPLAYED	D-540	ReleaseRole	pages=[1, 3, 11]
+S1B_REPLAYED	D-539	ReleaseRole	pages=[1, 3, 11]
+S1B_REPLAYED	D-541	RootFree	pages=[1, 3, 11]
+S1B_REPLAYED	D-542	ReleaseRole	pages=[1, 3, 10]
+S1B_REPLAYED	D-540	ReleaseRole	pages=[1, 3, 11]
+S1B_REPLAYED	D-543	ReleaseRole	pages=[1, 3, 10]
+S1B_REPLAYED	D-541	RootFree	pages=[1, 3, 11]
+S1B_REPLAYED	D-544	ReleaseRole	pages=[1, 3, 10]
+S1B_REPLAYED	D-542	ReleaseRole	pages=[1, 3, 10]
+S1B_REPLAYED	D-545	RootFree	pages=[1, 3, 10]
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::rdl_j_row_arm_replays_history_d ... ok
+S1B_REPLAYED	D-543	ReleaseRole	pages=[1, 3, 10]
+S1B_REPLAYED	D-544	ReleaseRole	pages=[1, 3, 10]
+S1B_REPLAYED	D-545	RootFree	pages=[1, 3, 10]
+S1B_REPLAYED	U-546	ReleaseRole	pages=[1, 3, 14]
+S1B_REPLAYED	U-547	ReleaseRole	pages=[1, 3, 14]
+S1B_REPLAYED	U-548	ReleaseRole	pages=[1, 3, 14]
+S1B_REPLAYED	U-549	RootFree	pages=[1, 3, 14]
+S1B_REPLAYED	U-550	ReleaseRole	pages=[1, 3, 15]
+S1B_REPLAYED	U-551	ReleaseRole	pages=[1, 3, 15]
+S1B_REPLAYED	U-552	ReleaseRole	pages=[1, 3, 15]
+S1B_REPLAYED	U-553	RootFree	pages=[1, 3, 15]
+S1B_REPLAYED	U-554	Begin	pages=[1, 3, 21]
+S1B_REFUSED	R-U-555-effect	Some(Retention(Corrupt))
+S1B_REFUSED	R-U-555-cell	Some(Retention(BudgetMismatch))
+S1B_REPLAYED	U-555	Reserve	pages=[1, 3, 10]
+S1B_REPLAYED	U-556	Cancel	pages=[1, 3]
+S1B_REPLAYED	U-557	Reserve	pages=[1, 3, 10]
+S1B_REFUSED	R-U-558-value	Some(RowSemantic(IdentityMismatch))
+S1B_REFUSED	R-U-558-length	Some(RowSemantic(IdentityMismatch))
+S1B_REFUSED	R-U-558-undo	Some(RowSemantic(Corrupt))
+S1B_REPLAYED	U-558	UpdateForward	pages=[1, 3, 10, 13, 21]
+S1B_REPLAYED	U-559	Reserve	pages=[1, 3, 11]
+S1B_REFUSED	R-U-560-edge	Some(RowSemantic(Corrupt))
+S1B_REPLAYED	U-560	UpdateForward	pages=[1, 3, 11, 13, 21]
+S1B_REPLAYED	U-561	RollbackStart	pages=[21]
+S1B_REFUSED	R-U-562-restore	Some(RowSemantic(Corrupt))
+S1B_REFUSED	R-U-562-count	Some(RowSemantic(Corrupt))
+S1B_REPLAYED	U-562	UpdateClr	pages=[1, 3, 11, 13, 21]
+S1B_REPLAYED	U-563	StatementFinish	pages=[21]
+S1B_REPLAYED	U-564	Reserve	pages=[1, 3, 14]
+S1B_REFUSED	R-U-565-edge	Some(RowSemantic(Corrupt))
+S1B_REPLAYED	U-565	Forward	pages=[1, 3, 13, 14, 21]
+S1B_REPLAYED	U-566	Reserve	pages=[1, 3, 15]
+S1B_REPLAYED	U-567	UpdateForward	pages=[1, 3, 13, 15, 21]
+S1B_REPLAYED	U-568	Commit	pages=[1, 3, 21]
+S1B_REFUSED	R-U-569-q	Some(RowSemantic(Corrupt))
+S1B_REFUSED	R-U-569-undo	Some(RowSemantic(Corrupt))
+S1B_REPLAYED	U-569	UpdatePrune	pages=[1, 3, 13, 15, 21]
+S1B_REPLAYED	U-570	Prune	pages=[1, 3, 13, 14, 21]
+S1B_REFUSED	R-U-571-payload	Some(RowSemantic(Corrupt))
+S1B_REPLAYED	U-571	UpdatePrune	pages=[1, 3, 10, 13, 21]
+S1B_REFUSED	R-U-572-stamp	Some(RowSemantic(Corrupt))
+S1B_REPLAYED	U-572	ReleaseRole	pages=[1, 3, 10]
+S1B_REPLAYED	U-573	ReleaseRole	pages=[1, 3, 10]
+S1B_REPLAYED	U-574	ReleaseRole	pages=[1, 3, 10]
+S1B_REPLAYED	U-575	RootFree	pages=[1, 3, 10]
+S1B_REPLAYED	U-576	ReleaseRole	pages=[1, 3, 11]
+S1B_REPLAYED	U-577	ReleaseRole	pages=[1, 3, 11]
+S1B_REPLAYED	U-578	ReleaseRole	pages=[1, 3, 11]
+S1B_REPLAYED	U-579	RootFree	pages=[1, 3, 11]
+RUP_R_REPLAY_REJECTED	13
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::rup_r_row_arm_replays_history_u ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 2201 filtered out; finished in 1.89s
+

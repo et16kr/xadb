@@ -1,0 +1,31 @@
+   Compiling version_check v0.9.5
+   Compiling typenum v1.20.1
+   Compiling autocfg v1.5.1
+   Compiling cfg_aliases v0.2.2
+   Compiling cfg-if v1.0.5
+   Compiling libc v0.2.191
+   Compiling generic-array v0.14.7
+   Compiling memoffset v0.9.1
+   Compiling nix v0.30.1
+   Compiling cpufeatures v0.2.17
+   Compiling bitflags v2.13.2
+   Compiling crypto-common v0.1.7
+   Compiling block-buffer v0.10.4
+   Compiling digest v0.10.7
+   Compiling sha2 v0.10.9
+   Compiling xadb-foundation v0.1.0 (/workspace/xadb/crates/foundation)
+   Compiling xadb-platform v0.1.0 (/workspace/xadb/crates/platform)
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 40s
+     Running unittests src/lib.rs (artifacts/dev3-08/target/debug/deps/engine-e4e141083d864921)
+
+running 6 tests
+test storage::tree_page::audit::tests::immutable_tree_audit_distinguishes_file_identity_and_unreachable_owned_pages ... ok
+test storage::tree_page::audit::tests::immutable_tree_audit_rejects_shared_children_and_incarnation_aliases_before_load ... ok
+test storage::tree_page::audit::tests::immutable_tree_audit_checks_capacity_before_load_and_preserves_callback_error ... ok
+test storage::tree_page::audit::tests::immutable_tree_audit_bounds_maximum_depth_and_accepts_empty_leaf ... ok
+test storage::tree_page::audit::tests::immutable_tree_audit_visits_all_families_in_exact_preorder ... ok
+test storage::tree_page::audit::tests::immutable_tree_audit_rejects_off_path_bounds_and_identity ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 2214 filtered out; finished in 0.02s
+

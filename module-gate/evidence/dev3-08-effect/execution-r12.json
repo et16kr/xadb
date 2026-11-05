@@ -1,0 +1,10 @@
+{
+  "source": "aac94d796de47e956914aa3a100b87140face2994c9de36bc03a4821e2ebfeca",
+  "elf": "1efbae6ad6a8898b3e2ed6f15e247bcb76dfc273d5cf02da838b83a799c3aedf",
+  "input": "9c55c0db6bdceabfa15a9191c99182f93c73394c95004afd9068d4ba42967611",
+  "filters": [
+    "structural_effect_original_clean_victim_stamp_change_rejects_before_claim",
+    "structural_effect_durable_write_failure_keeps_pending_and_fences"
+  ],
+  "timeout_seconds": 300
+}

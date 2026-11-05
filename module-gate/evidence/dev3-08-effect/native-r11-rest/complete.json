@@ -1,0 +1,34 @@
+{
+  "SMO-NR2": {
+    "result": "PASS",
+    "pids": [
+      "58575",
+      "58630",
+      "58632"
+    ],
+    "expected": {
+      "case": "SMO-NR2",
+      "child": "0",
+      "cut": "staged",
+      "partitions": "4",
+      "new_pages": "0",
+      "level": "0"
+    }
+  },
+  "SMO-NR3": {
+    "result": "PASS",
+    "pids": [
+      "58634",
+      "58645",
+      "58650"
+    ],
+    "expected": {
+      "case": "SMO-NR3",
+      "child": "0",
+      "cut": "installed",
+      "partitions": "4",
+      "new_pages": "0",
+      "level": "0"
+    }
+  }
+}
