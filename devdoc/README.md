@@ -13,7 +13,8 @@ DEV3 일정 보고는 [전체 예상 일정·누적 진척률 V1](plans/dev3-sch
 [U1](contracts/dev3-tree-smo.md#unlink-u1)**이다. 작업 branch는 `claude/project-thread-e9itre`다. 설계(LeafUnlink·
 RootCollapse를 scope4 opcode 3·4로, 퇴역 page는 Free가 아니라 anchor의 XTR1 목록에)는 독립 D2 3회차 ACCEPT를
 받았다. U1은 XTR1 codec, split candidate의 목록 보존과 `reached ⊎ retired == owned` 검산, 순수 unlink candidate,
-opcode 3·4 frame producer/observer, bank, Base4 closure와 UNL-P01..P10·F01..F04·B01..B09 memory 시험이다. 제품
+opcode 3·4 frame producer/observer, bank, Base4 closure와 UNL-P01..P10·F01..F04·B01..B06·B08 memory 시험이다(B07·B09는
+일부, 재시작·BaseOnly capture는 U2). 제품
 경로는 아직 이 코드를 부르지 않는다(replay U2, live 효과·호출자 U3, native U4). 앞 단위
 [current-leaf 소비자 일반화](contracts/dev3-tree-smo.md#current-leaf-consumers)(PR #53)와
 [A 자동 split 호출자](contracts/dev3-tree-smo.md#automatic-split)(PR #54)는 병합됐다. 08-1은 U4가 끝나야 적립하며

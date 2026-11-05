@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-11-06T01:06:16.877163+09:00",
+  "date": "2026-11-06T01:48:10.424922+09:00",
   "status": "FAIL",
   "errors": [
     "/home/claude/xadb/devdoc/contracts/dev3-tree-smo.md: missing link ../../module-gate/evidence/dev3-08-1-unlink-u1/review.md"
@@ -9,9 +9,9 @@
   "markdown_documents": [
     {
       "file": "devdoc/README.md",
-      "links": 316,
+      "links": 317,
       "duplicate_ids": 0,
-      "sha256": "5487030ba6e965cb0ba7f4d1180d8f299dcfafd7443b30b42fc50db40b4fcaea"
+      "sha256": "69fbefaf09b577c1e9a4a2efcfe2b0dbf165d29d3090d1701cad3590efbda606"
     },
     {
       "file": "devdoc/contracts/README.md",
@@ -465,9 +465,9 @@
     },
     {
       "file": "devdoc/contracts/dev3-tree-smo.md",
-      "links": 42,
+      "links": 43,
       "duplicate_ids": 0,
-      "sha256": "bfa8e174d3a014ea59da805a0a4f494e0cb5a37440aa8b35ac604429d8f8c319"
+      "sha256": "d66ec962794f5a278fbaa0e9c7926a021a70eb529095d41acfe1514cbfe27c46"
     },
     {
       "file": "devdoc/contracts/dev3-undo-format.md",
@@ -1497,9 +1497,9 @@
     },
     {
       "file": "devdoc/plans/dev3-schedule-baseline.md",
-      "links": 121,
+      "links": 122,
       "duplicate_ids": 0,
-      "sha256": "a7c2d5e51145b62d9174db525296ffe90547d3e03e64079f471b10773bcef1de"
+      "sha256": "df94c73900db3f8f5ebbfe78be48db158a4a08ad8e4f476ff09aadfe8a0210a7"
     },
     {
       "file": "devdoc/plans/dev3-test-plan.md",

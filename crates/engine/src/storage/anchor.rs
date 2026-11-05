@@ -174,8 +174,10 @@ impl<'a> RetiredList<'a> {
     }
 
     /// Merge `added` into this list in physical order, writing a new XTR1
-    /// cell. The result is validated again by the anchor encoder that uses
-    /// it. Errors preserve nothing useful in `output`.
+    /// cell. Precondition: `added` is sorted by (file, page_no) and shares no
+    /// physical page with this list; a caller that breaks it gets a cell
+    /// the anchor encoder that uses it refuses (InvalidInput), never a
+    /// written list. Errors preserve nothing useful in `output`.
     pub(crate) fn extend(
         self,
         added: &[RetiredPage],

@@ -1410,10 +1410,12 @@ PASS도 주장하지 않는다. 단계의 결과는 아래 각 단계 절에만 
   함께만 쓴다). 목록이 나쁜 encode 입력은 InvalidInput이다.
 - `semantic_row/structure.rs`·`bank.rs`: `Operation::{LeafUnlink=3, RootCollapse=4}`, opcode별 frame bytes,
   bank의 consumed WAL 35,248·19,032. bank 관측 이름 `FinishedSplit`을 `FinishedStructural`로 바꿨다(동작 같음).
-  split의 `decode_core`·`decode_layout`·`init`은 opcode 1·2만 받고 3·4는 Unsupported다. opcode 3·4의
+  split의 `decode_core`·`init`은 opcode 1·2만 받고 3·4는 Unsupported다. split의 `decode_layout`은 split 길이
+  (84,744·84,640)만 받으며(다른 길이는 Corrupt) 그 길이의 opcode 3·4는 Unsupported다. opcode 3·4의
   정확한 대조는 새 `structure::unlink::decode_layout`(길이·record_count·native/redo 수·role 집합·role별 core 칸과
   kind/level·redo ordinal dense·바뀌지 않는 native의 0xFFFF와 after=before digest·redo target)이 한다. U2의
-  replay dispatch가 opcode로 둘 중 하나를 고른다. finished descriptor 검산은 두 쪽이 같은
+  replay dispatch는 frame 길이(두 문법의 길이는 겹치지 않는다)로 둘 중 하나를 고르고, 고른 decoder가 opcode를 다시
+  대조한다. finished descriptor 검산은 두 쪽이 같은
   `validate_finished_owner`를 쓴다.
 - split candidate: anchor after가 `encode_listed_anchor`로 목록 bytes를 보존하고, `audit`이 `reached ⊎ retired ==
   owned`와 항목 검산(never-inline `retired_pages`: 같은 object·incarnation·generation·kind로 Allocated, 도달하지
@@ -1434,28 +1436,49 @@ PASS도 주장하지 않는다. 단계의 결과는 아래 각 단계 절에만 
   leaf 11을 비우고 90에 RootCollapse, root 16 level 0, revision 3, 목록 [11 leaf, 17 internal])를 쓴다. 기존
   fixture bytes는 같다.
 
-시험(모두 PASS, memory):
+시험(모두 PASS, memory). 경로는 `cargo test -p xadb-engine --lib -- --list`의 libtest 경로다.
 
-| ID | 시험 |
+| ID | libtest 경로 |
 | --- | --- |
-| UNL-P01..P04 | `storage::anchor_tests::unl_p01_*`..`unl_p04_*` |
-| UNL-P05..P10 | `semantic_row::structure::weights::candidate_tests::unlink::unl_p05_*`..`unl_p10_*` |
-| UNL-F01..F03 | `semantic_row::structure::weights::unlink_frame_tests::unl_f01_*`..`unl_f03_*`(제품 emitter 없이 쓴 section serializer, F02 변조 14개) |
-| UNL-F04 | `semantic_row::structure::bank_tests::unl_f04_*` |
-| UNL-B01, B07..B09 | `plan4_recovery_base::row::graph::current_tree_tests::unl_b01_*` |
-| UNL-B02..B06 | `plan4_recovery_base::row::graph::current_tree_tests::unl_b02_b06_*`(변조 6개, 모두 IdentityMismatch) |
+| UNL-P01..P04 | `storage::anchor::tests::unl_p01_*`..`unl_p04_*` |
+| UNL-P05..P10 | `storage::semantic_row::structure::weights::tests::candidate::unlink::unl_p05_*`..`unl_p10_*` |
+| UNL-F01..F03 | `storage::semantic_row::structure::weights::tests::candidate::unlink::frame::unl_f01_*`..`unl_f03_*`(제품 emitter 없이 쓴 section serializer, F02 변조 14개) |
+| UNL-F04 | `storage::semantic_row::structure::bank::tests::unl_f04_*` |
+| UNL-B01, B07..B09 | `storage::plan4_recovery_base::row::graph::tests::current_tree_tests::unl_b01_*` |
+| UNL-B02..B06 | `storage::plan4_recovery_base::row::graph::tests::current_tree_tests::unl_b02_b06_*`(변조 6개, 모두 IdentityMismatch) |
 
 계획과 다르게 남긴 것:
 
 - UNL-P08의 Catalog 부채(non-Free Catalog Job → Unsupported)는 `check_debt`로 구현했으나 이 단계의 독립 시험이
-  없다. CREATE Catalog Job이 있는 table로 U3의 UNL-L07이 본다. P08은 RootReserved Job·allocator Reserved
-  (OrderMismatch), stale·alias·non-leaf source, revision 소진(Exhausted), high-water 불일치를 본다.
+  없다. U2에서 non-Free Catalog Job 하나를 넣은 단위 시험(NotNeeded보다 먼저 거절)을 더하고, U3의 UNL-L07이 CREATE
+  Catalog Job table로 다시 본다. P08은 RootReserved Job·allocator Reserved(OrderMismatch), stale·alias·non-leaf
+  source, revision 소진(Exhausted), high-water 불일치를 본다.
 - UNL-B07의 재시작과 B09의 BaseOnly·다음 rebase capture는 복구 경로가 필요해 U2(UNL-R)로 미룬다. U1의 B07은
   퇴역한 CREATE leaf를 가리키는 Job pair[1] hint가 그대로 수락되는 것을, B09는 Base4 decode→encode가 목록·퇴역
   image·claim을 bytes 그대로 남기는 것을 본다. B08은 bank 33의 unlink descriptor(owner 90) 옆에 그보다 오래된
   split claim(70, 80, 85)이 있는 Base4의 수락이다.
 - S1B Row arm frame 고정값은 26,420B에서 26,452B가 되었다(위 대체 목록). 그 밖에 바뀐 회계 고정값은 없다.
 
-함께 돌린 기존 시험(AGENTS.md 선택 범위): anchor codec, `semantic_row::structure` 전체, `plan4_recovery_base::row`,
-S1B census, SPL-A08, scope4 replay·structural effect, structural bank·history·prepare. 결과 154 PASS, 1 ignored.
-환경 변수가 필요한 `xrb_*`는 이 변경 전 base에서도 같은 이유로 실패하여 제외했다.
+실행한 명령(작성자 checkout, U1 최종 code. 아래 `<hex>`는 64자 자리표시 hex이고, 세 XADB_CATALOG_*_SHA256에
+준다. AGENTS.md에 따라 바뀐 코드에 닿는 시험만 골랐고 전체 suite는 돌리지 않았다):
+
+| 명령(`cargo test -p xadb-engine --lib -- …`) | 결과 |
+| --- | --- |
+| `storage::anchor::tests:: storage::semantic_row::structure:: storage::plan4_recovery_base::row` | 113 passed, 0 ignored(UNL 16개 모두 여기 있다) |
+| `retention::history::structure:: retention::recovery::structural_ catalog_live::structural:: plan4_recovery::analysis::structural_bank_tests plan4_recovery::tests::row_gate:: retire::driver::structural_ split_rows::` | 59 passed, 1 ignored(`structural_effect_native_worker`: native controller가 부르는 worker). 바뀐 `structural_prepare.rs`·`history/structure.rs`·`structural_effect.rs`의 시험, S1B census, SPL-A08, live split 호출자 SPL-A01..A06·SPL-J01..J07을 포함한다 |
+| XADB_PLAN4_RECOVERY_*_SHA256에도 `<hex>`를 주고 `plan4_recovery::tests::recovery_source_` | 2 passed(바뀐 Base4 `current_tree::source_bytes`가 들어가는 recovery 자원 회계) |
+
+`storage::plan4_recovery_base::tests::`의 XRB 시험 13개는 [module-gate 정책](../policies/module-gate.json)의
+`evidence.executor_only` case다(XADB_XRB_INCLUDE와 frozen fixture 디렉터리·index hash를 executor만 준다). CI는
+이를 돌리지 않는다. 바뀐 Base4 decode를 지나므로 작성자가 executor 역할로 직접 돌렸다: fixture
+`tests/fixtures/dev3-plan4-recovery-base/vectors/p1`, `XADB_XRB_INDEX_SHA256` = 그 `raw-index.tsv`의 sha256,
+source·ELF·input hash는 자리표시, 시험마다 자기 ID 전부를 `XADB_XRB_INCLUDE`로 주고 `--exact`로 하나씩 실행했다.
+결과:
+
+| 시험 | 결과 |
+| --- | --- |
+| `xrb_canonical_snapshots` C001..C015, `xrb_section_rejections` S001..S016, `xrb_global_census_rejections` G001..G024, `xrb_provenance_and_bindings` I001..I008, `xrb_encoder_literals` E001..E008, `xrb_partial_source_layout` ST001 | 모두 XB_PASS |
+| `bridges::xrb_catalog_bridge_literals` BC001..BC006, `xrb_allocation_bridge_states` BA001..BA024, `xrb_reserved_terminal_adjacency` BB001, `xrb_borrowed_inventory_bridge` BI001..BI008, `xrb_bridge_source_layout` BST001 | 모두 XB_PASS |
+| `xrb_header_rejections` H002..H016 | XB_PASS |
+| `xrb_header_rejections` H001(header version 2를 Unsupported로 기대) | **XB_FAIL**("invalid base accepted"). main `1c9486a`의 같은 명령에서도 같은 위치(`plan4_recovery_base_tests.rs:295`)로 실패하므로 U1 전부터 있던 실패다. 원인은 분석하지 않았다(`read_header_format`은 Row가 아닌 mode에서 version 2를 V2System으로 받는다). 이 단계에서 고치지 않는다 |
+| `xrb_s5_reserved_header_bytes` | `#[ignore]` 시험이라 실행되지 않음 |

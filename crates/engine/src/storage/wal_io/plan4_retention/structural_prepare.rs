@@ -196,25 +196,28 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                 order.sort_unstable_by_key(|at| target_rank(request(observed.targets[*at])));
                 let requests = order.map(|at| request(observed.targets[at]));
                 let roles = order.map(|at| at as u8);
-                // A split Observation carries only RootSplit or ChildSplit.
-                let stamps = if observed.operation == smo::Operation::RootSplit {
-                    read_split_before::<3, W>(
+                // A split Observation carries only RootSplit or ChildSplit; the
+                // unlink arms keep the match exhaustive.
+                let stamps = match observed.operation {
+                    smo::Operation::RootSplit => read_split_before::<3, W>(
                         storage,
                         self.pool,
                         owner,
                         &observed,
                         before,
                         replay.bytes(),
-                    )
-                } else {
-                    read_split_before::<4, W>(
+                    ),
+                    smo::Operation::ChildSplit => read_split_before::<4, W>(
                         storage,
                         self.pool,
                         owner,
                         &observed,
                         before,
                         replay.bytes(),
-                    )
+                    ),
+                    smo::Operation::LeafUnlink | smo::Operation::RootCollapse => {
+                        Err(semantic(row::Error::Unsupported))
+                    }
                 }?;
                 let root = history::arena_page(replay.bytes(), 1);
                 let future = prepare_inventory(

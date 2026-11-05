@@ -380,11 +380,14 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 .map_err(|_| semantic(row::Error::IdentityMismatch))?,
         )
         .map_err(|_| semantic(row::Error::IdentityMismatch))?;
-        // A split Observation carries only RootSplit or ChildSplit.
-        let count = if prepared.observation.operation == smo::Operation::RootSplit {
-            2
-        } else {
-            1
+        // A split Observation carries only RootSplit or ChildSplit; the
+        // unlink arms keep the match exhaustive.
+        let count = match prepared.observation.operation {
+            smo::Operation::RootSplit => 2,
+            smo::Operation::ChildSplit => 1,
+            smo::Operation::LeafUnlink | smo::Operation::RootCollapse => {
+                return Err(semantic(row::Error::Unsupported));
+            }
         };
         let right = request(prepared.observation.targets[3]);
         let authority = StructuralAuthority {
