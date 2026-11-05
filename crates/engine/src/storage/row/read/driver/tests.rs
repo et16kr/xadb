@@ -344,7 +344,10 @@ impl<'x> ReadSource for LiteralSource<'x> {
         = LiteralPage<'g, 'x>
     where
         Self: 'g;
-    fn page(&mut self, key: RowId) -> Result<Step<LiteralPage<'_, 'x>, FlushTarget>, RetentionError> {
+    fn page(
+        &mut self,
+        key: RowId,
+    ) -> Result<Step<LiteralPage<'_, 'x>, FlushTarget>, RetentionError> {
         self.note(Page);
         let (bytes, upper) = match self.right {
             Some((separator, right)) if key >= separator => (right, None),

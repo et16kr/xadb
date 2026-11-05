@@ -68,7 +68,10 @@ fn leaves(pool: &SharedPool<'_, '_, '_, '_>) -> Vec<(PageRef, Vec<u64>)> {
 fn shape(leaves: &[(PageRef, Vec<u64>)]) -> (Vec<usize>, Vec<u64>) {
     (
         leaves.iter().map(|(_, keys)| keys.len()).collect(),
-        leaves.iter().flat_map(|(_, keys)| keys.iter().copied()).collect(),
+        leaves
+            .iter()
+            .flat_map(|(_, keys)| keys.iter().copied())
+            .collect(),
     )
 }
 
@@ -224,7 +227,15 @@ fn spl_j01_active_insert_split_then_commit_and_prune() {
                 assert_row_jobs_free(writer.catalog_test_jobs());
                 let targets: Vec<RowId> = rows.iter().map(|(row, _)| *row).collect();
                 assert_eq!(
-                    read_rows!(writer, reader, core, reader_private, flush, flusher, targets),
+                    read_rows!(
+                        writer,
+                        reader,
+                        core,
+                        reader_private,
+                        flush,
+                        flusher,
+                        targets
+                    ),
                     rows.iter().map(|(_, v)| Some(*v)).collect::<Vec<_>>()
                 );
                 let expected: Vec<(u64, i64)> =
@@ -244,7 +255,10 @@ fn spl_j01_active_insert_split_then_commit_and_prune() {
         );
         assert_eq!((joined.ready.0, joined.clrs, joined.row_cells), (2, 0, 0));
         assert_eq!(joined.rows, expected);
-        println!("SPL_J01 leaves=2,3 q=2 drain=26 restart_steps={}", joined.steps);
+        println!(
+            "SPL_J01 leaves=2,3 q=2 drain=26 restart_steps={}",
+            joined.steps
+        );
     });
 }
 
@@ -320,7 +334,10 @@ fn spl_j02_active_insert_split_then_rollback_and_insert() {
                 assert_eq!(shape(&before), (vec![6], ids(&all)));
                 split!(writer, owner, flush, private, before[0].0, Split::RootSplit);
                 let (counts, keys) = shape(&writer.catalog_test_with_pool(leaves));
-                assert!(counts.len() == 2 && counts.iter().all(|n| *n > 0), "{counts:?}");
+                assert!(
+                    counts.len() == 2 && counts.iter().all(|n| *n > 0),
+                    "{counts:?}"
+                );
                 assert_eq!(keys, ids(&all));
                 let out = rollback!(&mut writer, owner, flush, flusher, &mut holder, private);
                 assert!(
@@ -336,7 +353,15 @@ fn spl_j02_active_insert_split_then_rollback_and_insert() {
                 assert_eq!(shape(&writer.catalog_test_with_pool(leaves)).1, ids(&kept));
                 let targets: Vec<RowId> = all.iter().map(|(row, _)| *row).collect();
                 assert_eq!(
-                    read_rows!(writer, reader, core, reader_private, flush, flusher, targets),
+                    read_rows!(
+                        writer,
+                        reader,
+                        core,
+                        reader_private,
+                        flush,
+                        flusher,
+                        targets
+                    ),
                     [Some(7), Some(8), None, None, None, None]
                 );
                 let (out, slots) = autocommit!(
@@ -380,7 +405,10 @@ fn spl_j02_active_insert_split_then_rollback_and_insert() {
         );
         assert_eq!((joined.ready.0, joined.clrs, joined.row_cells), (3, 0, 0));
         assert_eq!(joined.rows, expected);
-        println!("SPL_J02 rollback_drain=17 q=3 restart_steps={}", joined.steps);
+        println!(
+            "SPL_J02 rollback_drain=17 q=3 restart_steps={}",
+            joined.steps
+        );
     });
 }
 
@@ -589,7 +617,10 @@ fn spl_j03_delete_update_beside_child_split_roll_back_then_commit() {
         );
         assert_eq!((joined.ready.0, joined.clrs, joined.row_cells), (4, 0, 0));
         assert_eq!(joined.rows, expected);
-        println!("SPL_J03 leaves=1,1,2 q=4 drains=9,11,6 restart_steps={}", joined.steps);
+        println!(
+            "SPL_J03 leaves=1,1,2 q=4 drains=9,11,6 restart_steps={}",
+            joined.steps
+        );
     });
 }
 
@@ -732,7 +763,10 @@ fn spl_j04_restart_prunes_the_winner_and_compensates_the_loser_across_leaves() {
                 let mut keys = ids(&rows);
                 keys.push(added[0].0.get());
                 let (counts, found) = shape(&writer.catalog_test_with_pool(leaves));
-                assert!(counts.len() == 3 && counts.iter().all(|n| *n > 0), "{counts:?}");
+                assert!(
+                    counts.len() == 3 && counts.iter().all(|n| *n > 0),
+                    "{counts:?}"
+                );
                 assert_eq!(found, keys);
                 assert!(!fence.is_fenced());
                 let images = state.lock().unwrap().images();

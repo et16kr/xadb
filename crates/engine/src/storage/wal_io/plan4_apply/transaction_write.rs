@@ -441,8 +441,11 @@ pub(in super::super) fn source_bytes() -> usize {
     // The Finished structural bank row is observed in its own frame before
     // the scan (`control::catalog::structural`): the receiver, Profile and
     // prefix arguments and its Result beside the bank decoder.
-    let structural = size_of::<(&(), crate::storage::control::Profile, crate::storage::wal_io::WalPrefix)>()
-        + 2 * size_of::<Result<()>>()
+    let structural = size_of::<(
+        &(),
+        crate::storage::control::Profile,
+        crate::storage::wal_io::WalPrefix,
+    )>() + 2 * size_of::<Result<()>>()
         + control::structural_bank_source_bytes();
     lifecycle_caller_bytes()
         + super::source_bytes()

@@ -803,6 +803,8 @@ Catalog Job도 포함한다. same-cut canonical 검산과 Job 부재에서 대�
 확인한다. 현재 `semantic_row/leaf`·`transition/prepare`·`row_preflight`의 level0 제한 때문에
 준비의 active debt 허용을 실제 effect 허용으로 그대로 확대하지 않는다. 다른 table의 원 부채는
 위 credit 계산대로 보존한다. 이 한정은 첫 연결의 임시 경계이며08-1 완료 조건을 줄이지 않는다.
+(2026-11-05: 이 한정은 [current-leaf 소비자 일반화](#current-leaf-consumers)로 대체됐다. 이제
+대상 table의 RootReserved Row root와 non-Free Catalog Job만 거절한다.)
 최종08-1에서는 current-leaf 소비자를 일반화하고 이 한정을 제거한 뒤 Active INSERT/DELETE/UPDATE의
 split→Commit/Abort/CLR/Prune와 후속 다단계 행 변경을 검증한다. SMO-P03의 무효과 active 준비는 유지한다.
 
@@ -868,3 +870,60 @@ capture/mapping 검산과 retirement 인계에서 Profile3·RowInternal level1..
 원 canonical Retention authority·capture·kind/level/stamp/attempt 결속과 실제 DWB/홈 write는
 유지한다. Allocator/Status 정책의 level0 조건은 바뀌지 않는다. 새 root의 dirty→Complete→clean
 관측은 Child의 clean-victim 시험에 포함하며 다단계 Row 변경 지원으로 확대하지 않는다.
+
+
+<a id="current-leaf-consumers"></a>
+## current-leaf 소비자 일반화
+
+상태는 **2026-11-05 구현·memory 시험 PASS / 독립 D2 검토 전**이다. 사용자가 Codex 브랜치를
+받아 08-1을 완료하라고 요청했고, 이 절은 그중 [효과 계약](#structural-effect)이 최종08-1 조건으로
+남긴 current-leaf 소비자 일반화와 admission 한정 제거를 다룬다. 빈 leaf unlink·root shrink·
+retirement opcode와 A의 자동 split 호출자는 이 절의 범위가 아니며08-1 잔여로 남는다.
+
+**현재 leaf의 정의.** 한 Row의 현재 RowLeaf는 같은 cut에서 anchor의 현재 tree를 그 RowId의
+big-endian key로 route하여 도달하는 leaf다. root level0이면 root 자체다. Job의 pair[1]은 Reserve가
+그때 현재였던 leaf를 적은 hint일 뿐이다. Forward만 pair[1]이 여전히 현재 leaf임을 요구한다.
+RootReserved root가 있는 동안 split을 거절하므로 Reserve와 Forward 사이에 구조 그룹이 끼지 않는다.
+CLR·Prune·recovery는 pair[1]을 믿지 않고 route한 leaf에서 행을 찾는다.
+
+**route 한 단계.** `tree_page::search::route_row_step`이 한 page를 기대 kind/level로 decode하고,
+key가 부모가 준 bounds 안인지 확인한 뒤 RowInternal이면 child와 좁힌 bounds를 돌려준다.
+`find_leaf_in_images`의 loop 본문과 같은 판정이며, 호출자는 각 page를 자기 짧은 read 아래에서만
+읽는다. depth는 root level로 묶이고, 호출자가 anchor revision을 단계 사이에 고정한다.
+
+| 소비자 | 일반화 |
+| --- | --- |
+| transition `table_leaf`/`leaf_source` | level0이면 anchor root, split tree이면 호출자가 route해 공급한 leaf image(anchor·root와 다른 table-owned dynamic page). Forward만 pair[1]과 같아야 함 |
+| 예약 D (`leaf_reservation`) | 그 leaf에 RowId가 있는 table의 Retained root restore bytes 합. restore bytes가 0인 root(INSERT, 다른 scope의 root)는 조회하지 않음. 단일 leaf tree에서는 기존 table 합과 같음 |
+| A 그룹 관측 (`row/insert/group.rs`) | level0이면 root가 그 leaf, split tree이면 C가 같은 cut에서 route해 공급한 leaf(root·anchor와 다름). Forward만 pair[1] 일치 |
+| C preflight (`row_preflight`) | `RowRouteCursor`로 anchor→RowInternal→leaf를 같은 residency 집합에 올리고 leaf를 source로 고정. 새 RowId는 가장 오른쪽 leaf로 route |
+| C rollback 선택·live cleanup (`row_rollback_select`, `row_start/retire`) | CLR/Prune 대상 행의 leaf를 route. Prune의 route callee는 LOAD 단계와 max |
+| recovery (`recovery_leaf`, `history/row::current_leaf`) | canonical arena에서 같은 route. `validate_live`는 pool route와 arena leaf를 대조 |
+| B point/cursor (`plan4_apply/row/read.rs`) | anchor LOAD 뒤 resident page만 따라 route하고, 비거주 RowInternal을 만나면 그 page를 LOAD한 뒤 처음부터 다시 걷는 restartable walk(LOAD 최대32단계). leaf 발급 시 anchor revision과 leaf의 bounds를 다시 확인. cursor는 leaf에 다음 key가 없으면 그 leaf의 upper bound로 다음 leaf를 route |
+| lookup LOAD membership | RowInternal은 level1..15, 그 밖의 target은 level0. Index/Catalog internal은 일정09/10 |
+
+B 읽기 operation의 `close_reads_for_retirement` gate가 split과 한 operation을 배타로 두므로,
+operation 안의 여러 route는 같은 tree를 본다. 한 cursor의 step 사이에 split이 끼면 다음 step이
+key로 다시 route한다. 이것은 SMO를 건너는 cursor/locator 인수(일정08-2)를 대신하지 않는다.
+
+**admission.** 원 `split_row`는 대상 table의 RootReserved Row root와 non-Free Catalog Job만
+무효과 Unsupported로 거절한다. Retained·Releasing·terminal Row 부채는 허용한다. 선택 가중치는
+기존대로 각 Retained root의 restore bytes를 그 행의 쪽에 둔다.
+
+**source census.** 원 charge 44,304B는 바꾸지 않았다. B cursor.row_load는 34,573/34,586B(여유13B),
+point.row_load 34,381B다. B route 단계(row_route)는 7,536B다. C preflight는 여유184B 안이다.
+S1B Row arm frame은 scope4 structural arm 26,420B가 기존 phase 최대보다 커서 그 값으로 고정했다.
+`check`는 structural bank 관측과 ATT/Job scan을 각자 never-inline frame으로 나눴다. 모두
+source-value 회계이며 compiler stack/RSS 측정이 아니다.
+
+| ID | 고정 경계와 판정 |
+| --- | --- |
+| SPL-J01 | 한 거래가7..10을 INSERT(Retained4)한 상태에서 RootSplit 허용, 두 leaf 2/2. 같은 거래의 다섯째 INSERT는 오른쪽 leaf. Commit q2, drain 26 groups, Row Job0, point/cursor와 재시작(q2, CLR0)이 다섯 행을 읽음 |
+| SPL-J02 | 7,8 commit 뒤 9..12 INSERT 상태에서 RootSplit, rollback의 InsertClr4가 route한 leaf에서 행 제거, drain17. 다음 INSERT(q3)는 오른쪽 leaf. 재시작이 7,8,13을 읽음 |
+| SPL-J03 | 7..10 commit·RootSplit 뒤 DELETE 7·UPDATE 10→100 상태에서 오른쪽 leaf ChildSplit(1/1), rollback이 둘을 복원(drain9). 같은 변경의 Commit q3, DeletePrune·UpdatePrune(drain11), INSERT q4는 가장 오른쪽 leaf. 재시작 q4가8,9,100,11을 읽음 |
+| SPL-J04 | split tree에서 승자 DELETE 8 Commit(정리 전)과 다른 Status의 패자 DELETE 7·UPDATE 9·INSERT 11, 그 옆 ChildSplit 뒤 파일 채취. 재시작이 승자 Prune과 패자 CLR3을 route한 leaf에서 실행, READY q3·Row Job0, cursor가7,9,10을 읽음 |
+| SPL-J05 | table의 CREATE Catalog Job이 남아 있으면 split은 무효과 Unsupported. WAL·bank·Jobs 불변, fence 없음, B가 네 행을 읽음 |
+| SMO-E01 | 기존 Active·Commit 후 거절 단언을 위 admission에 맞춰 제거. 깨끗한 leaf의 Root→Child 효과 검산은 그대로 |
+
+이 절은08-1을 완료로 적립하지 않는다. 빈 leaf unlink·root shrink·retirement와 Capacity 시 A의
+자동 split 호출자가 남아 있다.

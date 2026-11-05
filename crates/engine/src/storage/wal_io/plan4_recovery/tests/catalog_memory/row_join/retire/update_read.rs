@@ -363,7 +363,14 @@ fn rup_b07_broken_update_states_are_never_a_row() {
 /// row, RowId 1).
 macro_rules! first_capture {
     ($op:ident, $table:expr, $residency:expr) => {{
-        let page = match $op.page($table, $residency, foundation::identity::RowId::new(1).unwrap()).unwrap() {
+        let page = match $op
+            .page(
+                $table,
+                $residency,
+                foundation::identity::RowId::new(1).unwrap(),
+            )
+            .unwrap()
+        {
             ReadStep::Ready(page) => page,
             _ => panic!("resident"),
         };

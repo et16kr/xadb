@@ -477,7 +477,7 @@ impl RowRouteCursor {
     /// The RowInternal page to make resident and read next; None once the
     /// route has reached its RowLeaf.
     pub(in super::super::super) fn internal(&self, tree: RowTree) -> Option<TargetRequest> {
-        (self.level != 0).then(|| TargetRequest {
+        (self.level != 0).then_some(TargetRequest {
             identity: PageIdentity {
                 page: self.page,
                 ..tree.anchor
@@ -750,7 +750,11 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         let storage = self.storage;
         let selected = u8::try_from(root_job)
             .map_err(|_| unchanged(RetentionPhase::Prepare, RetentionCause::Invariant))?;
-        sources.queue(storage, self.jobs_request(root_job)?, RowSourceRole::RootJob)?;
+        sources.queue(
+            storage,
+            self.jobs_request(root_job)?,
+            RowSourceRole::RootJob,
+        )?;
         sources.queue(
             storage,
             self.jobs_request(terminal)?,
@@ -1027,7 +1031,11 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 Some(row) => row,
                 None => {
                     let (_, root) = job3::decode_root_page(root, namespace).map_err(|e| {
-                        fatal(storage, RetentionPhase::Census, RetentionCause::Retention(e))
+                        fatal(
+                            storage,
+                            RetentionPhase::Census,
+                            RetentionCause::Retention(e),
+                        )
                     })?;
                     root.row_high()
                         .checked_add(1)
@@ -1295,8 +1303,7 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             // this cut (dev3-tree-smo.md#current-leaf-consumers): the anchor
             // in T equals its arena page above, so a differing leaf is a pool
             // RowInternal page that contradicts the arena.
-            if self.arena_leaf(arena, table.tree(), key)?
-                != targets.before()[leaf_at].identity.page
+            if self.arena_leaf(arena, table.tree(), key)? != targets.before()[leaf_at].identity.page
             {
                 return Err(invariant());
             }
@@ -1399,14 +1406,8 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         key: RowId,
     ) -> Result<PageRef> {
         let storage = self.storage;
-        history::row::current_leaf(
-            arena,
-            storage.profile(),
-            tree.handle,
-            tree.anchor.page,
-            key,
-        )
-        .map_err(|cause| fatal(storage, RetentionPhase::Census, cause))
+        history::row::current_leaf(arena, storage.profile(), tree.handle, tree.anchor.page, key)
+            .map_err(|cause| fatal(storage, RetentionPhase::Census, cause))
     }
 
     /// The RowLeaf's free entry bytes (`leaf_free_bytes`). A leaf A does not
@@ -2181,9 +2182,8 @@ pub(in super::super::super) fn route_step_source_bytes() -> usize {
         + targets::call_bytes::<1>().max(
             size_of::<Read<'_>>()
                 + 2 * size_of::<dirty_frame::Result<&[u8; PAGE_BYTES]>>()
-                + 2 * size_of::<
-                    std::result::Result<Option<TreeExpectation>, tree_page::TreeError>,
-                >()
+                + 2 * size_of::<std::result::Result<Option<TreeExpectation>, tree_page::TreeError>>(
+                )
                 + tree_page::search::route_step_source_bytes(),
         )
 }
@@ -2212,9 +2212,7 @@ pub(in super::super::super) fn table_root_source_bytes() -> usize {
 /// cursor, the internal request, the queue and step Results.
 pub(in super::super::super) fn route_carrier_bytes() -> usize {
     use std::mem::size_of;
-    size_of::<RowRouteCursor>()
-        + size_of::<Option<TargetRequest>>()
-        + 2 * size_of::<Result<()>>()
+    size_of::<RowRouteCursor>() + size_of::<Option<TargetRequest>>() + 2 * size_of::<Result<()>>()
 }
 
 #[cfg(test)]

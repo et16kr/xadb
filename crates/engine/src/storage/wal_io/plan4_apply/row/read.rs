@@ -1510,7 +1510,10 @@ impl<W: WriterNamespace> ReadPort<'_, '_, '_, '_, '_, '_, '_, '_, W> {
                 + 2 * n::<Result<Option<TreeExpectation>>>(),
         );
         let root = read(
-            3 * r + n::<TargetRequest>() + 2 * n::<anchor::AnchorRoot>() + 2 * n::<Result<anchor::AnchorRoot>>(),
+            3 * r
+                + n::<TargetRequest>()
+                + 2 * n::<anchor::AnchorRoot>()
+                + 2 * n::<Result<anchor::AnchorRoot>>(),
         );
         let route = 3 * r
             + n::<TargetRequest>()

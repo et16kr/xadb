@@ -109,8 +109,7 @@ pub(crate) fn route_row_step(
     key: &[u8; 8],
     bounds: &mut RowRouteBounds,
 ) -> Result<Option<TreeExpectation>, TreeError> {
-    if !matches!(expected.kind, PageKind::RowLeaf | PageKind::RowInternal) || expected.arity != 0
-    {
+    if !matches!(expected.kind, PageKind::RowLeaf | PageKind::RowInternal) || expected.arity != 0 {
         return Err(TreeError::InvalidInput);
     }
     let view = decode_tree_page(bytes, expected)?;

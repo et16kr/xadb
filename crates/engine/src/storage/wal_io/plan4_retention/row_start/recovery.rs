@@ -53,8 +53,11 @@ pub(in super::super::super::super::super) fn recovery_leaf(
     ordinal: usize,
 ) -> Result<crate::storage::page::PageRef> {
     let invalid = || unchanged(RetentionPhase::Prepare, RetentionCause::Invariant);
-    let job = job3::decode_job(jobs.get(ordinal).ok_or_else(invalid)?, profile.spec().namespace)
-        .map_err(queue_error)?;
+    let job = job3::decode_job(
+        jobs.get(ordinal).ok_or_else(invalid)?,
+        profile.spec().namespace,
+    )
+    .map_err(queue_error)?;
     let handle = job.object().ok_or_else(invalid)?;
     let pair = job.pair().ok_or_else(invalid)?;
     let row = job.row_id().ok_or_else(invalid)?;
