@@ -1,0 +1,1346 @@
+{
+  "schema": "XADB_MODULE_GATE_RECORD_V1",
+  "change": "DEV3 08-1 U1 (dev3-tree-smo.md#unlink-u1): anchor XTR1 retired list codec, scope4 opcodes LeafUnlink(3)/RootCollapse(4) with exact decoders and bank WAL, split candidate keeps the list and audits reached + retired == owned, pure unlink candidate and frame producer/observer, Base4 closure with the list, independent fixtures; UNL-P01..P10, UNL-F01..F04, UNL-B01..B09. No product caller yet (replay U2, live U3).",
+  "rust_tests": [
+    {
+      "paths": [
+        "crates/engine/src/storage/anchor.rs",
+        "crates/engine/src/storage/anchor_tests.rs"
+      ],
+      "reason": "XTR1 retired list codec (dev3-tree-smo.md#unlink-u1): RetiredPage/RetiredList (find, extend), retired, encode_listed_anchor, decode_anchor's checked second cell (Row only, revision >= 2, order/alias/range/kind/LSN); UNL-P01..P04 against independent literals and the unchanged one-cell anchor tests.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/anchor_tests.rs",
+          "case": "storage::anchor::tests::anchor_cell_matches_independent_literal_and_validates_every_tree_level",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/anchor_tests.rs",
+          "case": "storage::anchor::tests::anchor_rejects_checksummed_semantic_damage_and_wrong_cell_count",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/anchor_tests.rs",
+          "case": "storage::anchor::tests::every_encode_validation_error_preserves_anchor_output",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/anchor_tests.rs",
+          "case": "storage::anchor::tests::root_load_requires_database_owner_reference_kind_and_level",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/anchor_tests.rs",
+          "case": "storage::anchor::tests::unl_p01_retired_list_matches_independent_literal_for_1_2_and_55",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/anchor_tests.rs",
+          "case": "storage::anchor::tests::unl_p02_retired_list_count_and_length_bounds",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/anchor_tests.rs",
+          "case": "storage::anchor::tests::unl_p03_retired_list_rejects_order_alias_range_kind_and_lsn",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/anchor_tests.rs",
+          "case": "storage::anchor::tests::unl_p04_list_is_row_only_and_one_cell_anchor_is_unchanged",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/semantic_row/structure.rs",
+        "crates/engine/src/storage/semantic_row/structure/bank.rs",
+        "crates/engine/src/storage/semantic_row/structure/bank_tests.rs",
+        "crates/engine/src/storage/semantic_row/structure/candidate.rs",
+        "crates/engine/src/storage/semantic_row/structure/candidate/source.rs",
+        "crates/engine/src/storage/semantic_row/structure/frame.rs",
+        "crates/engine/src/storage/semantic_row/structure/unlink.rs",
+        "crates/engine/src/storage/semantic_row/structure/unlink/candidate.rs",
+        "crates/engine/src/storage/semantic_row/structure/unlink/frame.rs",
+        "crates/engine/src/storage/semantic_row/structure/weights/candidate_tests.rs",
+        "crates/engine/src/storage/semantic_row/structure/weights/unlink_tests.rs",
+        "crates/engine/src/storage/semantic_row/structure/weights/unlink_frame_tests.rs"
+      ],
+      "reason": "scope4 opcodes LeafUnlink/RootCollapse: Operation 3/4, bank consumed WAL 35,248/19,032 (FinishedSplit renamed FinishedStructural), split decoders keep opcodes 1/2, unlink decode_core/decode_layout, split candidate keeps the list bytes and audits reached + retired == owned (retired_pages), pure unlink candidate and frame producer/observer sharing finished_descriptor and Cursor::patch, census retired_chain; UNL-P05..P10, UNL-F01..F04 (independent serializer) and every structure test (split candidate, frame, bank, weights, source census).",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/bank_tests.rs",
+          "case": "storage::semantic_row::structure::bank::tests::structural_bank_independent_finished_root_child_and_prior_epoch",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/bank_tests.rs",
+          "case": "storage::semantic_row::structure::bank::tests::structural_bank_raw_decoder_checks_reserved_bytes_and_binding",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/bank_tests.rs",
+          "case": "storage::semantic_row::structure::bank::tests::structural_bank_rejects_finished_semantic_debt_chain_and_inventory_changes",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/bank_tests.rs",
+          "case": "storage::semantic_row::structure::bank::tests::structural_bank_rejects_missing_future_or_wrong_profile_owner",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/bank_tests.rs",
+          "case": "storage::semantic_row::structure::bank::tests::structural_bank_source_covers_typed_validation_and_raw_decode",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/bank_tests.rs",
+          "case": "storage::semantic_row::structure::bank::tests::unl_f04_bank_accepts_exact_unlink_frame_bytes_only",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/candidate/source_tests.rs",
+          "case": "storage::semantic_row::structure::candidate::source_tests::structural_split_source_inventory_includes_retained_after_audit_and_frame_view",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/frame/source_tests.rs",
+          "case": "storage::semantic_row::structure::frame::source_tests::structural_frame_source_inventory_covers_parser_and_emit_nesting",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/tests.rs",
+          "case": "storage::semantic_row::structure::tests::structural_wire_accepts_exact_scalar_limits_and_predecessor_commitment",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/tests.rs",
+          "case": "storage::semantic_row::structure::tests::structural_wire_independent_root_child_leaf_internal_frames",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/tests.rs",
+          "case": "storage::semantic_row::structure::tests::structural_wire_rejects_core_identity_alias_and_scalar_mutations",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/tests.rs",
+          "case": "storage::semantic_row::structure::tests::structural_wire_rejects_native_redo_bijection_and_init_corruption",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/tests.rs",
+          "case": "storage::semantic_row::structure::tests::structural_wire_rejects_owner_chain_and_self_consistent_finished_debt",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/tests.rs",
+          "case": "storage::semantic_row::structure::tests::structural_wire_rejects_truncation_lengths_reserved_and_unsupported",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/candidate_density_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::density::structural_candidate_dense_nullable_rows_fit_reduced_scratch_and_preserve_all_bytes",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/candidate_density_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::density::structural_candidate_local_parent_last_separator_fits_reduced_scratch",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/candidate_density_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::density::structural_candidate_overdense_untyped_leaf_rejects_without_output",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/candidate_density_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::density::structural_candidate_tombstone_ceiling_includes_shortest_supported_record",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/candidate_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::structural_candidate_child_leaf_revises_anchor_and_preserves_current_root",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/candidate_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::structural_candidate_internal_api_rejects_short_pages_and_child_alias",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/candidate_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::structural_candidate_internal_root_and_child_promote_pivot_once",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/candidate_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::structural_candidate_leaf_root_preserves_literal_rows_and_actual_undo_costs",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/candidate_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::structural_candidate_local_parent_capacity_rejects_before_output",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/candidate_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::structural_candidate_old_epoch_descriptor_and_partial_error_output",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/candidate_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::structural_candidate_rejects_owned_orphans_and_wrong_canonical_selection",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/candidate_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::structural_candidate_rejects_previous_epoch_cut_and_finished_debt",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/candidate_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::structural_candidate_rejects_reserved_and_missing_retained_row",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/candidate_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::structural_candidate_skips_exhausted_incarnations_and_rejects_capacity",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/frame_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::frame::structural_frame_buffer_shortage_preserves_frame_and_checks_input_before_callback",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/frame_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::frame::structural_frame_matches_independent_sections_for_all_four_splits",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/frame_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::frame::structural_frame_new_owner_is_distinct_from_previous_epoch_owner",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/frame_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::frame::structural_frame_propagates_original_source_error",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/frame_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::frame::structural_frame_recomputes_workspace_and_binds_actual_before",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/frame_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::frame::structural_frame_rejects_wire_valid_canonical_mutations",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::structural_weights_allow_historical_leaf_hint_but_reject_reserved_and_aliases",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::structural_weights_check_capacity_cut_allocation_and_callback_error",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::structural_weights_enforce_actual_plus_undo_capacity_at_exact_boundary",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::structural_weights_reject_current_version_projection_and_committed_tombstone",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::structural_weights_reject_missing_predecessor_and_stale_or_future_images",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::structural_weights_reject_real_undo_identity_edge_and_typed_before_mutations",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::structural_weights_reject_reserved_jobs_of_other_tables",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::structural_weights_use_real_delete_update_and_missing_before_cells",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/unlink_frame_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::unlink::frame::unl_f01_unlink_frames_match_independent_sections",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/unlink_frame_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::unlink::frame::unl_f02_unlink_frames_reject_wire_and_canonical_mutations",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/unlink_frame_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::unlink::frame::unl_f03_split_frame_with_changed_retired_list_is_rejected",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/unlink_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::unlink::unl_p05_leaf_unlink_parent_after_is_the_independent_xbt1_page",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/unlink_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::unlink::unl_p06_root_collapse_lowers_anchor_and_lists_leaf_and_parent",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/unlink_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::unlink::unl_p07_not_needed_cases_and_non_root_parent_leaf_unlink",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/unlink_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::unlink::unl_p08_rejects_alias_reach_kind_revision_and_debt",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/unlink_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::unlink::unl_p09_split_beside_retired_list_preserves_list_bytes",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/unlink_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::unlink::unl_p10_split_and_unlink_reject_list_ownership_mismatch",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/plan4_recovery_base/row/current_tree.rs",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph/source_tests.rs",
+        "crates/engine/src/storage/plan4_recovery_base/catalog/graph/ledger.rs",
+        "tests/fixtures/module-row-format/current-tree/author.py",
+        "tests/fixtures/module-row-format/current-tree/inputs.sha256",
+        "tests/fixtures/module-row-format/current-tree/unlink-leaf.xrb",
+        "tests/fixtures/module-row-format/current-tree/unlink-collapse.xrb"
+      ],
+      "reason": "Base4 current-tree closure with the anchor retired list (reached | listed == owned, item allocation/incarnation/kind, decode, pageLSN < retire LSN, empty leaf) and its source bytes (+2 RetiredList, +2 RetiredPage); the Catalog ledger only renames FinishedSplit (same size). Independent fixtures unlink-leaf.xrb/unlink-collapse.xrb from author.py (existing fixtures byte-identical). UNL-B01..B09 and every Base4 Row test; recovery_source_* recount the Base4 component (base=64772).",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/actor_tests.rs",
+          "case": "storage::plan4_recovery_base::row::actor::tests::actor_literal_physical_graphs",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/actor_tests.rs",
+          "case": "storage::plan4_recovery_base::row::actor::tests::actor_orphan_cannot_hide_in_noncanonical_free",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/actor_tests.rs",
+          "case": "storage::plan4_recovery_base::row::actor::tests::actor_rejects_foreign_actor_and_orphan_row",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/actor_tests.rs",
+          "case": "storage::plan4_recovery_base::row::actor::tests::actor_rejects_orphan_physical_undo",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/actor_tests.rs",
+          "case": "storage::plan4_recovery_base::row::actor::tests::actor_rejects_row_target_schema_version_and_projection",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/actor_tests.rs",
+          "case": "storage::plan4_recovery_base::row::actor::tests::actor_rejects_uncut_release_and_cursor_mismatch",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/actor_tests.rs",
+          "case": "storage::plan4_recovery_base::row::actor::tests::actor_rejects_wrong_chain_counts_identity_and_before",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/actor_tests.rs",
+          "case": "storage::plan4_recovery_base::row::actor::tests::actor_root_free_row_high_water_boundary",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/actor_tests.rs",
+          "case": "storage::plan4_recovery_base::row::actor::tests::actor_root_free_rows_remain_globally_unique",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/actor_tests.rs",
+          "case": "storage::plan4_recovery_base::row::actor::tests::actor_root_free_same_leaf_rejects_duplicate_logical_version",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_accepts_internal_root_split_and_checks_off_path_internal",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_accepts_root_child_split_with_moved_retained_rows",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_delete_update_distribute_typed_undo_reservations_by_leaf",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_moved_delete_update_reserved_and_release_presence",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_preserves_reserved_absence_and_ready_releasing_states",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_rejects_alias_range_identity_and_anchor_history",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_rejects_orphan_and_global_logical_duplicate",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_retained_current_leaf_cannot_precede_job_step",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_revision_bound_accepts_maximum_high_water_without_wrap",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_typed_undo_and_same_catalog_schema_are_required",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::current_tree_tests::unl_b01_base4_accepts_listed_retired_leaf_and_internal_pages",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::current_tree_tests::unl_b02_b06_base4_rejects_retired_list_ownership_mismatch",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/source_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::source::tests::base4_closure_source_bound_covers_measured_frames",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/structural_bank_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::structural_bank_tests::structural_bank_alone_does_not_validate_inconsistent_current_tree",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/structural_bank_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::structural_bank_tests::structural_bank_base_accepts_retired_claims_without_active_inventory_owner",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/structural_bank_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::structural_bank_tests::structural_bank_base_rejects_missing_high_water_future_cut_and_wrong_epoch",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/structural_bank_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::structural_bank_tests::structural_bank_latest_claim_binds_operation_owner_and_monotonic_epoch",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::base4_closure_accepts_catalog_scope_actor",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::base4_closure_accepts_genesis_and_aging_start",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::base4_closure_accepts_live_system_init_done",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::base4_closure_accepts_row_undo_slot_reservation",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::base4_closure_accepts_system_page_reservation",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::base4_closure_entry_gates_profile_base_root_job",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::base4_closure_orders_ready_row_writer_after_creator",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::base4_closure_relation_variants",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::base4_closure_row_xoi_mode_reproduces_inventory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::rup_r_base4_update_root_needs_its_old_row",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row_structural_tests.rs",
+          "case": "storage::plan4_recovery_base::row::tests::structural::structural_base_birth_roles_and_borrowed_observations",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row_structural_tests.rs",
+          "case": "storage::plan4_recovery_base::row::tests::structural::structural_base_certificate_levels_and_profile_isolation",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row_structural_tests.rs",
+          "case": "storage::plan4_recovery_base::row::tests::structural::structural_base_groups_bind_same_lsn_even_with_changed_owner",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row_structural_tests.rs",
+          "case": "storage::plan4_recovery_base::row::tests::structural::structural_base_layout_accepts_historical_nonroot_and_retired_peers",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row_structural_tests.rs",
+          "case": "storage::plan4_recovery_base::row::tests::structural::structural_base_preserves_legacy_birth_rules",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row_structural_tests.rs",
+          "case": "storage::plan4_recovery_base::row::tests::structural::structural_base_raw_digest_is_observation_only",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row_structural_tests.rs",
+          "case": "storage::plan4_recovery_base::row::tests::structural::structural_base_rejects_cross_class_birth_collision",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row_structural_tests.rs",
+          "case": "storage::plan4_recovery_base::row::tests::structural::structural_base_rejects_scalar_role_and_physical_alias_mutations",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row_structural_tests.rs",
+          "case": "storage::plan4_recovery_base::row::tests::structural::structural_base_source_bound_covers_new_typed_carriers",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row_tests.rs",
+          "case": "storage::plan4_recovery_base::row::tests::base4_allocator_certificate_and_image_relations",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row_tests.rs",
+          "case": "storage::plan4_recovery_base::row::tests::base4_encode_rejections_and_accessor_bounds",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row_tests.rs",
+          "case": "storage::plan4_recovery_base::row::tests::base4_exact_dispatch_and_shared_header_modes",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row_tests.rs",
+          "case": "storage::plan4_recovery_base::row::tests::base4_init_records_and_reciprocal_pair",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row_tests.rs",
+          "case": "storage::plan4_recovery_base::row::tests::base4_layout_does_not_claim_graph_or_history",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row_tests.rs",
+          "case": "storage::plan4_recovery_base::row::tests::base4_literal_layout_roundtrip_and_borrows",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row_tests.rs",
+          "case": "storage::plan4_recovery_base::row::tests::base4_queue_lsn_and_header_summary",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row_tests.rs",
+          "case": "storage::plan4_recovery_base::row::tests::base4_section_geometry_gaps_and_checksums",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_source_memory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_source_native",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/wal_io/plan4_retention/control.rs",
+        "crates/engine/src/storage/wal_io/plan4_retention/history/structure.rs",
+        "crates/engine/src/storage/wal_io/plan4_retention/structural_effect.rs",
+        "crates/engine/src/storage/wal_io/plan4_retention/structural_prepare.rs",
+        "crates/engine/src/storage/wal_io/plan4_retention/recovery/structural_bank_tests.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/row_gate.rs"
+      ],
+      "reason": "C only renames FinishedSplit (same size) and keeps its split matches exhaustive with explicit LeafUnlink/RootCollapse arms (Unsupported); the S1B Row arm frame pin is 26,452 (split audit counts the retired list). Structural bank/replay/prepare/effect/admission tests, the S1B census and the live split callers (SPL-A01..A06, SPL-J01..J07) exercise the changed split audit.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/analysis/structural_bank_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::analysis::structural_bank_tests::structural_bank_capture_and_remaining_reject_stale_cut_epoch_and_ram_metadata",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/analysis/structural_bank_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::analysis::structural_bank_tests::structural_bank_capture_packs_ram34_as_wire33_with_no_active_debt",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_effect.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::structural_effect_original_root_then_child_and_target_debt_refusal",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_effect/faults.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_durable_write_failure_keeps_pending_and_fences",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_effect/faults.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_guardless_durable_wait_blocks_ordinary_paths_and_io_failure",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_effect/faults.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_replay_checked_return_failure_keeps_pending",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_effect/faults.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_stage_capacity_cancels_and_reenters_root_child",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_effect/faults.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_unwind_at_install_publication_and_finish_boundaries",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_effect/faults/refusals.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::refusals::structural_effect_actual_stage_history_and_replay_errors_are_fatal",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_effect/faults/refusals.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::refusals::structural_effect_changed_selection_and_before_cancel_without_wal",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_effect/faults/refusals.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::refusals::structural_effect_flush_admission_and_failed_cancel_lease",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_effect/faults/refusals.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::refusals::structural_effect_original_clean_victim_stamp_change_child",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_effect/faults/refusals.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::refusals::structural_effect_original_clean_victim_stamp_change_rejects_before_claim",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_prepare.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_prepare::structural_admission_original_active_rows_preserves_debt_and_exact_wal_fit",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_prepare.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_prepare::structural_prepare_child_reads_four_raw_fixture_images_and_parent_stamp",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_prepare.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_prepare::structural_prepare_original_live_two_rows_preserves_state_and_binds_stamps",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/row_gate.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::row_gate::s1b_mixed_bank_passes_combined_closure_and_gate_observation",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/row_gate.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::row_gate::s1b_row_arm_census_memory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/row_gate.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::row_gate::s1b_row_arm_census_native",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/row_gate.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::row_gate::s1b_row_arm_keeps_original_loans_and_handles",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/row_gate.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::row_gate::s1b_row_state_stops_at_interim_analysis_gate",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/row_gate.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::row_gate::s1g_reserve_tail_stops_at_interim_gate",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/row_gate/mixed.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::row_gate::mixed::s1c_ledger_check_admits_mixed_bank_with_row_debt",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/row_gate/mixed.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::row_gate::mixed::s1c_ledger_check_matches_row_terminals_to_att",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/row_gate/mixed.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::row_gate::mixed::s1d_ledger_check_applies_row_admission_subset",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/history/structure.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::history::structure::tests::structural_replay_source_inventory_covers_compare_and_claim_mint_phases",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/structural_bank_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::structural_bank_tests::structural_bank_admission_checks_original_row_before_omitting_finished_debt",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/structural_bank_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::structural_bank_tests::structural_bank_allocation_initial_skips_two_structural_claims_with_same_id",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/structural_bank_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::structural_bank_tests::structural_bank_ram_source_covers_metadata_and_observer_frames",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/structural_bank_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::structural_bank_tests::structural_bank_seed_maps_wire33_to_ram34_with_high_water_and_zero_metadata",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/structural_replay_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::structural_replay_tests::structural_replay_four_split_shapes_mint_exact_claims_and_preserve_rows",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/structural_replay_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::structural_replay_tests::structural_replay_minted_claims_pass_full_base_and_reject_semantic_tampering",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/structural_replay_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::structural_replay_tests::structural_replay_rejects_rehashed_canonical_mutations_before_publication",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/structural_replay_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::structural_replay_tests::structural_replay_reserved_allocation_guard_precedes_frame_observation",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/structural_replay_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::structural_replay_tests::structural_replay_scope_cut_epoch_and_reserved_row_guards_preserve_state",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/structural_replay_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::structural_replay_tests::structural_replay_second_init_conflict_and_prior_bank_corruption_are_atomic",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/structural_admission_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::structural::admission_tests::structural_admission_lsn_each_existing_counter_and_root_revision_boundaries",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/structural_effect.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::structural::effect::tests::spl_a08_live_split_fits_the_progress_charge",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/structural_effect.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::structural::effect::tests::spl_row_capacity_is_exactly_the_unchanged_prepare_capacity",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/structural_effect.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::structural::effect::tests::structural_effect_source_phases_fit_original_admission_and_callers",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/structural_prepare.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::structural::tests::structural_prepare_second_destination_and_inactive_child_are_bounded",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/structural_prepare.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::structural::tests::structural_prepare_source_inventory_covers_read_decode_and_return",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/split_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::spl_j01_active_insert_split_then_commit_and_prune",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/split_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::spl_j02_active_insert_split_then_rollback_and_insert",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/split_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::spl_j03_delete_update_beside_child_split_roll_back_then_commit",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/split_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::spl_j04_restart_prunes_the_winner_and_compensates_the_loser_across_leaves",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/split_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::spl_j05_catalog_debt_of_the_table_is_refused_without_effect",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/split_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::spl_j06_restart_prunes_committed_rows_moved_after_commit",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/split_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::spl_j07_cold_deep_route_progresses_with_one_tree_frame",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/auto_split.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::spl_a01_full_leaf_insert_splits_once_and_commits",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/auto_split.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::spl_a02_one_statement_splits_root_and_child_and_commits",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/auto_split.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::spl_a03_split_survives_the_rollback_of_its_transaction",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/auto_split.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::spl_a04_growing_update_splits_and_commits",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/auto_split.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::spl_a05_dirty_victim_is_flushed_before_the_split",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/auto_split.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::spl_a06_debt_and_room_refuse_without_effect",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/auto_split.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::spl_a10_reservation_capacity_splits_beside_a_retained_delete",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/auto_split.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::spl_review_failed_statement_after_split_preserves_prior_work",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/auto_split.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::spl_review_split_only_restart_preserves_committed_rows_and_shape",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/auto_split.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::spl_review_split_only_restart_undoes_losers_but_keeps_shape",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    }
+  ],
+  "na": [],
+  "reviews": [
+    {
+      "id": "dev3-08-1-unlink-u1-d2",
+      "class": "D2",
+      "scopes": [],
+      "author": "claude-thread-session/claude-project-thread-e9itre",
+      "reviewer": "claude-independent-review/dev3-08-1-unlink-u1",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/anchor.rs": "0089342701c389ca6a2754df4eab3321a4d694a4",
+        "crates/engine/src/storage/anchor_tests.rs": "9a2a27732c38e8d44c41258370403fa888522272",
+        "crates/engine/src/storage/plan4_recovery_base/catalog/graph/ledger.rs": "003e304aa21de6aa77b0e7060a797e34deb99c31",
+        "crates/engine/src/storage/plan4_recovery_base/row/actor_tests.rs": "876705a0094a57584d641b521d91683c93dc3e9a",
+        "crates/engine/src/storage/plan4_recovery_base/row/current_tree.rs": "573e648e35e92260743d71e290b288ef255dcf1d",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs": "cc02e5c6db4e853c33065ff49d1099a13b2f66aa",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph/source_tests.rs": "cffd31782fe8cd6c709add3238d8023d65cd9436",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph/structural_bank_tests.rs": "147280647ce578a4942315175e17d08fb31ff529",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph_tests.rs": "07f851a077bd8f2a8d6b67f38d2931b5fbcc6d5e",
+        "crates/engine/src/storage/plan4_recovery_base/row_structural_tests.rs": "23aa9513562e9de7b3ac7e36b65bfe40699745c5",
+        "crates/engine/src/storage/plan4_recovery_base/row_tests.rs": "441e4a7a2e6b4f1407420aa1c6de7c4356de34d6",
+        "crates/engine/src/storage/semantic_row/structure.rs": "c2e9c33ee0d1f67955acf3d25c8dda6e0181bbc2",
+        "crates/engine/src/storage/semantic_row/structure/bank.rs": "a2cc50c707ca8b978337ccdba973cb8561f0b2a4",
+        "crates/engine/src/storage/semantic_row/structure/bank_tests.rs": "0ffab8c38aae2675acd2b604b489a79d12d11b52",
+        "crates/engine/src/storage/semantic_row/structure/candidate.rs": "b2b5eb96da1d04195a94f07c874951759f781285",
+        "crates/engine/src/storage/semantic_row/structure/candidate/source.rs": "95a8aac4b647a2ee9e32bd2c49d43c272de8ada8",
+        "crates/engine/src/storage/semantic_row/structure/candidate/source_tests.rs": "dde87d420ee0f66893a397c7a3dab8027034ac80",
+        "crates/engine/src/storage/semantic_row/structure/frame.rs": "982679d46695fff8a9933a5de1851175b51d7b9c",
+        "crates/engine/src/storage/semantic_row/structure/frame/source_tests.rs": "7ede690722629fd47419d7bf007f1a8fdcf56c07",
+        "crates/engine/src/storage/semantic_row/structure/tests.rs": "c75fbd0655f6df8312fbb857ab6f71285a33d87b",
+        "crates/engine/src/storage/semantic_row/structure/unlink.rs": "94ae3f2cddf251fb6c6a35fc0df3f2bfae0d873e",
+        "crates/engine/src/storage/semantic_row/structure/unlink/candidate.rs": "dede1c0f2802a74d271099919d9164ec411e2ec9",
+        "crates/engine/src/storage/semantic_row/structure/unlink/frame.rs": "416de7272a5c4e9ad9c453e47add660782ae2182",
+        "crates/engine/src/storage/semantic_row/structure/weights/candidate_density_tests.rs": "8539c8b8ffd6fa8e948439198d84b696918b7e22",
+        "crates/engine/src/storage/semantic_row/structure/weights/candidate_tests.rs": "a9fc0f44c1e87b52bcde21a765e07d06e7ddea75",
+        "crates/engine/src/storage/semantic_row/structure/weights/frame_tests.rs": "414b869d23b76b173fbc5f3bae2c575b186bdf7d",
+        "crates/engine/src/storage/semantic_row/structure/weights/tests.rs": "f6f50625997c84ad73501a6387f03896967533a3",
+        "crates/engine/src/storage/semantic_row/structure/weights/unlink_frame_tests.rs": "585d9b6205f32bb75a0de05794c6be4f0b0d5d25",
+        "crates/engine/src/storage/semantic_row/structure/weights/unlink_tests.rs": "0270aaa17f1086d46e04e15ac0f0b997896d98ba",
+        "crates/engine/src/storage/wal_io/plan4_recovery/analysis/structural_bank_tests.rs": "433b61c3362698af199b35edd308927d740455bd",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests.rs": "9260df57a540f768154085f8d787262b940c2a93",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/auto_split.rs": "6b7a91d6eeecd108e1bcb6f021aa7983877d4b85",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/split_rows.rs": "93b9037912c150d433ef58c0609444619b714f64",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_effect.rs": "e544dcb8c5805c924e30941de076e200a31f5e5b",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_effect/faults.rs": "28fa2094fb572fb13937d212d17163e2d3e2c35f",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_effect/faults/refusals.rs": "18629853cecfe1e0cbb1b53646ebd971e79bba25",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_prepare.rs": "75373a6127ba43790aa3d86027df7e514d321ab0",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/row_gate.rs": "e05c0904dd86b76f8412dbac0daf3c19dcde0a4d",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/row_gate/mixed.rs": "029137d96164ffca790fe3f23f0a1f64e0fe9c2d",
+        "crates/engine/src/storage/wal_io/plan4_retention/control.rs": "ba9caa2fa81a30d23d5b3c75c642b2e11edb4a69",
+        "crates/engine/src/storage/wal_io/plan4_retention/history/structure.rs": "b022810668fe5c80749e5c332a5b96996d0c85b1",
+        "crates/engine/src/storage/wal_io/plan4_retention/recovery/structural_bank_tests.rs": "3e8ac0964c80c829e70d7794061a7c6f0f7e6f6f",
+        "crates/engine/src/storage/wal_io/plan4_retention/recovery/structural_replay_tests.rs": "5fcbe93cdcea0ead03428dfb609bca0b20103943",
+        "crates/engine/src/storage/wal_io/plan4_retention/structural_admission_tests.rs": "f6096db1b16abd244d4fdf23e6bc4eb88c965d78",
+        "crates/engine/src/storage/wal_io/plan4_retention/structural_effect.rs": "f5091b410b0867b5e34ceb2b565388e68f456e20",
+        "crates/engine/src/storage/wal_io/plan4_retention/structural_prepare.rs": "a4ecaa334d66f6fae1505de7a72866260666528d",
+        "tests/fixtures/module-row-format/current-tree/author.py": "3019851844495438dc02383332b4c92334415f84",
+        "tests/fixtures/module-row-format/current-tree/inputs.sha256": "d3f0ff5134257b295e3e626c1e6f43e68c95c66a",
+        "tests/fixtures/module-row-format/current-tree/unlink-collapse.xrb": "5cb4205743a6f66ffdfeb72652b725c183423d7b",
+        "tests/fixtures/module-row-format/current-tree/unlink-leaf.xrb": "7c9376e6e8bddd8603c2bb1048f27b6acf373dce"
+      },
+      "log": "module-gate/evidence/dev3-08-1-unlink-u1/review.md",
+      "log_sha256": "66edb765be537a7fc4245f949547bd1ca7957fcb94e2d93e7f46621b442358fe"
+    }
+  ]
+}
