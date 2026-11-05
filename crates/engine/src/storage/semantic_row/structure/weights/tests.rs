@@ -662,3 +662,25 @@ fn structural_weights_reject_missing_predecessor_and_stale_or_future_images() {
         }
     }
 }
+
+/// The admission relaxation preserves the global Reserved exclusion, even
+/// when the reserved Job belongs to a different table than the split target.
+#[test]
+fn structural_weights_reject_reserved_jobs_of_other_tables() {
+    for object in [6u64, 7] {
+        let mut fixture = Fixture::new(&["U-558", "U-560", "U-564"]);
+        let namespace = profile().spec().namespace;
+        let reserved = fixture
+            .jobs
+            .iter_mut()
+            .find(|raw| {
+                row::decode_job(raw.as_slice(), namespace).unwrap().state()
+                    == JobState::RootReserved
+            })
+            .unwrap();
+        reserved[176..184].copy_from_slice(&object.to_le_bytes());
+        let decoded = row::decode_job(reserved, namespace).unwrap();
+        assert_eq!(decoded.object().unwrap().object.get(), object);
+        assert_eq!(fixture.observe(), Err(Error::OrderMismatch));
+    }
+}

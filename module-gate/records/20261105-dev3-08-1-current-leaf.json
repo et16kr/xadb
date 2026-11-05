@@ -389,6 +389,13 @@
           "sources": [
             "head"
           ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/read/driver/tests.rs",
+          "case": "storage::row::read::driver::tests::spl_b02_cursor_rejects_nonprogressing_leaf_bounds",
+          "sources": [
+            "head"
+          ]
         }
       ]
     },
@@ -414,7 +421,7 @@
         "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
         "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_effect.rs"
       ],
-      "reason": "C/A/semantic current-leaf consumers (dev3-tree-smo.md#current-leaf-consumers): preflight RowRouteCursor, rollback selection, live Prune route, recovery_leaf and history current_leaf, transition table_leaf with Forward-only pair[1], per-leaf leaf reservation D over restoring Row roots, A's group observation, route_row_step; split admission refuses only the table's RootReserved Row root and Catalog debt. SPL-J01..J05 split beside Retained INSERT/DELETE/UPDATE roots, then Commit, rollback, Prune and restart CLRs; SMO-E01 drops the superseded refusals.",
+      "reason": "C/A/semantic current-leaf consumers (dev3-tree-smo.md#current-leaf-consumers): preflight RowRouteCursor, rollback selection, live Prune route, recovery_leaf and history current_leaf, transition table_leaf with Forward-only pair[1], per-leaf leaf reservation D over restoring Row roots, A's group observation, route_row_step; split preparation retains global allocator Reserved / RootReserved exclusion, then admission refuses the target table's non-Free Catalog debt. SPL-J01..J05 split beside Retained INSERT/DELETE/UPDATE roots, then Commit, rollback, Prune and restart CLRs; SMO-E01 drops the superseded refusals. SPL-J06 checks recovery Prune after Commit then split, including repeated reopen.",
       "cases": [
         {
           "file": "crates/engine/src/storage/row/insert/group_tests.rs",
@@ -1936,6 +1943,13 @@
           "sources": [
             "head"
           ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/split_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::spl_j06_restart_prunes_committed_rows_moved_after_commit",
+          "sources": [
+            "head"
+          ]
         }
       ]
     },
@@ -3012,6 +3026,28 @@
       },
       "log": "module-gate/evidence/dev3-08-1-current-leaf/review.md",
       "log_sha256": "180973389174460073752acaa43d88f68231140059456b6e84df3838cb1378ad"
+    },
+    {
+      "id": "dev3-08-1-pr53-supplement",
+      "class": "D2",
+      "scopes": [
+        "common",
+        "joint"
+      ],
+      "author": "/root",
+      "reviewer": "/root/independent_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/row/read/driver/tests.rs": "16b5e8694018dd48a2e8ba29b73a19e68209e2dc",
+        "crates/engine/src/storage/semantic_row/structure/weights/tests.rs": "f6f50625997c84ad73501a6387f03896967533a3",
+        "crates/engine/src/storage/tree_page/search/tests.rs": "4d2c26889dc5a566228ed2ca172fa9590820c250",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/split_rows.rs": "989ac5bc2033d3252ac7caba4ca8f6c5d7fb0b54",
+        "crates/engine/src/storage/wal_io/plan4_retention/structural_effect.rs": "64c757a850d10bd31b762a9c0f96badd1396c58d",
+        "devdoc/contracts/dev3-tree-smo.md": "8d7980fc21b9c432c5cffa8a196c8494911ea912"
+      },
+      "log": "module-gate/evidence/dev3-08-1-pr53-review/review.md",
+      "log_sha256": "eee50d2c439a5c2d2eacbc063e2a2a55708ad1e5697591070afdead7bb04adb1"
     }
   ]
 }

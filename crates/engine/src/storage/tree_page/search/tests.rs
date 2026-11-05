@@ -82,6 +82,56 @@ const FAMILIES: [(PageKind, PageKind, u8); 3] = [
     (PageKind::CatalogInternal, PageKind::CatalogLeaf, 0),
     (PageKind::IndexInternal, PageKind::IndexLeaf, 1),
 ];
+
+/// The live page-at-a-time route must agree with an independently authored
+/// partition map, including gaps and exact separators at both internal levels.
+#[test]
+fn row_route_steps_match_partition_model_and_inherited_bounds() {
+    let images = tree(PageKind::RowInternal, PageKind::RowLeaf, 0);
+    for query in 1u64..=120 {
+        let (parent, target, lower, upper) = match query {
+            1..=19 => (110, 111, None, Some(20u64)),
+            20..=39 => (110, 112, Some(20u64), Some(40)),
+            40..=59 => (120, 121, Some(40), Some(60)),
+            60..=79 => (120, 122, Some(60), Some(80)),
+            80..=99 => (130, 131, Some(80), Some(100)),
+            _ => (130, 132, Some(100), None),
+        };
+        let mut bounds = RowRouteBounds::default();
+        let mut request = expected(PageKind::RowInternal, 0, 2, 100);
+        for (number, level) in [(100, 2), (parent, 1), (target, 0)] {
+            assert_eq!(
+                (request.identity.page.page_no, request.level),
+                (number, level)
+            );
+            let next = route_row_step(&images[&number], request, &query.to_be_bytes(), &mut bounds)
+                .unwrap();
+            if level == 0 {
+                assert_eq!(next, None);
+            } else {
+                request = next.unwrap();
+            }
+        }
+        assert_eq!(
+            bounds,
+            RowRouteBounds {
+                lower: lower.map(u64::to_be_bytes),
+                upper: upper.map(u64::to_be_bytes),
+            }
+        );
+        // The leaf at [40,60) cannot contain a key below its inherited lower
+        // bound or equal to its upper bound, even if locally sorted and valid.
+        if target == 121 {
+            for entries in [&[(39, 0), (50, 0)][..], &[(40, 0), (60, 0)]] {
+                let corrupt = page(request, None, entries);
+                assert_eq!(
+                    route_row_step(&corrupt, request, &query.to_be_bytes(), &mut bounds),
+                    Err(TreeError::Corrupt)
+                );
+            }
+        }
+    }
+}
 fn tree(internal: PageKind, leaf: PageKind, arity: u8) -> BTreeMap<u64, Vec<u8>> {
     let mut images = BTreeMap::new();
     for (number, level, left, entries) in [

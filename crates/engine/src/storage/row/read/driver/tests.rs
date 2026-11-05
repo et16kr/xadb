@@ -252,6 +252,7 @@ struct LiteralSource<'x> {
     right: Option<(RowId, &'x [u8])>,
     /// The upper bound of the leaf `page` last issued.
     upper: Option<RowId>,
+    forced_upper: Option<RowId>,
     log: &'x RefCell<Vec<Call>>,
     page_answer: Answer<()>,
     status: Vec<(u64, Answer<TransactionState>)>,
@@ -269,6 +270,7 @@ impl<'x> LiteralSource<'x> {
             bytes,
             right: None,
             upper: None,
+            forced_upper: None,
             log,
             page_answer: Answer::Ready(()),
             status: Vec::new(),
@@ -358,7 +360,7 @@ impl<'x> ReadSource for LiteralSource<'x> {
         };
         Ok(match answer(self.page_answer)? {
             Step::Ready(()) => {
-                self.upper = upper;
+                self.upper = self.forced_upper.or(upper);
                 Step::Ready(LiteralPage {
                     source: self,
                     bytes,
@@ -1782,3 +1784,28 @@ mod delete;
 
 #[path = "update_tests.rs"]
 mod update;
+
+/// SPL-B02: an invalid source must not turn a non-progressing leaf bound
+/// into a loop, publish bytes or advance the cursor. Cleanup still runs.
+#[test]
+fn spl_b02_cursor_rejects_nonprogressing_leaf_bounds() {
+    let bytes = leaf_of("r10");
+    let view = LiteralView::new(10, None);
+    let table = LiteralTable::default();
+    let none = Cancellation::default();
+    for bound in [19, 20] {
+        let log = RefCell::new(Vec::new());
+        let mut cursor = RowCursor::open(&view, &table, Some(row(20)), None).unwrap();
+        let mut source = LiteralSource::new(&bytes, &log);
+        source.forced_upper = Some(row(bound));
+        let mut output = [FILL; 16];
+        assert_eq!(
+            read_error(advance(&mut cursor, source, &mut output, &none)),
+            ReadError::InvalidProgress
+        );
+        assert_eq!(log.take(), [Page, Leaf, ReleasePage, Finish]);
+        assert_eq!(progress(&cursor), (None, None));
+        assert_eq!(output, [FILL; 16]);
+        cursor.close().unwrap();
+    }
+}

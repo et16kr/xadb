@@ -134,6 +134,142 @@ fn ids(rows: &[(RowId, i64)]) -> Vec<u64> {
     rows.iter().map(|(row, _)| row.get()).collect()
 }
 
+/// SPL-J06: commit before RootSplit, then restart without live cleanup.
+/// RootSplit moves the upper half into a new leaf, making those Jobs'
+/// pair[1] hints stale. Exercise InsertPrune, DeletePrune and UpdatePrune
+/// against independently specified visible rows, then reopen the result again.
+#[test]
+fn spl_j06_restart_prunes_committed_rows_moved_after_commit() {
+    for change in [false, true] {
+        case_within("SPL-J06", std::time::Duration::from_secs(900), || {
+            let oracle = Oracle::new();
+            let (images, expected, q) = with_fresh!(
+                oracle,
+                frames = 32,
+                |live,
+                 owner,
+                 flusher,
+                 status,
+                 undo,
+                 private,
+                 reader_private,
+                 core,
+                 fence,
+                 state| {
+                    let _ = core;
+                    let (row_status, _) =
+                        create_table(live, owner, flusher, status, undo, private, true);
+                    retire_create!(live, owner, private);
+                    for _ in 0..3 {
+                        system_init(live, owner, flusher, true);
+                    }
+                    let (mut writer, reader, mut flush) = live.split();
+                    let (out, slots) = autocommit!(
+                        &mut writer,
+                        owner,
+                        flush,
+                        flusher,
+                        reader,
+                        reader_private,
+                        &row_status,
+                        private,
+                        6,
+                        ints(&[7, 8, 9, 10])
+                    );
+                    assert_eq!(committed(out), (2, 4));
+                    let rows = applied(slots, &[7, 8, 9, 10]);
+                    if change {
+                        assert_eq!(
+                            drains!(&mut writer, owner, flush, flusher, private),
+                            [drain(21, true)]
+                        );
+                        let mut holder = None;
+                        begun(begin!(
+                            &mut writer,
+                            owner,
+                            flush,
+                            flusher,
+                            &row_status,
+                            private,
+                            &mut holder
+                        ));
+                        let (out, _) = delete_statement!(
+                            &mut writer,
+                            owner,
+                            flush,
+                            flusher,
+                            reader,
+                            reader_private,
+                            &mut holder,
+                            private,
+                            6,
+                            rows[3].0
+                        );
+                        assert_eq!(done(out), 1);
+                        let (out, _) = update_statement!(
+                            &mut writer,
+                            owner,
+                            flush,
+                            flusher,
+                            reader,
+                            reader_private,
+                            &mut holder,
+                            private,
+                            6,
+                            rows[2].0,
+                            int(90)
+                        );
+                        assert_eq!(done(out), 1);
+                        assert_eq!(
+                            explicit_committed(commit!(
+                                &mut writer,
+                                owner,
+                                flush,
+                                flusher,
+                                &mut holder,
+                                private,
+                                2
+                            )),
+                            (3, 2)
+                        );
+                    }
+                    let root = writer.catalog_test_with_pool(leaves)[0].0;
+                    split!(writer, owner, flush, private, root, Split::RootSplit);
+                    let current = writer.catalog_test_with_pool(leaves);
+                    assert_eq!(current.len(), 2);
+                    assert_ne!(current[1].0, root);
+                    assert!(current[1].1.contains(&rows[2].0.get()));
+                    assert!(current[1].1.contains(&rows[3].0.get()));
+                    assert_eq!(shape(&current).1, ids(&rows));
+                    let expected = if change {
+                        vec![
+                            (rows[0].0.get(), 7),
+                            (rows[1].0.get(), 8),
+                            (rows[2].0.get(), 90),
+                        ]
+                    } else {
+                        rows.iter()
+                            .map(|(row, value)| (row.get(), *value))
+                            .collect()
+                    };
+                    assert!(!fence.is_fenced());
+                    (
+                        state.lock().unwrap().images(),
+                        expected,
+                        if change { 3 } else { 2 },
+                    )
+                }
+            );
+            let directory = clone_directory(&images);
+            for _ in 0..2 {
+                let joined = join_restart(&directory, RowRecoveryPolicy::RejectInitialLosers, None);
+                assert_eq!((joined.ready.0, joined.clrs, joined.row_cells), (q, 0, 0));
+                assert_eq!(joined.rows, expected);
+            }
+        });
+    }
+}
+
 /// SPL-J01: an explicit transaction inserts 7..10 (four Retained INSERT
 /// roots in T's one leaf), and the original RootSplit is admitted beside
 /// them: two leaves of two keys hold the same four RowIds in order. A fifth

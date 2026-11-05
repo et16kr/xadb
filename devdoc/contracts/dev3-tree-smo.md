@@ -804,7 +804,8 @@ Catalog Job도 포함한다. same-cut canonical 검산과 Job 부재에서 대�
 준비의 active debt 허용을 실제 effect 허용으로 그대로 확대하지 않는다. 다른 table의 원 부채는
 위 credit 계산대로 보존한다. 이 한정은 첫 연결의 임시 경계이며08-1 완료 조건을 줄이지 않는다.
 (2026-11-05: 이 한정은 [current-leaf 소비자 일반화](#current-leaf-consumers)로 대체됐다. 이제
-대상 table의 RootReserved Row root와 non-Free Catalog Job만 거절한다.)
+allocator Reserved·모든 scope/table의 RootReserved 배제는 유지하며, 그 뒤 대상 table의
+non-Free Catalog Job을 추가로 거절한다. Row의 Forward 이후 부채는 허용한다.)
 최종08-1에서는 current-leaf 소비자를 일반화하고 이 한정을 제거한 뒤 Active INSERT/DELETE/UPDATE의
 split→Commit/Abort/CLR/Prune와 후속 다단계 행 변경을 검증한다. SMO-P03의 무효과 active 준비는 유지한다.
 
@@ -906,9 +907,13 @@ B 읽기 operation의 `close_reads_for_retirement` gate가 split과 한 operatio
 operation 안의 여러 route는 같은 tree를 본다. 한 cursor의 step 사이에 split이 끼면 다음 step이
 key로 다시 route한다. 이것은 SMO를 건너는 cursor/locator 인수(일정08-2)를 대신하지 않는다.
 
-**admission.** 원 `split_row`는 대상 table의 RootReserved Row root와 non-Free Catalog Job만
-무효과 Unsupported로 거절한다. Retained·Releasing·terminal Row 부채는 허용한다. 선택 가중치는
-기존대로 각 Retained root의 restore bytes를 그 행의 쪽에 둔다.
+**admission.** 원 `split_row`의 canonical 준비는 기존대로 allocator Reserved와
+**모든 scope/table의 RootReserved**를 거절한다. `weights::derive`와 candidate의 역방향 검산이
+RootReserved를 `OrderMismatch`로 거절하므로, 뒤의 table별 검사까지 도달하지 않는다.
+준비가 성공한 뒤 대상 table의 non-Free Catalog Job은 무효과 Unsupported로 추가 거절한다.
+Retained·Releasing·terminal Row 부채는 허용한다. 선택 가중치는 기존대로 각 Retained root의
+restore bytes를 그 행의 쪽에 둔다. 이전 문구의 “대상 table만”은 이 전역 준비 조건을
+누락한 설명 오류이며, 이번 정정은 admission 동작이나 기존 Reserved 배제 계약을 바꾸지 않는다.
 
 **source census.** 원 charge 44,304B는 바꾸지 않았다. B cursor.row_load는 34,573/34,586B(여유13B),
 point.row_load 34,381B다. B route 단계(row_route)는 `route_row_step`이 품는 tree codec까지 세어
@@ -928,6 +933,8 @@ stack/RSS 측정이 아니다.
 | SPL-J03 | 7..10 commit·RootSplit 뒤 DELETE 7·UPDATE 10→100 상태에서 오른쪽 leaf ChildSplit(1/1), rollback이 둘을 복원(drain9). 같은 변경의 Commit q3, DeletePrune·UpdatePrune(drain11), INSERT q4는 가장 오른쪽 leaf. 재시작 q4가8,9,100,11을 읽음 |
 | SPL-J04 | split tree에서 승자 DELETE 8 Commit(정리 전)과 다른 Status의 패자 DELETE 7·UPDATE 9·INSERT 11, 그 옆 ChildSplit 뒤 파일 채취. 재시작이 승자 Prune과 패자 CLR3을 route한 leaf에서 실행, READY q3·Row Job0, cursor가7,9,10을 읽음 |
 | SPL-J05 | table의 CREATE Catalog Job이 남아 있으면 split은 무효과 Unsupported. WAL·bank·Jobs 불변, fence 없음, B가 네 행을 읽음 |
+| SPL-J06 | Commit 이후 RootSplit으로 오른쪽 leaf로 이동한 INSERT, DELETE·UPDATE의 정리 전 파일로 재시작. Prune 세 종류가 현재 leaf를 찾아 READY q2/q3·CLR0·Row Job0, 같은 파일의 두 번째 재진입도 같은 행을 읽음 |
+| SPL-B02 | 잘못된 leaf upper bound가 route key보다 작거나 같으면 InvalidProgress. page/operation 해제, output·cursor progress 불변 |
 | SPL-B01 | B driver의 literal 두 leaf(10,20 / 30,40, separator 30). cursor가 20 뒤 왼쪽 leaf의 upper bound로 오른쪽 leaf를 route해 30·40을 돌려주고 끝남. 범위가 separator에서 끝나면 오른쪽 leaf를 route하지 않고 끝남 |
 | SMO-E01 | 기존 Active·Commit 후 거절 단언을 위 admission에 맞춰 제거. 깨끗한 leaf의 Root→Child 효과 검산은 그대로 |
 

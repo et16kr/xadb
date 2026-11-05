@@ -235,8 +235,9 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     pub(in crate::storage) fn test_structural_fault(&self, kind: u8) -> fault_support::Fault {
         fault_support::arm(kind)
     }
-    /// Private structural system operation. It refuses the table's
-    /// RootReserved Row root and Catalog debt (`split_row_admitted`).
+    /// Private structural system operation. Canonical preparation refuses
+    /// allocator Reserved and every RootReserved Job; `split_row_admitted`
+    /// additionally refuses the target table's non-Free Catalog debt.
     pub(in crate::storage) fn split_row(
         &mut self,
         owner: &mut Owner<'c, 's>,
@@ -313,8 +314,9 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         // table's Row debt past its Forward (Retained, releasing, terminal)
         // is admitted: every current-leaf consumer routes its row
         // (dev3-tree-smo.md#current-leaf-consumers). A RootReserved Row root
-        // is refused, since its Forward writes the pair[1] leaf its Reserve
-        // found current, and so is any non-Free Catalog Job of the table,
+        // is already refused globally by canonical preparation (all tables
+        // and scopes), since Forward writes its reserved pair[1] leaf. The
+        // check below additionally refuses any non-Free Catalog Job of the table,
         // whose split-tree semantics are schedule 09/10's.
         for bytes in self.control.jobs() {
             use crate::storage::retention_page::row::{JobScope, JobState};

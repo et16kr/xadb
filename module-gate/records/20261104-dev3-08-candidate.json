@@ -290,6 +290,28 @@
         "devdoc/contracts/dev3-tree-smo.md": "e60ff6fbfcf0d52fccce95425f9d9913c2560164"
       },
       "log": "module-gate/evidence/dev3-08-effect/review.md (sha256 5c0f1ecbb805aad6300bdb7e4d93eaba1d05e0709a3bb3c69a9a7a44cbe49d1f)"
+    },
+    {
+      "id": "dev3-08-1-pr53-supplement",
+      "class": "D2",
+      "scopes": [
+        "common",
+        "joint"
+      ],
+      "author": "/root",
+      "reviewer": "/root/independent_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/row/read/driver/tests.rs": "16b5e8694018dd48a2e8ba29b73a19e68209e2dc",
+        "crates/engine/src/storage/semantic_row/structure/weights/tests.rs": "f6f50625997c84ad73501a6387f03896967533a3",
+        "crates/engine/src/storage/tree_page/search/tests.rs": "4d2c26889dc5a566228ed2ca172fa9590820c250",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/split_rows.rs": "989ac5bc2033d3252ac7caba4ca8f6c5d7fb0b54",
+        "crates/engine/src/storage/wal_io/plan4_retention/structural_effect.rs": "64c757a850d10bd31b762a9c0f96badd1396c58d",
+        "devdoc/contracts/dev3-tree-smo.md": "8d7980fc21b9c432c5cffa8a196c8494911ea912"
+      },
+      "log": "module-gate/evidence/dev3-08-1-pr53-review/review.md",
+      "log_sha256": "eee50d2c439a5c2d2eacbc063e2a2a55708ad1e5697591070afdead7bb04adb1"
     }
   ]
 }
