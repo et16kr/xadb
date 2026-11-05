@@ -1122,7 +1122,8 @@ split 종류 직접 관측. 18-frame pool에서 split 뒤 table issue의 Missing
 <a id="empty-leaf-unlink"></a>
 ## 빈 leaf unlink·root 축소·retirement 등록
 
-상태는 **2026-11-05 설계 / 독립 D2 1회차 CONDITIONAL(필수 3)·2회차 CONDITIONAL(필수 1) 반영 / 구현 없음**이다. 08-1의 마지막
+상태는 **2026-11-05 설계 / 독립 D2 3회차 ACCEPT, 필수 0 / 구현 없음**이다. 1회차 CONDITIONAL(필수 3)과
+2회차 CONDITIONAL(필수 1)을 반영했다([검토 기록](../../module-gate/evidence/dev3-08-1-unlink-design/review.md)). 08-1의 마지막
 범위(3.06.1.c, T06-06)를 닫는 설계다. 08-1은 아래 U4까지 끝나야 완료로 적립한다.
 
 이 절이 대체하거나 확장하는 앞 서술은 다음과 같다.
@@ -1294,7 +1295,8 @@ provenance를 발급할 일이 없으므로 하지 않는다. 같은 cut의 cano
 before에서 다시 하고, native before digest·redo·after 목록을 정확히 비교한 뒤 anchor·P after를 arena에
 반영하고 Structural bank 칸을 새 descriptor로 바꾼다. INIT provenance claim은 만들지 않는다. 복구 관측
 (`RetentionFrameObservation`)의 `changed`에는 바뀐 page만 넣는다. 퇴역 page를 `retired`에 넣지 않는다. 그 칸은
-Free를 뜻해 arena와 claim을 지운다(`plan4_recovery/analysis.rs`의 관측, `history/catalog.rs`의 arena·claim 정리). 그래서 퇴역 page의 기존 claim(CREATE pair 또는
+Free를 뜻해 arena와 claim을 지운다
+(`plan4_recovery/analysis.rs`의 관측, `history/catalog.rs`의 arena·claim 정리). 그래서 퇴역 page의 기존 claim(CREATE pair 또는
 role5/6)은 그대로 남는다. 복구는 새 unlink를 시작하지 않는다(빈 leaf는 정상 상태다).
 
 **Base4 closure.** [현재 tree 전체 검산](#current-tree-closure)의 `reached == owned`를 `reached ⊎ retired ==
@@ -1358,7 +1360,7 @@ Capacity로 거절한다. 제품 table은 CREATE Catalog Job 때문에 일정 10
 | UNL-B07..B09 | CREATE leaf(pair[1])를 퇴역시킨 Base4의 `validate_pairs`와 재시작, unlink descriptor가 bank에 있고 그보다 오래된 role5/6 claim이 있는 Base4, unlink 뒤 base 재작성(BaseOnly·다음 rebase)의 목록·claim 보존 |
 | UNL-R01..R03 | canonical replay의 opcode 3·4 수락과 재시작 read·leaf 수·목록, frame 변조 거절, 연속 split→unlink→split의 bank high-water |
 | UNL-L01..L08 | live: 중간 leaf의 행을 모두 DELETE·commit·drain → LeafUnlink, leftmost leaf, RootCollapse, 두 child가 빈 root → 빈 root leaf, non-root unary는 NotNeeded로 남음, rollback한 INSERT의 CLR note → unlink(SPL-A03 상태), CREATE Catalog Job table은 note 버림, unlink 뒤 split이 퇴역 page를 쓰지 않음. 각각 재시작 read |
-| UNL-L09..L14 | 작은 pool의 FlushRequired 왕복, 다른 Owner의 열린 읽기를 shell이 기다린 뒤(`ReadGateWaiting` test point) 읽기가 끝나면 unlink, 준비와 설치 사이 target stamp를 바꾸는 seam의 `Frame(Stale)` Unchanged가 note를 남김(Busy 계열), root level 2 tree에서 non-root P(separator ≥2) 아래 LeafUnlink와 지운 separator·이웃 경계 key의 point/cursor 읽기, 가장 오른쪽 leaf unlink 뒤 새 INSERT의 route, 오래된 snapshot이 DeletePrune을 Busy로 잡는 동안 unlink 없음·끝난 뒤 unlink, C 직접 호출의 RootReserved·allocator Reserved 거절 |
+| UNL-L09..L15 | 작은 pool의 FlushRequired 왕복, 다른 Owner의 열린 읽기를 shell이 기다린 뒤(`ReadGateWaiting` test point) 읽기가 끝나면 unlink, 준비와 설치 사이 target stamp를 바꾸는 seam의 `Frame(Stale)` Unchanged가 note를 남김(Busy 계열), root level 2 tree에서 non-root P(separator ≥2) 아래 LeafUnlink와 지운 separator·이웃 경계 key의 point/cursor 읽기, 가장 오른쪽 leaf unlink 뒤 새 INSERT의 route, 오래된 snapshot이 DeletePrune을 Busy로 잡는 동안 unlink 없음·끝난 뒤 unlink, C 직접 호출의 RootReserved·allocator Reserved 거절 |
 | UNL-A01..A03 | A literal(drain 순서·상한 8·FlushRequired 미계수·Busy 계열·그 밖의 Unchanged·Fatal·`Stage::Unlink`), 9번째 note 버림, census(C peak + 4,096 ≤ 44,304, A 새 지점) |
 | UNL-N01..N06 | native fault cut: stage 전후, sync, install, DWB/home, CURRENT 공개와 reopen. 각 cut 뒤 tree·목록·allocator 일치 |
 
