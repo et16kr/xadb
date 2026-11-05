@@ -15,7 +15,8 @@ DEV3 일정 보고는 [전체 예상 일정·누적 진척률 V1](plans/dev3-sch
 anchor의 XTR1 목록에)는 독립 D2 3회차 ACCEPT를 받았다. U1은 XTR1 codec, split candidate의 목록 보존과
 `reached ⊎ retired == owned` 검산, 순수 unlink candidate, opcode 3·4 frame producer/observer, bank, Base4 closure와
 UNL-P01..P10·F01..F04·B01..B06·B08 memory 시험이다. U2는 복구 replay의 opcode 3·4 dispatch와 source 회계,
-UNL-R01..R04(B07 재시작·B09 capture 포함)와 Catalog 부채 단위 시험이다. 복구는 이제 unlink frame을 받지만 그
+UNL-R01..R04(B07 재시작과 B09의 raw capture 대조. 제품 rebase `capture_base`는 U3의 재시작 read)와 Catalog 부채 단위
+시험이다. 복구는 이제 unlink frame을 받지만 그
 frame을 쓰는 제품 경로는 아직 없다(live 효과·호출자 U3, native U4). 앞 단위
 [current-leaf 소비자 일반화](contracts/dev3-tree-smo.md#current-leaf-consumers)(PR #53)와
 [A 자동 split 호출자](contracts/dev3-tree-smo.md#automatic-split)(PR #54)는 병합됐다. 08-1은 U4가 끝나야 적립하며

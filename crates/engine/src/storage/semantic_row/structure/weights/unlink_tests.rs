@@ -441,7 +441,7 @@ fn unl_p08_rejects_alias_reach_kind_revision_and_debt() {
 
 /// UNL-P08 Catalog debt (U1 deferral, dev3-tree-smo.md#unlink-u2): a
 /// non-Free Catalog Job of this table refuses with Unsupported before any
-/// unlink or NotNeeded decision (and before the tree audit). The Job is the
+/// unlink or NotNeeded decision. The Job is the
 /// independent job3 literal (RootRetained, Catalog, table 6 generation 1),
 /// never a product encoder's.
 #[test]

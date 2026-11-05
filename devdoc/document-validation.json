@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-11-06T02:51:36.026704+09:00",
+  "date": "2026-11-06T07:14:57.987201+09:00",
   "status": "FAIL",
   "errors": [
     "/home/claude/xadb/devdoc/contracts/dev3-tree-smo.md: missing link ../../module-gate/evidence/dev3-08-1-unlink-u2/review.md"
@@ -467,7 +467,7 @@
       "file": "devdoc/contracts/dev3-tree-smo.md",
       "links": 47,
       "duplicate_ids": 0,
-      "sha256": "0c118b72a5c905af26dcaa14314b9be32d5681bcf26159a543b4fbc23708baca"
+      "sha256": "57bd7ca36a6d3970f4c47d9a6ace53860cb729f59d5d3ab7f49ffc17a7240fbe"
     },
     {
       "file": "devdoc/contracts/dev3-undo-format.md",

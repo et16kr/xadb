@@ -243,6 +243,37 @@ fn unl_r02_rehashed_core_and_native_mutations_and_wrong_cuts_preserve_state() {
         Err(RetentionCause::RowSemantic(RowError::IdentityMismatch))
     ));
     assert_eq!(collapse.state(), state);
+    // The dispatch reads only the length: a split opcode inside an unlink
+    // length and an unlink opcode inside a split length are each refused
+    // by the chosen decoder (rehashed, so only the opcode differs).
+    let seed = World::new(LEAF_BEFORE);
+    let mut swapped = seed.unlink_frame(19);
+    let header = unlink::decode_layout(&swapped, seed.expectation(), profile())
+        .unwrap()
+        .header();
+    swapped[166..168].copy_from_slice(&1u16.to_le_bytes());
+    crate::storage::wal_frame::finish_semantic_envelope(header, 2, &mut swapped).unwrap();
+    let mut world = World::new(LEAF_BEFORE);
+    let state = world.state();
+    assert!(matches!(
+        world.apply(&swapped),
+        Err(RetentionCause::RowSemantic(RowError::Unsupported))
+    ));
+    assert_eq!(world.state(), state);
+    let seed = World::new(LIVE);
+    let mut swapped = seed.frame(11);
+    let header = semantic::decode_layout(&swapped, seed.expectation(), profile())
+        .unwrap()
+        .header();
+    swapped[166..168].copy_from_slice(&3u16.to_le_bytes());
+    crate::storage::wal_frame::finish_semantic_envelope(header, 5, &mut swapped).unwrap();
+    let mut world = World::new(LIVE);
+    let state = world.state();
+    assert!(matches!(
+        world.apply(&swapped),
+        Err(RetentionCause::RowSemantic(RowError::Unsupported))
+    ));
+    assert_eq!(world.state(), state);
 }
 
 #[test]
