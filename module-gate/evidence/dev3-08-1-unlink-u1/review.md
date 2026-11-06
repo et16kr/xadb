@@ -1,110 +1,86 @@
 Verdict: ACCEPT
 
-# 독립 D2 재검토(2회차): 빈 leaf unlink U1
+# D2 검토 기록: U1 4회차 (ec198b3 위 미커밋 diff, branch u1-main)
 
-## 대상
+## 판정: **ACCEPT**. 남은 필수 0, 권고 1(절차), NIT 2
 
-- commit: `d1cb74f` (local branch `u1-local`, parent `09eb773`). 이번 차이는 `git diff 09eb773 d1cb74f`이고,
-  전체 변경 `git diff b6dc3a2 d1cb74f` 안에서 읽었다.
-- 1회차: `review.md`(CONDITIONAL, 필수 1, 대상 `09eb773`)
-- 바뀐 파일 6개: `anchor.rs`(doc comment), `structural_effect.rs`, `structural_prepare.rs`, `devdoc/README.md`,
-  `devdoc/contracts/dev3-tree-smo.md`, `devdoc/document-validation.json`
-- 검토자는 이 코드를 작성하지 않았다. `/home/claude/xadb`은 읽기만 했고, 시험은 `git archive d1cb74f` 사본과
-  별도 `CARGO_TARGET_DIR`에서 했다. H001 기준선은 `git archive b6dc3a2` 사본에서 확인했다. 두 target과 사본은
-  기록 뒤 지웠다.
+3회차의 필수 1건과 권고·NIT는 모두 반영됐다. 아래 두 NIT는 문서 문구 문제이고, 제품 코드나 census 값에는 영향이 없다.
 
-## 결론
+## 3회차 지적 대조
 
-열린 필수는 **0건**이다.
+1. **필수 1, `history/row.rs:1082–1089` `table_source_bytes` — 해소.**
+   - 새 식은 `frame + (search + tree.max(catalog)).max(decode_source(tree))`로, 수용된 묶음이 그대로 돌아왔다.
+   - 값은 바뀌지 않은 성분(3회차 probe: selected 1,752, frame 600, search 3,384, tree 1,869, catalog 3,012)으로 계산했다: 1,752 + 600 + max(6,396, 1,871) = **8,748 B**. 문서의 "8,748B 그대로"와 맞다.
+   - 이 값을 직접 찍는 시험은 없어서, 산술로만 확인했다.
+2. **Undo 항 816 → 786 — 해소.** 새 시험 `…retention::read::catalog::tests::unl_c01_undo_decode_term_covers_the_list_check`는 PASS했고 `page=786 decode=788`을 출력했다.
+3. **candidate build의 page 항에 `+1536` 추가 — 해소.** 같은 파일의 `retired_chain`과 일관된다.
+   - anchor_codec은 3,843(listed 2,998)로 weights 15,820보다 작아 peak는 그대로다.
+   - `verifying`에 붙은 주석 내용은 맞다.
+4. **`check_list`에 `#[inline(never)]` — 반영.**
+5. **A 생산자 — 타입 크기 논법을 미결 항목으로 바꿨다.** 공백이 이 단위 전부터 있었다는 점과 U3(UNL-A03·C03)로 넘긴다는 점이 정확히 적혀 있다.
+6. **`extend_source_bytes` 행 — 해소.** 제품 호출자가 없다는 사실이 정확하다.
+7. **NIT 3건(Result 1 B×2, `retired` 값을 쓰는 곳마다 표시, module-boundaries의 "위 표와 아래") — 반영.**
 
-1회차 필수 1의 네 부분 (a)–(d)가 모두 닫혔다. 이번에 새로 적은 실행 명령 3개는 기록된 선택 수와 같고, 바뀐 코드에
-닿는 cmd2를 다시 돌려 기록된 결과와 같음을 확인했다. XRB executor 결과도 사본에서 재현했다. H001 실패는 U1의
-base(`b6dc3a2`)에서도 같은 위치로 실패한다. `b6dc3a2`는 main `1c9486a`과 `crates/`·`tests/`가 같으므로 U1 전부터
-있던 실패다. 선택 2·3·5의 반영도 맞고, 새 match 갈래는 stage 전 Unchanged 거절이라 안전하다. 남은 것은 아래 선택
-2건뿐이다.
+## 권고 (절차)
 
-## 확인 방법
+1. **module gate record `20261106-dev3-08-1-unlink-u1.json`을 아직 갱신하지 않았다.** 3회차에 `check` 결과 FAIL 54건이었다.
+   - 이번에 새로 바뀐 `read/catalog_tests.rs`(새 case)까지 포함해, rust_tests와 review `files`를 commit 뒤 head blob으로 갱신해야 한다.
+   - 범위 구분: `plan4_apply/row/read.rs`는 D2 common 대상이다(census 식만 바뀌었고 API·re-export 변화 없음). `dev3-module-boundaries.md`는 D2 policy 대상이다(날짜 단 메모뿐이고 규칙 변화 없음). 이 판정을 그 범위로 기록해도 된다.
+   - 검토한 working-tree blob(앞 12자리):
 
-읽은 것:
-
-- `git diff 09eb773 d1cb74f` 전체
-- 바뀐 계약 절(1399–1473행): split `decode_layout` 문장, U2 dispatch 문장, 시험 표, 명령 표, XRB 표
-- 비교 대상 코드: split `decode_layout`의 길이 검사, unlink `decode_layout`의 opcode 검사, `structural_effect.rs`의
-  `split_row_admitted`(새 갈래 앞뒤), `structural_prepare.rs`의 `semantic`, `plan4_recovery_base_tests.rs`의
-  `cases`·`rejected`·`xrb_header_rejections`, `plan4_recovery_base.rs`의 `read_header_format`
-
-실행한 것과 결과:
-
-| 명령 | 결과 |
+| 파일 | blob |
 | --- | --- |
-| `cargo test -p xadb-engine --lib -- --list`(d1cb74f) | 2,375건. 기록된 cmd1 filter는 **113**건, cmd2는 **60**건, cmd3는 **2**건을 고른다. UNL 16개는 모두 cmd1에 있고, cmd1과 cmd2는 겹치지 않는다. 시험 표의 6개 경로는 모두 실제 libtest 경로와 맞는다 |
-| cmd2 실행(바뀐 `structural_effect.rs`·`structural_prepare.rs`·`history/structure.rs`에 닿는다) | **59 passed, 0 failed, 1 ignored**(`structural_effect_native_worker`), 560s. 기록과 같다. S1B census, SPL-A08, `structural_prepare_*`, `structural_admission_*`, `structural_replay_source_inventory_*`, SPL-A01..A06·J를 포함한다 |
-| cmd1·cmd3 | 다시 돌리지 않았다. 두 범위의 코드는 1회차 뒤 바뀌지 않았고(anchor.rs는 doc comment만 바뀜), 1회차에 같은 시험이 PASS했다. 선택 수만 `--list`로 대조했다(AGENTS.md) |
-| XRB 13개(d1cb74f). 작성자 방법대로: fixture `vectors/p1`, `XADB_XRB_INDEX_SHA256` = `raw-index.tsv`의 sha256, 자리표시 hash, 시험마다 자기 ID 전부, `--exact`. 시험 binary를 직접 실행했다 | C 15/15, S 16/16, G 24/24, I 8/8, E 8/8, ST 1/1, BC 6/6, BA 24/24, BB 1/1, BI 8/8, BST 1/1 XB_PASS. `xrb_s5_reserved_header_bytes`는 ignored. `xrb_header_rejections`는 H001에서 XB_FAIL(`plan4_recovery_base_tests.rs:295:18`, "invalid base accepted") |
-| 같은 binary, `XADB_XRB_INCLUDE=XB-H002..XB-H016` | 15/15 XB_PASS |
-| U1 base `b6dc3a2` 사본, `XADB_XRB_INCLUDE=XB-H001` | 같은 위치 `plan4_recovery_base_tests.rs:295:18`에서 XB_FAIL. `git diff --stat 1c9486a b6dc3a2 -- crates tests`가 비어 있으므로 main 코드와 같다. 두 사본의 `raw-index.tsv`도 같다 |
-| `cargo fmt --all --check`(d1cb74f) | PASS |
-| `cargo clippy -p xadb-engine --all-targets --all-features --locked -- -D warnings`(d1cb74f) | PASS(engine crate만) |
-| `python3 -B devdoc/verify_documents.py`(d1cb74f 사본) | FAIL. 원인은 예상한 `module-gate/evidence/dev3-08-1-unlink-u1/review.md` 누락 링크 1건뿐 |
+| anchor.rs | 335bf6ce6e0f |
+| anchor_tests.rs | 2cab0b0c5b83 |
+| relations.rs | a0bee4f7dce1 |
+| current_tree.rs | 6713562c8148 |
+| semantic_catalog/resources.rs | 43da66652eed |
+| candidate/source.rs | 5c330e11fc8e |
+| transition/source.rs | 702a1458c183 |
+| census_tests.rs | 82aa2cfba8b4 |
+| plan4_apply/row/read.rs | f1d97673c4fd |
+| read/census.rs | f58ff3e8c411 |
+| plan4_genesis.rs | cb4f429d3f6b |
+| plan4_pages/resources.rs | a942ae585312 |
+| history/row.rs | 770bef2d24b9 |
+| read/catalog.rs | 4ca8dd282ec4 |
+| read/catalog_tests.rs | b42d5407266a |
+| row_preflight.rs | 5d2f82bce1bb |
+| epochs.rs | 0f7c5725891c |
+| dev3-module-boundaries.md | c91dda92017c |
+| dev3-tree-smo.md | d0ce17cd75e0 |
 
-1회차 필수 1의 처리:
+## NIT
 
-- **(a) 시험 식별자:** 닫힘. 표의 경로 6개는 `storage::anchor::tests::`,
-  `storage::semantic_row::structure::weights::tests::candidate::unlink::`(`…::frame::`),
-  `storage::semantic_row::structure::bank::tests::`, `storage::plan4_recovery_base::row::graph::tests::current_tree_tests::`
-  이며, `--list`에서 각각 해당 UNL 시험을 고른다.
-- **(b) 결과 수:** 닫힘. 기록된 명령 3개(113 / 59+1 / 2)를 `--list`로 대조했고, cmd2는 실행해서 같은 결과를
-  얻었다. 154 주장은 지워졌다.
-- **(c) xrb 문구:** 닫힘. module-gate.json의 `evidence.executor_only` 근거로 바뀌었고, executor 역할로 돌린 결과와
-  방법이 적혀 있다. 재현 결과도 표와 같다.
-- **(d) history·prepare 범위:** 닫힘. cmd2가 그 시험들을 고르고 실행했다.
+1. **`dev3-tree-smo.md`의 `listed_encode_source_bytes` 행 "page 938B에서 1,462B"가 낡았다.** build가 이제 2,474를 넘기므로 값은 **2,998B**다. `retired` 행처럼 고친다.
+2. **A 미결 문단 끝 문장이 앞뒤가 어긋난다.** "상한을 올리지 않고 별도 D2·사용자 결정으로 올린다"를 "임의로 올리지 않고, 올리려면 별도 D2·사용자 결정을 거친다"로 바꾼다.
 
-선택 반영:
+## 직접 확인한 것
 
-- **선택 2(exhaustive match):** 맞음. `structural_effect.rs:383–391`과 `structural_prepare.rs:199–221`이 `match`로
-  돌아갔고, `LeafUnlink | RootCollapse` 갈래는 `semantic(row::Error::Unsupported)`를 돌려준다.
-  `structural_prepare.rs:54`에 따르면 이는 `unchanged(Prepare, RowSemantic(Unsupported))`, 곧 stage 전 Unchanged
-  거절이다. `structural_effect.rs`의 갈래는 `check_split_debt`와 `SystemWorkRef` 생성 뒤, stage 앞에 있다.
-  `structural_prepare.rs`의 갈래는 `read_split_before` 대신 오는 것이라 pin이나 read를 쥐지 않는다. 지금은 닿지
-  않는 갈래다(split `Observation`은 split candidate만 만든다).
-- **선택 3(`extend` 전제):** 맞음. `anchor.rs:176–180`이 (file, page_no) 정렬과 기존 목록과의 물리 page 비중첩을
-  적고, 위반하면 encoder가 InvalidInput으로 거절한다고 적는다. 1회차에서 확인한 동작과 같다.
-- **선택 5(README):** 맞음. "B01..B06·B08, B07·B09는 일부, 재시작·BaseOnly capture는 U2"로 바뀌었다.
-- **계약의 split `decode_layout` 문장:** 맞음. 코드(`structure.rs` `decode_layout`)는 84,744·84,640이 아니면
-  Corrupt이고, 그 길이에서 opcode 3·4이면 Unsupported다. UNL-F01의 `structural::decode_layout(unlink frame) ==
-  Corrupt` 단언과도 맞는다.
-- **U2 dispatch 문장:** 실현 가능하다. 두 문법의 길이 {84,744, 84,640}과 {35,248, 19,032}는 서로 겹치지 않는다.
-  잘못된 opcode는 각 decoder가 다시 거절한다. split 길이에 opcode 3·4가 오면 split decoder의 `!is_split()`가,
-  unlink 길이에 opcode 1·2가 오면 unlink decoder의 `!is_unlink()`가 Unsupported로 거절한다.
-- **선택 1(`check_debt` 시험):** U2의 할 일로 계약 1441–1443행에 기록되었다("NotNeeded보다 먼저 거절"). U2 검토에서
-  확인한다.
-- **선택 4·6:** review 파일을 둔 뒤 하기로 했다. 실제로 커밋된 `document-validation.json`은
-  `dev3-tree-smo.md`의 sha가 현재 파일과 다르다(`d66ec962…` 대 실제 `6dd32b78…`). 나머지 문서 sha는 맞는다. 다시
-  생성할 때 함께 맞춰진다.
+- **diff 전체를 읽었다.** 바뀐 곳은 7개 파일이다. anchor_tests.rs의 변경은 줄바꿈뿐이다.
+- **`cargo fmt --all --check` 통과.**
+- **working tree에서 5개 시험을 돌려 모두 PASS했다:**
+  - `anchor::tests::unl_c01_xtr1_codec_cost_per_decoder_path`
+  - `…read::catalog::tests::unl_c01_undo_decode_term_covers_the_list_check`
+  - `s2w_c03` (memory·native 40,883)
+  - `structural_split_source_inventory`
+  - `row_replay_tree_selector_fits_existing_source_admission`
 
-## 필수
+## 믿고 받은 것
 
-없음.
+- coordinator가 돌리고 있는 전체 영향 시험(576개 + UNL-C01 2개)의 결과.
+- g5_bind_boundaries는 executor 전용이라 직접 확인하지 않았다.
+- XRB H001 실패는 main과 같은 것으로 보고, 별도로 넘어간 일로 받았다.
 
-## 선택
+repo는 수정하지 않았다(HEAD ec198b3, 미커밋 diff는 coordinator의 것 그대로).
 
-1. **XRB H002..H016의 방법 기록.** 계약 표는 "시험마다 자기 ID 전부를 `XADB_XRB_INCLUDE`로 주고"라고 적고, 그
-   결과로 `xrb_header_rejections` H002..H016 XB_PASS를 적는다. 그런데 `cases`는 첫 실패에서 `resume_unwind`로
-   멈춘다. 그래서 H001..H016 전부를 준 실행은 H001에서 끝나고 H002..H016은 돌지 않는다. 작성자 log(`xrb-H.log`)도
-   XB_PASS가 0개다. 그 PASS는 `XADB_XRB_INCLUDE=XB-H002..XB-H016`으로 따로 돌린 결과여야 하며, 검토자가 그렇게 돌려
-   15/15 PASS를 확인했다. 결과는 맞으므로 필수는 아니다. 다만 그 별도 실행을 한 줄 적어 두면 증거가 방법과 맞는다.
-2. **H001 기존 실패의 후속.** U1 범위 밖이고 base에서도 같은 위치로 실패한다. 다만 Base 형식 version 2가
-   Unsupported여야 한다는 XRB 기대와 `read_header_format`(Row가 아닌 mode에서 2를 `V2System`으로 받음)이 다르다.
-   그 실패를 소유할 별도 항목(담당·재현 명령)을 남기기를 권한다. development-policy는 불안정·실패 시험에 결함·담당·
-   재현 자료를 요구한다.
+## 작성자 후속(4회차 뒤)
 
-## 측정값
-
-- cmd2: 59 passed / 1 ignored / 2,315 filtered out, 560.11s(이 사본, 다른 실행과 CPU를 나눠 씀)
-- XRB(d1cb74f): 통과 ID 112개(C15 S16 G24 I8 E8 ST1 BC6 BA24 BB1 BI8 BST1) + H002..H016 15개, 실패 H001 1개,
-  ignored 1개(RH)
-- H001(b6dc3a2): XB_FAIL, `plan4_recovery_base_tests.rs:295:18`
-- build 약 2.5분 ×2, clippy 1분 33초
-- log: `scratchpad/review-u1/`의
-  `r2-cmd2.log`, `r2-list.txt`, `r2-clippy.log`, `r2-docs.log`, `xrb-r2/`(summary.txt와 시험별 log),
-  `xrb-base/H001.log`
+- NIT 1·2는 `4ef9577`에 반영했다. `listed_encode_source_bytes` 행은 "page codec + SHA scratch 2,474B에서 2,998B",
+  A 미결 문단 끝은 "상한을 임의로 올리지 않고, 올리려면 별도 D2·사용자 결정을 거친다"다.
+- 3회차 NIT 5(UNL-C01의 `retired >`·`listed > page` 단언은 smoke 수준)는 그대로 두었다. 값 자체는 census 시험과
+  계약 표가 고정한다.
+- 권고 1(gate record)은 이 기록 뒤의 commit에서 갱신했다. review 범위는 D2 common(`plan4_apply/row/read.rs`의
+  census 식만)과 D2 policy(`dev3-module-boundaries.md`의 날짜 단 메모만)로 적었다.
+- 계약의 U1 상태 줄과 "실행한 명령"에 4회차 결과와 재실행 결과(578개 중 570 passed, 실패 1은 executor 전용
+  g5_bind_boundaries로 padding 2048에서 16/16 PASS, ignored 7, XRB는 H001만 XB_FAIL)를 적었다.

@@ -1398,8 +1398,10 @@ PASS도 주장하지 않는다. 단계의 결과는 아래 각 단계 절에만 
 <a id="unlink-u1"></a>
 ### U1 결과
 
-상태는 **2026-11-05 구현·memory 시험 PASS, 2026-11-06 [UNL-C01 census](#unlink-u1-census) 보강 / 독립 D2 결과는 [U1 검토
-기록](../../module-gate/evidence/dev3-08-1-unlink-u1/review.md)**이다. 제품 경로는 아직 이 코드를 부르지 않는다
+상태는 **2026-11-05 구현·memory 시험 PASS, 2026-11-06 [UNL-C01 census](#unlink-u1-census) 보강, 독립 D2 ACCEPT·필수 0**이다.
+D2는 구현을 1회차 CONDITIONAL(필수 1) 뒤 2회차 ACCEPT, census 보강을 3회차 CONDITIONAL(필수 1) 뒤 4회차 ACCEPT로
+받았다([최종 검토 기록](../../module-gate/evidence/dev3-08-1-unlink-u1/review.md), 앞 회차는 같은 폴더의
+`review-r1.md`..`review-r3.md`). 제품 경로는 아직 이 코드를 부르지 않는다
 (replay dispatch는 U2, live 효과·호출자는 U3). 그래서 사용자에게 보이는 동작은 바뀌지 않는다.
 
 구현:
@@ -1532,3 +1534,11 @@ source·ELF·input hash는 자리표시, 시험마다 자기 ID 전부를 `XADB_
 | `xrb_header_rejections` H002..H016 | XB_PASS(`cases()`는 첫 실패에서 멈추므로 H001 뒤의 15개는 `XADB_XRB_INCLUDE=XB-H002,…,XB-H016`로 따로 실행했다) |
 | `xrb_header_rejections` H001(header version 2를 Unsupported로 기대) | **XB_FAIL**("invalid base accepted"). main `1c9486a`의 같은 명령에서도 같은 위치(`plan4_recovery_base_tests.rs:295`)로 실패하므로 U1 전부터 있던 실패다. 원인은 분석하지 않았다(`read_header_format`은 Row가 아닌 mode에서 version 2를 V2System으로 받는다). 이 단계에서 고치지 않고 별도 작업으로 넘겼다(재현: 위 fixture·env로 `XADB_XRB_INCLUDE=XB-H001 cargo test -p xadb-engine --lib -- --exact storage::plan4_recovery_base::tests::xrb_header_rejections`) |
 | `xrb_s5_reserved_header_bytes` | `#[ignore]` 시험이라 실행되지 않음 |
+
+UNL-C01 보강과 그 D2 수정 뒤(`4ef9577`의 code) 다시 실행한 것: 위 env에 더해 PLAN4_GENESIS·PLAN4_LIVE·PLAN4_RECOVERY·
+G6·G6RC·CATALOG의 source·ELF·input hash와 ALLOCATION·DIRTY·MIXED_OWNER source hash에 자리표시 hex를,
+`RUST_MIN_STACK`에 33554432를 주었다. 위 세 명령의 시험, 바뀐 census 파일의 시험, census 표의 기존 시험과 UNL-C01
+둘(합 578개)을 `--exact`로 실행했다: **570 passed, 1 failed, 7 ignored**. 실패 하나는 executor 전용
+`plan4_pages::tests::g5_bind_boundaries`다(B08이 `XADB_PLAN4_G5_CAPACITY_PADDING`을 요구한다). 그 값을 처음
+수락되는 2048로 주고 따로 돌리면 16/16 PASS다. ignored 7개는 `#[ignore]` 시험(g5 S5 넷, genesis S5 둘)과 native
+worker다. XRB 13개도 이 code에서 다시 돌렸고 결과는 위 표와 같다(H001만 XB_FAIL, H002..H016은 따로 실행해 15/15).
