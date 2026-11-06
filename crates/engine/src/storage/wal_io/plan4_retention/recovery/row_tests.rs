@@ -2000,10 +2000,13 @@ fn s1b_row_arm_refuses_mutations_without_effect() {
 
 /// H03: the frame's scope selects exactly one arm. A Row group relabelled
 /// scope2 reaches only the Catalog observer, scope1 only the System arm
-/// (which refuses any Reserved Job3 root first), and any other scope or
-/// layout version is Unsupported; none falls back to another arm. The
-/// Catalog-group-as-scope3 direction is MBC40-V01's scope loop
-/// (`format_tests`), refused by the Row decoder.
+/// (which refuses any Reserved Job3 root first), scope4 only the structural
+/// arm, and any other scope or layout version is Unsupported; none falls
+/// back to another arm. The structural decoder refuses the Row frame's
+/// length (no scope4 frame length) as `Corrupt` before any digest, while a
+/// Row-arm retry would stop at the envelope digest (`Wal(Corrupt)`, the
+/// `damaged` case below). The Catalog-group-as-scope3 direction is
+/// MBC40-V01's scope loop (`format_tests`), refused by the Row decoder.
 #[test]
 fn s1b_scope_routes_only_to_its_own_arm() {
     let frame = scope3!("noh-301-forward.wal");
@@ -2016,6 +2019,7 @@ fn s1b_scope_routes_only_to_its_own_arm() {
         match scope {
             2 => assert!(cause.starts_with("Some(CatalogSemantic("), "{cause}"),
             1 => assert_eq!(cause, "Some(Invariant)"),
+            4 => assert_eq!(cause, "Some(RowSemantic(Corrupt))"),
             _ => assert_eq!(cause, "Some(Unsupported)"),
         }
     }
@@ -2032,9 +2036,9 @@ fn s1b_scope_routes_only_to_its_own_arm() {
     let mut damaged = frame.to_vec();
     damaged[200] ^= 1;
     let mut r = noh_300(Mode::default());
-    assert!(
-        r.refused("damaged", &damaged)
-            .starts_with("Some(RowSemantic(")
+    assert_eq!(
+        r.refused("damaged", &damaged),
+        "Some(RowSemantic(Wal(Corrupt)))"
     );
 }
 
