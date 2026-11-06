@@ -361,6 +361,7 @@ pub(crate) fn decode_anchor(input: &[u8], expected: PageIdentity) -> Result<Tree
 /// its root (`check_retired`). Kept out of `decode_anchor` so the list adds
 /// one Result to the root-only decoder frame; this frame and the walk run
 /// after `decode_page` has returned.
+#[inline(never)]
 fn check_list(page: &PageView<'_>, anchor: PageRef, root: AnchorRoot) -> Result<(), PageError> {
     match page.cell(1) {
         None => Ok(()),

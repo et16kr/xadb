@@ -282,10 +282,11 @@ pub(crate) fn source_census() -> SourceCensus {
     );
     let allocator = allocator_chain();
     // build reads the anchor's list and encodes the anchor after with it:
-    // one whole `retired` or `encode_listed_anchor` call (UNL-C01).
-    let anchor_codec = anchor::retired_source_bytes(semantic_catalog::page_read_codec_bytes()).max(
-        anchor::listed_encode_source_bytes(semantic_catalog::page_read_codec_bytes()),
-    );
+    // one whole `retired` or `encode_listed_anchor` call over the page codec
+    // with its SHA scratch, as `retired_chain` (UNL-C01).
+    let page = semantic_catalog::page_read_codec_bytes() + 1536;
+    let anchor_codec =
+        anchor::retired_source_bytes(page).max(anchor::listed_encode_source_bytes(page));
     let nested_build = build_outer
         + weights
             .max(parent)
@@ -296,6 +297,9 @@ pub(crate) fn source_census() -> SourceCensus {
             .max(anchor_codec);
     let building =
         (args + 128 + before_outer + table.max(audit).max(previous)).max(args + 128 + nested_build);
+    // `verify_after` reads the before and after lists (`retired`) and decodes
+    // the anchor after: `audit` holds `retired_chain`, a whole `retired` call
+    // at least as large, and `table` the anchor decode (UNL-C01).
     let verifying = outer + after_outer + audit.max(table).max(allocation_codec());
     let peak = building.max(verifying).max(returning);
     SourceCensus {

@@ -1079,11 +1079,14 @@ pub(in super::super) fn table_source_bytes() -> usize {
         + size_of::<[u8; 8]>()
         + 16 * size_of::<&[u8]>()
         + 16 * size_of::<u64>();
+    // The accepted search term with its tree or Catalog codec, or the anchor
+    // decode before it (a page codec, or the XTR1 walk after it, UNL-C01).
     selected
         + (current_leaf_frame_bytes()
-            + (tree_page::search::frame_source_bytes() + transition::tree_source_bytes())
-                .max(anchor::decode_source_bytes(transition::tree_source_bytes()))
-                .max(crate::storage::semantic_catalog::catalog_read_codec_bytes()))
+            + (tree_page::search::frame_source_bytes()
+                + transition::tree_source_bytes()
+                    .max(crate::storage::semantic_catalog::catalog_read_codec_bytes()))
+            .max(anchor::decode_source_bytes(transition::tree_source_bytes())))
 }
 
 /// `current_leaf` (dev3-tree-smo.md#current-leaf-consumers): its arguments,

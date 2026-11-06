@@ -3451,7 +3451,7 @@ charge 44,304 B, short cap 65,536 B, 원 slack과 다른 항은 그대로다.
 
 2026-11-06 DEV3 08-1 U1의 anchor 목록(XTR1)이 root만 읽는 anchor decoder frame에 Result 하나(2 B)를 더해 Row
 lifecycle 본문은 40,883 B, `BEGIN`의 C 여유는 605 B다([UNL-C01 census](dev3-tree-smo.md#unlink-u1-census)).
-상한은 그대로다. 아래 40,881 B는 이 절을 정할 때의 값이다.
+상한은 그대로다. 위 표와 아래의 40,881 B·607 B는 이 절을 정할 때의 값이다.
 
 상한 값은 두 실행기 중 큰 몫에 128 B 이상을 더하고 128 B 단위로 올린 값이다(측정 뒤 정한
 값). native는 retained 18,648 B, peak 64,024 B로 여유가 같다. C 시험

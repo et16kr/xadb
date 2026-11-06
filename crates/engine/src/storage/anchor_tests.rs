@@ -536,7 +536,10 @@ fn unl_c01_xtr1_codec_cost_per_decoder_path() {
         ("page_read_codec", semantic_catalog::page_read_codec_bytes()),
         ("tree_codec", transition::tree_source_bytes()),
     ] {
-        assert!(check <= page, "{name}: check_list {check} > page term {page}");
+        assert!(
+            check <= page,
+            "{name}: check_list {check} > page term {page}"
+        );
         assert_eq!(super::decode_source_bytes(page), page + result);
         assert_eq!(super::decode_increment_bytes(page), result);
         let retired = super::retired_source_bytes(page);

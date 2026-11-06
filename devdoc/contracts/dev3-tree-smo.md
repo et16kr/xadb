@@ -1445,14 +1445,15 @@ UNL-C01 source census(2026-11-06, PR #55 후속 보강 반영). 타입 크기가
 
 | 함수 | 쓰는 곳 | 값(memory·native 같음) |
 | --- | --- | --- |
-| `decode_source_bytes(page)` | root만 읽는 기존 호출자. 자기 anchor 값은 그대로 세고 page 항을 이것으로 바꾼다: `check_list` Result 2개 + max(page, `check_list` 586B) | page 938B(page codec)·1,869B(tree codec)·816B(Undo decode 항)에서 page + 2B |
+| `decode_source_bytes(page)` | root만 읽는 기존 호출자. 자기 anchor 값은 그대로 세고 page 항을 이것으로 바꾼다: `check_list` Result 2개 + max(page, `check_list` 586B) | page 938B(page codec)·1,869B(tree codec)·786B(Undo decode 항)에서 page + 2B |
 | `decode_increment_bytes(page)` | 중첩 decode를 허용 bytes 안에 이미 든 평평한 합(Catalog read guard, plan4 Catalog lookup codec, genesis 둘, Base Catalog graph) | 2B |
-| `retired_source_bytes(page)` | 목록을 읽는 U1 코드(Base4, split candidate의 `audit`·`build`): `retired` 전체(frame + decoder 전체 frame 703B + 위 callee, 또는 두 번째 page decode) | page 938B에서 2,307B |
-| `listed_encode_source_bytes(page)` | split candidate `build`의 anchor after | page 938B에서 1,462B |
-| `extend_source_bytes()` | U2 unlink candidate(목록 병합) | 409B |
+| `retired_source_bytes(page)` | 목록을 읽는 U1 코드(Base4, split candidate의 `audit`·`build`): `retired` 전체(frame + decoder 전체 frame 703B + 위 callee, 또는 두 번째 page decode) | Base4(page 2,240B) 3,609B, split `audit`·`build`(page codec + SHA scratch 2,474B) 3,843B |
+| `listed_encode_source_bytes(page)` | split candidate `build`의 anchor after | page codec + SHA scratch 2,474B에서 2,998B |
+| `extend_source_bytes()` | U1의 unlink candidate(목록 병합). 그 candidate·frame은 시험만 부르고 제품 호출자가 없어 이 단계에는 census가 없다. U2 replay·U3 live census가 이 항을 쓴다 | 409B |
 
-`check_list`(586B)는 그 walk(408B)를 포함해도 기존 호출자가 넘기는 page 항(938·1,869·816B)보다 작아서, root만
-읽는 경로의 증분은 Result 2B다(UNL-C01 시험이 두 page 항에서 이를 확인한다). 기존 census에 넣은 곳: C
+`check_list`(586B)는 그 walk(408B)를 포함해도 기존 호출자가 넘기는 page 항(938·1,869·786B)보다 작아서, root만
+읽는 경로의 증분은 Result 하나다(`size_of` 1B를 이 census들의 관례대로 두 번 세어 2B). UNL-C01 시험 둘이 세 page
+항 모두에서 이를 확인한다. `check_list`는 `#[inline(never)]`라 machine frame에서도 decoder와 따로다. 기존 census에 넣은 곳: C
 `row_preflight`(anchor_decode, `table_root`), history `current_leaf`·`table_source_bytes`, visibility epochs,
 Catalog read guard, B 읽기(route read helper, schema 항), plan4 Catalog lookup codec, genesis 둘, semantic_row
 transition `anchor()`(`table_leaf`), semantic_catalog `catalog_image`, Base Catalog graph relations, Base4
@@ -1473,9 +1474,16 @@ Base INIT 재구성)에는 항을 넣지 않았다.
 
 S2W-C03은 "Row lifecycle이 바뀌지 않음"을 정확한 값으로 고정하는 시험이라 기대값을 40,883B로 고쳤다(늘어난 2B는
 위 Result). [Begin 상한 계약](dev3-module-boundaries.md#begin-statement-ceilings)의 여유 607B와 그 앞 기록들의
-40,881B는 당시 값이다. A의 생산자 inventory(`insert.rs` `local_source_carrier_bytes`, CLR_PRODUCER 19,456B에
-19,436B)는 문서대로 callee를 세지 않는 carrier 목록이고, group observer의 `decode_anchor`가 돌려주는 carrier는
-같으므로 그 값은 바뀌지 않았다. decoder의 2B와 `check_list`는 callee 쪽이다.
+40,881B는 당시 값이다. history `table_source_bytes`는 수용된 식(search frame 옆에 tree 또는 Catalog codec)을
+그대로 두고 anchor decode를 그 옆의 다른 갈래로 더했다(8,748B 그대로).
+
+미결(U3에서 다시 본다): A 생산자의 group observer(`row/insert/group.rs`)가 부르는 `decode_anchor`의 중첩 비용은
+이 단위 전부터 어느 census에도 이름으로 없다. A의 생산자 inventory(`insert.rs` `local_source_carrier_bytes`,
+CLR_PRODUCER 19,456B에 19,436B, 여유 20B)는 문서대로 callee를 세지 않는 carrier 목록이고("shared codec locals …
+still require the root's source census"), 그 root census가 이 decode를 항으로 갖지 않는다. XTR1이 그 callee에 더한
+것은 위 Result와 page 항 이하의 `check_list`다. 이 공백은 XTR1이 만든 것이 아니지만 UNL-C01의 "영향받는 호출자"이므로,
+A의 census를 다루는 U3(UNL-A03·C03)에서 decoder 전체 frame과 page codec을 A 쪽 항으로 세어 본다. 기존 상한 안에
+들지 않으면 상한을 임의로 올리지 않고, 올리려면 별도 D2·사용자 결정을 거친다.
 
 시험(모두 PASS, memory). 경로는 `cargo test -p xadb-engine --lib -- --list`의 libtest 경로다.
 
@@ -1487,7 +1495,7 @@ S2W-C03은 "Row lifecycle이 바뀌지 않음"을 정확한 값으로 고정하�
 | UNL-F04 | `storage::semantic_row::structure::bank::tests::unl_f04_*` |
 | UNL-B01, B07..B09 | `storage::plan4_recovery_base::row::graph::tests::current_tree_tests::unl_b01_*` |
 | UNL-B02..B06 | `storage::plan4_recovery_base::row::graph::tests::current_tree_tests::unl_b02_b06_*`(변조 6개, 모두 IdentityMismatch) |
-| UNL-C01 | `storage::anchor::tests::unl_c01_xtr1_codec_cost_per_decoder_path`(산정 함수), 그리고 위 census 표의 값을 찍고 상한과 대조하는 기존 시험(S2W-C01..C06, S3-C01, S4-C01, F4 C commit·rollback·begin, MBC40-V09, f4_row_operation, live_row_retirement, repro_full_read_beside_pending, writer gate floors, recovery_source_·retention_source_·runtime_core_source_·g5_source_·plan4_source_census, row_read_census) |
+| UNL-C01 | `storage::anchor::tests::unl_c01_xtr1_codec_cost_per_decoder_path`(page codec·tree codec 항), `…retention::read::catalog::tests::unl_c01_undo_decode_term_covers_the_list_check`(Undo decode 항), 그리고 위 census 표의 값을 찍고 상한과 대조하는 기존 시험(S2W-C01..C06, S3-C01, S4-C01, F4 C commit·rollback·begin, MBC40-V09, f4_row_operation, live_row_retirement, repro_full_read_beside_pending, writer gate floors, recovery_source_·retention_source_·runtime_core_source_·g5_source_·plan4_source_census, row_read_census) |
 
 계획과 다르게 남긴 것:
 
