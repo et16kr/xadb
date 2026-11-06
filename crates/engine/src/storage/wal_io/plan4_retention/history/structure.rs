@@ -373,9 +373,8 @@ pub(in super::super) fn source_bytes() -> SourceCensus {
         + size_of::<(&[u8], &mut [[u8; PAGE_BYTES]; 5], PageRef)>()
         + 512;
     let split = compare + frame::source_bytes().max(control::structural_bank_source_bytes());
-    let unlink = unlink_source_bytes();
-    let dispatch = unlink_dispatch_bytes();
-    let semantic = split.max(dispatch + unlink.semantic);
+    let unlink = unlink_arm_bytes();
+    let semantic = split.max(unlink.semantic);
     let finishing = args
         + 2 * size_of::<LayoutView<'_>>()
         + 2 * size_of::<frame::Observation>()
@@ -394,21 +393,35 @@ pub(in super::super) fn source_bytes() -> SourceCensus {
         + 1536;
     SourceCensus {
         semantic,
-        finishing: finishing.max(dispatch + unlink.finishing),
+        finishing: finishing.max(unlink.finishing),
     }
 }
 
-/// The scope4 dispatch in `recovery::apply_frame` (UNL-C02): `is_unlink`
-/// with its length tests, and the after2 prefix borrow with its `try_into`
-/// Result. They exist only on the unlink path, for the whole `apply_unlink`
-/// call (both phases); the split path keeps its arguments as before.
+/// The scope4 dispatch in `recovery::apply_frame` (UNL-C02). `is_unlink`
+/// (its argument, the length and two frame lengths, the bool) runs before
+/// either arm and returns first, so on the split path the arm's maximum
+/// covers it; it is added to the unlink arm as a conservative sum. The after2
+/// prefix borrow (the slice, the bound reference and its `try_into` Result)
+/// exists only on the unlink path, for the whole `apply_unlink` call (both
+/// phases); the split path keeps its arguments as before.
 pub(in super::super) fn unlink_dispatch_bytes() -> usize {
     use std::mem::size_of;
-    size_of::<(&[u8], bool, bool)>()
+    size_of::<(&[u8], [usize; 3], bool)>()
+        + size_of::<&mut [[u8; PAGE_BYTES]]>()
         + size_of::<&mut [[u8; PAGE_BYTES]; 2]>()
         + 2 * size_of::<
             std::result::Result<&mut [[u8; PAGE_BYTES]; 2], std::array::TryFromSliceError>,
         >()
+}
+
+/// The unlink arm under the scope4 dispatch: the dispatch values beside the
+/// whole `apply_unlink` frame in each phase.
+pub(in super::super) fn unlink_arm_bytes() -> SourceCensus {
+    let (arm, dispatch) = (unlink_source_bytes(), unlink_dispatch_bytes());
+    SourceCensus {
+        semantic: dispatch + arm.semantic,
+        finishing: dispatch + arm.finishing,
+    }
 }
 
 /// `apply_unlink` (dev3-tree-smo.md#empty-leaf-unlink): a sibling frame of
@@ -586,27 +599,42 @@ mod tests {
     }
 
     /// UNL-C02 (dev3-tree-smo.md#unlink-u2-census): the scope4 dispatch's own
-    /// values (the frame length tests and the after2 prefix borrow) sit
-    /// beside the whole unlink arm in both phases, and the scope4 census is
-    /// still the split arm, so the history frame does not change.
+    /// values sit beside the whole unlink arm in both phases, and the scope4
+    /// census is still the split arm, so the history frame does not change.
+    /// The list below counts each value of `recovery::apply_frame`'s scope4
+    /// arm one by one (no tuple padding), apart from the census's grouping.
     #[test]
     fn unl_c02_scope4_dispatch_beside_the_unlink_arm() {
         type Prefix<'a> = &'a mut [[u8; PAGE_BYTES]; 2];
-        let dispatch = size_of::<(&[u8], bool, bool)>()
-            + size_of::<Prefix<'_>>()
-            + 2 * size_of::<std::result::Result<Prefix<'_>, std::array::TryFromSliceError>>();
-        let (arm, all) = (unlink_source_bytes(), source_bytes());
+        // is_unlink: raw, raw.len(), the two frame_bytes(), the bool.
+        let test = size_of::<&[u8]>() + 3 * size_of::<usize>() + size_of::<bool>();
+        // `(&mut after[..2]).try_into()`: the slice, the Result (counted
+        // twice like every Result), the bound `after`.
+        let borrow = size_of::<&mut [[u8; PAGE_BYTES]]>()
+            + 2 * size_of::<std::result::Result<Prefix<'_>, std::array::TryFromSliceError>>()
+            + size_of::<Prefix<'_>>();
+        let dispatch = test + borrow;
+        let (arm, dispatched, all) = (unlink_source_bytes(), unlink_arm_bytes(), source_bytes());
         println!(
-            "UNL_C02 dispatch {dispatch}/{} unlink {}+{dispatch}/{} finishing {}+{dispatch}/{}",
+            "UNL_C02 dispatch {dispatch}/{} unlink {}+{}={}/{} finishing {}+{}={}/{}",
             unlink_dispatch_bytes(),
             arm.semantic,
+            unlink_dispatch_bytes(),
+            dispatched.semantic,
             all.semantic,
             arm.finishing,
+            unlink_dispatch_bytes(),
+            dispatched.finishing,
             all.finishing
         );
         assert!(dispatch <= unlink_dispatch_bytes());
+        assert_eq!(dispatched.semantic, arm.semantic + unlink_dispatch_bytes());
+        assert_eq!(
+            dispatched.finishing,
+            arm.finishing + unlink_dispatch_bytes()
+        );
         // Strictly below: the split arm stays the scope4 maximum.
-        assert!(arm.semantic + unlink_dispatch_bytes() < all.semantic);
-        assert!(arm.finishing + unlink_dispatch_bytes() < all.finishing);
+        assert!(dispatched.semantic < all.semantic);
+        assert!(dispatched.finishing < all.finishing);
     }
 }

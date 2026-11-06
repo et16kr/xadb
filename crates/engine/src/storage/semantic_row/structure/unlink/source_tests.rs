@@ -79,7 +79,14 @@ fn parsing() -> usize {
         + size_of::<R<PageView<'_>, PageError>>()
         + 256
         + (semantic_catalog::page_read_codec_bytes() + 1536).max(hash());
-    entry + owner.max(records).max(hash())
+    // `decode_core`'s own frame: the fixed core, the address list, the
+    // collapse flag and count, the scalars it checks and one decode Result.
+    let core = size_of::<(&[u8], super::super::Operation, &[u8; 256], bool)>()
+        + size_of::<([PageRef; 4], usize, PageRef, bool)>()
+        + size_of::<(u64, u64, u64)>()
+        + 2 * size_of::<Result<PageRef>>()
+        + 256;
+    entry + owner.max(records).max(core).max(hash())
 }
 
 fn emitting() -> usize {
@@ -149,6 +156,23 @@ fn draft_values() -> usize {
     arrays + retained + controls()
 }
 
+/// UNL-C01: the XTR1 merge and one whole `encode_listed_anchor`, over the
+/// page codec with its SHA scratch (anchor_tests.rs checks these call costs).
+fn anchor_call() -> usize {
+    let page = semantic_catalog::page_read_codec_bytes() + 1536;
+    size_of::<(PageHeader, AnchorRoot, &[u8], &mut [u8; PAGE_BYTES])>()
+        + size_of::<[RetiredPage; 2]>()
+        + size_of::<[RetiredList<'_>; 2]>()
+        + 256
+        + transition::tree_source_bytes()
+            .max(hash())
+            .max(anchor::extend_source_bytes())
+            .max(anchor::listed_encode_source_bytes(page))
+}
+/// UNL-C01: the list read, one whole `retired` over the page codec.
+fn retired_call() -> usize {
+    anchor::retired_source_bytes(semantic_catalog::page_read_codec_bytes() + 1536)
+}
 /// Each post-audit call of `build` with its own values.
 fn draft_calls() -> usize {
     let reached = size_of::<(&Table<'_>, &AllocationPage<'_>, u8, &mut ())>()
@@ -157,23 +181,10 @@ fn draft_calls() -> usize {
         + allocation_codec().max(semantic_catalog::page_read_codec_bytes() + 1536);
     let tree =
         size_of::<(TreePageView<'_>, TreeExpectation)>() + 256 + transition::tree_source_bytes();
-    // UNL-C01: the XTR1 merge and one whole `encode_listed_anchor`, and the
-    // list read (one whole `retired`), each over the page codec with its
-    // SHA scratch (anchor_tests.rs checks these call costs).
-    let page = semantic_catalog::page_read_codec_bytes() + 1536;
-    let anchor = size_of::<(PageHeader, AnchorRoot, &[u8], &mut [u8; PAGE_BYTES])>()
-        + size_of::<[RetiredPage; 2]>()
-        + size_of::<[RetiredList<'_>; 2]>()
-        + 256
-        + transition::tree_source_bytes()
-            .max(hash())
-            .max(anchor::extend_source_bytes())
-            .max(anchor::listed_encode_source_bytes(page));
-    let retired = anchor::retired_source_bytes(page);
     reached
         .max(tree)
-        .max(anchor)
-        .max(retired)
+        .max(anchor_call())
+        .max(retired_call())
         .max(parent_chain())
 }
 
@@ -215,6 +226,22 @@ fn unl_r04_unlink_source_inventory_covers_parse_prepare_and_emit() {
         .max(previous_chain())
         .max(debt);
     let (draft, calls) = (draft_values(), draft_calls());
+    let verify_calls = audit_chain().max(table_chain()).max(after_decode());
+    // Each call term against the census's own term and phase maximum
+    // (UNL-C01): the max model hides a smaller term behind the binding one
+    // (parent 11,705 / audit 18,908 B), so each is checked on its own.
+    let terms = [
+        ("retired", retired_call(), c.retired, c.draft_calls),
+        ("anchor", anchor_call(), c.anchor, c.draft_calls),
+        ("decode", after_decode(), c.anchor_decode, c.verify_calls),
+        ("prefix", prefix_calls, c.prefix_calls, c.prefix_calls),
+        ("draft", calls, c.draft_calls, c.draft_calls),
+        ("verify", verify_calls, c.verify_calls, c.verify_calls),
+    ];
+    for (name, own, term, phase) in terms {
+        println!("unlink call {name} {own}/{term} in {phase}");
+        assert!(own <= term && term <= phase, "{name}");
+    }
     let wrapper = args + size_of::<(Prepared<'_>, [u8; 32])>() + size_of::<Result<()>>() + 128;
     let after = size_of::<(
         &Inputs<'_>,
@@ -234,8 +261,12 @@ fn unl_r04_unlink_source_inventory_covers_parse_prepare_and_emit() {
     assert!(wrapper <= c.outer && after <= c.after_outer);
     let actual = (args + prefix + prefix_calls)
         .max(args + draft + calls)
-        .max(wrapper + after + audit_chain().max(table_chain()).max(after_decode()));
+        .max(wrapper + after + verify_calls);
     assert!(actual <= c.peak);
+    // The phase maxima are the census's own peak terms.
+    assert!(args + 128 + c.before_outer + c.prefix_calls <= c.peak);
+    assert!(args + 128 + c.build_outer + c.draft_calls <= c.peak);
+    assert!(c.outer + c.after_outer + c.verify_calls <= c.peak);
 
     // produce/observe hold the decoded layout and the prepared draft across
     // prepare and body; the Observation is built only after both return.

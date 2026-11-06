@@ -88,6 +88,16 @@ pub(crate) struct CandidateCensus {
     pub(crate) build_outer: usize,
     pub(crate) after_outer: usize,
     pub(crate) returning: usize,
+    /// The call maxima of `build`'s prefix and draft and of `verify_after`.
+    pub(crate) prefix_calls: usize,
+    pub(crate) draft_calls: usize,
+    pub(crate) verify_calls: usize,
+    /// The UNL-C01 terms inside those maxima: the list read (one whole
+    /// `retired`), the XTR1 merge with the listed encode, and the anchor
+    /// decode after.
+    pub(crate) retired: usize,
+    pub(crate) anchor: usize,
+    pub(crate) anchor_decode: usize,
     pub(crate) peak: usize,
 }
 /// The split candidate census's phases (candidate/source.rs): `build`'s
@@ -165,32 +175,37 @@ pub(crate) fn candidate_census() -> CandidateCensus {
         .max(previous_chain())
         .max(allocation_codec());
     // `build` reads the list with one whole `retired` call (UNL-C01).
+    let retired = anchor::retired_source_bytes(semantic_catalog::page_read_codec_bytes() + 1536);
+    let anchor = anchor_chain();
     let draft_calls = reached_chain()
         .max(tree_chain())
         .max(parent_chain())
-        .max(anchor_chain())
-        .max(anchor::retired_source_bytes(
-            semantic_catalog::page_read_codec_bytes() + 1536,
-        ))
+        .max(anchor)
+        .max(retired)
         .max(size_of::<CoreView<'_>>() + slack());
     // `verify_after` decodes the anchor after: one whole `decode_anchor`.
     let anchor_decode = size_of::<TreeAnchor>()
         + size_of::<Result<TreeAnchor>>()
         + anchor::whole_decode_source_bytes(semantic_catalog::page_read_codec_bytes() + 1536);
+    let verify_calls = audit_chain()
+        .max(table_chain())
+        .max(allocation_codec())
+        .max(anchor_decode);
     let building =
         (args + 128 + before_outer + prefix_calls).max(args + 128 + build_outer + draft_calls);
-    let verifying = outer
-        + after_outer
-        + audit_chain()
-            .max(table_chain())
-            .max(allocation_codec())
-            .max(anchor_decode);
+    let verifying = outer + after_outer + verify_calls;
     CandidateCensus {
         outer,
         before_outer,
         build_outer,
         after_outer,
         returning,
+        prefix_calls,
+        draft_calls,
+        verify_calls,
+        retired,
+        anchor,
+        anchor_decode,
         peak: building.max(verifying).max(returning),
     }
 }

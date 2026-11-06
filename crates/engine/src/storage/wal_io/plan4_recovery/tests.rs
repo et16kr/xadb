@@ -156,18 +156,25 @@ fn recovery_source_native() {
 }
 
 /// UNL-C02 (dev3-tree-smo.md#unlink-u2-census): a base capture over a
-/// replayed unlink state runs the Base4 encoder, whose validation reads the
+/// replayed unlink state has two phases. Packing reads the Structural bank
+/// row (an unlink descriptor takes the same `bank::observe`/`validate`
+/// frame as a split one) inside the packing census's structural bank term.
+/// The encode phase runs the Base4 encoder, whose validation reads the
 /// anchor list in the current-tree closure (the Base4 codec's whole
-/// `retired` term, UNL-C01). The capture encode phase holds that whole codec
-/// beside the owner, under the recovery peak, for both writers.
+/// `retired` term, UNL-C01), beside the owner and the capture arguments.
+/// Both stay under the recovery peak, for both writers.
 fn unl_c02_capture<W: WriterNamespace>(label: &str) {
     let c = source_census::<W>();
     let codec = base::row::source_bytes();
+    let packing = analysis::packing_source_bytes();
+    let bank = super::super::plan4_pages::structural_bank_source_bytes();
     println!(
-        "UNL_C02 {label} capture owner {} + codec {codec} <= encode {} <= capture {} <= peak {}",
+        "UNL_C02 {label} capture owner {} + codec {codec} <= encode {}; packing {packing} \
+         (bank {bank}) <= capture {} <= peak {}",
         c.owner, c.capture_encode, c.base_capture, c.peak
     );
     assert!(c.owner + codec <= c.capture_encode);
+    assert!(bank <= packing && c.owner + packing <= c.base_capture);
     assert!(c.capture_encode <= c.base_capture && c.base_capture <= c.peak);
 }
 #[test]

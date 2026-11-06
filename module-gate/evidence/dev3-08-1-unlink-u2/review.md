@@ -1,163 +1,216 @@
 Verdict: ACCEPT
 
-# 독립 D2 재검토(2회차): 빈 leaf unlink U2
+# 독립 D2 재검토(3회차): 빈 leaf unlink U2 — U1 위 rebase와 UNL-C01·C02 census
 
 ## 대상
 
-- commit: `fa766b5` (local branch `u2-local`, parent `1a82225`). 이번 차이는 `git diff 1a82225 fa766b5`, 6개 파일,
-  +282/−9다. 전체 변경 `git diff 98faf08 fa766b5` 안에서 읽었다.
-- 1회차: `module-gate/evidence/dev3-08-1-unlink-u2/review-r1.md`(CONDITIONAL, 필수 1, 대상 `1a82225`). commit된
-  파일은 검토자가 쓴 1회차 원본과 byte가 같다(`cmp`).
-- 바뀐 파일은 다음과 같다.
-  - 시험: `weights/unlink_tests.rs`(P08 doc comment 1행), `structural_replay_tests/unlink.rs`(R02 +31행)
-  - 문서: `devdoc/README.md`, `devdoc/contracts/dev3-tree-smo.md`, `devdoc/document-validation.json`
-  - 기록: `review-r1.md`
-- 제품 코드는 바뀌지 않았다. `git diff --stat 1a82225 fa766b5 -- crates tests scripts Cargo.toml Cargo.lock`은 위
-  시험 파일 2개만 보인다.
-- 검토자는 이 코드를 작성하지 않았다. `/home/claude/xadb`은 읽기만 했다. 작업 트리는 깨끗하고 HEAD가 `fa766b5`다.
-  - 시험은 `git archive fa766b5` 사본과 별도 `CARGO_TARGET_DIR`에서 했다.
-  - 사본에 넣은 mutation probe 2개는 "확인 방법"에 따로 적었다. 두 probe 모두 끝난 뒤 파일을 commit blob과 같게
-    되돌렸다(`cmp`).
+- branch `u2-main`, HEAD `db0ac7d`(tree `5ac81672…`). base는 `u1-main` `2b39998`(PR #56, U1 최종)이다.
+- 2회차(`review.md`, ACCEPT)는 옛 U1 위의 `fa766b5`를 보았다. 이번 범위는 세 가지다.
+  1. rebase. 충돌은 `dev3-tree-smo.md`와 `document-validation.json` 두 파일뿐이었다.
+  2. `7f63c50`: code와 시험, 6개 파일, +122/−12.
+  3. `db0ac7d`: 계약 문구와 `document-validation.json`.
+- 계약은 `git diff u1-main..u2-main -- devdoc/contracts/dev3-tree-smo.md` 전체를 읽었다. 특히 본 곳:
+  - `#unlink-u2-census`(1591–1623행)
+  - U2 결과의 값 서술(1574–1582행)
+  - 재실행 기록(1661–1674행)
+- 검토 의무: `af6a31e`의 UNL-C01(XTR1 decoder·encoder의 중첩 비용을 영향받는 census마다 센다. 타입 크기 불변 논법은 쓰지 않는다)과 UNL-C02(U2: opcode dispatch·canonical replay·base capture census를 fresh·recovered writer 양쪽에서 검산한다. 상한을 올리려면 별도 D2).
+- 검토자는 이 코드를 작성하지 않았다.
+  - 작성자 worktree는 읽기만 했다. 그 안에서 `python3 -B scripts/check_module_gate.py check`를 읽기 전용으로 한 번 돌렸고, 뒤에도 status는 깨끗했고 HEAD는 `db0ac7d`였다.
+  - 빌드·시험은 `git archive u2-main` 사본과 별도 `CARGO_TARGET_DIR`에서 했다.
+  - 사본에 넣은 probe 2개는 "직접 확인한 것"에 따로 적었다. 둘 다 끝난 뒤 파일을 commit blob과 같게 되돌렸다(`cmp`).
   - target과 사본은 기록 뒤 지웠다.
 
-## 결론
+## 판정: **ACCEPT**. 필수 0, 권고 4(1건은 절차), NIT 3
 
-열린 필수는 **0건**이다.
+근거:
 
-1회차 필수 1(U2 시험의 실행 명령·결과 수 미기록)은 닫혔다.
-
-- 명령 표가 commit되었다(`dev3-tree-smo.md:1544–1554`).
-- 1회차에 지적한 SPL 범위 표기도 "SPL-A01..A06·A08·A10"으로 고쳐졌다. 고르지 않은 A07·A09의 사유도 함께 적혔다.
-- 세 명령의 선택 수를 이번 사본에서 다시 셌고, 115 / 80(ignored 1) / 2로 같다.
-- 바뀐 R02를 포함하는 cmd2를 다시 돌려 기록과 같은 79 passed·1 ignored를 얻었다.
-
-선택 1·2·3·5·7의 반영은 맞다. 특히 새 R02의 교차 opcode 두 경우는 dispatch를 고정한다. dispatch를 opcode 기준으로
-바꾼 mutant 두 개가 각각 새 assert 한 줄(258행·272행)에서 실패하고, 기존 R01·R03은 두 mutant 모두에서 통과한다.
-
-미룬 선택 4·6의 사유는 받아들인다. 남은 것은 아래 선택 3건뿐이다.
-
-## 확인 방법
-
-읽은 것:
-
-- `git diff 1a82225 fa766b5` 전체.
-- 바뀐 계약 행과 절:
-  - 시험 계획 UNL-L01..L08 행(1367행)
-  - U2 결과의 처음 계산 서술(1508–1511행)
-  - R02·R03 행(1526–1527행)
-  - 새 명령 표(1544–1554행)
-  - README 18–20행
-- 새 R02 경우의 경로를 확인하려고 다시 읽은 코드(모두 `fa766b5`에서 1회차와 같은 blob):
-  - `apply_frame`(`plan4_retention/recovery.rs:509–595`). dispatch 전에는 frame byte 164..166(version 2)과
-    170..172(scope)만 읽는다. opcode(166..168)는 읽지 않는다.
-  - `is_unlink`(`history/structure.rs:244–247`)
-  - unlink `decode_layout`(`semantic_row/structure/unlink.rs:287–318`). 길이가 아니면 Corrupt(300행),
-    `!is_unlink()`이면 Unsupported(313행)다.
-  - split `decode_layout`(`semantic_row/structure.rs:309–336`). 길이가 아니면 Corrupt(322행), `!is_split()`이면
-    Unsupported다.
-  - 시험 harness `World::apply`·`frame`·`expectation`(`structural_replay_tests.rs:76–131`). `apply`(123행)는
-    `observe_recovery_frame`을 그대로 부른다.
-- `row_gate.rs:635–646`의 S1B 시험 doc comment(`/// C01: memory writer census`, `/// C02: native writer census`).
-  계약 1510행의 "S1B 회계 C01·C02"가 가리키는 ID다.
-- `documentation-policy.md#push-gate`와 `parallel-development-policy.md`의 XADB-LAYOUT-006(document-validation.json
-  생성 규칙), README 154행(저장된 결과의 의미).
-
-실행한 것과 결과(scratch 사본 `fa766b5`, `CARGO_TARGET_DIR` 분리, CATALOG·PLAN4_RECOVERY에 64자 자리표시 hash):
-
-| 명령 | 결과 |
-| --- | --- |
-| `cargo fmt --all --check` | PASS |
-| `cargo test -p xadb-engine --lib --locked --no-run` | 빌드 3분 18초. libtest 전체 2,381건(1회차와 같다) |
-| cmd2 filter에 `--list`, `--list --ignored` | **80**건, 그중 ignored 1(`structural_effect_native_worker`). 고른 시험 목록이 1회차 `list-cmd2.txt`와 줄 단위로 같다 |
-| `unlink_replay::`(UNL-R01..R03) | **3 passed**, 2.15s. 바뀐 R02 포함 |
-| `unl_p08`(P08 두 시험. 주석만 바뀜) | **2 passed** |
-| cmd2 실행(`retention::history::structure:: … retention::owner_tests::`) | **79 passed, 0 failed, 1 ignored**, 2,301 filtered out, 1,128.2s. 계약 1551행의 기록과 같다 |
-| cmd1·cmd3 | 다시 돌리지 않았다. 두 범위의 코드는 1회차 뒤 바뀌지 않았다(P08은 doc comment뿐이고 위에서 따로 돌렸다). 1회차에 115 passed / 2 passed였다(AGENTS.md) |
-| mutation probe A: `is_unlink`를 `raw.len() >= 168 && matches!(u16(raw[166..168]), 3 \| 4)`로 바꾸고 `unlink_replay::` 실행 | R01·R03 통과. R02는 `unlink.rs:258`(unlink 길이 + opcode 1 → Unsupported 기대)에서 실패. 그 frame이 split decoder로 가서 길이 Corrupt가 된다 |
-| mutation probe B: `is_unlink`를 "unlink 길이 또는 opcode 3·4"로 바꾸고 `unlink_replay::` 실행 | R01·R03 통과. R02는 `unlink.rs:272`(split 길이 + opcode 3 → Unsupported 기대)에서 실패. 그 frame이 unlink decoder로 가서 길이 Corrupt가 된다 |
-| `cargo clippy --workspace --all-targets --all-features --locked -- -D warnings` | PASS(경고 0, 2분 28초) |
-| `python3 -B devdoc/verify_documents.py` | FAIL. 원인은 예상한 `module-gate/evidence/dev3-08-1-unlink-u2/review.md` 누락 링크 1건뿐이다. 다시 생성한 파일별 값은 commit된 `document-validation.json`과 2개 파일에서 다르다(선택 3) |
-
-전체 suite는 돌리지 않았다(AGENTS.md). XRB executor 전용 시험은 돌리지 않았다. 두 commit 모두
-`plan4_recovery_base`를 바꾸지 않는다.
-
-1회차 필수 1의 처리:
-
-- **닫힘.** 명령 표(1544–1554행)가 commit되었다. 1회차 검토의 재현 결과와 비교하면 다음과 같다.
-  - 세 filter 문자열은 1회차에 돌린 filter와 글자가 같다.
-  - 결과 수 115 passed·0 ignored / 79 passed·1 ignored / 2 passed가 맞다.
-  - cmd1 설명 "U1의 113개 + UNL-R04 source·UNL-P08 Catalog 부채"가 맞다.
-  - cmd2 설명의 SPL 범위는 "SPL-A01..A06·A08·A10·SPL-J01..J07·structural effect"로 고쳐졌다. "SPL-A07·A09는 U2
-    code에 닿지 않아 고르지 않았다"는 사유도 적혔다. 이번 `--list`로 A07·A09가 고르지 않음을 다시 확인했다.
-  - XRB 미실행 사유(1554행)가 맞다.
-
-1회차 선택의 처리:
-
-1. **README의 B09 표현과 UNL-L 행: 반영됨.**
-   - README 18–19행이 "B07 재시작과 B09의 raw capture 대조. 제품 rebase `capture_base`는 U3의 재시작 read"로
-     바뀌었다.
-   - UNL-L01..L08 행(1367행)에 "WAL의 unlink frame을 지나는 제품 rebase(`capture_base`)의 목록·claim 보존(U2에서
-     넘어온 B09 부분)"이 더해졌다. U3 검토가 시험 계획에서 그 의무를 바로 볼 수 있다.
-2. **R03 문구: 반영됨.** 1527행이 "첫 split(RootSplit 70)은 before fixture의 상태"와 "decode한 목록 항목 [11, 17]
-   유지"로 바뀌었다. 시험(`unlink.rs` R03)이 하는 일과 같다.
-3. **P08 주석: 반영됨.** "(and before the tree audit)"이 지워졌다(`weights/unlink_tests.rs:442–444`). 남은 문장
-   "before any unlink or NotNeeded decision"은 시험이 보이는 것(빈 leaf 21의 unlink, 행이 있는 leaf 13의
-   NotNeeded)과 맞다. 다른 table의 Catalog Job은 거절하지 않는다는 반대 대조는 더하지 않았다. 1회차에서도 덧붙인
-   제안이었으므로 다시 올리지 않는다.
-4. **회계 목록의 빈칸: 미룸.** 값에 영향이 없다는 1회차 판단이 그대로다. 제품·시험 회계 코드가 바뀌지 않았으므로
-   이전 측정값도 그대로다. 받아들인다.
-5. **dispatch 교차 시험: 반영됨.** R02에 두 경우가 더해졌다(`unlink.rs:246–276`).
-   - LeafUnlink frame(35,248B)의 opcode를 1로 바꾼 경우, 그리고 RootSplit frame(84,744B)의 opcode를 3으로 바꾼
-     경우다.
-   - 둘 다 `finish_semantic_envelope`로 다시 hash한다. record 수 인수는 원래 값(2·5)이므로 opcode 2 byte만 다르다.
-   - 두 경우를 각각 새 world에 넣어 `RowSemantic(Unsupported)`와 digest·cursor 불변을 본다.
-
-   이 판정은 길이 dispatch를 가려낸다. 두 decoder 모두 길이가 맞지 않으면 Corrupt, 길이는 맞고 opcode가 다른
-   문법이면 Unsupported를 낸다. dispatch 전에는 opcode byte를 읽지 않는다. 그래서 Unsupported는 frame이 길이로 고른
-   decoder에 갔을 때만 나온다. 위 probe A·B가 실행으로 이를 확인했다. 계약 1526행의 서술도 시험과 같다.
-6. **`document-validation.json`: 미룸.** review.md를 둔 뒤 다시 생성한다는 작성자 계획을 받아들인다. 다만 이번
-   commit에서는 파일별 값도 맞지 않는다. 아래 선택 3에 적었다.
-7. **처음 계산의 실패 목록: 반영됨.** 1510행이 "S2W-C01·C02·C03·C06과 S1B 회계 C01·C02 실패"로 바뀌었다.
-   - C01·C02는 `s1b_row_arm_census_memory`·`_native`의 doc comment ID다(`row_gate.rs:635,642`).
-   - 1회차 probe(+1,096B)에서 실패한 시험 목록과 같다.
+- **rebase가 U2 code를 바꾸지 않았다.** 두 diff의 +/− 줄이 글자까지 같다: `git diff u1-main be60ad7 -- crates`와 2회차가 본 `git diff 98faf08 fa766b5 -- crates`(각 1,364행).
+  - U1 최종의 C01 항은 rebase 뒤에도 남아 있다: split `table_chain`의 `decode_source_bytes`, `retired_chain`, `build`의 `anchor_codec`.
+  - U2가 split census에 한 일은 공개 범위 변경과 `previous_chain`·`descriptor_chain`·`redo_chain` 추출뿐이다. 값은 같다.
+- **UNL-C01: unlink candidate의 anchor 호출이 모두 셈에 들어 있다.** `candidate.rs`의 호출과 그 census 항은 다음과 같다.
+  - `build`:
+    - `candidate::table`(127행, 안에서 `decode_anchor`): split `table_chain`, prefix 단계
+    - `candidate::audit`(130행, 안에서 `retired`): `audit_chain` ⊇ `retired_chain`, prefix 단계
+    - `anchor::retired`(178행): 새 whole-call 항 `retired_source_bytes(2,474)` = 3,843B, draft 단계
+    - `RetiredList::extend`(247·249행)와 `encode_listed_anchor`(255행): `anchor_chain`의 `extend_source_bytes().max(listed_encode_source_bytes(page))`, draft 단계
+  - `verify_after`:
+    - `candidate::table`(352행): `table_chain`
+    - `anchor::decode_anchor`(354행): 새 항 `whole_decode_source_bytes(2,474)`
+    - `candidate::audit`(359행, 바뀐 anchor에 대한 `retired`): `audit_chain`
+  - 단계도 맞다. `retired`·`extend`·encode는 audit가 돌아온 뒤의 draft 값이고, decode는 verifying이다.
+  - U2의 다른 code에는 anchor 목록 decode가 없다. frame body·`decode_layout`·`apply_unlink`의 `request_from_image`는 `decode_page`만 부르고, 그 항은 기존 page codec 항이다.
+- **UNL-C02 dispatch: 셈과 배치가 맞다.**
+  - unlink 경로에만 있는 값은 둘이다: after 2장 대여(8B)와 그 `try_into` Result(관례대로 ×2).
+  - `is_unlink`는 두 경로 모두에서 arm보다 먼저 돌아온다. 그래서 split 쪽에서는 max로 덮인다. unlink 쪽에 합으로 더한 것은 보수적이다.
+  - 두 단계에 다 더한 것도 맞다. 대여는 `apply_unlink` 호출 전체 동안 살아 있다.
+  - 더한 뒤 compare는 24,924 < 25,036B(여유 112B)이고, finishing은 6,074 < 10,170B다.
+  - 그래서 scope4는 계속 split arm이다. history frame 26,452B는 S1B가 `assert_eq!`로 고정한다(`row_gate.rs:630`). live Row lifecycle 40,883B는 S2W-C03이 고정한다.
+- **UNL-C02 base capture: capture 회계가 목록 읽기까지 담는다.**
+  - `capture_encode`는 `decode(…)`로 Base4 row codec 59,675B를 담는다.
+  - 그 codec은 current-tree closure 28,928B를 담는다(`graph/source.rs:205,323`). closure 안에 `retired_source_bytes(2,240)` = 3,609B가 있다(`current_tree.rs:305`).
+  - unlink 상태에서 packing(`pack_bank`)이 지나는 Structural 칸 경로는 split 상태와 같은 함수·타입이다. 다른 것은 `bank::validate`의 `consumed_wal` match 갈래뿐이다.
+    - `check_structural_bank` → `observe_structural_bank_row` → `bank::observe`/`validate`
+    - `decode_ram_descriptor` → `SystemWorkRef::decode` + `decode_descriptor`
+    - 이 경로는 `packing_source_bytes`의 `structural_bank_source_bytes()` 항(analysis.rs:1246)이 덮는다.
+  - certificate loop와 `pack_inventory`는 anchor를 decode하지 않는다. 빠진 항은 찾지 못했다.
+- **바뀐 값은 계약과 모두 같다**(probe와 시험 출력). 상한은 하나도 바뀌지 않았다.
 
 ## 필수
 
 없음.
 
-## 선택
+## 권고
 
-1. **cmd2 설명의 "UNL-R01..R04"**(`dev3-tree-smo.md:1551`). cmd2가 고르는 R04는 history 쪽
-   (`…retention::history::structure::tests::unl_r04_*`) 하나뿐이다. source 쪽 R04
-   (`storage::semantic_row::structure::unlink::source_tests::unl_r04_*`)는 cmd1이 고르고, cmd1 설명(1550행)에
-   적혀 있다. 두 행을 함께 읽으면 틀리지 않는다. 그래도 "UNL-R01..R03·R04 history"처럼 적으면 행 하나만 읽어도
-   정확하다.
-2. **1회차 선택 4의 회계 목록 빈칸**은 그대로 남는다(미룸에 동의). 다음 회계 변경 때 `anchor_chain` 주석에
-   `anchor::retired` decode를 적고, parser 목록에 `decode_core` 자체 frame을 적기를 권한다.
-3. **`document-validation.json`이 이 commit의 문서와 맞지 않는다**(`devdoc/document-validation.json:11–14,
-   467–470`). 1회차에는 파일별 `links`·`sha256`이 commit과 모두 같았지만, 이번에는 두 곳이 다르다.
-   - `devdoc/README.md`: `ba18b13d…`는 `1a82225`의 blob 값이다. `fa766b5`의 README는 `124a2327…`다.
-   - `devdoc/contracts/dev3-tree-smo.md`: `57bd7ca3…`는 `1a82225`(`0c118b72…`)의 값도 아니고 `fa766b5`
-     (`4644964f…`)의 값도 아니다. commit되지 않은 중간본에서 생성한 값으로 보인다.
+1. **계약 U2 절의 값 두 곳이 rebase와 C02 뒤의 값이 아니다.**
+   - 1578행 "preflight C 여유 184B"는 이제 **182B**다.
+     - U1 UNL-C01이 preflight 본문을 37,384B에서 37,386B로, 합계를 44,120B에서 44,122B로 올렸다(같은 문서 U1 표 1472행).
+     - S2W-C01·C02가 이번에 `c_margin=182`를 찍었다(memory·native).
+     - 같은 문장의 40,881B는 40,883B로 고쳤는데 이 값은 남았다.
+   - 1582행 "unlink compare의 split 아래 여유는 160B다"는 dispatch 48B를 더한 지금 **112B**다(25,036 − 24,924). U3가 이 여유를 보고 값을 더할 수 있으므로 지금 값으로 적는다.
+2. **UNL-C02 base capture 서술(1607–1612행)에 packing 단계가 없다.**
+   - capture는 `base_capture = capture_encode.max(owner + common + capture_outer + packing_source_bytes())`의 두 단계다. 계약과 시험은 encode 단계만 다룬다.
+   - unlink descriptor가 든 Structural 칸은 packing 단계에서 `pack_bank`가 읽는다(analysis.rs:946·987). 위 "근거"처럼 같은 frame이고 `structural_bank_source_bytes` 항 안에 든다. 이 검산을 한 줄로 적는다.
+   - `unl_c02_base_capture_holds_the_row_codec`에 `c.owner + packing_source_bytes() <= c.base_capture` 같은 한 줄을 더하면 두 단계가 모두 시험에 나온다. `packing_source_bytes`는 `pub(super)`라 시험 쪽 공개 범위는 맞춰야 한다.
+   - 1611행 "capture encode 단계는 owner + codec(64,203/64,211B)"도 정확하지 않다.
+     - owner + codec은 61,259/61,267B다(1,584/1,592 + 59,675).
+     - 64,203/64,211B에는 rebase Current·Header·Expected·Sections·오류 둘·참조 20개·u64 16개와 `decode`의 Result·`VerifiedPlan4Base`도 들어 있다.
+     - "owner + capture 인수 + codec"처럼 적는다.
+3. **새 시험은 산술과 배선을 확인할 뿐, 새 항이 빠지는 것을 잡지는 못한다.** 계약 표(1621–1623행)와 commit `7f63c50`의 설명("UNL-C02 tests pin the dispatch term", UNL-R04가 UNL-C01(U2)의 시험)은 실제보다 강하게 말한다.
+   - probe A로 확인했다. unlink `source.rs`에서 C01 항 셋(`retired` whole-call, `anchor_chain`의 extend/listed encode, `whole_decode`)을 모두 옛 식으로 되돌려도 census 시험 9개가 모두 통과한다.
+     - 대상 시험: 두 UNL-R04, 세 UNL-C02, S1B memory·native, S2W-C03, split replay inventory
+     - 새 항은 모두 binding 항(build 11,705 / verify 18,908B) 아래라 peak가 같기 때문이다. max 모델의 성질이다.
+   - dispatch 시험의 "독립 dispatch 목록"(`history/structure.rs:594–597`)은 `unlink_dispatch_bytes()`와 같은 식을 그대로 옮긴 것이다. 그래서 `dispatch <= unlink_dispatch_bytes()`는 늘 48/48로 같다. 뒤의 strict `<` 두 줄은 의미가 있다(split arm이 최대라는 주장을 고정한다). 하지만 `all.semantic`은 dispatch를 넣든 빼든 split 값이라, `source_bytes()`가 dispatch를 더한다는 사실은 시험되지 않는다.
+   - `unl_c02_current_tree_closure_counts_the_retired_list`의 `list <= closure`는 closure가 목록 항을 잃어도 참이다(3,609 ≪ 28,928).
+   - 제안:
+     - `CandidateCensus`에 build·verify 단계의 호출 최대값을 split `SourceCensus`(table·audit·parent…)처럼 필드로 낸다. 그리고 R04에서 `retired_source_bytes(page) <= c.draft_calls`, `after_decode() <= c.verify_calls`처럼 항마다 단언한다.
+     - dispatch 목록은 `is_unlink` 안의 `len()`·`frame_bytes()` usize 임시값처럼 census와 다르게 센 목록으로 바꾼다.
+     - 고칠 때까지 계약 표의 설명을 "각 항이 binding 항 아래라는 산술과 배선 확인"으로 바꾼다.
+     - 값 자체는 이번 probe와 code 읽기로 확인했으므로 필수로 두지 않는다.
+4. **(절차) module gate record `20261106-dev3-08-1-unlink-u2.json`이 낡았다.**
+   - `check_module_gate.py check --base u1-main --head u2-main` 결과는 FAIL, 오류 29건이다.
+   - 원인은 `7f63c50`과 rebase 뒤 head blob을 review `files`가 담지 않은 것이다. 거기서 `rust_tests[0..1]` 무효와 "no scoped CI evidence" 21건이 따라 나온다.
+   - `rust_tests[1].reason`의 "live Row lifecycle 40,881 (C margin 184)"도 40,883 / 182로 고친다.
+   - `candidate/source.rs`는 rebase로 blob이 바뀌었다. U2가 U1 위에 바꾼 것은 공개 범위와 `previous_chain` 추출뿐이고 값은 같다는 것을 이번에 확인했으므로, 이 review가 그 blob을 덮어도 된다.
+   - 이번 검토가 본 head blob(앞 12자리):
 
-   README 154행과 XADB-LAYOUT-006에 따르면 저장된 결과는 그 실행 당시 입력에만 귀속한다. 그리고 push 검사는 임시
-   사본에서 다시 생성한다. 그래서 push를 막지는 않는다. 또 1회차 선택 6에서 미룬 재생성 때 함께 바로잡힌다. 그 재생성은
-   작업 트리가 아니라 review.md를 넣은 최종 commit의 `git archive` 사본에서 하기를 권한다.
+| 파일 | blob |
+| --- | --- |
+| `storage/anchor.rs` | d9c91ca5432a |
+| `plan4_recovery_base/row/graph/current_tree_tests.rs` | b80ca6d8d550 |
+| `semantic_row/structure/candidate/source.rs` | 61799eac7778 |
+| `semantic_row/structure/unlink/source.rs` | 8ba424438902 |
+| `semantic_row/structure/unlink/source_tests.rs` | c019401812df |
+| `wal_io/plan4_recovery/tests.rs` | 7391020e3665 |
+| `wal_io/plan4_retention/history/structure.rs` | 4361f5aa1fe0 |
+| `devdoc/contracts/dev3-tree-smo.md` | 6c464323efbf |
+| `devdoc/document-validation.json` | f92230b09140 |
 
-## 측정값
+## NIT
 
-- libtest 전체 2,381건. cmd2 선택 80건(ignored 1). 선택 목록은 1회차와 같다.
-- cmd2 1,128.2s(79 passed, 1 ignored). `unlink_replay::` 2.15s(3 passed). `unl_p08` 0.08s(2 passed).
-- build 3분 18초, clippy 2분 28초, fmt 8.9초.
-- probe A·B의 `unlink_replay::` 실행: 각각 2 passed·1 failed(R02, 258행 / 272행). 증분 빌드 포함 약 41초.
-- 회계 값(unlink compare 24,876 / finishing 6,026, S1B 26,452, recovered 65,392/65,400, live Row lifecycle 40,881,
-  C 여유 184B)은 1회차 측정과 같다. 회계 코드가 바뀌지 않았고, cmd2에 든 S1B·S2W·history R04가 이 값의
-  `assert_eq`와 함께 통과했다.
-- log: `/tmp/claude-0/-home-claude-xadb/484d24b6-02c4-5c37-84ef-21ff3507de06/scratchpad/review-u2/logs-r2/`
-  - 시험·검사: `fmt.log`, `build.log`, `list-cmd2.txt`, `list-cmd2-ignored.txt`, `unlink-replay.log`, `p08.log`,
-    `cmd2.log`, `clippy.log`, `docs.log`
-  - probe: `probe-dispatch.diff`·`.log`, `probe-dispatch2.diff`·`.log`
-  - `document-validation.committed.json`
-  - 검토자 script: `/tmp/claude-0/-home-claude-xadb/484d24b6-02c4-5c37-84ef-21ff3507de06/scratchpad/review-u2/scripts/`의
-    `run-r2.sh`, `probe-dispatch.sh`, `probe-dispatch2.sh`
-  - build target(약 3.9GB)과 사본은 기록 뒤 지웠다.
+1. **"unlink 쪽에만 있는 값"이라는 표현이 정확하지 않다.** 해당 위치는 `unlink_dispatch_bytes` doc comment("They exist only on the unlink path", `history/structure.rs:401–404`)와 계약 1602–1603행이다.
+   - `is_unlink`는 split frame에서도 돌고 false를 낸다.
+   - unlink에만 있는 것은 after 2장 대여와 `try_into` Result다.
+   - `is_unlink`는 arm보다 먼저 돌아오므로 split 쪽은 max로 덮이고, unlink 쪽에 더한 것은 보수적이다. 이렇게 적으면 정확하다.
+2. **1649행 "U2 최종 code" 명령 표의 선택 수는 rebase 전 값이다.**
+   - 표의 수: 115 / 79 passed + 1 ignored
+   - 지금 같은 filter가 고르는 수: 117(+`unl_c01_xtr1_codec_cost_per_decoder_path`, +current-tree UNL-C02) / 81(+dispatch UNL-C02)
+   - 재실행 문단(1661행)이 이를 대신하지만, 표 제목을 "rebase 전 U2 code"로 고치면 혼동이 없다.
+3. **2회차 선택 2의 뒷부분이 남아 있다.** parser 목록에 `decode_core` 자체 frame을 적는 일이다. 앞부분(`anchor_chain` 주석에 목록 읽기를 적는 것)은 이번에 반영됐다. 값에는 영향이 없다.
+
+## 직접 확인한 것
+
+- **diff 전체를 읽었다.** `git show 7f63c50 db0ac7d`와 계약 diff `u1-main..u2-main` 전체다.
+  - `whole_decode_source_bytes`는 `retired_source_bytes` 안의 기존 식을 함수로 뽑은 것이다. `retired(938)` = 2,307B로 U1 3회차 probe와 같다.
+- **probe 1**(사본의 unlink `source.rs`에 출력 시험 추가, 뒤에 원복):
+  - page 항 2,474B. tree 1,869B, digest 1,680B.
+  - draft 단계 호출: reached 5,906, tree chain 3,869, parent 11,705, anchor chain 2,661 → 3,790, retired 3,843, decode_core 280B.
+  - prefix 단계 호출: table 9,148, debt 7,132, audit 18,908, previous 10,831, allocation 5,106B.
+  - verify decode 2,698 → 3,403B. extend 409B, listed(2,474) 2,998B.
+  - 옛 식과 새 식의 building은 20,284 = 20,284, verifying은 21,096 = 21,096, returning은 10,084다. 그래서 candidate peak 21,096, frame peak 23,084B로 그대로다. 계약 1594–1600행의 모든 수가 맞다.
+- **probe A**(C01 항 셋을 옛 식으로 되돌림): census 시험 9개 PASS. 권고 3의 근거다.
+- **시험 출력값**(memory·native):
+  - UNL-C02 dispatch: 48/48. unlink compare 24,876(+48)/25,036, finishing 6,026(+48)/10,170.
+  - UNL-R04 history: compare 24,396/24,876, finishing 4,762/6,026, scope4 25,036/10,170.
+  - UNL-R04 source:
+    - parser 11,991/17,495, emitter 13,193/15,567
+    - prefix 1,160/1,224, draft 6,808/7,080, wrapper 882/884, after 1,040/1,304
+    - frame outer 1,984/1,988, return 1,952/1,988, peak 21,096 / 23,084
+  - UNL-C02 capture: list 3,609 ≤ closure 28,928 ≤ codec 59,675. owner 1,584/1,592 + codec ≤ encode 64,203/64,211 = capture ≤ peak 65,392/65,400.
+  - S1B: row 25,739, structural = frame 26,452. recovered analysis 62,819/62,827, peak 65,392/65,400.
+  - S2W-C01..C06: row_lifecycle 40,883, preflight c_total 37,978, total 44,122, **c_margin 182**. S2W-C04 live 64,016/64,024.
+  - UNL-C01 anchor: page 938·1,869·786에서 decode +2B, retired 2,307·3,238, listed 1,462·2,393.
+- **dispatch 경로**(`recovery.rs:579–594`): 4 arm에서 `is_unlink` 다음 unlink면 after 2장 대여 후 `apply_unlink`, 아니면 기존 `apply`다.
+  - `frame_outer`(history.rs)의 dispatch 층 허용량은 두 갈래에 같다.
+  - `apply_unlink`의 반환은 split의 `finishing`이 2개씩 세는 `RetentionFrameObservation`/Result 안에 든다.
+- **capture 경로**: `capture_base` → `pack_capture`(`pack_bank`, certificate loop, `pack_inventory`, root decode) → `base::row::encode` = `encode_layout` + `validate`다. `validate`는 decode와 같은 Graph closure이고 그 안에 `current_tree`가 있다.
+  - packing에서 anchor decode는 없다.
+  - `CaptureInventoryRows`는 Structural wire 칸(33)을 읽지 않는다.
+  - Structural 칸의 `bank::validate`는 opcode 3·4에서도 같은 frame이다.
+- **실행**(사본, `jenv2.sh` 자리표시 hash, `RUST_MIN_STACK=33554432`):
+
+| 명령 | 결과 |
+| --- | --- |
+| `cargo test -p xadb-engine --lib --locked --no-run` | 1분 52초. libtest 전체 2,388건 |
+| cmd1·cmd3 filter + `unlink_replay::` + `retention::history::structure::` + `row_gate::` + `row::census_tests::` + `structural_split_source_inventory` + `unl_c02` | **141 passed**, 0 failed, 2.99s. UNL-R01..R04, UNL-C01, UNL-C02 셋, UNL-P08, recovery_source_ 둘 포함 |
+| cmd2 filter(1650행과 같은 문자열) | 81건 선택. **80 passed, 1 ignored**(`structural_effect_native_worker`), 588.2s |
+| `s1b_scope_routes_only_to_its_own_arm`, `mbc40_v01_profile2_binding_rejected_at_owner_grammar_sites` | 둘 다 FAIL. s1b는 `row_tests.rs:2019`에서 left `Some(RowSemantic(Corrupt))`, right `Some(Unsupported)`다. mbc40은 `format_tests.rs:490`(scope 4가 Unsupported가 아님)이다. s1b의 frame은 91,506B라 unlink 길이가 아니다. 그래서 U2에서도 main과 같은 split arm으로 간다 |
+| 작성자 592개 목록과 대조 | 세 filter와 UNL-C02가 고르는 203건이 모두 목록에 있다. 위 두 실패 시험은 목록에 없다(계약 1668행에 사유가 있다) |
+| `cargo fmt --all --check` | PASS |
+| `cargo clippy --workspace --all-targets --all-features --locked -- -D warnings` | PASS, 경고 0, 1분 59초 |
+| `python3 -B devdoc/verify_documents.py` | PASS. 다시 생성한 파일별 `links`·`sha256`가 commit된 `document-validation.json`과 모두 같다(date만 다르다). module-boundaries 행이 바뀐 것은 u1-main의 낡은 값을 바로잡은 것이다 |
+| `check_module_gate.py check --base u1-main --head u2-main`(작성자 worktree, 읽기 전용) | FAIL 29건(권고 4) |
+
+- **계약의 다른 서술도 대조했다.**
+  - 시험 경로 세 개는 `--list`의 이름과 같다.
+  - "U2는 capture code를 바꾸지 않았다"는 참이다. `analysis.rs`와 `resources.rs`는 u1-main과 같다.
+  - `37a0465`가 split의 scope4 arm commit인 것도 맞다.
+  - 상한·charge 상수는 바뀌지 않았다.
+
+## 믿고 받은 것
+
+- 작성자의 592개 `--exact` 실행(584 passed, 1 failed, 7 ignored). 이번에는 그중 겹친 시험 222건(141 + 81)만 다시 돌렸다.
+- executor 전용 `g5_bind_boundaries`가 padding 2048에서 16/16이라는 것. XRB H 시험은 다시 돌리지 않았다. U2는 `plan4_recovery_base` 제품 code를 바꾸지 않는다(시험 파일에 case 하나만 더했다).
+- 두 실패 시험이 main `1725df0`에서도 같은 값으로 실패한다는 것. U2 사본에서 실패 모양을 보았고, s1b는 frame 길이로 경로가 main과 같음을 확인했다. main은 빌드하지 않았고, mbc40 Catalog frame의 길이는 확인하지 않았다. 고치는 일은 별도 작업으로 넘어갔다.
+- U1까지 수용된 census:
+  - `anchor.rs`의 비용 함수들
+  - split `table_chain`·`audit_chain`·`retired_chain`
+  - Base4 `current_tree`의 퇴역 항목 loop가 closure 안에 든다는 것
+  - packing·certificate의 기존 허용량
+  - live Row lifecycle이 history frame을 포함한다는 경로(1회차 처음 계산의 C 여유 −744B 기록과 S2W 고정값)
+
+## 작업 흔적
+
+- 작성자 worktree는 수정하지 않았다(HEAD `db0ac7d`, status 깨끗).
+- scratch 사본과 build target(약 3.0GB)은 지웠다.
+- log: `/tmp/claude-0/-home-claude-xadb/484d24b6-02c4-5c37-84ef-21ff3507de06/scratchpad/review-u2c/logs/`
+  - 시험·검사: `u2c-build.log`, `u2c-census.log`, `u2c-run1.log`, `u2c-cmd2.log`, `u2c-main-fail-u2.log`, `u2c-fmt.log`, `u2c-clippy.log`, `u2c-docs.log`, `u2c-docval.committed.json`, `u2c-gate-u1base.log`, `u2c-gate.log`(`--base main`. local main이 낡아 쓰지 않았다)
+  - 선택 목록: `u2c-cmd1.txt`, `u2c-cmd2.txt`, `u2c-cmd3.txt`, `u2c-c02.txt`, `u2c-mine.txt`, `u2c-author-run.sorted`
+  - probe: `u2c-probe1.log`, `u2c-probe-mutA.diff`, `u2c-probe-mutA.log`, 원본 `u2c-source.rs.orig`
+  - rebase 대조: `u2c-old-u2.diff`, `u2c-new-u2.diff`
+
+## 작성자 후속(3회차 뒤)
+
+- 권고 1: 계약 U2 절의 preflight C 여유를 182B로, unlink compare의 split 아래 여유를 "arm만으로 160B, dispatch를
+  더한 지금 72B"로 고쳤다.
+- 권고 2: 계약 UNL-C02 base capture 서술에 packing 단계(`pack_bank`의 Structural 칸 경로, packing 24,887B 안의
+  structural bank 항 12,679B)를 적고, encode 단계 64,203/64,211B의 구성을 "owner + capture 인수 + codec + decode
+  Result·`VerifiedPlan4Base`"로 고쳤다. `unl_c02_base_capture_holds_the_row_codec`에 `bank <= packing`과
+  `owner + packing <= base_capture`를 더했다(`packing_source_bytes`는 `pub(super)`라 공개 범위는 바꾸지 않았다).
+- 권고 3:
+  - `CandidateCensus`가 `prefix_calls`·`draft_calls`·`verify_calls`와 UNL-C01 세 항(`retired`·`anchor`·
+    `anchor_decode`)을 필드로 낸다. UNL-R04 source는 독립 호출값 ≤ 그 항 ≤ 단계 최대, 단계 최대가 peak 식 안에 듦을
+    항마다 단언한다(3,843/3,843, 3,502/3,790, 3,403/3,403B).
+  - dispatch 시험의 독립 목록을 code의 값 하나씩(`is_unlink`의 인수·`len()`·`frame_bytes()` 둘·bool, slice·Result×2·
+    묶은 참조)으로 바꿨다. 81B가 나와 옛 48B보다 컸다. 그래서 `unlink_dispatch_bytes`를 `(&[u8], [usize; 3], bool)`
+    + slice + 참조 + Result×2 = 88B로 고쳤다. 더한 뒤 compare 24,964 < 25,036B, finishing 6,114 < 10,170B이고 scope4
+    최대·history frame 26,452B는 그대로다.
+  - `unlink_arm_bytes`(arm + dispatch)를 뽑아 scope4 회계가 그 값을 쓰고, 시험이 `unlink_arm_bytes` = arm +
+    dispatch(두 단계)를 `assert_eq`로 본다.
+  - 계약 시험 표에 각 시험의 판정을 적고, max 회계에서 binding 아래 항이 빠지는 것은 peak로 드러나지 않으므로 항을
+    필드로 내어 이름으로 짚는다고 적었다.
+- 권고 4(gate record): 이 기록 뒤의 commit에서 다시 만든다. U1(#56)이 main에 들어간 뒤 base를 main으로 다시 확인한다.
+- NIT 1: `unlink_dispatch_bytes` doc comment와 계약을 "`is_unlink`는 두 경로 모두 arm보다 먼저 돌아오므로 split 쪽은
+  max가 덮고, unlink 쪽에 더한 것은 보수적이다. unlink에만 있는 것은 after 2장 대여다"로 고쳤다.
+- NIT 2: 명령 표 제목을 "U1 위 rebase 전 U2 code"로 고쳤다.
+- NIT 3: UNL-R04 source의 독립 parser 목록에 `decode_core` 자체 frame을 더했다. parser 값 11,991/17,495B는 그대로다.
+- 재실행: 바뀐 회계·시험에 닿는 10개 filter로 45 passed, 0 failed. fmt·clippy(`-D warnings`)·문서 검사 PASS.
