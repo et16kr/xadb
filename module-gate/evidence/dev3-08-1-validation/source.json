@@ -1,0 +1,21 @@
+{
+  "base": "be52fc679deca576ed455dcb698a7f33472a76a8",
+  "files": {
+    "scripts/check_dev3_unlink_native.py": {
+      "blob": "c16d67a925547d622378a2ecaed2daa41f01b35d",
+      "sha256": "2ac0ef99bc5bbdb041e00ef9328c863959e0be67b4549c8e1306ba3e3afaa568"
+    },
+    "scripts/test_check_dev3_unlink_native.py": {
+      "blob": "18787f468c9687debe1ca23792071525bb9ab4e9",
+      "sha256": "18716bc0171551888fd919e4c58e0174b7d2f5a99f3d98dad09c66c73366e1c2"
+    }
+  },
+  "tests": [
+    "test_check_dev3_unlink_native.UnlinkEvidenceTests.test_home_cut_rejects_checksum_valid_or_truncated_page",
+    "test_check_dev3_unlink_native.UnlinkEvidenceTests.test_home_cut_accepts_checksum_invalid_page"
+  ],
+  "native_cases": [
+    "UNL-N05-L",
+    "UNL-N05-R"
+  ]
+}

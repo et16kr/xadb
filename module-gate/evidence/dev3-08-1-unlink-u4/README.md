@@ -61,3 +61,9 @@ RootCollapse 한 모양으로 변경 분기를 모두 검증하며, N01/N02 양�
 
 [독립 D2 추가 검토](review-codex.md)는 `/root/pr59_independent_review`의 별도 실행이며,
 기존 `review.md`·`review-r1.md`를 대체하거나 과거 source의 판정을 바꾸지 않는다.
+
+## 08-1 완료 후 검토
+
+PR #59 병합 기준의 [설계·코드 검토와 N05 입력 확인 보강](../dev3-08-1-validation/README.md)은
+08-1의 제한된 완료 범위와 후속 의무를 대조한다. N05 controller는 복구 전 실제 home page의
+길이와 checksum 손상을 직접 검사하도록 보강했다. 기존 실행 결과는 원 source의 증거로 보존한다.

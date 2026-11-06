@@ -122,6 +122,17 @@ def check_produce(want, receipt, effects, db):
     """The cut and the WAL it left, from the trace and this reader."""
     wal_name = sorted(p.name for p in db.iterdir() if p.name.startswith('d3-wal-'))[-1]
     check_cut(want, receipt, effects, wal_name)
+    if want['cut'] == 'home_first_byte':
+        # The first byte is invariant on an already valid XDP1 page. Check
+        # the persisted damage before recovery, rather than treating the
+        # cut label or a later DWB read as proof of a torn home page.
+        write = effects[-2]
+        with (db / write[2]).open('rb') as home:
+            home.seek(int(write[3]))
+            page = home.read(PAGE_BYTES)
+        assert len(page) == PAGE_BYTES, 'incomplete home page at the N05 cut'
+        assert bytes.fromhex(digest(page[:-32])) != page[-32:], \
+            'N05 did not leave a checksum-invalid home page'
     return check_wal(want, receipt, db, wal_name)
 
 

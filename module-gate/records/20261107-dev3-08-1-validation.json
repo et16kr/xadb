@@ -1,0 +1,25 @@
+{
+  "schema": "XADB_MODULE_GATE_RECORD_V1",
+  "change": "XADB DEV3 08-1 review: verify N05 persisted home checksum damage before recovery",
+  "reviews": [
+    {
+      "id": "dev3-08-1-validation-d2",
+      "class": "D2",
+      "scopes": [
+        "joint"
+      ],
+      "author": "/root",
+      "reviewer": "/root/independent_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "scripts/check_dev3_unlink_native.py": "c16d67a925547d622378a2ecaed2daa41f01b35d",
+        "scripts/test_check_dev3_unlink_native.py": "18787f468c9687debe1ca23792071525bb9ab4e9",
+        "module-gate/evidence/dev3-08-1-unlink-u4/README.md": "bcbe382b562f5dfa07eec575b4b8acdf17e1ca6f",
+        "module-gate/evidence/dev3-08-1-validation/README.md": "7d086a71ac7b6e218ef870c8bd8008efeebbf77d"
+      },
+      "log": "module-gate/evidence/dev3-08-1-validation/review.md",
+      "log_sha256": "7d426f52f6aa32fd664e8bb037afe22280e2802afe7382a382cbae9aff04d77b"
+    }
+  ]
+}

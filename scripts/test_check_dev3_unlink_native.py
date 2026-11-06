@@ -1,6 +1,7 @@
 """Independent negative vectors for UNL-N's evidence checks (no engine run)."""
 import csv
 from pathlib import Path
+import tempfile
 import unittest
 
 import check_dev3_unlink_native as check
@@ -115,6 +116,40 @@ class UnlinkEvidenceTests(unittest.TestCase):
                                     transferred(check.PAGE_BYTES - 1)))
             with self.subTest(name=name, offset=offset), self.assertRaises(AssertionError):
                 check.check_repair(want, 'recover', effects, dict(anchor_page='9'))
+
+    def home_cut(self, page):
+        want, receipt = self.cut(5)
+        receipt.update(anchor_page='9', flushed_page='9', lsn='50',
+                       wal_sha256=check.digest(b'p' * 100))
+        frame = bytearray(want['frame'])
+        frame[:4] = b'XWF1'
+        for offset, size, value in ((12, 4, len(frame)), (56, 8, 51),
+                                    (166, 2, 4), (170, 2, 4)):
+            frame[offset:offset + size] = value.to_bytes(size, 'little')
+        effects = [event('arm', receipt['armed']), event('sync', 'd3-dwb-images'),
+                   event('write', HOME, 9 * check.PAGE_BYTES, check.PAGE_BYTES, 'ATTEMPT'),
+                   event('write', HOME, 9 * check.PAGE_BYTES, 1, 'FIRST_BYTE:Ok(1)'),
+                   event('cut', receipt['armed'], outcome=f'write:{HOME}')]
+        with tempfile.TemporaryDirectory() as directory:
+            db = Path(directory)
+            (db / WAL).write_bytes(b'p' * 100 + frame)
+            (db / HOME).write_bytes(bytes(9 * check.PAGE_BYTES) + page)
+            return check.check_produce(want, receipt, effects, db)
+
+    def test_home_cut_rejects_checksum_valid_or_truncated_page(self):
+        # XDP1 has invariant magic: writing its first byte to an already
+        # valid page may leave the page intact. A cut label is not damage.
+        body = b'XDP1' + bytes(check.PAGE_BYTES - 32 - 4)
+        valid = body + bytes.fromhex(check.digest(body))
+        for page in (valid, valid[:-1], b'X'):
+            with self.subTest(length=len(page)), self.assertRaises(AssertionError):
+                self.home_cut(page)
+
+    def test_home_cut_accepts_checksum_invalid_page(self):
+        body = b'XDP1' + bytes(check.PAGE_BYTES - 32 - 4)
+        page = bytearray(body + bytes.fromhex(check.digest(body)))
+        page[64] = 1  # New pageLSN under the old checksum.
+        self.home_cut(page)
 
     def test_unchanged_wal_and_ready_negative_vectors(self):
         import tempfile
