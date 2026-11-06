@@ -1,0 +1,37 @@
+test_home_cut_rejects_checksum_valid_or_truncated_page (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_home_cut_rejects_checksum_valid_or_truncated_page) ... 
+  test_home_cut_rejects_checksum_valid_or_truncated_page (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_home_cut_rejects_checksum_valid_or_truncated_page) (length=16384) ... FAIL
+  test_home_cut_rejects_checksum_valid_or_truncated_page (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_home_cut_rejects_checksum_valid_or_truncated_page) (length=16383) ... FAIL
+  test_home_cut_rejects_checksum_valid_or_truncated_page (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_home_cut_rejects_checksum_valid_or_truncated_page) (length=1) ... FAIL
+test_home_cut_accepts_checksum_invalid_page (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_home_cut_accepts_checksum_invalid_page) ... ok
+
+======================================================================
+FAIL: test_home_cut_rejects_checksum_valid_or_truncated_page (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_home_cut_rejects_checksum_valid_or_truncated_page) (length=16384)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/xadb/scripts/test_check_dev3_unlink_native.py", line 145, in test_home_cut_rejects_checksum_valid_or_truncated_page
+    with self.subTest(length=len(page)), self.assertRaises(AssertionError):
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AssertionError not raised
+
+======================================================================
+FAIL: test_home_cut_rejects_checksum_valid_or_truncated_page (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_home_cut_rejects_checksum_valid_or_truncated_page) (length=16383)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/xadb/scripts/test_check_dev3_unlink_native.py", line 145, in test_home_cut_rejects_checksum_valid_or_truncated_page
+    with self.subTest(length=len(page)), self.assertRaises(AssertionError):
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AssertionError not raised
+
+======================================================================
+FAIL: test_home_cut_rejects_checksum_valid_or_truncated_page (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_home_cut_rejects_checksum_valid_or_truncated_page) (length=1)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/xadb/scripts/test_check_dev3_unlink_native.py", line 145, in test_home_cut_rejects_checksum_valid_or_truncated_page
+    with self.subTest(length=len(page)), self.assertRaises(AssertionError):
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AssertionError not raised
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.002s
+
+FAILED (failures=3)

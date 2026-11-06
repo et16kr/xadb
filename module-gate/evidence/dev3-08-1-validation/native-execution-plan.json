@@ -1,0 +1,40 @@
+{
+  "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::unlink_rows::native::unlink_native_worker",
+  "cases": {
+    "UNL-N05-L": [
+      "produce",
+      "recover",
+      "reenter"
+    ],
+    "UNL-N05-R": [
+      "produce",
+      "recover",
+      "reenter"
+    ]
+  },
+  "source": "6cccc5041f6df7ecefa950b156f51e85b4a3f590db29f6d3d8db11784cb121bf",
+  "elf": "9a7105c0a1ee4e3da5685835bab3777fb160a2661602cc020fa9ab09f1f812bf",
+  "input": "dfba91c272b562bfcc32b1509fad0613f9b350dcdcc883f58a48b71e7ae0d6dd",
+  "controller": "2ac0ef99bc5bbdb041e00ef9328c863959e0be67b4549c8e1306ba3e3afaa568",
+  "per_process_seconds": 180,
+  "log_bytes_cap": 16777216,
+  "rust_stack": 33554432,
+  "expected": {
+    "UNL-N05-L": {
+      "after": true,
+      "route": "3,5",
+      "level": 1,
+      "listed": 1,
+      "added": 35248,
+      "rows": 8
+    },
+    "UNL-N05-R": {
+      "after": true,
+      "route": "5",
+      "level": 0,
+      "listed": 2,
+      "added": 19032,
+      "rows": 5
+    }
+  }
+}
