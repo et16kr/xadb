@@ -155,6 +155,28 @@ fn recovery_source_native() {
     h.finish();
 }
 
+/// UNL-C02 (dev3-tree-smo.md#unlink-u2-census): a base capture over a
+/// replayed unlink state runs the Base4 encoder, whose validation reads the
+/// anchor list in the current-tree closure (the Base4 codec's whole
+/// `retired` term, UNL-C01). The capture encode phase holds that whole codec
+/// beside the owner, under the recovery peak, for both writers.
+fn unl_c02_capture<W: WriterNamespace>(label: &str) {
+    let c = source_census::<W>();
+    let codec = base::row::source_bytes();
+    println!(
+        "UNL_C02 {label} capture owner {} + codec {codec} <= encode {} <= capture {} <= peak {}",
+        c.owner, c.capture_encode, c.base_capture, c.peak
+    );
+    assert!(c.owner + codec <= c.capture_encode);
+    assert!(c.capture_encode <= c.base_capture && c.base_capture <= c.peak);
+}
+#[test]
+fn unl_c02_base_capture_holds_the_row_codec() {
+    unl_c02_capture::<port::Writer>("memory");
+    #[cfg(target_os = "linux")]
+    unl_c02_capture::<super::super::plan4_pages::native::Writer>("native");
+}
+
 #[path = "tests/base_cause.rs"]
 mod base_cause;
 #[path = "tests/cases.rs"]

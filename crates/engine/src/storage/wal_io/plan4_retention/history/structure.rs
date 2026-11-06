@@ -374,7 +374,8 @@ pub(in super::super) fn source_bytes() -> SourceCensus {
         + 512;
     let split = compare + frame::source_bytes().max(control::structural_bank_source_bytes());
     let unlink = unlink_source_bytes();
-    let semantic = split.max(unlink.semantic);
+    let dispatch = unlink_dispatch_bytes();
+    let semantic = split.max(dispatch + unlink.semantic);
     let finishing = args
         + 2 * size_of::<LayoutView<'_>>()
         + 2 * size_of::<frame::Observation>()
@@ -393,8 +394,21 @@ pub(in super::super) fn source_bytes() -> SourceCensus {
         + 1536;
     SourceCensus {
         semantic,
-        finishing: finishing.max(unlink.finishing),
+        finishing: finishing.max(dispatch + unlink.finishing),
     }
+}
+
+/// The scope4 dispatch in `recovery::apply_frame` (UNL-C02): `is_unlink`
+/// with its length tests, and the after2 prefix borrow with its `try_into`
+/// Result. They exist only on the unlink path, for the whole `apply_unlink`
+/// call (both phases); the split path keeps its arguments as before.
+pub(in super::super) fn unlink_dispatch_bytes() -> usize {
+    use std::mem::size_of;
+    size_of::<(&[u8], bool, bool)>()
+        + size_of::<&mut [[u8; PAGE_BYTES]; 2]>()
+        + 2 * size_of::<
+            std::result::Result<&mut [[u8; PAGE_BYTES]; 2], std::array::TryFromSliceError>,
+        >()
 }
 
 /// `apply_unlink` (dev3-tree-smo.md#empty-leaf-unlink): a sibling frame of
@@ -569,5 +583,30 @@ mod tests {
         );
         assert!(compare <= arm.semantic && finishing <= arm.finishing);
         assert!(arm.semantic <= all.semantic && arm.finishing <= all.finishing);
+    }
+
+    /// UNL-C02 (dev3-tree-smo.md#unlink-u2-census): the scope4 dispatch's own
+    /// values (the frame length tests and the after2 prefix borrow) sit
+    /// beside the whole unlink arm in both phases, and the scope4 census is
+    /// still the split arm, so the history frame does not change.
+    #[test]
+    fn unl_c02_scope4_dispatch_beside_the_unlink_arm() {
+        type Prefix<'a> = &'a mut [[u8; PAGE_BYTES]; 2];
+        let dispatch = size_of::<(&[u8], bool, bool)>()
+            + size_of::<Prefix<'_>>()
+            + 2 * size_of::<std::result::Result<Prefix<'_>, std::array::TryFromSliceError>>();
+        let (arm, all) = (unlink_source_bytes(), source_bytes());
+        println!(
+            "UNL_C02 dispatch {dispatch}/{} unlink {}+{dispatch}/{} finishing {}+{dispatch}/{}",
+            unlink_dispatch_bytes(),
+            arm.semantic,
+            all.semantic,
+            arm.finishing,
+            all.finishing
+        );
+        assert!(dispatch <= unlink_dispatch_bytes());
+        // Strictly below: the split arm stays the scope4 maximum.
+        assert!(arm.semantic + unlink_dispatch_bytes() < all.semantic);
+        assert!(arm.finishing + unlink_dispatch_bytes() < all.finishing);
     }
 }

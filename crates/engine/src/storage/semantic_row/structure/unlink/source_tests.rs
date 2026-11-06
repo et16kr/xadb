@@ -19,7 +19,7 @@ use crate::{
     api::Namespace,
     storage::{
         allocation_page::{AllocationError, AllocationPage, SystemWorkRef},
-        anchor::{AnchorRoot, RetiredList, RetiredPage, TreeAnchor},
+        anchor::{self, AnchorRoot, RetiredList, RetiredPage, TreeAnchor},
         control::Profile,
         obligation::{
             self, DescriptorSpec, InventoryClaim, OwnerChain, RemainingBudget, SystemProgress,
@@ -157,11 +157,30 @@ fn draft_calls() -> usize {
         + allocation_codec().max(semantic_catalog::page_read_codec_bytes() + 1536);
     let tree =
         size_of::<(TreePageView<'_>, TreeExpectation)>() + 256 + transition::tree_source_bytes();
+    // UNL-C01: the XTR1 merge and one whole `encode_listed_anchor`, and the
+    // list read (one whole `retired`), each over the page codec with its
+    // SHA scratch (anchor_tests.rs checks these call costs).
+    let page = semantic_catalog::page_read_codec_bytes() + 1536;
     let anchor = size_of::<(PageHeader, AnchorRoot, &[u8], &mut [u8; PAGE_BYTES])>()
         + size_of::<[RetiredPage; 2]>()
+        + size_of::<[RetiredList<'_>; 2]>()
         + 256
-        + transition::tree_source_bytes().max(hash());
-    reached.max(tree).max(anchor).max(parent_chain())
+        + transition::tree_source_bytes()
+            .max(hash())
+            .max(anchor::extend_source_bytes())
+            .max(anchor::listed_encode_source_bytes(page));
+    let retired = anchor::retired_source_bytes(page);
+    reached
+        .max(tree)
+        .max(anchor)
+        .max(retired)
+        .max(parent_chain())
+}
+
+/// `verify_after`'s anchor decode (UNL-C01): one whole `decode_anchor`.
+fn after_decode() -> usize {
+    size_of::<(TreeAnchor, Result<TreeAnchor>)>()
+        + anchor::whole_decode_source_bytes(semantic_catalog::page_read_codec_bytes() + 1536)
 }
 
 #[test]
@@ -215,7 +234,7 @@ fn unl_r04_unlink_source_inventory_covers_parse_prepare_and_emit() {
     assert!(wrapper <= c.outer && after <= c.after_outer);
     let actual = (args + prefix + prefix_calls)
         .max(args + draft + calls)
-        .max(wrapper + after + audit_chain().max(table_chain()));
+        .max(wrapper + after + audit_chain().max(table_chain()).max(after_decode()));
     assert!(actual <= c.peak);
 
     // produce/observe hold the decoded layout and the prepared draft across

@@ -399,6 +399,13 @@ pub(crate) fn decode_increment_bytes(page: usize) -> usize {
     decode_source_bytes(page) - page
 }
 
+/// One complete `decode_anchor` call for a census that counts nothing of the
+/// decoder itself (new U1+ code): its whole frame, then the
+/// `decode_source_bytes` callee (UNL-C01).
+pub(crate) fn whole_decode_source_bytes(page: usize) -> usize {
+    decoder_frame_bytes() + decode_source_bytes(page)
+}
+
 /// One complete `retired` call for a list reader (UNL-C01): its arguments,
 /// the anchor Result, the second envelope view and the borrowed list, then
 /// the whole `decode_anchor` frame with its callee, or the second page
@@ -412,7 +419,7 @@ pub(crate) fn retired_source_bytes(page: usize) -> usize {
         + 2 * size_of::<Option<&[u8]>>()
         + 2 * size_of::<RetiredList<'static>>()
         + size_of::<Result<RetiredList<'static>, PageError>>();
-    frame + (decoder_frame_bytes() + decode_source_bytes(page)).max(page)
+    frame + whole_decode_source_bytes(page).max(page)
 }
 
 /// One complete `encode_listed_anchor` call (UNL-C01): its arguments, the

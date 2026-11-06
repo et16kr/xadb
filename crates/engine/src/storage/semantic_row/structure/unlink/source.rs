@@ -13,7 +13,7 @@ use crate::{
     api::Namespace,
     storage::{
         allocation_page::{AllocationEntry, AllocationPage, SystemWorkRef},
-        anchor::{AnchorRoot, RETIRED_CELL_BYTES, RetiredList, RetiredPage, TreeAnchor},
+        anchor::{self, AnchorRoot, RETIRED_CELL_BYTES, RetiredList, RetiredPage, TreeAnchor},
         obligation::{
             self, DescriptorSpec, InventoryClaim, OwnerChain, RemainingBudget, SystemProgress,
         },
@@ -58,13 +58,19 @@ fn reached_chain() -> usize {
         + 2 * slack()
         + allocation_codec().max(semantic_catalog::page_read_codec_bytes() + 1536)
 }
-/// The listed anchor encode: the XTR1 merge, then the sealed page.
+/// The listed anchor encode: the XTR1 merge (`RetiredList::extend`), then
+/// one whole `encode_listed_anchor` (UNL-C01). Its page term is the larger
+/// of this chain's earlier sealed-page term and the split candidate's page
+/// codec with its SHA scratch.
 fn anchor_chain() -> usize {
+    let page = transition::tree_source_bytes()
+        .max(digest())
+        .max(semantic_catalog::page_read_codec_bytes() + 1536);
     size_of::<(PageHeader, AnchorRoot, &[u8], &mut [u8; PAGE_BYTES])>()
         + 2 * size_of::<RetiredPage>()
         + 2 * size_of::<RetiredList<'_>>()
         + 2 * slack()
-        + transition::tree_source_bytes().max(digest())
+        + anchor::extend_source_bytes().max(anchor::listed_encode_source_bytes(page))
 }
 /// Tree page decodes of the leaf, the level-1 pages and the parent.
 fn tree_chain() -> usize {
@@ -158,15 +164,19 @@ pub(crate) fn candidate_census() -> CandidateCensus {
         .max(audit_chain())
         .max(previous_chain())
         .max(allocation_codec());
+    // `build` reads the list with one whole `retired` call (UNL-C01).
     let draft_calls = reached_chain()
         .max(tree_chain())
         .max(parent_chain())
         .max(anchor_chain())
+        .max(anchor::retired_source_bytes(
+            semantic_catalog::page_read_codec_bytes() + 1536,
+        ))
         .max(size_of::<CoreView<'_>>() + slack());
+    // `verify_after` decodes the anchor after: one whole `decode_anchor`.
     let anchor_decode = size_of::<TreeAnchor>()
         + size_of::<Result<TreeAnchor>>()
-        + semantic_catalog::page_read_codec_bytes()
-        + 1536;
+        + anchor::whole_decode_source_bytes(semantic_catalog::page_read_codec_bytes() + 1536);
     let building =
         (args + 128 + before_outer + prefix_calls).max(args + 128 + build_outer + draft_calls);
     let verifying = outer
