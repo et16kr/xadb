@@ -1,5 +1,7 @@
 # XADB 조사·실행 증거
 
+2026-11-05 [XB-H001의 Base header version 2 거절 기대](main-preexisting-failures-20261030.md#xrb-header-version): 실행자 전용 XRB 시험 XB-H001이 version 2를 `Unsupported`로 기대하지만, version 2는 이후 Free Undo 계약이 정한 지원 형식 V2System이다. decoder는 맞고 시험 기대가 낡았다. 시험만 legacy decoder가 거절해야 하는 0·3·4·5·65535로 바꿨고 XB-H001 PASS. frozen 입력과 원 PASS는 보존한다.
+
 2026-11-04 [일정08 첫 트리 구조 후보](dev3-tree-structure-20261104.md): 신규 고유9개 선택 PASS·독립 D2/D1 ACCEPT. 실제 SMO·복구와 08 전체는 미완료.
 2026-11-04 [DEV3 개선 계획 리뷰: 구조 목표·단일 노드 가용성·HA 연결](dev3-improved-plan-structural-review-20261104.md): PR #51 병합 main `8a4f8e4a`의 A0–A7을 Claude가 검토했다. 이전 지적과 PR #51 리뷰 의견의 반영을 확인했고, A2–A4의 구조 목표, buffer manager 확장, 단일 노드의 DB 전체 쓰기 정지 경로, A2와 DEV8 HA의 연결, 제품 목표의 사용자 결정을 권고한다. 같은 PR의 Codex 검토와 겹치지 않는 부분을 중심으로 적었고, r2에서 이 문서에 달린 리뷰를 반영해 쓰기 정지 경로를 일곱으로 늘리고(checkpoint WAL 한도, offline backup, dirty backlog 압력 추가), A3·A4 목표의 적용 조건과 A2 판정 사례를 좁히고, A6 구조 목표를 더하고, 같은 PR 리뷰들의 사용자 결정을 목록 하나(U1–U6)로 묶었다. D0 정적 리뷰 기록이며 계약·일정·제품 코드 변경과 제품 시험 새 실행은 없다.
 

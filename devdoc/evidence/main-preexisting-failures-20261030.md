@@ -420,3 +420,43 @@ D01은 위의 **F0 전체 완료 지시**를 current-format 이관 권고안의 
 독립 리뷰에서 second-cycle fixture의 Terminal1/CREATE root1 충돌, base4 Root cell offset·remaining 필드·Reserved chunk의 reserved bytes, W02 발급 시점을 지적해 반영했다. 리뷰와 실행에서 나온 FAIL은 보존한다. 마지막 `cargo fmt`는 형식 정리이며 그것만으로 통과한 제품 시험을 반복하지 않는다. 필수 fmt/Clippy/document 및 정적 module gate는 전송 commit의 pre-push hook에서 확인하고 결과는 PR과 gate artifact에 기록한다.
 
 현재 F0 대상의 known failure와 resident 미완료 경로는 변경 검증까지 끝냈다. 과거 원 로그 미확보는 역사적 attribution 한계로 보존하며 현재 PASS로 과거 실패를 없애지 않는다. F2–F7은 각각의 diff·계약·선택 의무를 적용해 진행할 수 있다. 이 기록은 main 병합, PR CI 또는 전체 lib PASS를 대신하지 않는다. 되돌림은 이 PR의 시험/helper/fixture·현황 정정을 revert하며 옛 fixture·과거 실행 결과는 그대로 남는다.
+
+<a id="xrb-header-version"></a>
+## 9. XB-H001의 Base header version 2 거절 기대
+
+2026-11-05 · branch `claude/project-thread-m0owu0`(기준 main `1c9486a`). 08-1 작업이 찾은 실행자 전용 시험의 기존 실패다. `storage::plan4_recovery_base::tests::xrb_header_rejections`의 XB-H001은 `active` base의 header version u16@4를 2로 바꾸고 다시 봉인한 뒤 `Unsupported`를 기대한다. decoder가 이 base를 받아들여 `plan4_recovery_base_tests.rs:295`의 "invalid base accepted"로 실패한다. 이 시험은 실행자만 주는 입력이 필요해 CI가 실행하지 않는다(`devdoc/policies/module-gate.json`의 `evidence.executor_only`).
+
+### 9.1 원인
+
+decoder 결함이 아니라 시험 기대가 낡았다.
+
+- XB-H001의 입력(`tests/fixtures/dev3-plan4-recovery-base/input-plan.json`, recipe `version@4=2`)은 2026-10-24 XRB1 codec에 v1(Status 전용)만 있을 때 작성됐다. 그 source에서는 PASS했다([원 증거](dev3-recovery-control-base-20261024.md)).
+- 다음 날 [D3-PLAN4-FREE-UNDO-001](../contracts/dev3-plan4-free-undo.md)이 "XRB1 version u16@4=2 자체가 fixed Plan4SystemInit scope"로 정하고 `BaseFormat::V2System`을 넣었다. 같은 legacy `decode`가 v1과 v2를 함께 읽고, current-build runtime은 v2만 capture한다. `plan4_recovery_base/row_tests.rs`의 header mode 시험도 Legacy mode에서 V1·V2를 허용으로 단언한다. 그 단위는 변경 시험만 실행했으므로 XB-H001은 다시 실행되지 않았다.
+- v2는 v1의 Status 전용 내용을 그대로 담을 수 있고, Undo record·terminal3(InitializedUndo)·System descriptor를 더 허용한다. 그래서 `active`의 version만 2로 바꾼 base는 Status 페이지만 있는 정상 v2 base다.
+
+진단으로 15개 fixture 각각의 version을 0·1·2·3·4·5·65535로 바꿔 다시 봉인하고 `decode` 결과를 한 번 봤다. 임시 시험이며 commit하지 않았다.
+
+| version | 결과 |
+| --- | --- |
+| 1(원래 값) | 15/15 `Ok(V1Status)` |
+| 2 | 13/15 `Ok(V2System)`, `reserved`·`reserved32`는 `IdentityMismatch` |
+| 0·3·4·5·65535 | 75/75 `Unsupported` |
+
+두 `reserved` fixture가 v2에서 거절되는 것은 Prepared AllocationMaintenance의 terminal 예약이 v1 38000/70768B, v2 38208/70976B로 다르고(free-undo 계약 §2), v2 검사 `validate_plan4_system_base_allocation`이 v2 값을 요구하기 때문이다. 두 형식이 실제로 다른 곳에서는 decoder가 구분한다.
+
+### 9.2 수정
+
+`crates/engine/src/storage/plan4_recovery_base_tests.rs`의 XB-H001만 바꿨다. version 2 대신 Legacy decoder가 거절해야 하는 0, Catalog·Row 형식 번호 3·4, 다음 미사용 번호 5, 최댓값 65535를 하나씩 넣어 다시 봉인하고 모두 `Unsupported`인지 본다. 지원하지 않는 version을 거절한다는 원래 의도는 유지하고, Catalog·Row base가 legacy `decode`에 들어오는 경우까지 전체 decode로 덮는다. 제품 코드는 바꾸지 않았다.
+
+frozen 입력 `input-plan.json`의 XB-H001 recipe는 그대로 둔다. fixture `vectors/p1/manifest.json`이 그 파일의 SHA-256 `86d008ca5ffad39385e9fa8b9aa512443dda80574d6ede9aa2f442c25db63fab`을 묶고 있고, 원 입력은 당시 기록으로 보존한다. XB-H001의 현재 recipe는 이 절과 시험 source다. 2026-10-24의 원 PASS는 그 source의 결과로 남는다.
+
+### 9.3 실행
+
+`cargo test -p xadb-engine --lib --no-run`(debug)으로 build하고 `--exact storage::plan4_recovery_base::tests::xrb_header_rejections --test-threads=1`, stack 32MiB로 1회 실행했다. `XADB_XRB_INCLUDE=XB-H001`만 선택했고, `XADB_XRB_FIXTURE_DIR`은 `tests/fixtures/dev3-plan4-recovery-base/vectors/p1`, `XADB_XRB_INDEX_SHA256`은 그 `raw-index.tsv`의 `b3f7e7f018baf54284ac062ef1f7cf39b0c6da4991748097ce9431889d05fef1`이다.
+
+| build | test ELF SHA-256 | XB-H001 |
+| --- | --- | --- |
+| 수정 전 main `1c9486a` | `18b2a915a0d3501d9726068d7e9f88d86c9c8b75b23609e98b9589fea39279e9` | FAIL `plan4_recovery_base_tests.rs:295`, invalid base accepted |
+| 수정 후 | `9fbc93c785af9fd779e1a6badb07bdf292f41c8d7134d05ea45bd84200b7612c` | PASS, XB-H002..H016 SKIP |
+
+바꾼 case가 XB-H001뿐이므로 XB-H002..H016과 다른 `xrb_*` 함수는 실행하지 않았다. 두 실행 로그와 §9.1 진단의 임시 시험 source·출력은 공유 폴더 `xrb-header-version-20261105/`에 `SHA256SUMS`와 함께 있다(`before-h001.log` `d4d96cc2…`, `after-h001.log` `841c7804…`, `diag-relabel.log` `e27827ca…`). ELF는 지웠다. 진도표([DEV3 일정 기준선](../plans/dev3-schedule-baseline.md))는 이 수정과 관계없어 바꾸지 않았다(33/86 = 38.37%).
