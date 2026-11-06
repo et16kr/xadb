@@ -1910,6 +1910,7 @@ U3 실행 기록. env는 U2와 같다: source·ELF·input hash에 64자 자리�
 | D2 1회차 반영 뒤 `unlink_rows:: auto_split::spl_a03_ split_rows::spl_j02_ --test-threads 4` | 13 passed, 1 failed(493초). 실패는 L09의 시험 배치: 40 frame에서는 모든 page가 resident라 L을 내보낼 page가 없었다. 34 frame으로 바꾼 뒤 `unlink_rows::unl_l09` 1 passed(182초) |
 | leaf LOAD의 보호 집합을 잠시 [anchor, leaf]로 되돌리고 `unlink_rows::unl_l09`(파일은 바로 복원) | **FAILED**(기대대로): `unlink_leaf_live`가 `RetentionError { phase: Prepare, cause: Frame(DirtyError { cause: MissingTarget, effect: Unchanged }), effect: Unchanged }`(note를 버리는 쪽) |
 | `unl_a03 unl_c03 unl_a02 live_row_retirement_fits budget_tests::` | 20 passed. UNL_A03 residency 36,511·prepare 36,561·peak 36,561B, room 3,647B. UNL_C03 named_end 58,240·rows_end 64,896·bank_end 65,536, shared 20,208/20,216B. 회수 39,694B(room 514B). drain 지점 최대 4,082/4,096B |
+| 최종: 위 321개 + `unlink_rows::unl_l09_flush_required_round_trip_keeps_the_parent` = 322개, `--exact --test-threads 2`, D2 1회차 반영 commit `3b0fd72` 위(그 뒤 commit은 주석·문서·증거뿐) | **321 passed, 0 failed, 1 ignored**(2,140초). ignored는 위와 같은 `f6_m0_levels_to_l3`. gate 기록의 case는 이 실행에서 통과한 시험이다 |
 
 321개는 다음의 합집합이다.
 - 바뀐 파일에 literal로 정의된 시험 103개(`check_module_gate.changed_cases`, literal만). driver literal 시험 전부, source census
