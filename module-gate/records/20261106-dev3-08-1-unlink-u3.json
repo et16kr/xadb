@@ -1241,6 +1241,20 @@
           "sources": [
             "head"
           ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::unlink_rows::unl_review_refilled_leaf_discards_stale_note_then_can_be_unlinked",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::unlink_rows::unl_review_four_pending_notes_follow_leaf_unlinks_into_root_collapse",
+          "sources": [
+            "head"
+          ]
         }
       ]
     },
@@ -2292,6 +2306,13 @@
           "sources": [
             "head"
           ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::unl_review_flush_failures_preserve_prior_progress_and_pending_notes",
+          "sources": [
+            "head"
+          ]
         }
       ]
     }
@@ -2375,6 +2396,21 @@
       },
       "log": "module-gate/evidence/dev3-08-1-unlink-u3/review.md",
       "log_sha256": "7a8dce88176091f8473ffbd0afeaca791d082f9019e1b5fdab27a4b0fbfd4aec"
+    },
+    {
+      "id": "pr58-additional-tests-d1",
+      "class": "D1",
+      "scopes": [],
+      "author": "/root",
+      "reviewer": "/root/independent_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/row/insert/driver/tests.rs": "8befc822a08545fecc634e2203ac007f6154ebef",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs": "a3880528c4f35353fd412c18a305c0e339432475"
+      },
+      "log": "module-gate/evidence/dev3-08-1-unlink-u3/additional-review.md",
+      "log_sha256": "0febd5240d626d61c0616f3ca9a410b139d953baa4437a5128df48f5c6ca3b5f"
     }
   ]
 }

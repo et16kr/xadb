@@ -4890,3 +4890,55 @@ fn lxt_a07_slot_reading() {
 
 #[path = "delete_tests.rs"]
 mod delete;
+
+/// A flush failure after an installed unlink must preserve that progress,
+/// leave the pending and later notes alone, and report the flush's stage.
+/// In particular, a failure from continue_flush must not become Stage::Unlink.
+#[test]
+fn unl_review_flush_failures_preserve_prior_progress_and_pending_notes() {
+    for (at, fault, stage, must_resolve) in [
+        (TryFlush(77), Fault::Fatal, Stage::Flush, true),
+        (ContinueFlush, Fault::Fatal, Stage::ContinueFlush, true),
+        (
+            ContinueFlush,
+            Fault::Before(Cause::Busy),
+            Stage::ContinueFlush,
+            false,
+        ),
+    ] {
+        let state = unlinking(
+            &ONE_COMMIT[5..],
+            &[(41, 7), (41, 14), (42, 3)],
+            &[LiteralUnlink::Unlinked, LiteralUnlink::Flush(77)],
+            &[(at, fault), (TryFlush(77), Fault::Steps(2))],
+        );
+        let stop = drain(&state).unwrap_err();
+        assert_eq!(
+            stop.retired,
+            Retired {
+                groups: 1,
+                held: 0,
+                complete: true,
+                unlinked: 1,
+                unlink_held: 0,
+            }
+        );
+        assert_eq!(stop.failure.stage, stage);
+        assert_eq!(stop.failure.must_resolve, must_resolve);
+        assert_eq!(kept(&state), [14, 3]);
+        let mut expected = vec![
+            CleanupNext,
+            Retire(2),
+            CleanupNext,
+            UnlinkNext,
+            Unlink(7),
+            UnlinkNext,
+            Unlink(14),
+            TryFlush(77),
+        ];
+        if at == ContinueFlush {
+            expected.push(ContinueFlush);
+        }
+        assert_eq!(take_log(&state), expected);
+    }
+}

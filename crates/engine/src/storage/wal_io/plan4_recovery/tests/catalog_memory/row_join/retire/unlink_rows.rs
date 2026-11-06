@@ -1937,3 +1937,364 @@ fn unl_l09_flush_required_round_trip_keeps_the_parent() {
         assert_eq!(joined.rows, expected);
     });
 }
+
+/// A deferred note is only a hint: refill its rightmost leaf before asking
+/// C to unlink it. NotNeeded must drop only the note, without writing WAL or
+/// losing the new row. Emptying it again must create a fresh actionable note.
+#[test]
+fn unl_review_refilled_leaf_discards_stale_note_then_can_be_unlinked() {
+    case_within(
+        "UNL-REVIEW-REFILL",
+        std::time::Duration::from_secs(1500),
+        || {
+            let oracle = Oracle::new();
+            let (images, expected) = with_fresh!(
+                oracle,
+                frames = 48,
+                file_bytes = 48 * 1_048_576,
+                |live,
+                 owner,
+                 flusher,
+                 status,
+                 undo,
+                 private,
+                 reader_private,
+                 core,
+                 fence,
+                 state| {
+                    let (row_status, _) = create_table_with(
+                        live,
+                        owner,
+                        flusher,
+                        status,
+                        undo,
+                        private,
+                        true,
+                        &spec(),
+                    );
+                    retire_create!(live, owner, private);
+                    for _ in 0..18 {
+                        system_init(live, owner, flusher, true);
+                    }
+                    let (mut writer, reader, mut flush) = live.split();
+                    let (out, slots) = autocommit!(
+                        &mut writer,
+                        owner,
+                        flush,
+                        flusher,
+                        reader,
+                        reader_private,
+                        &row_status,
+                        private,
+                        6,
+                        bigs(0..8)
+                    );
+                    assert_eq!(committed(out), (2, 8));
+                    let keys = rows_of(&slots);
+                    drains!(&mut writer, owner, flush, flusher, private);
+                    let before = writer.catalog_test_with_pool(reachable);
+                    assert_eq!(shape(&before).0, [3, 5]);
+                    let anchor_before = writer.catalog_test_with_pool(anchor_of);
+                    let (emptied, doomed) = (before[1].0, before[1].1.clone());
+
+                    let mut holder = None;
+                    begun(begin!(
+                        &mut writer,
+                        owner,
+                        flush,
+                        flusher,
+                        &row_status,
+                        private,
+                        &mut holder
+                    ));
+                    for row in &doomed {
+                        let (out, slot) = delete_in!(
+                            &mut writer,
+                            owner,
+                            flush,
+                            flusher,
+                            reader,
+                            reader_private,
+                            &mut holder,
+                            private,
+                            *row
+                        );
+                        assert_eq!(done(out), 1);
+                        assert_eq!(slot.unwrap().row().get(), *row);
+                    }
+                    assert_eq!(
+                        explicit_committed(commit!(
+                            &mut writer,
+                            owner,
+                            flush,
+                            flusher,
+                            &mut holder,
+                            private,
+                            5
+                        )),
+                        (3, 5)
+                    );
+                    // Retire the Row groups without invoking A's unlink drain.
+                    assert!(!retire_all!(writer, owner, private, flush, flusher).is_empty());
+                    let notes = writer.test_unlink_notes();
+                    assert_eq!(notes.len(), 1);
+                    assert_eq!(notes[0].0, 6);
+                    assert!(doomed.contains(&notes[0].1));
+                    let stale_key = RowId::new(notes[0].1).unwrap();
+                    let empty = writer.catalog_test_with_pool(reachable);
+                    assert_eq!(
+                        empty.iter().find(|(page, _)| *page == emptied).unwrap().1,
+                        Vec::<u64>::new()
+                    );
+
+                    let (out, slots) = autocommit!(
+                        &mut writer,
+                        owner,
+                        flush,
+                        flusher,
+                        reader,
+                        reader_private,
+                        &row_status,
+                        private,
+                        6,
+                        bigs(8..9)
+                    );
+                    assert_eq!(committed(out), (4, 1));
+                    let fresh_key = rows_of(&slots)[0];
+                    assert!(fresh_key > *keys.last().unwrap());
+                    retire_all!(writer, owner, private, flush, flusher);
+                    assert_eq!(writer.test_unlink_notes(), notes);
+                    let refilled = writer.catalog_test_with_pool(reachable);
+                    assert_eq!(
+                        refilled
+                            .iter()
+                            .find(|(page, _)| *page == emptied)
+                            .unwrap()
+                            .1,
+                        vec![fresh_key]
+                    );
+                    let images_before = state.lock().unwrap().images();
+                    assert!(matches!(
+                        writer
+                            .unlink_leaf_live(owner, object(), stale_key, private, &mut flush)
+                            .unwrap(),
+                        crate::storage::wal_io::disk_api::RowUnlinkStep::NotNeeded
+                    ));
+                    assert!(writer.test_unlink_notes().is_empty());
+                    assert!(state.lock().unwrap().images() == images_before);
+                    assert_eq!(writer.catalog_test_with_pool(reachable), refilled);
+                    assert_eq!(writer.catalog_test_with_pool(anchor_of), anchor_before);
+                    let mut refilled_values = kept_values(&keys, &doomed);
+                    refilled_values.push((fresh_key, tagged(8, BIG)));
+                    assert_eq!(
+                        read_big!(writer, reader, core, reader_private, flush, flusher),
+                        refilled_values
+                    );
+
+                    let (out, slot) = delete!(
+                        &mut writer,
+                        owner,
+                        flush,
+                        flusher,
+                        reader,
+                        reader_private,
+                        &row_status,
+                        private,
+                        fresh_key
+                    );
+                    assert_eq!(committed(out), (5, 1));
+                    assert_eq!(slot.unwrap().row().get(), fresh_key);
+                    let drained = drains!(&mut writer, owner, flush, flusher, private);
+                    assert!(drained.last().unwrap().complete);
+                    assert_eq!(drained.iter().map(|d| d.unlinked).sum::<u8>(), 1);
+                    assert_eq!(drained.iter().map(|d| d.unlink_held).sum::<u8>(), 0);
+                    assert!(writer.test_unlink_notes().is_empty());
+                    assert_row_jobs_free(writer.catalog_test_jobs());
+                    let after = writer.catalog_test_with_pool(reachable);
+                    assert_eq!(after, vec![before[0].clone()]);
+                    let (root, level, mut retired) = writer.catalog_test_with_pool(anchor_of);
+                    assert_eq!((root, level), (before[0].0, 0));
+                    retired.sort_by_key(|page| page.page_no);
+                    let mut want = vec![emptied, anchor_before.0];
+                    want.sort_by_key(|page| page.page_no);
+                    assert_eq!(retired, want);
+                    let expected = kept_values(&keys, &doomed);
+                    assert_eq!(
+                        read_big!(writer, reader, core, reader_private, flush, flusher),
+                        expected
+                    );
+                    assert!(!fence.is_fenced());
+                    (state.lock().unwrap().images(), expected)
+                }
+            );
+            let joined = join_restart_with(
+                &clone_directory(&images),
+                RowRecoveryPolicy::RejectInitialLosers,
+                None,
+                &Images::new,
+                &BigScan,
+            );
+            assert_eq!((joined.ready.0, joined.clrs, joined.row_cells), (5, 0, 0));
+            assert_eq!(joined.rows, expected);
+        },
+    );
+}
+
+/// Four pending notes must route against each preceding unlink: two LeafUnlinks,
+/// then RootCollapse, then NotNeeded for the survivor that is now the root.
+#[test]
+fn unl_review_four_pending_notes_follow_leaf_unlinks_into_root_collapse() {
+    case_within(
+        "UNL-REVIEW-CHAIN",
+        std::time::Duration::from_secs(1200),
+        || {
+            let oracle = Oracle::new();
+            let (images, expected) = with_fresh!(
+                oracle,
+                frames = 56,
+                file_bytes = 64 * 1_048_576,
+                |live,
+                 owner,
+                 flusher,
+                 status,
+                 undo,
+                 private,
+                 reader_private,
+                 core,
+                 fence,
+                 state| {
+                    let _ = state;
+                    let (row_status, _) = create_table_with(
+                        live,
+                        owner,
+                        flusher,
+                        status,
+                        undo,
+                        private,
+                        true,
+                        &spec(),
+                    );
+                    retire_create!(live, owner, private);
+                    for _ in 0..24 {
+                        system_init(live, owner, flusher, true);
+                    }
+                    let (mut writer, reader, mut flush) = live.split();
+                    let (out, slots) = autocommit!(
+                        &mut writer,
+                        owner,
+                        flush,
+                        flusher,
+                        reader,
+                        reader_private,
+                        &row_status,
+                        private,
+                        6,
+                        bigs(0..15)
+                    );
+                    assert_eq!(committed(out), (2, 15));
+                    let mut keys = rows_of(&slots);
+                    drains!(&mut writer, owner, flush, flusher, private);
+                    let before = writer.catalog_test_with_pool(reachable);
+                    assert_eq!(shape(&before).0, [3, 3, 3, 6]);
+                    let (old_root, _, _) = writer.catalog_test_with_pool(anchor_of);
+                    let pages: Vec<PageRef> = before.iter().map(|(page, _)| *page).collect();
+
+                    let mut holder = None;
+                    begun(begin!(
+                        &mut writer,
+                        owner,
+                        flush,
+                        flusher,
+                        &row_status,
+                        private,
+                        &mut holder
+                    ));
+                    for row in &keys {
+                        let (out, slot) = delete_in!(
+                            &mut writer,
+                            owner,
+                            flush,
+                            flusher,
+                            reader,
+                            reader_private,
+                            &mut holder,
+                            private,
+                            *row
+                        );
+                        assert_eq!(done(out), 1);
+                        assert_eq!(slot.expect("deleted row").row().get(), *row);
+                    }
+                    assert_eq!(
+                        explicit_committed(commit!(
+                            &mut writer,
+                            owner,
+                            flush,
+                            flusher,
+                            &mut holder,
+                            private,
+                            15
+                        )),
+                        (3, 15)
+                    );
+                    let drained = drains!(&mut writer, owner, flush, flusher, private);
+                    let last = drained.last().unwrap();
+                    assert!(last.complete && last.unlink_held == 0, "{drained:?}");
+                    assert_eq!(drained.iter().map(|d| d.unlinked).sum::<u8>(), 3);
+                    assert_row_jobs_free(writer.catalog_test_jobs());
+                    assert!(writer.test_unlink_notes().is_empty());
+                    let after = writer.catalog_test_with_pool(reachable);
+                    assert_eq!(after.len(), 1);
+                    assert!(after[0].1.is_empty() && pages.contains(&after[0].0));
+                    let (root, level, mut listed) = writer.catalog_test_with_pool(anchor_of);
+                    assert_eq!((root, level), (after[0].0, 0));
+                    listed.sort_by_key(|page| page.page_no);
+                    let mut want: Vec<_> =
+                        pages.iter().copied().filter(|page| *page != root).collect();
+                    want.push(old_root);
+                    want.sort_by_key(|page| page.page_no);
+                    assert_eq!(listed, want);
+                    assert_eq!(
+                        read_big!(writer, reader, core, reader_private, flush, flusher),
+                        []
+                    );
+                    let deleted = keys.clone();
+                    let (out, slots) = autocommit!(
+                        &mut writer,
+                        owner,
+                        flush,
+                        flusher,
+                        reader,
+                        reader_private,
+                        &row_status,
+                        private,
+                        6,
+                        bigs(15..16)
+                    );
+                    assert_eq!(committed(out), (4, 1));
+                    keys.extend(rows_of(&slots));
+                    drains!(&mut writer, owner, flush, flusher, private);
+                    let after = writer.catalog_test_with_pool(reachable);
+                    assert_eq!(after.len(), 1);
+                    assert_eq!(after[0].0, root);
+                    let expected = kept_values(&keys, &deleted);
+                    assert_eq!(
+                        read_big!(writer, reader, core, reader_private, flush, flusher),
+                        expected
+                    );
+                    assert!(!fence.is_fenced());
+                    println!("UNL_REVIEW_CHAIN root={root:?} listed={listed:?}");
+                    (state.lock().unwrap().images(), expected)
+                }
+            );
+            let joined = join_restart_with(
+                &clone_directory(&images),
+                RowRecoveryPolicy::RejectInitialLosers,
+                None,
+                &Images::new,
+                &BigScan,
+            );
+            assert_eq!((joined.ready.0, joined.clrs, joined.row_cells), (4, 0, 0));
+            assert_eq!(joined.rows, expected);
+        },
+    );
+}
