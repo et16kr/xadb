@@ -1,0 +1,241 @@
+test_current_cut_rejects_failed_barrier_effects (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_current_cut_rejects_failed_barrier_effects) ... 
+  test_current_cut_rejects_failed_barrier_effects (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_current_cut_rejects_failed_barrier_effects) (index=0) ... FAIL
+  test_current_cut_rejects_failed_barrier_effects (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_current_cut_rejects_failed_barrier_effects) (index=1) ... FAIL
+  test_current_cut_rejects_failed_barrier_effects (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_current_cut_rejects_failed_barrier_effects) (index=2) ... FAIL
+  test_current_cut_rejects_failed_barrier_effects (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_current_cut_rejects_failed_barrier_effects) (index=3) ... FAIL
+  test_current_cut_rejects_failed_barrier_effects (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_current_cut_rejects_failed_barrier_effects) (index=4) ... FAIL
+test_current_cut_requires_current_selector (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_current_cut_requires_current_selector) ... FAIL
+test_hook_uses_completed_read_bytes (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_hook_uses_completed_read_bytes) ... 
+  test_hook_uses_completed_read_bytes (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_hook_uses_completed_read_bytes) (number=1, returned=0) ... FAIL
+  test_hook_uses_completed_read_bytes (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_hook_uses_completed_read_bytes) (number=1, returned=1) ... FAIL
+  test_hook_uses_completed_read_bytes (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_hook_uses_completed_read_bytes) (number=1, returned=99) ... FAIL
+  test_hook_uses_completed_read_bytes (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_hook_uses_completed_read_bytes) (number=1, returned=101) ... FAIL
+  test_hook_uses_completed_read_bytes (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_hook_uses_completed_read_bytes) (number=2, returned=0) ... FAIL
+  test_hook_uses_completed_read_bytes (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_hook_uses_completed_read_bytes) (number=2, returned=1) ... FAIL
+  test_hook_uses_completed_read_bytes (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_hook_uses_completed_read_bytes) (number=2, returned=99) ... FAIL
+  test_hook_uses_completed_read_bytes (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_hook_uses_completed_read_bytes) (number=2, returned=101) ... FAIL
+test_repair_rejects_empty_dwb_read (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_repair_rejects_empty_dwb_read) ... FAIL
+test_repair_rejects_gap_and_other_file_completion (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_repair_rejects_gap_and_other_file_completion) ... 
+  test_repair_rejects_gap_and_other_file_completion (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_repair_rejects_gap_and_other_file_completion) (name='d3-data-0000000100000001', offset=147458) ... FAIL
+  test_repair_rejects_gap_and_other_file_completion (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_repair_rejects_gap_and_other_file_completion) (name='d3-data-other', offset=147457) ... FAIL
+test_repair_requires_complete_home_write (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_repair_requires_complete_home_write) ... 
+  test_repair_requires_complete_home_write (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_repair_requires_complete_home_write) (returned=0) ... FAIL
+  test_repair_requires_complete_home_write (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_repair_requires_complete_home_write) (returned=1) ... FAIL
+  test_repair_requires_complete_home_write (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_repair_requires_complete_home_write) (returned=16383) ... FAIL
+test_unchanged_wal_and_ready_negative_vectors (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_unchanged_wal_and_ready_negative_vectors) ... ok
+test_wal_cut_requires_successful_sync_of_the_same_wal (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_wal_cut_requires_successful_sync_of_the_same_wal) ... 
+  test_wal_cut_requires_successful_sync_of_the_same_wal (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_wal_cut_requires_successful_sync_of_the_same_wal) (bad=['0', 'sync', 'd3-wal-00000001', '0', '0', 'ATTEMPT']) ... FAIL
+  test_wal_cut_requires_successful_sync_of_the_same_wal (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_wal_cut_requires_successful_sync_of_the_same_wal) (bad=['0', 'sync', 'd3-wal-00000001', '0', '0', 'Err(io)']) ... FAIL
+  test_wal_cut_requires_successful_sync_of_the_same_wal (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_wal_cut_requires_successful_sync_of_the_same_wal) (bad=['0', 'sync', 'd3-wal-other', '0', '0', 'Ok(())']) ... FAIL
+
+======================================================================
+FAIL: test_current_cut_rejects_failed_barrier_effects (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_current_cut_rejects_failed_barrier_effects) (index=0)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/xadb/scripts/test_check_dev3_unlink_native.py", line 70, in test_current_cut_rejects_failed_barrier_effects
+    with self.subTest(index=index), self.assertRaises(AssertionError):
+                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AssertionError not raised
+
+======================================================================
+FAIL: test_current_cut_rejects_failed_barrier_effects (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_current_cut_rejects_failed_barrier_effects) (index=1)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/xadb/scripts/test_check_dev3_unlink_native.py", line 70, in test_current_cut_rejects_failed_barrier_effects
+    with self.subTest(index=index), self.assertRaises(AssertionError):
+                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AssertionError not raised
+
+======================================================================
+FAIL: test_current_cut_rejects_failed_barrier_effects (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_current_cut_rejects_failed_barrier_effects) (index=2)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/xadb/scripts/test_check_dev3_unlink_native.py", line 70, in test_current_cut_rejects_failed_barrier_effects
+    with self.subTest(index=index), self.assertRaises(AssertionError):
+                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AssertionError not raised
+
+======================================================================
+FAIL: test_current_cut_rejects_failed_barrier_effects (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_current_cut_rejects_failed_barrier_effects) (index=3)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/xadb/scripts/test_check_dev3_unlink_native.py", line 70, in test_current_cut_rejects_failed_barrier_effects
+    with self.subTest(index=index), self.assertRaises(AssertionError):
+                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AssertionError not raised
+
+======================================================================
+FAIL: test_current_cut_rejects_failed_barrier_effects (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_current_cut_rejects_failed_barrier_effects) (index=4)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/xadb/scripts/test_check_dev3_unlink_native.py", line 70, in test_current_cut_rejects_failed_barrier_effects
+    with self.subTest(index=index), self.assertRaises(AssertionError):
+                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AssertionError not raised
+
+======================================================================
+FAIL: test_current_cut_requires_current_selector (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_current_cut_requires_current_selector)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/xadb/scripts/test_check_dev3_unlink_native.py", line 76, in test_current_cut_requires_current_selector
+    with self.assertRaises(AssertionError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AssertionError not raised
+
+======================================================================
+FAIL: test_hook_uses_completed_read_bytes (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_hook_uses_completed_read_bytes) (number=1, returned=0)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/xadb/scripts/test_check_dev3_unlink_native.py", line 38, in test_hook_uses_completed_read_bytes
+    with self.subTest(number=number, returned=n), self.assertRaises(AssertionError):
+                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AssertionError not raised
+
+======================================================================
+FAIL: test_hook_uses_completed_read_bytes (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_hook_uses_completed_read_bytes) (number=1, returned=1)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/xadb/scripts/test_check_dev3_unlink_native.py", line 38, in test_hook_uses_completed_read_bytes
+    with self.subTest(number=number, returned=n), self.assertRaises(AssertionError):
+                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AssertionError not raised
+
+======================================================================
+FAIL: test_hook_uses_completed_read_bytes (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_hook_uses_completed_read_bytes) (number=1, returned=99)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/xadb/scripts/test_check_dev3_unlink_native.py", line 38, in test_hook_uses_completed_read_bytes
+    with self.subTest(number=number, returned=n), self.assertRaises(AssertionError):
+                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AssertionError not raised
+
+======================================================================
+FAIL: test_hook_uses_completed_read_bytes (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_hook_uses_completed_read_bytes) (number=1, returned=101)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/xadb/scripts/test_check_dev3_unlink_native.py", line 38, in test_hook_uses_completed_read_bytes
+    with self.subTest(number=number, returned=n), self.assertRaises(AssertionError):
+                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AssertionError not raised
+
+======================================================================
+FAIL: test_hook_uses_completed_read_bytes (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_hook_uses_completed_read_bytes) (number=2, returned=0)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/xadb/scripts/test_check_dev3_unlink_native.py", line 38, in test_hook_uses_completed_read_bytes
+    with self.subTest(number=number, returned=n), self.assertRaises(AssertionError):
+                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AssertionError not raised
+
+======================================================================
+FAIL: test_hook_uses_completed_read_bytes (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_hook_uses_completed_read_bytes) (number=2, returned=1)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/xadb/scripts/test_check_dev3_unlink_native.py", line 38, in test_hook_uses_completed_read_bytes
+    with self.subTest(number=number, returned=n), self.assertRaises(AssertionError):
+                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AssertionError not raised
+
+======================================================================
+FAIL: test_hook_uses_completed_read_bytes (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_hook_uses_completed_read_bytes) (number=2, returned=99)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/xadb/scripts/test_check_dev3_unlink_native.py", line 38, in test_hook_uses_completed_read_bytes
+    with self.subTest(number=number, returned=n), self.assertRaises(AssertionError):
+                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AssertionError not raised
+
+======================================================================
+FAIL: test_hook_uses_completed_read_bytes (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_hook_uses_completed_read_bytes) (number=2, returned=101)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/xadb/scripts/test_check_dev3_unlink_native.py", line 38, in test_hook_uses_completed_read_bytes
+    with self.subTest(number=number, returned=n), self.assertRaises(AssertionError):
+                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AssertionError not raised
+
+======================================================================
+FAIL: test_repair_rejects_empty_dwb_read (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_repair_rejects_empty_dwb_read)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/xadb/scripts/test_check_dev3_unlink_native.py", line 105, in test_repair_rejects_empty_dwb_read
+    with self.assertRaises(AssertionError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AssertionError not raised
+
+======================================================================
+FAIL: test_repair_rejects_gap_and_other_file_completion (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_repair_rejects_gap_and_other_file_completion) (name='d3-data-0000000100000001', offset=147458)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/xadb/scripts/test_check_dev3_unlink_native.py", line 116, in test_repair_rejects_gap_and_other_file_completion
+    with self.subTest(name=name, offset=offset), self.assertRaises(AssertionError):
+                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AssertionError not raised
+
+======================================================================
+FAIL: test_repair_rejects_gap_and_other_file_completion (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_repair_rejects_gap_and_other_file_completion) (name='d3-data-other', offset=147457)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/xadb/scripts/test_check_dev3_unlink_native.py", line 116, in test_repair_rejects_gap_and_other_file_completion
+    with self.subTest(name=name, offset=offset), self.assertRaises(AssertionError):
+                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AssertionError not raised
+
+======================================================================
+FAIL: test_repair_requires_complete_home_write (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_repair_requires_complete_home_write) (returned=0)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/xadb/scripts/test_check_dev3_unlink_native.py", line 92, in test_repair_requires_complete_home_write
+    with self.subTest(returned=n), self.assertRaises(AssertionError):
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AssertionError not raised
+
+======================================================================
+FAIL: test_repair_requires_complete_home_write (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_repair_requires_complete_home_write) (returned=1)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/xadb/scripts/test_check_dev3_unlink_native.py", line 92, in test_repair_requires_complete_home_write
+    with self.subTest(returned=n), self.assertRaises(AssertionError):
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AssertionError not raised
+
+======================================================================
+FAIL: test_repair_requires_complete_home_write (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_repair_requires_complete_home_write) (returned=16383)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/xadb/scripts/test_check_dev3_unlink_native.py", line 92, in test_repair_requires_complete_home_write
+    with self.subTest(returned=n), self.assertRaises(AssertionError):
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AssertionError not raised
+
+======================================================================
+FAIL: test_wal_cut_requires_successful_sync_of_the_same_wal (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_wal_cut_requires_successful_sync_of_the_same_wal) (bad=['0', 'sync', 'd3-wal-00000001', '0', '0', 'ATTEMPT'])
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/xadb/scripts/test_check_dev3_unlink_native.py", line 52, in test_wal_cut_requires_successful_sync_of_the_same_wal
+    with self.subTest(bad=bad), self.assertRaises(AssertionError):
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AssertionError not raised
+
+======================================================================
+FAIL: test_wal_cut_requires_successful_sync_of_the_same_wal (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_wal_cut_requires_successful_sync_of_the_same_wal) (bad=['0', 'sync', 'd3-wal-00000001', '0', '0', 'Err(io)'])
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/xadb/scripts/test_check_dev3_unlink_native.py", line 52, in test_wal_cut_requires_successful_sync_of_the_same_wal
+    with self.subTest(bad=bad), self.assertRaises(AssertionError):
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AssertionError not raised
+
+======================================================================
+FAIL: test_wal_cut_requires_successful_sync_of_the_same_wal (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_wal_cut_requires_successful_sync_of_the_same_wal) (bad=['0', 'sync', 'd3-wal-other', '0', '0', 'Ok(())'])
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/xadb/scripts/test_check_dev3_unlink_native.py", line 52, in test_wal_cut_requires_successful_sync_of_the_same_wal
+    with self.subTest(bad=bad), self.assertRaises(AssertionError):
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AssertionError not raised
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.008s
+
+FAILED (failures=23)

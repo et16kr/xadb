@@ -1,0 +1,13 @@
+case	shape	cut	state	route	level	listed	wal_added
+UNL-N01-L	leaf	stage_before	before	0,3,5	1	0	0
+UNL-N01-R	root	stage_before	before	0,5	1	0	0
+UNL-N02-L	leaf	ram_install	before	0,3,5	1	0	0
+UNL-N02-R	root	ram_install	before	0,5	1	0	0
+UNL-N03-L	leaf	wal_first_byte	before	0,3,5	1	0	1
+UNL-N03-R	root	wal_first_byte	before	0,5	1	0	1
+UNL-N04-L	leaf	wal_synced	after	3,5	1	1	35248
+UNL-N04-R	root	wal_synced	after	5	0	2	19032
+UNL-N05-L	leaf	home_first_byte	after	3,5	1	1	35248
+UNL-N05-R	root	home_first_byte	after	5	0	2	19032
+UNL-N06-L	leaf	current_published	after	3,5	1	1	35248
+UNL-N06-R	root	current_published	after	5	0	2	19032

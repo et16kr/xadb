@@ -2525,3 +2525,8 @@ fn unl_review_root_collapse_sync_error_fences_and_recovers() {
         || unlink_wal_failure(true, true),
     );
 }
+
+/// UNL-N: the native process cuts of one live unlink (U4).
+#[cfg(target_os = "linux")]
+#[path = "unlink_native.rs"]
+mod native;
