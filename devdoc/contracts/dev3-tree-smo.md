@@ -1398,16 +1398,19 @@ PASS도 주장하지 않는다. 단계의 결과는 아래 각 단계 절에만 
 <a id="unlink-u1"></a>
 ### U1 결과
 
-상태는 **2026-11-05 구현·memory 시험 PASS / 독립 D2 결과는 [U1 검토
+상태는 **2026-11-05 구현·memory 시험 PASS, 2026-11-06 [UNL-C01 census](#unlink-u1-census) 보강 / 독립 D2 결과는 [U1 검토
 기록](../../module-gate/evidence/dev3-08-1-unlink-u1/review.md)**이다. 제품 경로는 아직 이 코드를 부르지 않는다
 (replay dispatch는 U2, live 효과·호출자는 U3). 그래서 사용자에게 보이는 동작은 바뀌지 않는다.
 
 구현:
 
 - `anchor.rs`: XTR1 `RetiredPage`·`RetiredList`(`find`, 물리 순서 병합 `extend`), `retired(input, expected)`,
-  `encode_listed_anchor`(`encode_anchor`는 빈 목록으로 이를 부른다). `decode_anchor`는 cell 1·2개를 받고 cell 1을
-  위 항목 규칙으로 검산한다. 목록이 있으면 anchor revision이 2 이상이어야 한다(목록은 unlink 그룹이 revision+1과
-  함께만 쓴다). 목록이 나쁜 encode 입력은 InvalidInput이다.
+  `encode_listed_anchor`(빈 목록이면 `encode_anchor`를 부른다). `encode_anchor`는 main의 함수 그대로다(본문 같음,
+  doc만 추가). `decode_anchor`는 cell 1·2개를 받고 cell 1을 위 항목 규칙으로 검산한다. 검산은 `decode_page`가
+  돌아온 뒤 부르는 별도 함수 `check_list`가 하므로 root만 읽는 decoder frame에 늘어나는 지역값은
+  그 Result 하나다. `retired`는 anchor 전체를 decode한 뒤 같은 입력의 envelope를 다시 검증해 cell 1을 빌린다.
+  목록이 있으면 anchor revision이 2 이상이어야 한다(목록은 unlink 그룹이 revision+1과 함께만 쓴다). 목록이 나쁜
+  encode 입력은 InvalidInput이다.
 - `semantic_row/structure.rs`·`bank.rs`: `Operation::{LeafUnlink=3, RootCollapse=4}`, opcode별 frame bytes,
   bank의 consumed WAL 35,248·19,032. bank 관측 이름 `FinishedSplit`을 `FinishedStructural`로 바꿨다(동작 같음).
   split의 `decode_core`·`init`은 opcode 1·2만 받고 3·4는 Unsupported다. split의 `decode_layout`은 split 길이
@@ -1436,6 +1439,44 @@ PASS도 주장하지 않는다. 단계의 결과는 아래 각 단계 절에만 
   leaf 11을 비우고 90에 RootCollapse, root 16 level 0, revision 3, 목록 [11 leaf, 17 internal])를 쓴다. 기존
   fixture bytes는 같다.
 
+<a id="unlink-u1-census"></a>
+UNL-C01 source census(2026-11-06, PR #55 후속 보강 반영). 타입 크기가 같다는 것을 근거로 쓰지 않고, XTR1이 더한
+지역값·중첩 호출을 decoder 경로마다 세어 기존 census의 page 항 자리에 넣었다. `anchor.rs`의 산정 함수:
+
+| 함수 | 쓰는 곳 | 값(memory·native 같음) |
+| --- | --- | --- |
+| `decode_source_bytes(page)` | root만 읽는 기존 호출자. 자기 anchor 값은 그대로 세고 page 항을 이것으로 바꾼다: `check_list` Result 2개 + max(page, `check_list` 586B) | page 938B(page codec)·1,869B(tree codec)·816B(Undo decode 항)에서 page + 2B |
+| `decode_increment_bytes(page)` | 중첩 decode를 허용 bytes 안에 이미 든 평평한 합(Catalog read guard, plan4 Catalog lookup codec, genesis 둘, Base Catalog graph) | 2B |
+| `retired_source_bytes(page)` | 목록을 읽는 U1 코드(Base4, split candidate의 `audit`·`build`): `retired` 전체(frame + decoder 전체 frame 703B + 위 callee, 또는 두 번째 page decode) | page 938B에서 2,307B |
+| `listed_encode_source_bytes(page)` | split candidate `build`의 anchor after | page 938B에서 1,462B |
+| `extend_source_bytes()` | U2 unlink candidate(목록 병합) | 409B |
+
+`check_list`(586B)는 그 walk(408B)를 포함해도 기존 호출자가 넘기는 page 항(938·1,869·816B)보다 작아서, root만
+읽는 경로의 증분은 Result 2B다(UNL-C01 시험이 두 page 항에서 이를 확인한다). 기존 census에 넣은 곳: C
+`row_preflight`(anchor_decode, `table_root`), history `current_leaf`·`table_source_bytes`, visibility epochs,
+Catalog read guard, B 읽기(route read helper, schema 항), plan4 Catalog lookup codec, genesis 둘, semantic_row
+transition `anchor()`(`table_leaf`), semantic_catalog `catalog_image`, Base Catalog graph relations, Base4
+`current_tree`, split candidate(`table`·`retired_chain`·`build`). Catalog 쪽 decode도 `check_list`를 지나므로(목록이
+있으면 Corrupt) 같이 셌다. `encode_anchor`는 바뀌지 않았으므로 그 호출자(CREATE pair `initialize_pair`, genesis,
+Base INIT 재구성)에는 항을 넣지 않았다.
+
+바뀐 값(작성자 checkout, U1 최종 code, 위 env 자리표시): 기존 상한은 하나도 바꾸지 않았고 모두 안에 든다.
+
+| 항목 | 전 | 후 |
+| --- | --- | --- |
+| C Row lifecycle 본문(S2W-C03 고정값, memory·native) | 40,881 | 40,883(BEGIN 2,816과 합쳐 charge 44,304에 여유 607 → 605B) |
+| preflight 본문 / 합계(charge 44,304) | 37,384 / 44,120 | 37,386 / 44,122 |
+| producer_lane·validation_lane 본문 | 23,505·14,656 | 23,507·14,658 |
+| live Row 정리 본문(LIVE_ROW_CLEANUP 4,096과 합쳐) | 39,564(여유 644) | 39,566(여유 642) |
+| 표 발급 CatalogFull charge / Pending 옆 여유(memory·native) | 34,586 / 52·44 | 34,588 / 50·42 |
+| 복구 cleanup·control·select·clr_lane 본문 | 39,424·37,262·37,532·27,985 | 각 +2 |
+
+S2W-C03은 "Row lifecycle이 바뀌지 않음"을 정확한 값으로 고정하는 시험이라 기대값을 40,883B로 고쳤다(늘어난 2B는
+위 Result). [Begin 상한 계약](dev3-module-boundaries.md#begin-statement-ceilings)의 여유 607B와 그 앞 기록들의
+40,881B는 당시 값이다. A의 생산자 inventory(`insert.rs` `local_source_carrier_bytes`, CLR_PRODUCER 19,456B에
+19,436B)는 문서대로 callee를 세지 않는 carrier 목록이고, group observer의 `decode_anchor`가 돌려주는 carrier는
+같으므로 그 값은 바뀌지 않았다. decoder의 2B와 `check_list`는 callee 쪽이다.
+
 시험(모두 PASS, memory). 경로는 `cargo test -p xadb-engine --lib -- --list`의 libtest 경로다.
 
 | ID | libtest 경로 |
@@ -1446,6 +1487,7 @@ PASS도 주장하지 않는다. 단계의 결과는 아래 각 단계 절에만 
 | UNL-F04 | `storage::semantic_row::structure::bank::tests::unl_f04_*` |
 | UNL-B01, B07..B09 | `storage::plan4_recovery_base::row::graph::tests::current_tree_tests::unl_b01_*` |
 | UNL-B02..B06 | `storage::plan4_recovery_base::row::graph::tests::current_tree_tests::unl_b02_b06_*`(변조 6개, 모두 IdentityMismatch) |
+| UNL-C01 | `storage::anchor::tests::unl_c01_xtr1_codec_cost_per_decoder_path`(산정 함수), 그리고 위 census 표의 값을 찍고 상한과 대조하는 기존 시험(S2W-C01..C06, S3-C01, S4-C01, F4 C commit·rollback·begin, MBC40-V09, f4_row_operation, live_row_retirement, repro_full_read_beside_pending, writer gate floors, recovery_source_·retention_source_·runtime_core_source_·g5_source_·plan4_source_census, row_read_census) |
 
 계획과 다르게 남긴 것:
 

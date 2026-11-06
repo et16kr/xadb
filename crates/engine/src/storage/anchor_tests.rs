@@ -516,3 +516,41 @@ fn unl_p04_list_is_row_only_and_one_cell_anchor_is_unchanged() {
     );
     assert_eq!(retired(&plain, h.identity).unwrap(), RetiredList::EMPTY);
 }
+
+/// UNL-C01 (dev3-tree-smo.md#empty-leaf-unlink): the XTR1 list's source
+/// cost per decoder path. A root-only `decode_anchor` adds the
+/// `check_list` Result to its frame; `check_list` and its walk run after
+/// `decode_page` has returned and stay below every page term the existing
+/// censuses pass (the page codec and the tree codec), so the increment
+/// over those terms is that Result alone. `retired` and
+/// `encode_listed_anchor` are whole new calls, larger than the page term.
+#[test]
+fn unl_c01_xtr1_codec_cost_per_decoder_path() {
+    use crate::storage::{page::PageError, semantic_catalog, semantic_row::transition};
+    use std::mem::size_of;
+    let result = 2 * size_of::<Result<(), PageError>>();
+    let check = super::list_check_bytes();
+    let walk = super::walk_source_bytes();
+    assert!(check > walk);
+    for (name, page) in [
+        ("page_read_codec", semantic_catalog::page_read_codec_bytes()),
+        ("tree_codec", transition::tree_source_bytes()),
+    ] {
+        assert!(check <= page, "{name}: check_list {check} > page term {page}");
+        assert_eq!(super::decode_source_bytes(page), page + result);
+        assert_eq!(super::decode_increment_bytes(page), result);
+        let retired = super::retired_source_bytes(page);
+        assert!(retired > super::decode_source_bytes(page) + super::decoder_frame_bytes());
+        let listed = super::listed_encode_source_bytes(page);
+        assert!(listed > page);
+        println!(
+            "UNL_C01 page_term={name} page={page} decode={} increment={} check_list={check} \
+             walk={walk} retired={retired} listed_encode={listed} extend={}",
+            super::decode_source_bytes(page),
+            super::decode_increment_bytes(page),
+            super::extend_source_bytes()
+        );
+    }
+    // A page term below the walk pays the walk instead of the page.
+    assert_eq!(super::decode_source_bytes(0), result + check);
+}

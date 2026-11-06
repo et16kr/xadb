@@ -262,30 +262,17 @@ fn check_retired(
 
 /// Encode one anchor cell in a page, validating all fields before output writes.
 /// Exact page size is required; errors preserve output. No I/O or pin effects.
+/// This is the pre-list encoder unchanged; a listed anchor goes through
+/// `encode_listed_anchor` (dev3-tree-smo.md#empty-leaf-unlink, UNL-C01).
 pub(crate) fn encode_anchor(
     header: PageHeader,
     root: AnchorRoot,
-    output: &mut [u8],
-) -> Result<(), PageError> {
-    encode_listed_anchor(header, root, &[], output)
-}
-
-/// Encode the anchor and, when `retired` is not empty, that exact XTR1 cell
-/// as cell 1. Only a Row anchor of revision 2 or later may carry a list.
-pub(crate) fn encode_listed_anchor(
-    header: PageHeader,
-    root: AnchorRoot,
-    retired: &[u8],
     output: &mut [u8],
 ) -> Result<(), PageError> {
     if header.kind != PageKind::TreeAnchor || header.level != 0 {
         return Err(PageError::InvalidInput);
     }
     root.validate(header.identity.page)?;
-    if !retired.is_empty() {
-        check_retired(retired, header.identity.page, root, header.lsn.0)
-            .map_err(|_| PageError::InvalidInput)?;
-    }
     let mut cell = [0; ANCHOR_CELL_BYTES];
     cell[..4].copy_from_slice(b"XTA1");
     cell[4..6].copy_from_slice(&1_u16.to_le_bytes());
@@ -293,29 +280,46 @@ pub(crate) fn encode_listed_anchor(
     cell[7] = root.level;
     root.page.encode(&mut cell[8..32])?;
     cell[32..40].copy_from_slice(&root.revision.to_le_bytes());
+    encode_page(header, &[&cell], output)
+}
+
+/// Encode the anchor and, when `retired` is not empty, that exact XTR1 cell
+/// as cell 1. Only a Row anchor of revision 2 or later may carry a list.
+/// An empty list is `encode_anchor`.
+pub(crate) fn encode_listed_anchor(
+    header: PageHeader,
+    root: AnchorRoot,
+    retired: &[u8],
+    output: &mut [u8],
+) -> Result<(), PageError> {
     if retired.is_empty() {
-        encode_page(header, &[&cell], output)
-    } else {
-        encode_page(header, &[&cell, retired], output)
+        return encode_anchor(header, root, output);
     }
+    if header.kind != PageKind::TreeAnchor || header.level != 0 {
+        return Err(PageError::InvalidInput);
+    }
+    root.validate(header.identity.page)?;
+    check_retired(retired, header.identity.page, root, header.lsn.0)
+        .map_err(|_| PageError::InvalidInput)?;
+    let cell = descriptor_cell(root)?;
+    encode_page(header, &[&cell, retired], output)
+}
+
+/// The XTA1 descriptor cell of a validated root.
+fn descriptor_cell(root: AnchorRoot) -> Result<[u8; ANCHOR_CELL_BYTES], PageError> {
+    let mut cell = [0; ANCHOR_CELL_BYTES];
+    cell[..4].copy_from_slice(b"XTA1");
+    cell[4..6].copy_from_slice(&1_u16.to_le_bytes());
+    cell[6] = root.tree.leaf() as u8;
+    cell[7] = root.level;
+    root.page.encode(&mut cell[8..32])?;
+    cell[32..40].copy_from_slice(&root.revision.to_le_bytes());
+    Ok(cell)
 }
 
 /// Validate the anchor envelope, its descriptor cell and, on a Row anchor
 /// only, the optional XTR1 cell. Root-only callers ignore the list.
 pub(crate) fn decode_anchor(input: &[u8], expected: PageIdentity) -> Result<TreeAnchor, PageError> {
-    decode_listed(input, expected).map(|(anchor, _)| anchor)
-}
-
-/// The validated retired list of a Row anchor; `RetiredList::EMPTY` when
-/// the anchor has only its descriptor cell.
-pub(crate) fn retired(input: &[u8], expected: PageIdentity) -> Result<RetiredList<'_>, PageError> {
-    decode_listed(input, expected).map(|(_, list)| list)
-}
-
-fn decode_listed(
-    input: &[u8],
-    expected: PageIdentity,
-) -> Result<(TreeAnchor, RetiredList<'_>), PageError> {
     let page = decode_page(input, expected, PageKind::TreeAnchor)?;
     if !matches!(page.len(), 1 | 2) {
         return Err(PageError::Corrupt);
@@ -346,20 +350,165 @@ fn decode_listed(
     };
     root.validate(expected.page)
         .map_err(|_| PageError::Corrupt)?;
-    let list = match page.cell(1) {
-        None => RetiredList::EMPTY,
-        Some(cell) => {
-            check_retired(cell, expected.page, root, page.header().lsn.0)?;
-            RetiredList { cell }
-        }
-    };
-    Ok((
-        TreeAnchor {
-            header: page.header(),
-            root,
-        },
-        list,
-    ))
+    check_list(&page, expected.page, root)?;
+    Ok(TreeAnchor {
+        header: page.header(),
+        root,
+    })
+}
+
+/// Cell 1 of an anchor envelope, when present, is an XTR1 list valid for
+/// its root (`check_retired`). Kept out of `decode_anchor` so the list adds
+/// one Result to the root-only decoder frame; this frame and the walk run
+/// after `decode_page` has returned.
+fn check_list(page: &PageView<'_>, anchor: PageRef, root: AnchorRoot) -> Result<(), PageError> {
+    match page.cell(1) {
+        None => Ok(()),
+        Some(cell) => check_retired(cell, anchor, root, page.header().lsn.0),
+    }
+}
+
+/// The validated retired list of a Row anchor; `RetiredList::EMPTY` when
+/// the anchor has only its descriptor cell. The whole anchor is decoded
+/// first, then cell 1 is borrowed from the same verified envelope.
+pub(crate) fn retired(input: &[u8], expected: PageIdentity) -> Result<RetiredList<'_>, PageError> {
+    decode_anchor(input, expected)?;
+    let page = decode_page(input, expected, PageKind::TreeAnchor)?;
+    Ok(page
+        .cell(1)
+        .map_or(RetiredList::EMPTY, |cell| RetiredList { cell }))
+}
+
+/// The callee term of a root-only `decode_anchor` call for a census that
+/// already counts its own anchor values (the descriptor locals of the
+/// pre-list decoder) and passes the page codec term it counted
+/// (dev3-tree-smo.md#empty-leaf-unlink, UNL-C01): the `check_list` Result
+/// the XTR1 list adds to the decoder frame, then the larger of the page
+/// codec and `check_list` with its walk, which run after `decode_page` has
+/// returned. A caller replaces its page term with this. `TreeAnchor` keeps
+/// its size; that is not this term's argument.
+pub(crate) fn decode_source_bytes(page: usize) -> usize {
+    use std::mem::size_of;
+    2 * size_of::<Result<(), PageError>>() + page.max(list_check_bytes())
+}
+
+/// What `decode_source_bytes` adds above a page term a flat census already
+/// holds inside its nested-decode allowance.
+pub(crate) fn decode_increment_bytes(page: usize) -> usize {
+    decode_source_bytes(page) - page
+}
+
+/// One complete `retired` call for a list reader (UNL-C01): its arguments,
+/// the anchor Result, the second envelope view and the borrowed list, then
+/// the whole `decode_anchor` frame with its callee, or the second page
+/// decode.
+pub(crate) fn retired_source_bytes(page: usize) -> usize {
+    use std::mem::size_of;
+    let frame = size_of::<(&[u8], PageIdentity)>()
+        + 2 * size_of::<Result<TreeAnchor, PageError>>()
+        + size_of::<PageView<'static>>()
+        + 2 * size_of::<Result<PageView<'static>, PageError>>()
+        + 2 * size_of::<Option<&[u8]>>()
+        + 2 * size_of::<RetiredList<'static>>()
+        + size_of::<Result<RetiredList<'static>, PageError>>();
+    frame + (decoder_frame_bytes() + decode_source_bytes(page)).max(page)
+}
+
+/// One complete `encode_listed_anchor` call (UNL-C01): its arguments, the
+/// descriptor cell and its Result, the two-cell table and the Results, then
+/// the largest of the page codec, `descriptor_cell`, the walk and the
+/// empty-list `encode_anchor` frame with its page codec.
+pub(crate) fn listed_encode_source_bytes(page: usize) -> usize {
+    use std::mem::size_of;
+    let cell = size_of::<AnchorRoot>()
+        + size_of::<[u8; ANCHOR_CELL_BYTES]>()
+        + 2 * size_of::<Result<(), PageError>>();
+    let root_only = size_of::<(PageHeader, AnchorRoot, &mut [u8])>()
+        + size_of::<[u8; ANCHOR_CELL_BYTES]>()
+        + size_of::<[&[u8]; 1]>()
+        + 4 * size_of::<Result<(), PageError>>()
+        + page;
+    size_of::<(PageHeader, AnchorRoot, &[u8], &mut [u8])>()
+        + size_of::<[u8; ANCHOR_CELL_BYTES]>()
+        + 2 * size_of::<Result<[u8; ANCHOR_CELL_BYTES], PageError>>()
+        + size_of::<[&[u8]; 2]>()
+        + 6 * size_of::<Result<(), PageError>>()
+        + page.max(cell).max(walk_source_bytes()).max(root_only)
+}
+
+/// The whole `decode_anchor` frame without its callees: arguments, the
+/// envelope view and its Result, the descriptor cell, kind, revision bytes,
+/// root, the reference and check Results and the returned anchor.
+fn decoder_frame_bytes() -> usize {
+    use std::mem::size_of;
+    size_of::<(&[u8], PageIdentity)>()
+        + size_of::<PageView<'static>>()
+        + 2 * size_of::<Result<PageView<'static>, PageError>>()
+        + size_of::<&[u8]>()
+        + size_of::<TreeKind>()
+        + size_of::<[u8; 8]>()
+        + 2 * size_of::<AnchorRoot>()
+        + 2 * size_of::<Result<PageRef, PageError>>()
+        + 6 * size_of::<Result<(), PageError>>()
+        + size_of::<PageHeader>()
+        + size_of::<TreeAnchor>()
+}
+
+/// `check_list`: arguments, cell 1 and its Result, then the walk.
+fn list_check_bytes() -> usize {
+    use std::mem::size_of;
+    size_of::<(&PageView<'static>, PageRef, AnchorRoot)>()
+        + 2 * size_of::<Option<&[u8]>>()
+        + size_of::<PageHeader>()
+        + 2 * size_of::<Result<(), PageError>>()
+        + walk_source_bytes()
+}
+
+/// `RetiredList::extend`: arguments, counters, the merge cursor and one
+/// item with its entry decode and encode (UNL-C01).
+pub(crate) fn extend_source_bytes() -> usize {
+    use std::mem::size_of;
+    size_of::<(
+        RetiredList<'static>,
+        &[RetiredPage],
+        &mut [u8; RETIRED_CELL_BYTES],
+    )>() + 6 * size_of::<usize>()
+        + size_of::<std::ops::Range<usize>>()
+        + size_of::<bool>()
+        + 2 * size_of::<Option<RetiredPage>>()
+        + 2 * size_of::<RetiredPage>()
+        + 2 * size_of::<Result<usize, PageError>>()
+        + 2 * size_of::<Result<(), PageError>>()
+        + 2 * size_of::<&[u8]>()
+        + entry_source_bytes()
+}
+
+/// `check_retired`: arguments, the first file, the walk cursor and previous
+/// ordinal, one entry and its Results, the `same` closure, then the entry
+/// decode it nests.
+fn walk_source_bytes() -> usize {
+    use std::mem::size_of;
+    size_of::<(&[u8], PageRef, AnchorRoot, u64)>()
+        + size_of::<FileId>()
+        + size_of::<Option<u64>>()
+        + size_of::<std::iter::StepBy<std::ops::Range<usize>>>()
+        + 2 * size_of::<usize>()
+        + 2 * size_of::<RetiredPage>()
+        + 2 * size_of::<Result<RetiredPage, PageError>>()
+        + 2 * size_of::<Result<(), PageError>>()
+        + size_of::<&RetiredPage>()
+        + entry_source_bytes()
+}
+
+/// One 40-byte entry decode or encode: the slice, the LSN bytes and the
+/// field Results.
+fn entry_source_bytes() -> usize {
+    use std::mem::size_of;
+    size_of::<&[u8]>()
+        + size_of::<[u8; 8]>()
+        + 2 * size_of::<Result<PageRef, PageError>>()
+        + 2 * size_of::<Result<PageKind, PageError>>()
+        + 2 * size_of::<Result<(), PageError>>()
 }
 
 #[cfg(test)]

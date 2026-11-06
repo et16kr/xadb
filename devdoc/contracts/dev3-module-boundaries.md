@@ -3449,6 +3449,10 @@ charge 44,304 B, short cap 65,536 B, 원 slack과 다른 항은 그대로다.
 | 같은 값 | | | retained 18,640 + split port 192 + Row writer 본문 23,027 + 2,816 ≤ 세션 peak 64,016 | 19,341 |
 | `STATEMENT_START` | 3,584 | 3,409 / 3,176 | retained 18,640 + split port 192 + Row writer 본문 23,027 + 3,584 ≤ 세션 peak 64,016 | 18,573 |
 
+2026-11-06 DEV3 08-1 U1의 anchor 목록(XTR1)이 root만 읽는 anchor decoder frame에 Result 하나(2 B)를 더해 Row
+lifecycle 본문은 40,883 B, `BEGIN`의 C 여유는 605 B다([UNL-C01 census](dev3-tree-smo.md#unlink-u1-census)).
+상한은 그대로다. 아래 40,881 B는 이 절을 정할 때의 값이다.
+
 상한 값은 두 실행기 중 큰 몫에 128 B 이상을 더하고 128 B 단위로 올린 값이다(측정 뒤 정한
 값). native는 retained 18,648 B, peak 64,024 B로 여유가 같다. C 시험
 `f4_c_begin_statement_budget`이 세 합을 확인하고, A 시험이 몫을 확인한다.

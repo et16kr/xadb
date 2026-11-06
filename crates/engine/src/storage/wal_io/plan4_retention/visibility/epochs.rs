@@ -532,6 +532,8 @@ pub(in super::super) fn publication_source_bytes() -> usize {
 
 /// Borrowed decoder carriers and their existing codec closure; backing stays
 /// in the original loan. This is a source census, not a compiler-stack estimate.
+/// The Catalog and Row anchor decodes run one page codec, or the XTR1 walk
+/// after it (UNL-C01).
 pub(super) fn source_bytes() -> usize {
     use std::mem::size_of;
     4 * size_of::<queue::JobView<'_>>()
@@ -547,6 +549,9 @@ pub(super) fn source_bytes() -> usize {
         + crate::storage::semantic_catalog::profile3_source_census()
             .catalog_image
             .max(queue::source_bytes())
+            .max(anchor::decode_source_bytes(
+                crate::storage::semantic_catalog::page_read_codec_bytes(),
+            ))
 }
 
 #[cfg(test)]

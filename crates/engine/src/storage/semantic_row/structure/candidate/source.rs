@@ -104,11 +104,18 @@ fn table_chain() -> usize {
         + 2 * size_of::<Table<'_>>()
         + 2 * size_of::<Result<Table<'_>>>()
         + 4 * slack()
-        + transition::tree_source_bytes().max(semantic_catalog::catalog_read_codec_bytes())
+        + transition::tree_source_bytes()
+            .max(semantic_catalog::catalog_read_codec_bytes())
+            // The anchor decode: one page codec, or the XTR1 walk after it
+            // (UNL-C01).
+            .max(anchor::decode_source_bytes(
+                semantic_catalog::page_read_codec_bytes(),
+            ))
         + 1536
 }
 /// `retired_pages` plus the anchor list decode that precedes it: one item's
-/// allocation entry and its page decode, children never followed.
+/// allocation entry and its page decode, children never followed. The list
+/// decode is one whole `retired` call (UNL-C01).
 fn retired_chain() -> usize {
     let frame = size_of::<(
         &Table<'_>,
@@ -124,7 +131,9 @@ fn retired_chain() -> usize {
     frame
         + (transition::tree_source_bytes() + 1536)
             .max(allocation_codec())
-            .max(semantic_catalog::page_read_codec_bytes() + 1536)
+            .max(anchor::retired_source_bytes(
+                semantic_catalog::page_read_codec_bytes() + 1536,
+            ))
 }
 fn audit_chain() -> usize {
     let frame = size_of::<(
@@ -272,13 +281,19 @@ pub(crate) fn source_census() -> SourceCensus {
         parent_chain(),
     );
     let allocator = allocator_chain();
+    // build reads the anchor's list and encodes the anchor after with it:
+    // one whole `retired` or `encode_listed_anchor` call (UNL-C01).
+    let anchor_codec = anchor::retired_source_bytes(semantic_catalog::page_read_codec_bytes()).max(
+        anchor::listed_encode_source_bytes(semantic_catalog::page_read_codec_bytes()),
+    );
     let nested_build = build_outer
         + weights
             .max(parent)
             .max(allocator)
             .max(side)
             .max(allocation_codec())
-            .max(tree_structure());
+            .max(tree_structure())
+            .max(anchor_codec);
     let building =
         (args + 128 + before_outer + table.max(audit).max(previous)).max(args + 128 + nested_build);
     let verifying = outer + after_outer + audit.max(table).max(allocation_codec());

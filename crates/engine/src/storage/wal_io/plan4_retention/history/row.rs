@@ -1081,18 +1081,19 @@ pub(in super::super) fn table_source_bytes() -> usize {
         + 16 * size_of::<u64>();
     selected
         + (current_leaf_frame_bytes()
-            + tree_page::search::frame_source_bytes()
-            + transition::tree_source_bytes()
+            + (tree_page::search::frame_source_bytes() + transition::tree_source_bytes())
+                .max(anchor::decode_source_bytes(transition::tree_source_bytes()))
                 .max(crate::storage::semantic_catalog::catalog_read_codec_bytes()))
 }
 
 /// `current_leaf` (dev3-tree-smo.md#current-leaf-consumers): its arguments,
 /// the anchor's identity, root and the key beside the bounded immutable
-/// search, whose visited path is one fixed array.
+/// search, whose visited path is one fixed array, or beside the anchor
+/// decode before it (a page codec, or the XTR1 walk after it, UNL-C01).
 pub(in super::super) fn current_leaf_bytes() -> usize {
     current_leaf_frame_bytes()
-        + tree_page::search::frame_source_bytes()
-        + transition::tree_source_bytes()
+        + (tree_page::search::frame_source_bytes() + transition::tree_source_bytes())
+            .max(anchor::decode_source_bytes(transition::tree_source_bytes()))
 }
 
 /// Only the observation/anchor frame belongs to history. Traversal and

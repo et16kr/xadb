@@ -1911,12 +1911,13 @@ pub(in super::super) fn row_preflight_body<W: WriterNamespace>(
         + size_of::<Result<Option<Plan4Target>>>()
         + 6 * reference
         + super::super::super::lookup_load::source_bytes::<W>();
-    // One page decode as the Undo decode term counts it, for the anchor
-    // decode, beside the decoded anchor values.
+    // One page decode as the Undo decode term counts it, or the XTR1 walk
+    // after it, for the anchor decode, beside the decoded anchor values
+    // (UNL-C01).
     let anchor_decode = 2 * size_of::<anchor::TreeAnchor>()
         + 2 * size_of::<anchor::AnchorRoot>()
         + 2 * size_of::<std::result::Result<anchor::TreeAnchor, PageError>>()
-        + super::super::super::read::undo_decode_source_bytes();
+        + anchor::decode_source_bytes(super::super::super::read::undo_decode_source_bytes());
     // The INSERT key: the Root decode, its view and the checked successor.
     let key_decode = size_of::<(crate::storage::page::PageHeader, job3::RootView<'_>)>()
         + 2 * size_of::<
@@ -2190,7 +2191,8 @@ pub(in super::super::super) fn route_step_source_bytes() -> usize {
 }
 
 /// `table_root`: the anchor request and root beside a one-target typed read
-/// and the anchor decode (one page decode as the Undo decode term counts it).
+/// and the anchor decode (one page decode as the Undo decode term counts it,
+/// or the XTR1 walk after it, UNL-C01).
 pub(in super::super::super) fn table_root_source_bytes() -> usize {
     use crate::storage::page::PageError;
     use std::mem::size_of;
@@ -2205,7 +2207,7 @@ pub(in super::super::super) fn table_root_source_bytes() -> usize {
                 + 2 * size_of::<anchor::TreeAnchor>()
                 + 2 * size_of::<anchor::AnchorRoot>()
                 + 2 * size_of::<std::result::Result<anchor::TreeAnchor, PageError>>()
-                + super::super::super::read::undo_decode_source_bytes(),
+                + anchor::decode_source_bytes(super::super::super::read::undo_decode_source_bytes()),
         )
 }
 

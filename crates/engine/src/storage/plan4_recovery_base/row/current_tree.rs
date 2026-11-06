@@ -300,4 +300,7 @@ pub(super) fn source_bytes() -> usize {
             .max(source::header_read())
             .max(source::allocation_decode())
             .max(super::super::image_records::provenance_source_bytes())
+            // The anchor decode, then `retired` with its whole nested decode
+            // (UNL-C01).
+            .max(anchor::retired_source_bytes(source::page_codec()))
 }
