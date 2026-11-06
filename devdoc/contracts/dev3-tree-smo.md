@@ -1944,7 +1944,8 @@ fmt·clippy(`--workspace --all-targets --all-features --locked -D warnings`)·�
 <a id="unlink-u4"></a>
 ### U4 결과
 
-상태는 **2026-11-07 native fault cut UNL-N01..N06 PASS(12 이력, 38 process), 독립 D2 RESULT_PENDING**이다. 제품 경로는
+상태는 **2026-11-07 native fault cut UNL-N01..N06 PASS(12 이력, 38 process), 독립 D2 2회차 ACCEPT(필수 0)**다. 1회차
+CONDITIONAL(필수 2)을 반영했다([검토 기록](../../module-gate/evidence/dev3-08-1-unlink-u4/review.md)). 제품 경로는
 바뀌지 않는다. 시험, controller, 동결 inventory, 그리고 native 시험 adapter의 trace 한도 조정만 더했다. U4가 08-1의
 마지막 단위이므로, 이 단계의 병합으로 08-1(2일, 1단위)을 완료로 적립한다([진도표](../plans/dev3-schedule-baseline.md#items)).
 
@@ -2019,22 +2020,25 @@ fmt·clippy(`--workspace --all-targets --all-features --locked -D warnings`)·�
     파일(unlink bytes 없음, N01의 상태)과 durable unlink 뒤의 파일(N04의 상태)에서 각각 recover와 reenter를 돌려 같은
     READY 검사를 한다.
   - `unl_n_inventory_states_the_module_rule`: inventory의 사례 순서와 각 행이 worker의 규칙과 맞는지 본다.
-- **결과.** commit `cf46cc6`의 debug test ELF 하나로 12 이력 38 process가 모두 통과했다(controller 합계 768초).
-  - produce는 leaf 사례가 75.8~77.4초, root 사례가 45.6~47.4초다. crash는 1.2~1.5초, recover는 0.7~2.0초, reenter는
+- **결과.** D2 1회차 반영 commit `e3efd16`의 debug test ELF 하나로 12 이력 38 process가 모두 통과했다(controller 합계
+  764초).
+  - produce는 leaf 사례가 74.3~77.0초, root 사례가 46.0~47.5초다. crash는 1.1~1.4초, recover는 0.5~2.1초, reenter는
     0.6~0.7초다.
   - unlink 전 WAL prefix는 leaf 9,434,850 B, root 7,948,646 B다. 뒤 사례의 cut은 frame 하나(35,248 B 또는 19,032 B)를
     더했고, N03은 1 byte `X`를 더했다.
-  - 복구 process의 trace는 최대 741,243 B(N03-L recover)로 4 MiB 안이다. 16 MiB 한도가 필요한 것은 produce뿐이다(effect
+  - 복구 process의 trace는 최대 743,576 B(N03-L recover)로 4 MiB 안이다. 16 MiB 한도가 필요한 것은 produce뿐이다(effect
     trace 약 6 MB).
   - 실행 기록은 [`module-gate/evidence/dev3-08-1-unlink-u4/`](../../module-gate/evidence/dev3-08-1-unlink-u4/README.md)에
-    있다. 같은 사례를 worker의 memory 쌍둥이 추가 전 code로 한 번 더 돌린 시범 실행도 모두 통과했지만, 기록은 이
-    실행만 남긴다.
+    있다. 같은 12 사례는 그 전에 두 번 더 돌았고 모두 통과했다. 한 번은 memory 쌍둥이를 더하기 전의 worker로, 한 번은
+    D2 1회차 전 commit `cf46cc6`에서다. 기록은 마지막 실행만 남긴다. `cf46cc6` 실행의 trace는 새 controller 검사를 offline으로
+    다시 대조하는 데 썼다. 검사를 하나씩 어긋나게 만든 입력(N03 ATTEMPT 길이, hook arm 뒤 read 제거, N05 ATTEMPT offset,
+    N05 DWB read 제거, N04 recover의 DWB read 추가, test log의 panic)은 각각 겨냥한 사례에서만 거절됐다.
   - CI 시험 셋은 `cargo test -p xadb-engine --lib -- unlink_rows::native:: --test-threads 3`으로 3 passed, 1 ignored(worker)다
-    (78초). env는 U3와 같다.
+    (`e3efd16`에서 76초). env는 U3와 같다.
   - native 명령: `python3 -B scripts/check_dev3_unlink_native.py --elf <test ELF> --output <dir> --input
     tests/fixtures/dev3-08-unlink/native-inventory.tsv`(사례 id를 주면 그 사례만). ELF는 `cargo test -p xadb-engine --lib
     --no-run`의 unittests binary를 복사해 쓴다.
-  - fmt·clippy(`--workspace --all-targets --all-features --locked -D warnings`)·문서 검사는 `cf46cc6`에서 PASS다.
+  - fmt·clippy(`--workspace --all-targets --all-features --locked -D warnings`)·문서 검사는 `cf46cc6`과 `e3efd16`에서 PASS다.
 - **한계.**
   - cut은 process 종료다. page cache의 쓰기를 잃는 전원 단절은 아니다. N03·N05의 torn write는 첫 1 byte만 쓰는 write로
     흉내 낸다.
