@@ -1575,7 +1575,7 @@ worker다. XRB 13개도 이 code에서 다시 돌렸고 결과는 위 표와 같
     단계(`result`·target 검산·공개)를 나눈다.
   - scope4 회계는 단계마다 split과 unlink 중 큰 쪽이다. unlink compare는 24,876B로 split의 25,036B보다 작고,
     finishing은 6,026B로 split의 10,170B보다 작다. 그래서 다음 값이 모두 그대로다: history frame 26,452B, recovered
-    peak 65,392/65,400B(memory/native), live Row lifecycle 40,881B, preflight C 여유 184B.
+    peak 65,392/65,400B(memory/native), live Row lifecycle 40,883B(U1 UNL-C01 뒤 값), preflight C 여유 184B.
   - 처음 계산에서는 compare·finishing을 한 단계로 합쳐 unlink arm이 25,972B였고, history frame이 27,388B가
     되었다. live Row lifecycle 회계가 이 frame을 포함하므로 preflight의 C 여유가 −744B가 되었다(S2W-C01·C02·C03·C06과
     S1B 회계 C01·C02 실패). 그래서 위처럼 `apply`의 단계 규칙에 맞췄다. 코드도 그 순서다: `result`는 관측이 돌아온 뒤 선언된다.
@@ -1587,6 +1587,40 @@ worker다. XRB 13개도 이 code에서 다시 돌렸고 결과는 위 표와 같
     `unlink-leaf-before.xrb`.
   - `root_collapse_before`: RootSplit 70이 CREATE leaf 11을 비운 상태(root 17 [1], revision 2).
     `unlink-collapse-before.xrb`.
+
+<a id="unlink-u2-census"></a>
+UNL-C01·C02 census(2026-11-06, U1 UNL-C01 뒤 보강). 값은 memory·native가 같고, 아래 시험이 찍는다.
+
+- UNL-C01(U2 code의 목록 호출): unlink candidate의 목록 호출을 call 전체로 센다.
+  - `build`의 목록 읽기: `retired_source_bytes`(page codec + SHA scratch 2,474B)로 3,843B.
+  - 병합과 anchor encode: `extend`(409B) 또는 `listed_encode_source_bytes`. page 항은 이 chain의 기존 항(tree
+    codec·digest)과 split candidate의 page codec + SHA scratch 중 큰 쪽이다. anchor chain은 2,661B에서 3,790B가 된다.
+  - `verify_after`의 anchor decode: `whole_decode_source_bytes`(decoder 전체 frame + callee)로 2,698B에서 3,403B가 된다.
+  - 셋 다 기존 최대보다 작다. build 쪽 최대는 parent edit 11,705B이고 verify 쪽 최대는 audit 18,908B다. 그래서
+    candidate peak 21,096B와 frame peak 23,084B는 그대로다. UNL-R04 source 목록에도 같은 호출을 더했다.
+- UNL-C02 dispatch: `recovery::apply_frame`의 scope4 dispatch 값(`is_unlink`의 길이 검사, after 2장 대여와 그
+  `try_into` Result)을 `unlink_dispatch_bytes` 48B로 센다. 이 값은 unlink 쪽에만 있으므로 unlink arm의 두 단계에
+  더했다. 더한 뒤 compare는 24,876 + 48 = 24,924B로 split 25,036B보다 작고, finishing은 6,026 + 48 = 6,074B로 split
+  10,170B보다 작다. scope4 최대는 split arm 그대로이고 history frame도 26,452B 그대로다.
+- UNL-C02 canonical replay: `apply_unlink`의 회계(`unlink_source_bytes`)가 observer(`unlink::source_bytes`, 위
+  candidate 포함)를 callee로 갖는다. 그래서 위 UNL-C01 항이 replay에도 그대로 들어간다.
+- UNL-C02 base capture: replay한 unlink 상태의 `capture_base`는 Base4 encoder를 부른다. encoder의 검증은
+  current-tree closure에서 anchor 목록을 읽는다. 이 경로의 값은 다음과 같다.
+  - closure 28,928B 안에 목록 읽기 3,609B가 있다(U1 UNL-C01).
+  - Base4 row codec 59,675B가 이 closure를 포함한다.
+  - capture encode 단계는 owner + codec(64,203/64,211B, memory/native)이고, recovered peak 65,392/65,400B 안에 든다.
+  - U2는 capture code를 바꾸지 않았다.
+- fresh·recovered writer:
+  - fresh writer의 live Row lifecycle 회계(S2W-C01..C06)는 history frame을 포함한다. 그 frame이 그대로이므로
+    40,883B도 그대로다.
+  - recovered writer의 회계(`recovery_source_` memory·native, owner 회계)는 peak 65,392/65,400B 그대로다.
+  - 상한은 바꾸지 않았다.
+
+| ID | libtest 경로 |
+| --- | --- |
+| UNL-C02 dispatch | `…retention::history::structure::tests::unl_c02_scope4_dispatch_beside_the_unlink_arm`(독립 dispatch 목록, unlink arm + dispatch < split arm) |
+| UNL-C02 capture | `storage::plan4_recovery_base::row::graph::tests::current_tree_tests::unl_c02_current_tree_closure_counts_the_retired_list`, `storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::unl_c02_base_capture_holds_the_row_codec`(memory·native) |
+| UNL-C01(U2) | 위 UNL-R04 source 시험(목록 호출을 더한 독립 목록) |
 
 시험(모두 PASS, memory). 경로는 `cargo test -p xadb-engine --lib -- --list`의 libtest 경로다(`…retention`은
 `storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention`).
@@ -1623,3 +1657,18 @@ U1에서 미룬 것의 처리:
 | `plan4_recovery::tests::recovery_source_` | 2 passed(바뀐 history 회계가 들어가는 recovery 자원 회계) |
 
 U2는 Base4 decode(`plan4_recovery_base`)를 바꾸지 않으므로 executor 전용 XRB 시험은 다시 돌리지 않았다.
+
+U1 위로 다시 올리고 UNL-C01·C02를 더한 뒤 다시 실행한 것:
+- env: U1의 재실행과 같다. source·ELF·input hash에는 자리표시 hex를 모두 주었고 `RUST_MIN_STACK=33554432`다.
+- 범위: 위 세 명령의 시험, UNL-C02 셋, U1이 재실행한 시험 전부(UNL-C01 census 시험 포함)다. 겹친 것을 뺀 592개를
+  `--exact`로 실행했다.
+- 결과: **584 passed, 1 failed, 7 ignored**. 실패 하나는 executor 전용 `g5_bind_boundaries`다. padding 2048로 따로
+  돌리면 16/16 PASS다.
+
+scope4 dispatch를 지나는 두 시험은 main `1725df0`에서도 같은 값으로 실패한다. 두 시험은
+`…retention::recovery::row_tests::s1b_scope_routes_only_to_its_own_arm`과 format 시험
+`mbc40_v01_profile2_binding_rejected_at_owner_grammar_sites`다. 두 시험 모두 frame을 scope 4로 바꾸면 Unsupported라고
+기대한다. 실제로는 structural decoder의 길이 검사에서 Corrupt로 거절된다.
+
+원인은 시험 기대값이다. split의 scope4 arm(`37a0465`)이 들어올 때 이 기대를 고치지 않았다. 별도 작업("Fix scope 4
+frame routing test")이 시험 두 파일만 고치고, 그 commit을 이 브랜치에 merge한다. 이 단계에서는 고치지 않았다.

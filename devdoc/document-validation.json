@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-11-06T08:45:40.395724+09:00",
+  "date": "2026-11-06T11:41:09.340574+09:00",
   "status": "PASS",
   "errors": [],
   "markdown_documents": [
@@ -157,9 +157,9 @@
     },
     {
       "file": "devdoc/contracts/dev3-module-boundaries.md",
-      "links": 365,
+      "links": 366,
       "duplicate_ids": 0,
-      "sha256": "f3b1f5e1539b982de4153aac7b805a40a8b595059adf94a13f0a01232dec04f7"
+      "sha256": "87dcfac7f6c035c39e27ad260d59bd294fa3905b0a53b77291504a660a2c83b6"
     },
     {
       "file": "devdoc/contracts/dev3-module-consumers.md",
@@ -463,9 +463,9 @@
     },
     {
       "file": "devdoc/contracts/dev3-tree-smo.md",
-      "links": 47,
+      "links": 51,
       "duplicate_ids": 0,
-      "sha256": "94ab670309d4225530164a30fe99b76aa43ea77d974215b534a9a63316b1d428"
+      "sha256": "5e085ecb02de2022c695721fdc97b044a67dc78abd14cb37f9fe5500e82ebaf1"
     },
     {
       "file": "devdoc/contracts/dev3-undo-format.md",
