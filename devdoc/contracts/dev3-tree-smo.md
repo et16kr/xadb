@@ -2,13 +2,18 @@
 
 2026-11-04 · **D3-TREE-SMO-001 / scope4 wire·owner·provenance 및 원 pool 수명 설계 D2 ACCEPT / 실제 타입·F05·효과·fault 인수 미완료**.
 
+현재 상태(2026-11-07): 위 줄과 아래 문단은 2026-11-04 설계 시점의 기록이다. 그 뒤 실제 RootSplit/ChildSplit 효과와
+fault inventory([structural-effect](#structural-effect)), [current-leaf 소비자 일반화](#current-leaf-consumers),
+[A 자동 split 호출자](#automatic-split), 그리고 [빈 leaf unlink·root 축소](#empty-leaf-unlink)의 U1–U4(U4는 native fault cut)가
+각 절의 독립 D2를 거쳐 닫혔다. 08-1 항목은 [U4 결과](#unlink-u4)의 병합으로 적립하며, 일정 08 행은 08-2–08-4가 남아
+진행 중이다.
+
 사용자의 일정08 전체 구현 요청과 기존 D2 위임에 따른 내부 설계다. 계약·구현 담당은
 `/root`, 독립 검토자는 `/root/dev3_08_review`다. 비교 대안과 권한 경로의 정적 사전 검토는
 받았고 구체 wire·owner·provenance 범위는 필수 지적 해소 뒤 D2 수용됐다. live admission은 아직
 수용되지 않았다. 효과 구현은
 해당 F01/F02/F05와 독립 검토를 닫은 뒤 연결한다. [작업 정본](dev3-task-06-tree-rows.md)의
-요구를 대체하지 않으며 [일정08](../plans/dev3-schedule-baseline.md#items)을 완료로 적립하지 않는다. 08-1 항목은
-[U4 결과](#unlink-u4)의 병합으로 적립한다.
+요구를 대체하지 않으며 [일정08](../plans/dev3-schedule-baseline.md#items)을 완료로 적립하지 않는다.
 
 ## 결정과 범위
 
@@ -1394,7 +1399,7 @@ Capacity로 거절한다. 제품 table은 CREATE Catalog Job 때문에 일정 10
 | U3 | `ExistingGroup::Structural`·live 효과·RAM note·A drain·census | UNL-L·A·C03 |
 | U4 | native fault cut | UNL-N |
 
-각 단계는 독립 D2와 PR 하나다. U4가 끝나면 08-1(2단위)을 완료로 적립한다. 이 절의 설계 부분은 어느 단계의
+각 단계는 독립 D2와 PR 하나다. U4가 끝나면 08-1(2일, 1단위)을 완료로 적립한다. 이 절의 설계 부분은 어느 단계의
 PASS도 주장하지 않는다. 단계의 결과는 아래 각 단계 절에만 적는다.
 
 <a id="unlink-u1"></a>
@@ -1939,9 +1944,9 @@ fmt·clippy(`--workspace --all-targets --all-features --locked -D warnings`)·�
 <a id="unlink-u4"></a>
 ### U4 결과
 
-상태는 **2026-11-06 native fault cut UNL-N01..N06 PASS(12 이력, 38 process), 독립 D2 RESULT_PENDING**이다. 제품 경로는
+상태는 **2026-11-07 native fault cut UNL-N01..N06 PASS(12 이력, 38 process), 독립 D2 RESULT_PENDING**이다. 제품 경로는
 바뀌지 않는다. 시험, controller, 동결 inventory, 그리고 native 시험 adapter의 trace 한도 조정만 더했다. U4가 08-1의
-마지막 단위이므로, 이 단계의 병합으로 08-1(2단위)을 완료로 적립한다([진도표](../plans/dev3-schedule-baseline.md#items)).
+마지막 단위이므로, 이 단계의 병합으로 08-1(2일, 1단위)을 완료로 적립한다([진도표](../plans/dev3-schedule-baseline.md#items)).
 
 - **이력.** U3 리뷰 시험(`unlink_wal_failure`)과 같은 이력이다.
   - CREATE가 q 1을 쓴다. A의 자동커밋 INSERT가 가장 큰 행(Binary 2,039 B)을 q 2에 commit한다. 11개면 leaf가
@@ -1978,16 +1983,21 @@ fmt·clippy(`--workspace --all-targets --all-features --locked -D warnings`)·�
   - 기대 tree는 drain 직전 produce의 pool image를 같은 walker로 걸어 만든다. "전"은 같은 route·internal·root·
     revision이고 목록이 비었다. "뒤"는 revision이 1 늘고 route는 첫 leaf를 뺀 것이다. 목록은 LeafUnlink면 [빈 leaf]이고,
     RootCollapse면 [빈 leaf, 옛 root]이다(level 0·1, retire LSN은 unlink LSN, page 순).
+  - 목록의 page는 그 kind로 decode되고, 목록의 leaf는 cell이 0개다. unlink는 목록의 page를 쓰지 않으므로 "뒤"의 목록
+    page는 produce image와 byte 단위로 같다.
   - allocator 64 항목과 structural claim(64 × 352 B)은 produce image와 같다. bank의 structural high-water는 "뒤"가 unlink
     LSN, "전"이 produce의 값이다. RAM note는 비어 있다(재시작이 지운다).
   - B cursor가 남은 행(5 또는 8개)을 읽는다.
 - **controller 검사.** 기대값은 inventory, 어느 cut이 옛 tree를 남기는지에 대한 controller 자신의 규칙, 그리고 stdlib로
   짠 XWF1 header reader에서 온다.
   - produce의 effect trace:
-    - hook cut(N01·N02)은 arm 행(HOOK) 뒤에 WAL 변경이 없다.
+    - hook cut(N01·N02)은 arm 행(HOOK) 뒤에 어떤 파일 변경도 없다. 그리고 arm 뒤의 성공한 WAL read가 drain 직전 WAL
+      prefix 전체를 끊김 없이 덮는다. 즉 drain이 unlink 준비의 같은-cut canonical replay까지 갔다. drain 전에 abort하는
+      process는 여기서 거절된다(D2 1회차 권고 2의 probe).
     - I/O cut(N03·N04·N05)은 arm이 하나이고 마지막 행이 그 cut이다(N03은 WAL write, N04는 WAL sync, N05는 home write).
-      N03·N05에서는 그 앞 행이 FIRST_BYTE write다. N05에서는 arm 뒤에 DWB image sync가 있고, FIRST_BYTE write의 offset이
-      anchor page의 home offset(page × 16,384)과 같다.
+      N03·N05에서는 그 앞 행이 FIRST_BYTE write이고, 그 앞 행이 막힌 write의 ATTEMPT다. N03의 ATTEMPT는 WAL 끝(drain 직전
+      길이)에서 unlink frame 길이(35,248 B 또는 19,032 B)만큼 쓰는 write다. N05의 ATTEMPT는 anchor page 전체(16,384 B)를
+      그 home offset(page × 16,384)에 쓰는 write다. N05에서는 arm 뒤에 DWB image sync도 있다.
     - N06은 arm이 없다. 마지막 성공 sync가 WAL sync이고 그 뒤에는 변경이 없다.
   - WAL: drain 직전 WAL prefix의 SHA-256이 worker의 witness와 같고, cut이 더한 bytes가 inventory와 같다. N03의 1 byte는
     `X`다. 더한 frame은 XWF1 header의 길이, LSN(= prefix의 complete LSN + 1), structural op 3 또는 4, scope 4를 본다.
@@ -1995,17 +2005,36 @@ fmt·clippy(`--workspace --all-targets --all-features --locked -D warnings`)·�
     있고 remove는 없다.
   - recover·reenter: 결과 ready, handle 0, READY q 5(recover)·6(reenter), route·level·목록 page·high-water·행 수가
     controller의 기대와 같다. ack q 6은 recover에만 있다.
+  - DWB 수리: N05의 recover만 DWB image를 읽는다. 그 뒤 첫 home write가 anchor page 전체이고, 복구의 첫 공개보다 앞선다.
+    다른 사례의 복구와 모든 reenter는 DWB image를 읽지 않는다.
+  - 모든 process의 test log에 `panicked`·`overflowed its stack`·`fatal runtime error`가 없다. 그래서 cut이 아닌 SIGABRT는
+    통과하지 못한다.
   - 각 process가 namespace 파일을 바꿨고, 세 process(N06은 넷)의 pid가 모두 다르다. 복구 process마다 handle 0, peak 3
     이하, fd peak 6 이하, log 16 MiB 이하다(worker 단언).
 - **trace 한도.** native 시험 adapter(`plan4_pages/native_tests.rs`, cfg(test))의 trace log 한도는 4 MiB였다. 이 이력은
-  live group마다 canonical replay가 WAL 전체를 읽으므로 produce trace가 약 5.9 MB다. 그래서 첫 event 전에만 한도를 올릴
+  live group마다 canonical replay가 WAL 전체를 읽으므로 produce trace가 약 6 MB다. 그래서 첫 event 전에만 한도를 올릴
   수 있는 `raise_log_bound`를 더했고, UNL-N worker만 16 MiB로 올린다. 다른 worker는 4 MiB 그대로다.
 - **메모리 쌍둥이(CI).** native worker는 ignored라 CI가 돌리지 않는다. CI는 다음 셋을 돈다.
   - `unl_n_leaf_memory_twin`·`unl_n_root_memory_twin`: 같은 이력을 memory directory 위에서 돈다. drain 시작 때의
     파일(unlink bytes 없음, N01의 상태)과 durable unlink 뒤의 파일(N04의 상태)에서 각각 recover와 reenter를 돌려 같은
     READY 검사를 한다.
   - `unl_n_inventory_states_the_module_rule`: inventory의 사례 순서와 각 행이 worker의 규칙과 맞는지 본다.
-- **결과.** RESULT_PENDING
+- **결과.** commit `cf46cc6`의 debug test ELF 하나로 12 이력 38 process가 모두 통과했다(controller 합계 768초).
+  - produce는 leaf 사례가 75.8~77.4초, root 사례가 45.6~47.4초다. crash는 1.2~1.5초, recover는 0.7~2.0초, reenter는
+    0.6~0.7초다.
+  - unlink 전 WAL prefix는 leaf 9,434,850 B, root 7,948,646 B다. 뒤 사례의 cut은 frame 하나(35,248 B 또는 19,032 B)를
+    더했고, N03은 1 byte `X`를 더했다.
+  - 복구 process의 trace는 최대 741,243 B(N03-L recover)로 4 MiB 안이다. 16 MiB 한도가 필요한 것은 produce뿐이다(effect
+    trace 약 6 MB).
+  - 실행 기록은 [`module-gate/evidence/dev3-08-1-unlink-u4/`](../../module-gate/evidence/dev3-08-1-unlink-u4/README.md)에
+    있다. 같은 사례를 worker의 memory 쌍둥이 추가 전 code로 한 번 더 돌린 시범 실행도 모두 통과했지만, 기록은 이
+    실행만 남긴다.
+  - CI 시험 셋은 `cargo test -p xadb-engine --lib -- unlink_rows::native:: --test-threads 3`으로 3 passed, 1 ignored(worker)다
+    (78초). env는 U3와 같다.
+  - native 명령: `python3 -B scripts/check_dev3_unlink_native.py --elf <test ELF> --output <dir> --input
+    tests/fixtures/dev3-08-unlink/native-inventory.tsv`(사례 id를 주면 그 사례만). ELF는 `cargo test -p xadb-engine --lib
+    --no-run`의 unittests binary를 복사해 쓴다.
+  - fmt·clippy(`--workspace --all-targets --all-features --locked -D warnings`)·문서 검사는 `cf46cc6`에서 PASS다.
 - **한계.**
   - cut은 process 종료다. page cache의 쓰기를 잃는 전원 단절은 아니다. N03·N05의 torn write는 첫 1 byte만 쓰는 write로
     흉내 낸다.
@@ -2013,4 +2042,7 @@ fmt·clippy(`--workspace --all-targets --all-features --locked -D warnings`)·�
     실패)는 보지 않는다. unlink의 WAL write·sync 오류는 U3 memory 시험(`unl_review_*`)이 본다. 일반 재장애는
     [일정 12](../plans/dev3-schedule-baseline.md#items), fault 전수는 일정 17의 몫이다.
   - 메모리 쌍둥이는 READY 상태 두 개(N01과 N04의 상태)만 본다. hook·torn·DWB·CURRENT cut 자체는 native에서만 돈다.
+  - hook cut이 어느 hook에서 멈췄는지는 trace에 남지 않는다. N01과 N02는 trace와 파일이 같고, 둘의 위치(stage 호출과 첫 RAM
+    page)는 worker 코드의 Point 대응과 arm 직전의 Row Job 부재 단언(drain 안의 existing group은 unlink뿐)으로만 묶인다.
+    controller는 drain이 unlink 준비까지 갔고 아무것도 쓰지 않았음만 본다.
   - native 결과는 이 cloud 환경에서 한 번 실행한 것이다.

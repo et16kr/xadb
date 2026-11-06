@@ -337,6 +337,20 @@ fn inspect(arena: &[u8], allocator: PageIdentity) -> Tree {
         let (id, allocated_kind) = identity(page.page_no as usize);
         assert_eq!((id.page, allocated_kind), (*page, *kind));
         assert_eq!(*level, u8::from(*kind == PageKind::RowInternal));
+        // A listed page still decodes as its kind; a listed leaf is empty.
+        let view = decode_tree_page(
+            self::page(arena, page.page_no as usize),
+            TreeExpectation {
+                identity: id,
+                kind: *kind,
+                level: *level,
+                arity: 0,
+            },
+        )
+        .unwrap();
+        if *kind == PageKind::RowLeaf {
+            assert_eq!(view.len(), 0, "listed leaf {}", page.page_no);
+        }
     }
     Tree {
         anchor: anchor_id.page,
@@ -356,8 +370,14 @@ fn route_keys(tree: &Tree) -> Vec<Vec<u64>> {
 }
 
 /// READY's tree against the produce images: the literal keys, then the
-/// pages the unlink keeps routed, lists or makes the root.
-fn expect(case: &Case<'_>, before: &Tree, ready: &Tree, unlink_lsn: u64) {
+/// pages the unlink keeps routed, lists or makes the root. The unlink writes
+/// neither listed page, so each keeps its produce image byte for byte.
+fn expect(
+    case: &Case<'_>,
+    (before, before_arena): (&Tree, &[u8]),
+    (ready, ready_arena): (&Tree, &[u8]),
+    unlink_lsn: u64,
+) {
     assert_eq!(route_keys(ready), case.keys(case.after), "{}", case.id);
     assert_eq!(
         ready
@@ -381,6 +401,13 @@ fn expect(case: &Case<'_>, before: &Tree, ready: &Tree, unlink_lsn: u64) {
     }
     assert_eq!(ready.revision, before.revision + 1);
     assert_eq!(ready.route[..], before.route[1..]);
+    for (page, ..) in &ready.listed {
+        let at = page.page_no as usize;
+        assert!(
+            self::page(ready_arena, at) == self::page(before_arena, at),
+            "listed page {at} differs from its produce image"
+        );
+    }
     let emptied = (before.route[0].0, PageKind::RowLeaf, 0, unlink_lsn);
     if case.root {
         assert_eq!(ready.root, before.route[1].0);
@@ -401,6 +428,8 @@ fn expect(case: &Case<'_>, before: &Tree, ready: &Tree, unlink_lsn: u64) {
 struct Before {
     arena: Vec<u8>,
     claims: Vec<u8>,
+    /// The last committed q (the third DELETE's).
+    q: u64,
     lsn: u64,
     high_water: u64,
 }
@@ -422,6 +451,7 @@ impl Before {
         Self {
             arena: fs::read(produce.join("before-arena.bin")).unwrap(),
             claims: fs::read(produce.join("before-claims.bin")).unwrap(),
+            q: field("q"),
             lsn: field("lsn"),
             high_water: field("high_water"),
         }
@@ -475,10 +505,13 @@ impl Sink<'_> {
         fs::write(output.join("before-claims.bin"), &saved.claims).unwrap();
         fs::write(
             output.join("before.tsv"),
-            format!("lsn\t{}\nhigh_water\t{}\n", saved.lsn, saved.high_water),
+            format!(
+                "q\t{}\nlsn\t{}\nhigh_water\t{}\n",
+                saved.q, saved.lsn, saved.high_water
+            ),
         )
         .unwrap();
-        receipt.line("q", 5);
+        receipt.line("q", saved.q);
         receipt.line("lsn", saved.lsn);
         receipt.line("high_water", saved.high_water);
         receipt.line("wal_bytes", wal.1);
@@ -551,6 +584,7 @@ fn produce<D: DirectoryPort>(case: &Case<'_>, directory: &D, sink: &mut Sink<'_>
                 bigs(0..count)
             );
             assert_eq!(committed(out), (2, count));
+            let mut q = 2;
             let keys = rows_of(&slots);
             assert_eq!(keys, (1..=case.rows()).collect::<Vec<_>>());
             drains!(&mut writer, owner, flush, flusher, private);
@@ -573,7 +607,9 @@ fn produce<D: DirectoryPort>(case: &Case<'_>, directory: &D, sink: &mut Sink<'_>
                     private,
                     *row
                 );
-                assert_eq!(committed(out), (3 + at as u64, 1));
+                let (at_q, deleted) = committed(out);
+                assert_eq!((at_q, deleted), (3 + at as u64, 1));
+                q = at_q;
                 assert_eq!(slot.unwrap().row().get(), *row);
                 retire_all!(writer, owner, private, flush, flusher);
             }
@@ -591,6 +627,7 @@ fn produce<D: DirectoryPort>(case: &Case<'_>, directory: &D, sink: &mut Sink<'_>
             let saved = Before {
                 arena,
                 claims: writer.test_structural_provenance(),
+                q,
                 lsn: writer.test_structural_prefix().complete_lsn,
                 high_water: high_water(writer.recovery_test_bank()),
             };
@@ -671,13 +708,20 @@ impl AtReady for Ready<'_> {
         flusher: &mut Owner<'c, 's>,
         private: &mut [u8; PRIVATE_BYTES],
     ) {
-        let q = if self.phase == "recover" { 5 } else { 6 };
+        // recover's READY is the last ACK; reenter's is recover's empty Commit.
+        let q = self.before.q + u64::from(self.phase != "recover");
         assert_eq!(live.catalog_test_q(), q);
         let unlink_lsn = self.before.lsn + 1;
         let allocator = live.recovery_test_expected_target(0).unwrap().identity();
         let before = inspect(&self.before.arena, allocator);
-        let ready = inspect(&live.recovery_test_structural_arena().unwrap(), allocator);
-        expect(self.case, &before, &ready, unlink_lsn);
+        let recovered = live.recovery_test_structural_arena().unwrap();
+        let ready = inspect(&recovered, allocator);
+        expect(
+            self.case,
+            (&before, &self.before.arena),
+            (&ready, &recovered),
+            unlink_lsn,
+        );
         for (at, (old, new)) in before.allocated.iter().zip(&ready.allocated).enumerate() {
             assert_eq!(old, new, "allocator entry {at}");
         }

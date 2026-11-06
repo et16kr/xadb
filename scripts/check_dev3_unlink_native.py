@@ -54,6 +54,9 @@ CUTS = {
 FRAME = {'leaf': (35248, 3), 'root': (19032, 4)}
 ROWS = {'leaf': 11, 'root': 8}
 MUTATIONS = {'create', 'write', 'sync', 'dirsync', 'publish', 'resize', 'remove'}
+# A process that ends by anything but the cut (a panic, a stack overflow)
+# leaves one of these in its test log.
+CRASH_MARKS = (b'panicked', b'overflowed its stack', b'fatal runtime error')
 
 
 def digest(raw):
@@ -100,13 +103,27 @@ def expected_of(row):
                 phases=phases)
 
 
+def ok(row):
+    """A successful I/O row (reads and writes `OK:n:hash`, syncs `Ok(())`,
+    publishes `DWB:Ok(())`)."""
+    return row[5].startswith('OK') or row[5].endswith('Ok(())')
+
+
 def check_produce(want, receipt, effects, db):
     """The cut and the WAL it left, from the trace and this reader."""
+    wal_name = sorted(p.name for p in db.iterdir() if p.name.startswith('d3-wal-'))[-1]
+    check_cut(want, receipt, effects, wal_name)
+    return check_wal(want, receipt, db, wal_name)
+
+
+def check_cut(want, receipt, effects, wal_name):
+    """Where the produce process stopped, from its effect trace."""
     assert receipt['shape'] == want['shape'] and receipt['cut_at'] == want['cut']
     assert int(receipt['q']) == 5
     kind = want['stop'][0]
     label = want['stop'][1]
     arms = [i for i, row in enumerate(effects) if row[1] == 'arm']
+    start = int(receipt['wal_bytes'])
     if kind == 'io':
         assert receipt['armed'] == label and len(arms) == 1 and effects[arms[0]][2] == label
         last = effects[-1]
@@ -121,25 +138,47 @@ def check_produce(want, receipt, effects, db):
             assert write[1] == 'write' and write[5] == 'FIRST_BYTE:Ok(1)', write
             assert int(write[3]) == int(receipt['flushed_page']) * PAGE_BYTES == \
                 int(receipt['anchor_page']) * PAGE_BYTES, write
+            # The blocked write is the anchor's whole page.
+            attempt = effects[-3]
+            assert attempt[1:3] == ['write', write[2]] and attempt[2].startswith('d3-data-')
+            assert attempt[3:] == [write[3], str(PAGE_BYTES), 'ATTEMPT'], attempt
         elif want['cut'] == 'wal_first_byte':
             assert effects[-2][1] == 'write' and effects[-2][5] == 'FIRST_BYTE:Ok(1)', effects[-2]
+            # The blocked write is the unlink frame at the WAL's end.
+            attempt = effects[-3]
+            assert attempt[1:] == ['write', wal_name, str(start), str(want['frame']), 'ATTEMPT'], \
+                attempt
     elif kind == 'hook':
         # C's hook aborts with no trace row: nothing of the group reached
         # the WAL after the arm row.
         assert receipt['armed'] == label and len(arms) == 1
         assert effects[arms[0]][2] == label and effects[arms[0]][5] == 'HOOK'
-        assert not any(row[1] in MUTATIONS and row[2].startswith('d3-wal-')
-                       for row in effects[arms[0]:]), 'a WAL mutation after the hook arm'
+        assert not any(row[1] in MUTATIONS for row in effects[arms[0]:]), \
+            'a mutation after the hook arm'
         assert 'cut' not in receipt
+        # The drain reached the unlink's preparation: its same-cut canonical
+        # replay read the whole WAL after the arm. Which hook stopped it (stage
+        # call or first RAM page) leaves no trace; the worker binds that.
+        reads = sorted((int(row[3]), int(row[3]) + int(row[4])) for row in effects[arms[0]:]
+                       if row[1] == 'read' and row[2] == wal_name and ok(row))
+        end = 0
+        for low, high in reads:
+            if low > end:
+                break
+            end = max(end, high)
+        assert end >= start, ('the WAL read after the hook arm', end, start)
     else:
         assert receipt['cut'] == label and not arms and 'armed' not in receipt
         # After the unlink's WAL sync: no mutation (no Drop either).
         syncs = [i for i, row in enumerate(effects) if row[1] == 'sync' and row[5] == 'Ok(())']
         assert effects[syncs[-1]][2].startswith('d3-wal-')
         assert not {row[1] for row in effects[syncs[-1] + 1:]} & MUTATIONS
-    wal_name = sorted(p.name for p in db.iterdir() if p.name.startswith('d3-wal-'))[-1]
-    wal = (db / wal_name).read_bytes()
+
+
+def check_wal(want, receipt, db, wal_name):
+    """The WAL the cut left: the drain's prefix and what the cut added."""
     start = int(receipt['wal_bytes'])
+    wal = (db / wal_name).read_bytes()
     assert digest(wal[:start]) == receipt['wal_sha256'], 'the WAL before the drain is a prefix'
     assert len(wal) - start == want['added'], (len(wal) - start, want['added'])
     if want['added'] == 1:
@@ -165,6 +204,24 @@ def check_crash(receipt, effects):
     assert published == 3, published
     assert sum(1 for row in done if row[1] == 'sync' and row[2].startswith('d3-rebase-')) == 1
     assert not any(row[1] == 'remove' for row in done), 'the old WAL is still named'
+
+
+def check_repair(want, phase, effects, produced):
+    """Only N05's recover repairs a torn home page: it reads the DWB images,
+    then rewrites T's anchor page before any other home write and before
+    recovery publishes anything."""
+    dwb = [i for i, row in enumerate(effects)
+           if row[1] == 'read' and row[2] == 'd3-dwb-images' and ok(row)]
+    if want['cut'] != 'home_first_byte' or phase != 'recover':
+        assert not dwb, (phase, 'a DWB image read')
+        return
+    homes = [i for i, row in enumerate(effects)
+             if row[1] == 'write' and row[2].startswith('d3-data-') and ok(row)]
+    publishes = [i for i, row in enumerate(effects) if row[1] == 'publish' and ok(row)]
+    assert dwb and homes and publishes and dwb[0] < homes[0] < publishes[0], \
+        (dwb[:1], homes[:1], publishes[:1])
+    first = effects[homes[0]]
+    assert first[3:5] == [str(int(produced['anchor_page']) * PAGE_BYTES), str(PAGE_BYTES)], first
 
 
 def check_ready(want, phase, receipt, produced):
@@ -254,6 +311,8 @@ def main():
             results.append(dict(case=case, phase=phase, exit=code, seconds=round(seconds, 2)))
             (out / 'results.json').write_text(json.dumps(results, indent=2) + '\n')
             assert (output / 'test.log').stat().st_size <= LOG_CAP
+            log_text = (output / 'test.log').read_bytes()
+            assert not any(mark in log_text for mark in CRASH_MARKS), (case, phase, 'test log')
             print(case, phase, code, round(seconds, 2), flush=True)
             cut_phase = phase in ('produce', 'crash')
             if code != (-signal.SIGABRT if cut_phase else 0):
@@ -274,6 +333,7 @@ def main():
                 assert current != previous, 'the crash wrote nothing'
             else:
                 check_ready(want, phase, receipt, produced)
+                check_repair(want, phase, effects, produced)
                 assert current != previous, 'the process wrote nothing'
                 facts[phase] = dict(log_bytes=int(receipt['log_bytes']))
             previous = current
