@@ -315,3 +315,217 @@ fn unl_r03_split_after_collapse_keeps_the_list_and_never_reuses_retired_pages() 
     assert_eq!(restarted.rows(), rows);
     assert_eq!(restarted.retired(), listed);
 }
+
+/// PR57 review: compare owned state directly, excluding the documented
+/// disposable after-image workspace. Do not use the product state digest
+/// as the only oracle for a rejected frame.
+fn assert_refused_unchanged(world: &mut World, expected: FrameExpectation, raw: &[u8]) {
+    let owned = world.replay[..history::BANK_END].to_vec();
+    let claims = retention_replay_provenance(&world.replay).to_vec();
+    let cursor = (
+        world.cursor.previous_lsn,
+        world.cursor.epoch,
+        world.cursor.adopted_local,
+        world.cursor.predecessor_epoch,
+        world.cursor.base_seeded,
+        world.cursor.allocation.reserved(),
+    );
+    assert!(
+        observe_recovery_frame(
+            profile(),
+            expected,
+            raw,
+            &mut world.replay,
+            &mut world.cursor
+        )
+        .is_err()
+    );
+    assert_eq!(world.replay[..history::BANK_END], owned);
+    assert_eq!(
+        retention_replay_provenance(&world.replay).as_slice(),
+        claims
+    );
+    assert_eq!(
+        (
+            world.cursor.previous_lsn,
+            world.cursor.epoch,
+            world.cursor.adopted_local,
+            world.cursor.predecessor_epoch,
+            world.cursor.base_seeded,
+            world.cursor.allocation.reserved(),
+        ),
+        cursor
+    );
+}
+
+#[test]
+fn pr57_unlink_length_boundaries_reject_without_consuming_the_cut() {
+    for (before, leaf) in [(LEAF_BEFORE, 19), (COLLAPSE_BEFORE, 11)] {
+        let mut world = World::new(before);
+        let raw = world.unlink_frame(leaf);
+        let expected = world.expectation();
+        // Envelope, dispatch, group, descriptor, core, native, redo and
+        // final digest boundaries. Include the other unlink opcode length.
+        let mut lengths = vec![0, 159, 160, 171, 172, 351, 352, 1887, 1888, 2143, 2144];
+        let natives = if leaf == 19 { 3 } else { 4 };
+        for index in 1..=natives {
+            lengths.extend([2144 + index * 128 - 1, 2144 + index * 128]);
+        }
+        lengths.extend([raw.len() - 33, raw.len() - 32, raw.len() - 1]);
+        for len in lengths {
+            assert_refused_unchanged(&mut world, expected, &raw[..len]);
+        }
+        for len in [raw.len() + 1, if leaf == 19 { 19_032 } else { 35_248 }] {
+            let mut resized = raw.clone();
+            resized.resize(len, 0);
+            assert_refused_unchanged(&mut world, expected, &resized);
+        }
+        // A rejected frame must not poison the next valid attempt.
+        assert_eq!(world.apply(&raw).unwrap().header.lsn, 90);
+    }
+}
+
+#[test]
+fn pr57_unlink_all_native_digests_and_last_redo_are_compared_before_publication() {
+    for (before, leaf) in [(LEAF_BEFORE, 19), (COLLAPSE_BEFORE, 11)] {
+        let mut world = World::new(before);
+        let raw = world.unlink_frame(leaf);
+        let expected = world.expectation();
+        let view = unlink::decode_layout(&raw, expected, profile()).unwrap();
+        let operation = view.operation();
+        let header = view.header();
+        for index in 0..operation.natives() {
+            let native = view.native(index).unwrap();
+            // Unchanged natives must keep equal before/after digests to
+            // pass grammar; canonical replay must still reject the lie.
+            let offsets = if operation.changes(native.role()) {
+                &[56, 88][..]
+            } else {
+                &[56][..]
+            };
+            for &offset in offsets {
+                let mut changed = raw.clone();
+                changed[2144 + index * 128 + offset] ^= 1;
+                if !operation.changes(native.role()) {
+                    changed[2144 + index * 128 + if offset == 56 { 88 } else { 56 }] ^= 1;
+                }
+                crate::storage::wal_frame::finish_semantic_envelope(
+                    header,
+                    operation.redo_records() as u16,
+                    &mut changed,
+                )
+                .unwrap();
+                assert!(unlink::decode_layout(&changed, expected, profile()).is_ok());
+                assert_refused_unchanged(&mut world, expected, &changed);
+            }
+        }
+        // The final payload byte forces comparison past every earlier
+        // native/redo, including the anchor redo before LeafUnlink's parent.
+        let mut changed = raw.clone();
+        let last_payload = changed.len() - 33;
+        changed[last_payload] ^= 1;
+        crate::storage::wal_frame::finish_semantic_envelope(
+            header,
+            operation.redo_records() as u16,
+            &mut changed,
+        )
+        .unwrap();
+        assert!(unlink::decode_layout(&changed, expected, profile()).is_ok());
+        assert_refused_unchanged(&mut world, expected, &changed);
+        world.apply(&raw).unwrap();
+    }
+}
+
+#[test]
+fn pr57_unlink_rejects_wrong_stream_cut_and_duplicate_frame() {
+    for (before, leaf) in [(LEAF_BEFORE, 19), (COLLAPSE_BEFORE, 11)] {
+        let mut world = World::new(before);
+        let raw = world.unlink_frame(leaf);
+        let expected = world.expectation();
+        let mut wrong_cut = expected;
+        wrong_cut.previous_lsn -= 1;
+        assert_refused_unchanged(&mut world, wrong_cut, &raw);
+        let mut wrong_epoch = expected;
+        wrong_epoch.stream.writer_epoch += 1;
+        assert_refused_unchanged(&mut world, wrong_epoch, &raw);
+        let mut wrong_timeline = expected;
+        wrong_timeline.stream.timeline += 1;
+        assert_refused_unchanged(&mut world, wrong_timeline, &raw);
+        world.apply(&raw).unwrap();
+        assert_refused_unchanged(&mut world, expected, &raw);
+        let next = world.expectation();
+        assert_refused_unchanged(&mut world, next, &raw);
+    }
+}
+
+#[test]
+fn pr57_unlink_adopts_successor_epoch_only_from_a_seeded_base() {
+    for (before, leaf) in [(LEAF_BEFORE, 19), (COLLAPSE_BEFORE, 11)] {
+        let mut producer = World::new(before);
+        let predecessor = producer.cursor.epoch.unwrap();
+        producer.cursor.epoch = Some(predecessor + 1);
+        let raw = producer.unlink_frame(leaf);
+        let expected = producer.expectation();
+        let mut world = World::new(before);
+        let rows = world.rows();
+        let claims = retention_replay_provenance(&world.replay).to_vec();
+        world.cursor.epoch = None;
+        world.cursor.predecessor_epoch = predecessor;
+        assert_refused_unchanged(&mut world, expected, &raw);
+        world.cursor.base_seeded = true;
+        let mut old_epoch = expected;
+        old_epoch.stream.writer_epoch = predecessor;
+        assert_refused_unchanged(&mut world, old_epoch, &raw);
+        let observed = observe_recovery_frame(
+            profile(),
+            expected,
+            &raw,
+            &mut world.replay,
+            &mut world.cursor,
+        )
+        .unwrap();
+        assert_eq!(observed.header.lsn, 90);
+        assert_eq!(world.cursor.epoch, Some(predecessor + 1));
+        assert_eq!(world.rows(), rows);
+        assert_eq!(
+            retention_replay_provenance(&world.replay).as_slice(),
+            claims
+        );
+        let listed: Vec<_> = world.retired().iter().map(|r| r.page.page_no).collect();
+        assert_eq!(listed, if leaf == 19 { vec![19] } else { vec![11, 17] });
+        // capture_after retains the fixture's epoch metadata. This capture
+        // belongs to the successor writer, while the old claims retain
+        // their birth epoch. Update both Base4 header epoch fields.
+        let mut capture = capture_after(before, &world);
+        for at in [144, 1184] {
+            capture[at..at + 4].copy_from_slice(&(predecessor + 1).to_le_bytes());
+        }
+        seal_capture(&mut capture);
+        let restarted = World::new(capture.as_slice().try_into().unwrap());
+        assert_eq!(restarted.cursor.epoch, Some(predecessor + 1));
+        assert_eq!(restarted.rows(), rows);
+        assert_eq!(restarted.retired(), world.retired());
+    }
+}
+
+#[test]
+fn pr57_unlink_refuses_a_valid_nonempty_leaf_cut() {
+    // ROOT is a valid independent tree: leaf11 holds rows1/2, leaf16 row3.
+    // COLLAPSE_BEFORE instead has an empty leaf11 and all three rows in16.
+    // Advance only the replay position, as unrelated frames may follow the
+    // last structural owner; do not corrupt or re-encode any tree page.
+    let raw = World::new(COLLAPSE_BEFORE).unlink_frame(11);
+    let mut world = World::new(ROOT);
+    world.cursor.previous_lsn = 89;
+    assert!(matches!(
+        world.unlink(11),
+        unlink::frame::Produced::NotNeeded
+    ));
+    let expected = world.expectation();
+    assert!(unlink::decode_layout(&raw, expected, profile()).is_ok());
+    assert_refused_unchanged(&mut world, expected, &raw);
+    assert!(matches!(
+        world.apply(&raw),
+        Err(RetentionCause::RowSemantic(RowError::IdentityMismatch))
+    ));
+}

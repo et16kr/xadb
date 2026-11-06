@@ -1,0 +1,11 @@
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 38.07s
+     Running unittests src/lib.rs (/workspace/scratch/pr57-target/debug/deps/engine-e4e141083d864921)
+
+running 3 tests
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::structural_replay_tests::unlink_replay::pr57_unlink_refuses_a_valid_nonempty_leaf_cut ... ok
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::structural_replay_tests::unlink_replay::pr57_unlink_all_native_digests_and_last_redo_are_compared_before_publication ... ok
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::structural_replay_tests::unlink_replay::pr57_unlink_adopts_successor_epoch_only_from_a_seeded_base ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 2393 filtered out; finished in 0.19s
+

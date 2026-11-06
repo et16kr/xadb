@@ -997,6 +997,94 @@
           ]
         }
       ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/wal_io/plan4_retention/recovery/structural_replay_tests/unlink.rs"
+      ],
+      "reason": "PR57 independent review: new unlink replay boundary, wire-valid late mutation, wrong cut/duplicate, successor epoch and valid nonempty leaf tests; direct canonical bytes/claims/cursor preservation. Product code unchanged.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/structural_replay_tests/unlink.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::structural_replay_tests::unlink_replay::pr57_unlink_length_boundaries_reject_without_consuming_the_cut",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "crates/engine/src/storage/wal_io/plan4_retention/recovery/structural_replay_tests.rs",
+            "tests/fixtures/module-row-format/current-tree/author.py",
+            "tests/fixtures/module-row-format/current-tree/unlink-leaf-before.xrb",
+            "tests/fixtures/module-row-format/current-tree/unlink-collapse-before.xrb",
+            "tests/fixtures/module-row-format/current-tree/root-split.xrb",
+            "tests/fixtures/module-row-format/envelopes/profiles.bin",
+            "tests/fixtures/module-row-format/base4-closure/live.xrb"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/structural_replay_tests/unlink.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::structural_replay_tests::unlink_replay::pr57_unlink_all_native_digests_and_last_redo_are_compared_before_publication",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "crates/engine/src/storage/wal_io/plan4_retention/recovery/structural_replay_tests.rs",
+            "tests/fixtures/module-row-format/current-tree/author.py",
+            "tests/fixtures/module-row-format/current-tree/unlink-leaf-before.xrb",
+            "tests/fixtures/module-row-format/current-tree/unlink-collapse-before.xrb",
+            "tests/fixtures/module-row-format/current-tree/root-split.xrb",
+            "tests/fixtures/module-row-format/envelopes/profiles.bin",
+            "tests/fixtures/module-row-format/base4-closure/live.xrb"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/structural_replay_tests/unlink.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::structural_replay_tests::unlink_replay::pr57_unlink_rejects_wrong_stream_cut_and_duplicate_frame",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "crates/engine/src/storage/wal_io/plan4_retention/recovery/structural_replay_tests.rs",
+            "tests/fixtures/module-row-format/current-tree/author.py",
+            "tests/fixtures/module-row-format/current-tree/unlink-leaf-before.xrb",
+            "tests/fixtures/module-row-format/current-tree/unlink-collapse-before.xrb",
+            "tests/fixtures/module-row-format/current-tree/root-split.xrb",
+            "tests/fixtures/module-row-format/envelopes/profiles.bin",
+            "tests/fixtures/module-row-format/base4-closure/live.xrb"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/structural_replay_tests/unlink.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::structural_replay_tests::unlink_replay::pr57_unlink_adopts_successor_epoch_only_from_a_seeded_base",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "crates/engine/src/storage/wal_io/plan4_retention/recovery/structural_replay_tests.rs",
+            "tests/fixtures/module-row-format/current-tree/author.py",
+            "tests/fixtures/module-row-format/current-tree/unlink-leaf-before.xrb",
+            "tests/fixtures/module-row-format/current-tree/unlink-collapse-before.xrb",
+            "tests/fixtures/module-row-format/current-tree/root-split.xrb",
+            "tests/fixtures/module-row-format/envelopes/profiles.bin",
+            "tests/fixtures/module-row-format/base4-closure/live.xrb"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/structural_replay_tests/unlink.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::structural_replay_tests::unlink_replay::pr57_unlink_refuses_a_valid_nonempty_leaf_cut",
+          "sources": [
+            "head"
+          ],
+          "inputs": [
+            "crates/engine/src/storage/wal_io/plan4_retention/recovery/structural_replay_tests.rs",
+            "tests/fixtures/module-row-format/current-tree/author.py",
+            "tests/fixtures/module-row-format/current-tree/unlink-leaf-before.xrb",
+            "tests/fixtures/module-row-format/current-tree/unlink-collapse-before.xrb",
+            "tests/fixtures/module-row-format/current-tree/root-split.xrb",
+            "tests/fixtures/module-row-format/envelopes/profiles.bin",
+            "tests/fixtures/module-row-format/base4-closure/live.xrb"
+          ]
+        }
+      ]
     }
   ],
   "na": [],
@@ -1053,6 +1141,26 @@
       },
       "log": "module-gate/evidence/dev3-08-1-unlink-u2/review.md",
       "log_sha256": "c18731e39d3a51da43465b02b17c6bdc23bcf70ee4a0d4070e96035a299ce259"
+    },
+    {
+      "id": "pr57-additional-replay-tests-20261106",
+      "class": "D1",
+      "scopes": [],
+      "author": "/root",
+      "reviewer": "/root/pr57_independent_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/wal_io/plan4_retention/recovery/structural_replay_tests/unlink.rs": "120e124b47c3cffdca5c0f51005a8c4731d725e5",
+        "crates/engine/src/storage/wal_io/plan4_retention/recovery/structural_replay_tests.rs": "dd44ba6f22f7a36e42685e91bfb897d4dcbb97e9",
+        "tests/fixtures/module-row-format/current-tree/author.py": "66be745d3c12cc7cbad9334ab8ae70af22e77ec3",
+        "tests/fixtures/module-row-format/current-tree/unlink-leaf-before.xrb": "93302a00a50bab4bda58a94ef0ef59ce3b04c9b4",
+        "tests/fixtures/module-row-format/current-tree/unlink-collapse-before.xrb": "75e9065a988fbd482310d202d69292faeba3752b",
+        "tests/fixtures/module-row-format/current-tree/root-split.xrb": "b667b403466ee69de55ef918dd706da9103944b3",
+        "tests/fixtures/module-row-format/envelopes/profiles.bin": "721736fc0e2edafa27e9eb43278ab33d2edb4b34",
+        "tests/fixtures/module-row-format/base4-closure/live.xrb": "08867fa718cd237e2fe45f7b2e2e7e366b22af71"
+      },
+      "log": "module-gate/evidence/pr57-review/review.md (sha256 8ac4df6da0b5126adb25c6346f6d6b2a72cc5164e1137022c8cd468f504a671b)"
     }
   ]
 }
