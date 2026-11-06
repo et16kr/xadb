@@ -194,3 +194,99 @@ Verdict: ACCEPT
   `document-validation.json`은 `status: FAIL`(missing link)이다. 그 폴더를 더한 뒤 문서 검사로 다시 만들어야 한다.
   지시대로 finding으로 세지 않는다.
 - 판정은 **ACCEPT(필수 0, 권고 0) 그대로**다. 남은 NIT는 없다.
+
+## common API(disk) 검토
+
+### 대상
+
+- 범위: `git -C …/wt-u3 diff 92b22bf HEAD`(HEAD `99815c2`), 아래 아홉 파일. 읽기만 했다. code는 `3b0fd72` 뒤로
+  `structural_unlink.rs`의 주석(NIT 1)만 바뀌었다.
+- gate가 요구한 blob(HEAD에서 `git rev-parse`로 확인, `check_module_gate.py files` 출력과 같음):
+  - `disk.rs` 0b2d39bd06d2
+  - `wal_io/disk_api.rs` ec6394b50caa
+  - `wal_io/plan4_apply.rs` 27ad38df1e4f
+  - `wal_io/plan4_apply/row.rs` f2fe28daefed
+  - `wal_io/plan4_apply/row/split.rs` c595ed3fa810
+  - `wal_io/plan4_retention/catalog_live.rs` 9c0e8483c392
+  - `wal_io/plan4_retention/row_start/retire.rs` 5a1534530979
+  - `wal_io/plan4_retention/structural_live.rs` 335638e3c340
+  - `wal_io/plan4_retention/structural_unlink.rs` 59c05b71cff1
+- 기준:
+  - `dev3-module-boundaries.md` §4·4.1(`disk_api`는 `pub(in crate::storage)`, `disk`는 crate 내부 API이고 API type과
+    checked method만 선택 재노출한다. port 타입은 `pub(crate)`, 일반 method는 `pub(in crate::storage)`, 필드는 private이고
+    raw backend·pool·control·runtime을 돌려주는 method가 없다. raw constructor도 없다).
+  - gate manifest `devdoc/policies/module-gate.json`(`disk` common-api, A·B·CAT의 allow `disk, codec, semantic, values`,
+    JOIN `*`, exports side a/b의 `cargo test --no-run`).
+  - 설계 `dev3-tree-smo.md` 1287-1290의 C 입구 서명.
+- gate 실행(읽기 전용, `--out`은 scratchpad):
+  - `check --base origin/main --head HEAD`의 오류는 이 아홉 파일의 "review missing: D2 common" 9개뿐이다. import graph나
+    다른 위반은 없다.
+  - `files`는 위 blob을 출력했다.
+  - 작성자 worktree의 `git status`는 깨끗하다.
+
+### disk 표면이 얻거나 바뀐 것
+
+1. **새 type `disk::RowUnlinkStep`**(`#[derive(Debug)] pub(in crate::storage) enum`, variant `Unlinked(smo::Operation)`·
+   `FlushRequired(Plan4Target)`·`NotNeeded`).
+   - 재노출 경로: structural_unlink.rs:30 → `row/split.rs:12` → `row.rs:55` → `plan4_apply.rs:159` → `disk_api.rs:50` →
+     `disk.rs:58`. 모두 `pub(in crate::storage)`이고, 기존 `RowSplitStep`과 경로·가시성·derive가 같다.
+   - payload `Plan4Target`은 이미 disk 품목이다. `smo::Operation`(`semantic_row::structure::Operation`, `pub(crate)`)은 A의
+     allow에 있는 `semantic` 모듈 type이다. 기존 `RowRetireStep::Retired(row_group::Observation)`도 semantic 값을 싣는다.
+     A는 이 값을 `_`로 버린다(live.rs:410).
+   - Clone·Copy와 raw constructor 문제는 없다. variant를 만드는 곳은 C의 `unlink_live_admitted`·`unlink_row_admitted`뿐이다.
+2. **disk의 `MutationPort`(= C 안의 별칭 `RetentionWriter`)에 더한 inherent method**(structural_unlink.rs).
+   - `unlink_next(&mut self) -> Result<Option<(ObjectHandle, RowId)>>`와
+     `unlink_leaf_live(&mut self, owner, table: ObjectHandle, key: RowId, private: &mut [u8; PRIVATE_BYTES], flusher) ->
+     Result<RowUnlinkStep>`. 둘 다 `pub(in crate::storage)`이고, 정책의 "일반 method" 가시성이다.
+   - 서명은 설계 1287-1288과 같다. CheckedTable 대신 ObjectHandle을 받는 이유(drain에는 statement view가 없다)는 설계가
+     정했다.
+   - 입력이 넓어지지는 않는다. `unlink_leaf_live`는 C 자신이 남긴 note 가운데 (table, key)가 맞는 것이 없으면 Unchanged
+     `InvalidInput`이다(:299-311). 그 뒤 모든 조건을 같은 cut의 canonical replay로 다시 검산한다. 그래서 소비자가 임의의
+     table이나 page를 겨눌 수 없다.
+   - 돌려주는 값은 note의 (table, RowId)와 step뿐이다. anchor PageRef, pool·control bytes, frame이나 raw 참조는 나오지 않는다.
+   - 같은 port의 live 정리 입구 `retire_row`(row_start/retire.rs:284)도 `plan4_retention`에 `pub(in crate::storage)`로
+     정의돼 있다. 이 위치는 기존 관례와 같다.
+   - `test_unlink_notes`는 `#[cfg(test)]`이고 `Vec<(u64, u64)>`만 돌려준다.
+   - `note_emptied_leaf`는 `pub(in create_pair)`(:257)라 C 안에만 보인다. A·B·CAT 표면이 아니다.
+3. **disk의 `RetentionError`에 더한 `unlink_busy(&self) -> bool`**(plan4_apply.rs:366-385, `pub(crate)`).
+   - 같은 type의 기존 판정 `visibility_busy`·`row_capacity`와 가시성이 같다. 필드가 이미 `pub(crate)`라 새로 드러나는
+     값은 없다.
+   - 목록(Unchanged이고 `Concurrency(Busy)`, `Frame` Stale·Busy, `Visibility(Busy)`)은 계약 1774와 같다. 기존
+     `visibility_busy`의 의미는 바꾸지 않았다.
+4. **표면을 바꾸지 않는 파일.**
+   - `catalog_live.rs`: census 주석과 `.max(note_source_bytes())` 항 하나다.
+   - `row_start/retire.rs`: private `delete_prune_note`, `retire_resident` 안의 note 호출, census 함수 문서와 항이다.
+   - `structural_live.rs`: `split_load`가 private에서 `pub(super)`로 바뀌었다(`effect` 아래의 형제 `unlink`가 쓰는 최소
+     가시성이다). census helper 둘(`load_step_bytes`·`split_debt_bytes`)도 `pub(super)`다.
+   - 이 셋은 disk가 재노출하는 type(`RetentionWriter`)에 impl을 두는 파일이라 gate가 목록에 넣었다. 새 공개 품목은 없다.
+5. **C 안의 새 공개 이름이 소비자에게 새지 않는다.** `PreparedUnlink`(필드 private, 생성은 `prepare_unlink`뿐),
+   `UnlinkSource`·`source_bytes`·`note_source_bytes`·`note_region`(census, `note_region`은 cfg(test)), `note` 모듈은
+   `pub(in crate::storage)`이나 `pub(in super^4)`다. 하지만 경로 모듈 `bootstrap::…::plan4_pages`가 정책 4.1대로 wal_io
+   밖에 열리지 않고, disk는 이것들을 재노출하지 않는다. 실제 사용처도 C 안과 `plan4_apply/source_tests.rs`의 census 시험뿐이다
+   (grep 확인).
+6. `Retired`·`RetireStop`·`Stage::Unlink`·`UnlinkNext`·`Boundary::{unlink_next, unlink}`는 A의 driver type(row/insert/driver.rs)이다.
+   disk 표면이 아니다. `Retired` 크기 24B 유지와 필드 의미는 1·2회차에서 보았다.
+
+### `#[allow(unused_imports)]`
+
+- `disk.rs:54-58`의 이유는 "named only by A's cleanup drain; the C+B export has no A"다. 이것은 사실이다.
+  - product 사용처는 A의 `driver/live.rs:30`뿐이다.
+  - 시험(JOIN, allow `*`)은 `wal_io::disk_api::RowUnlinkStep`을 직접 쓴다(unlink_rows.rs:1754). auto_split.rs:20의
+    `disk_api::RowSplitStep`과 같은 관례다.
+  - 그래서 A를 지운 C+B export(side b, `cargo test --no-run`)에서는 `disk::RowUnlinkStep`이 쓰이지 않는다.
+  - `RowRetireStep`·`RowSplitStep` 행과 같은 모양·같은 이유다.
+- 중간 재노출(`disk_api.rs`, `plan4_apply.rs`, `row.rs`, `row/split.rs`)에는 allow가 없다. 다음 단계의 `use`가 쓰므로
+  필요 없고, `RowSplitStep`과 같다.
+- `3b0fd72`에서 workspace clippy `-D warnings`는 PASS였다(위 직접 확인). 두 export side의 build는 돌리지 않았고 CI에 맡긴다.
+
+### 판정
+
+**ACCEPT(common scope, finding 없음).** disk 표면은 품목 셋만 얻는다.
+
+- type 하나: `RowUnlinkStep`.
+- `MutationPort`의 checked method 둘: `unlink_next`, `unlink_leaf_live`.
+- `RetentionError`의 판정 하나: `unlink_busy`.
+
+모두 기존 `RowSplitStep`·`retire_row`·`visibility_busy`와 같은 가시성·경로·관례다. 필요보다 넓은 가시성은 없다
+(`split_load`도 `pub(super)`). 내부 type이 A·B·CAT로 새지 않고, raw backend나 constructor도 드러나지 않는다.
+allow 이유도 맞다. 계약 `dev3-module-boundaries.md`에는 disk 품목 목록이 없으므로 고칠 행이 없다. 서명은 설계 1287-1288과 같다.
