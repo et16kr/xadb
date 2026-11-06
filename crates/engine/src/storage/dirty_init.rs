@@ -1108,6 +1108,8 @@ pub(in crate::storage) mod test_support {
         StructuralReplayChecked,
         StructuralFinishChecked,
         StructuralCancelChecking,
+        /// The live unlink's group is prepared; its install has not begun.
+        UnlinkPrepared,
         LoadResidentObserved,
         LoadCleanSelected,
         LoadFlushSelected,

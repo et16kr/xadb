@@ -30,7 +30,10 @@ use crate::storage::{
     row_record::{MAX_ROW_COLUMNS, ValueRef, canonical_values_len},
     semantic_row::Operation,
 };
-use foundation::{error::Effect, identity::RowId};
+use foundation::{
+    error::Effect,
+    identity::{ObjectHandle, RowId},
+};
 use std::convert::Infallible;
 
 pub(in crate::storage) mod autocommit;
@@ -153,6 +156,19 @@ trait Boundary {
         length: usize,
         loan: &mut Loan,
     ) -> Result<SplitNext<Self::Target>, RetentionError>;
+    /// C's first kept unlink note, as (table, the RowId whose removal left
+    /// its routed RowLeaf empty), or None (`unlink_next`,
+    /// dev3-tree-smo.md#empty-leaf-unlink). C first drops the notes of a
+    /// table with Catalog debt.
+    fn unlink_next(&mut self) -> Result<Option<(ObjectHandle, RowId)>, RetentionError>;
+    /// C's live unlink for that note (`unlink_leaf_live`) with the statement
+    /// Owner and the call's flusher as its flush lease.
+    fn unlink(
+        &mut self,
+        table: ObjectHandle,
+        key: RowId,
+        loan: &mut Loan,
+    ) -> Result<UnlinkNext<Self::Target>, RetentionError>;
 }
 
 /// What C answered for one live split (dev3-tree-smo.md#automatic-split).
@@ -185,6 +201,22 @@ enum RetireNext<F> {
     Flush(F),
     /// C refused it unchanged with `Visibility(Busy)`: a live reference pin
     /// or an older snapshot still holds its target.
+    Held,
+}
+
+/// What C answered for one live unlink (dev3-tree-smo.md#empty-leaf-unlink).
+#[derive(Debug)]
+enum UnlinkNext<F> {
+    /// One LeafUnlink or RootCollapse is installed and durable; C dropped
+    /// its note.
+    Unlinked,
+    /// The residency of its pages needs this dirty victim flushed first;
+    /// nothing was prepared or staged and the note stays.
+    Flush(F),
+    /// The tree needs no unlink there; C dropped the note.
+    NotNeeded,
+    /// C refused it unchanged with a Busy-class cause
+    /// (`RetentionError::unlink_busy`); the note stays.
     Held,
 }
 
@@ -375,6 +407,9 @@ pub(crate) enum Stage {
     RollbackFinish,
     /// C's live split of a row's full leaf (`split_row_live`).
     Split,
+    /// C's `unlink_next` or `unlink_leaf_live` in a live Row cleanup drain
+    /// (dev3-tree-smo.md#empty-leaf-unlink).
+    Unlink,
 }
 
 /// A failed call's first error and, for a row, the one release after it.
@@ -1520,6 +1555,10 @@ const CLEANUP_HELD: usize = 8;
 /// commit and 4n + 1 after its abort, so a commit of more than 12 rows takes
 /// more than one drain: the caller drains again while `complete` is false.
 const CLEANUP_GROUPS: usize = 64;
+/// Most live unlink answers one complete cleanup drain asks for
+/// (dev3-tree-smo.md#empty-leaf-unlink, 호출자): C's `Unlinked` and
+/// `NotNeeded` count, a FlushRequired does not. C keeps at most eight notes.
+const CLEANUP_UNLINKS: u8 = 8;
 
 /// What one live Row cleanup drain did (`retire_finished`).
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -1533,6 +1572,14 @@ pub(crate) struct Retired {
     /// drain stopped at `CLEANUP_GROUPS` or at a held step past
     /// `CLEANUP_HELD`.
     pub(crate) complete: bool,
+    /// Live unlinks C installed after a complete drain
+    /// (dev3-tree-smo.md#empty-leaf-unlink), at most `CLEANUP_UNLINKS`.
+    /// One byte, like `unlink_held`: both fit in the padding after
+    /// `complete`, so the drain's carriers keep their size.
+    pub(crate) unlinked: u8,
+    /// 1 when C refused the drain's last unlink with a Busy-class cause,
+    /// which ended its unlinks and kept the note for a later drain.
+    pub(crate) unlink_held: u8,
 }
 
 /// A live Row cleanup drain that C refused other than with Busy: the
@@ -1562,7 +1609,9 @@ enum GroupStop {
 /// under C's rule (`row_cleanup_next`): the drain holds the call, so no Job
 /// is allocated between its calls. Any other refusal ends the drain with
 /// what it installed; an unchanged one that C keeps selecting first blocks
-/// the later steps until its cause is gone.
+/// the later steps until its cause is gone. Once C selects none, the drain
+/// asks C's live unlinks of the RowLeafs its groups emptied
+/// (`unlink_notes`, dev3-tree-smo.md#empty-leaf-unlink).
 #[inline(never)]
 #[allow(
     clippy::result_large_err,
@@ -1576,7 +1625,7 @@ fn retire_finished<B: Boundary>(call: &mut B, loan: &mut Loan) -> Result<Retired
             Ok(Some(step)) => step,
             Ok(None) => {
                 retired.complete = true;
-                return Ok(retired);
+                return unlink_notes(call, loan, retired);
             }
             Err(error) => {
                 return Err(RetireStop {
@@ -1593,6 +1642,64 @@ fn retire_finished<B: Boundary>(call: &mut B, loan: &mut Loan) -> Result<Retired
             }
             Err(GroupStop::Held) => return Ok(retired),
             Err(GroupStop::Failed(failure)) => return Err(RetireStop { retired, failure }),
+        }
+    }
+    Ok(retired)
+}
+
+/// After a complete drain, C's live unlinks of emptied RowLeafs
+/// (dev3-tree-smo.md#empty-leaf-unlink, 호출자): C's next kept note and
+/// its unlink, until C keeps none, up to `CLEANUP_UNLINKS` answers. A
+/// residency victim is flushed (`flush`) and the same note asked again,
+/// which is not counted. A Busy-class refusal keeps its note and ends the
+/// unlinks (`unlink_held`); any other refusal ends the drain with
+/// `Stage::Unlink` (C dropped an unchanged one's note) and what it did
+/// before. Never inlined, and it returns the drain's result in the drain's
+/// place: the drain's own frame keeps its size.
+#[inline(never)]
+#[allow(
+    clippy::result_large_err,
+    reason = "Failure keeps the stage and the error inline, without allocation"
+)]
+fn unlink_notes<B: Boundary>(
+    call: &mut B,
+    loan: &mut Loan,
+    mut retired: Retired,
+) -> Result<Retired, RetireStop> {
+    let mut asked = 0;
+    while asked < CLEANUP_UNLINKS {
+        let (table, key) = match call.unlink_next() {
+            Ok(Some(note)) => note,
+            Ok(None) => return Ok(retired),
+            Err(error) => {
+                return Err(RetireStop {
+                    retired,
+                    failure: Failure::new(Stage::Unlink, error.into()),
+                });
+            }
+        };
+        match call.unlink(table, key, loan) {
+            Ok(UnlinkNext::Unlinked) => {
+                asked += 1;
+                retired.unlinked += 1;
+            }
+            Ok(UnlinkNext::NotNeeded) => asked += 1,
+            // The target stays in C's answer: no copy of it in this frame.
+            Ok(UnlinkNext::Flush(ref target)) => {
+                if let Err(failure) = flush(call, target) {
+                    return Err(RetireStop { retired, failure });
+                }
+            }
+            Ok(UnlinkNext::Held) => {
+                retired.unlink_held = 1;
+                return Ok(retired);
+            }
+            Err(error) => {
+                return Err(RetireStop {
+                    retired,
+                    failure: Failure::new(Stage::Unlink, error.into()),
+                });
+            }
         }
     }
     Ok(retired)
@@ -2689,7 +2796,7 @@ const fn call_sites<B: Boundary + 'static>() -> [CallSite; CALL_SITES] {
 }
 
 #[cfg(test)]
-const CLEANUP_SITES: usize = 4;
+const CLEANUP_SITES: usize = 8;
 
 /// A's share at each C call of the live Row cleanup drain (reclamation
 /// `#live-row-cleanup-caller`) as (site, per-call share, frame-static
@@ -2699,7 +2806,11 @@ const CLEANUP_SITES: usize = 4;
 /// standard slack once, a C call's result twice (the driver's slot and the
 /// forwarding frame's return), a forwarding frame's arguments, and for the
 /// frame-static share every own slot of each driver frame on the path. C's
-/// own return carrier (`Result<RowRetireStep>`) belongs to C's census.
+/// own return carriers (`Result<RowRetireStep>`, `Result<RowUnlinkStep>`)
+/// belong to C's census. The unlinks (dev3-tree-smo.md#empty-leaf-unlink)
+/// run in `unlink_notes`' frame below the drain's, with the drain's
+/// arguments and its moved `Retired` as the call's packet; it returns in
+/// the drain's place, which is the caller's.
 #[cfg(test)]
 const fn cleanup_sites<B: Boundary + 'static>(
     caller: usize,
@@ -2744,6 +2855,25 @@ const fn cleanup_sites<B: Boundary + 'static>(
         + 2 * r
         + size_of::<Result<(), Failure>>();
     let in_flush = base + drain_frame + group_frame + flush_frame;
+    // unlink_notes: the call's packet (its arguments, the moved Retired),
+    // its count, C's next answer, the note it binds, C's unlink answer, a
+    // reference to the flush target in it and flush's result (a Failure is
+    // built in the drain's result).
+    let unlink_call = 2 * r + size_of::<Retired>();
+    let unlink_live = 2 * r + size_of::<Retired>() + size_of::<u8>();
+    let unlink_next = size_of::<Result<Option<(ObjectHandle, RowId)>, RetentionError>>();
+    let note = size_of::<(ObjectHandle, RowId)>();
+    let unlink = size_of::<Result<UnlinkNext<G<B>>, RetentionError>>();
+    let unlink_frame =
+        unlink_live + unlink_next + note + unlink + r + size_of::<Result<(), Failure>>();
+    // `unlink_next(&mut self)`; `unlink(&mut self, table, key, loan)`.
+    let unlink_arguments = 2 * r + note;
+    let unlinking = base + drain_live + unlink_call + unlink_live;
+    // At a flush: C's answer holding the target, the reference, and flush's
+    // arguments and result slot.
+    let unlink_flushing = unlinking + unlink + r + 2 * r + size_of::<Result<(), Failure>>();
+    let in_unlink = base + drain_frame + unlink_call + unlink_frame;
+    let in_unlink_flush = in_unlink + flush_frame;
     [
         (
             "cleanup.next",
@@ -2764,6 +2894,26 @@ const fn cleanup_sites<B: Boundary + 'static>(
             "cleanup.continue_flush",
             flushing + 2 * size_of::<Result<FlushStep, RetentionError>>() + r,
             in_flush + size_of::<Result<FlushStep, RetentionError>>() + r,
+        ),
+        (
+            "cleanup.unlink_next",
+            unlinking + r + 2 * unlink_next,
+            in_unlink + r + unlink_next,
+        ),
+        (
+            "cleanup.unlink",
+            unlinking + note + unlink_arguments + 2 * unlink,
+            in_unlink + unlink_arguments + unlink,
+        ),
+        (
+            "cleanup.unlink_try_flush",
+            unlink_flushing + 2 * size_of::<Result<(), RetentionError>>() + 2 * r,
+            in_unlink_flush + size_of::<Result<(), RetentionError>>() + 2 * r,
+        ),
+        (
+            "cleanup.unlink_continue_flush",
+            unlink_flushing + 2 * size_of::<Result<FlushStep, RetentionError>>() + r,
+            in_unlink_flush + size_of::<Result<FlushStep, RetentionError>>() + r,
         ),
     ]
 }

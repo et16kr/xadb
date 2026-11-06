@@ -370,9 +370,11 @@ fn spl_a02_one_statement_splits_root_and_child_and_commits() {
 /// rows splits T's leaf at its eighth row, whose value check finds the leaf
 /// full (a RootSplit beside the transaction's seven Retained INSERT roots,
 /// which reserve nothing), then the caller rolls the transaction back. No
-/// row stands, but the split does: two leaves, now empty. A later
-/// autocommit INSERT commits at q 2 into the current tree, and a new
-/// statement and C's restart read only that row.
+/// row stands, but the split does: two leaves, now empty (`leaves` reads
+/// every registered leaf; the rollback's drain then collapses the root over
+/// them, which UNL-L06 checks). A later autocommit INSERT commits at q 2
+/// into the current tree, and a new statement and C's restart read only
+/// that row.
 #[test]
 fn spl_a03_split_survives_the_rollback_of_its_transaction() {
     case_within("SPL-A03", std::time::Duration::from_secs(900), || {
@@ -1128,3 +1130,8 @@ fn spl_review_failed_statement_after_split_preserves_prior_work() {
         assert_eq!(joined.rows, expected);
     });
 }
+
+/// UNL-L (dev3-tree-smo.md#empty-leaf-unlink): the live unlink of a RowLeaf
+/// that A's DELETE or a rolled-back INSERT emptied, over SPL-A's table.
+#[path = "unlink_rows.rs"]
+mod unlink_rows;

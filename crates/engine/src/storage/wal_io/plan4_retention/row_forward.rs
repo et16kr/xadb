@@ -1581,9 +1581,14 @@ pub(in super::super::super::super) fn row_forward_body<W: WriterNamespace>(
             .max(row_group::layout_source_bytes())
             .max(assembled);
     let register = register + 2 * size_of::<Result<()>>();
+    // An INSERT CLR's unlink note after its install
+    // (dev3-tree-smo.md#empty-leaf-unlink) in `row_apply_clr`, whose frame
+    // this phase stands for.
+    let note = super::super::super::super::structural::effect::unlink::note_source_bytes();
     let apply = apply_shell
         + (apply_frame
-            + entry.max(apply_held + apply_group + reassemble.max(register).max(install)))
+            + entry
+                .max(apply_held + apply_group + reassemble.max(register).max(install).max(note)))
         .max(apply_arms);
     RowForwardBody {
         recompute,

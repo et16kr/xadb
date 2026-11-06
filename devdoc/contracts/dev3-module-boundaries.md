@@ -3302,7 +3302,7 @@ native Writer에서 같고, 시험 `f4_a_autocommit_budgets_{memory,native}`가 
 | Commit frame | 2,889 | 3,024 (그대로) | 135 |
 | statement end | 5,948 | 6,144 (그대로) | 196 |
 | insert 지점(preflight 5,500, 최대 producer lane 9,332) | — | 기존 preflight·Write 상한 그대로 | 644 이상 |
-| 정리 drain 네 지점(최대 `try_flush` 3,979, caller 816) | — | `LIVE_ROW_CLEANUP` 4,096 (그대로) | 117 이상 |
+| 정리 drain 네 지점(최대 `try_flush` 3,979, caller 816). 08-1 U3가 unlink 네 지점을 더한 뒤 최대 `unlink_try_flush` 4,082([U3 census](dev3-tree-smo.md#unlink-u3-census)) | — | `LIVE_ROW_CLEANUP` 4,096 (그대로) | 117 이상, U3 뒤 14 |
 | rollback base caller | 1,377 | **1,536** (512에서) | 159 |
 | `rollback.next` | 6,361 | **6,528** (6,144에서) | 167 |
 | `rollback.clr_lane` | 12,185 | **12,416** (11,520에서) | 231 |
@@ -3415,7 +3415,7 @@ rollback으로 r행을 되돌린 거래는 5c+4r+1그룹, 전체 rollback은 적
 | `rollback.finish`(거래 경로) | 5,952 | 6,144 | 192 |
 | 나머지 rollback 지점(두 경로) | — | 그대로 | 320 이상 |
 | insert 지점(preflight 5,267, 최대 producer lane 9,099) | — | 그대로 | 877 이상 |
-| 정리 drain 네 지점(최대 `try_flush` 3,979) | — | 4,096 | 117 |
+| 정리 drain 네 지점(최대 `try_flush` 3,979). 08-1 U3 뒤 여덟 지점, 최대 `unlink_try_flush` 4,082 | — | 4,096 | 117, U3 뒤 14 |
 | Begin | 2,577 | 2,816 (새) | 239 |
 | statement 시작 | 3,176 | 3,584 (새) | 408 |
 

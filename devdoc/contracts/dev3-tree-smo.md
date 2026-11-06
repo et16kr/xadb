@@ -931,7 +931,7 @@ stack/RSS 측정이 아니다.
 | ID | 고정 경계와 판정 |
 | --- | --- |
 | SPL-J01 | 한 거래가7..10을 INSERT(Retained4)한 상태에서 RootSplit 허용, 두 leaf 2/2. 같은 거래의 다섯째 INSERT는 오른쪽 leaf. Commit q2, drain 26 groups, Row Job0, point/cursor와 재시작(q2, CLR0)이 다섯 행을 읽음 |
-| SPL-J02 | 7,8 commit 뒤 9..12 INSERT 상태에서 RootSplit, rollback의 InsertClr4가 route한 leaf에서 행 제거, drain17. 다음 INSERT(q3)는 오른쪽 leaf. 재시작이 7,8,13을 읽음 |
+| SPL-J02 | 7,8 commit 뒤 9..12 INSERT 상태에서 RootSplit, rollback의 InsertClr4가 route한 leaf에서 행 제거, drain17. 다음 INSERT(q3)는 오른쪽 leaf. 재시작이 7,8,13을 읽음. U3 뒤에는 rollback drain이 빈 오른쪽 leaf를 RootCollapse하므로 INSERT 13은 root leaf로 들어간다([U3 결과](#unlink-u3)) |
 | SPL-J03 | 7..10 commit·RootSplit 뒤 DELETE 7·UPDATE 10→100 상태에서 오른쪽 leaf ChildSplit(1/1), rollback이 둘을 복원(drain9). 같은 변경의 Commit q3, DeletePrune·UpdatePrune(drain11), INSERT q4는 가장 오른쪽 leaf. 재시작 q4가8,9,100,11을 읽음 |
 | SPL-J04 | split tree에서 승자 DELETE 8 Commit(정리 전)과 다른 Status의 패자 DELETE 7·UPDATE 9·INSERT 11, 그 옆 ChildSplit 뒤 파일 채취. 재시작이 승자 Prune과 패자 CLR3을 route한 leaf에서 실행, READY q3·Row Job0, cursor가7,9,10을 읽음 |
 | SPL-J05 | table의 CREATE Catalog Job이 남아 있으면 split은 무효과 Unsupported. WAL·bank·Jobs 불변, fence 없음, B가 네 행을 읽음 |
@@ -1362,7 +1362,7 @@ extent를 계속 차지하므로 unlink는 tree를 줄이고 route 비용을 줄
 부하에서는 unlink가 없을 때보다 첫 extent를 먼저 소진할 수 있다. 소진되면 [자동 split](#automatic-split)이
 Capacity로 거절한다. 제품 table은 CREATE Catalog Job 때문에 일정 10-1 전에는 unlink도 하지 않는다.
 
-### 시험 계획 (U1·U2 행의 결과는 [U1 결과](#unlink-u1)·[U2 결과](#unlink-u2), 나머지 NOT_RUN)
+### 시험 계획 (U1·U2·U3 행의 결과는 [U1 결과](#unlink-u1)·[U2 결과](#unlink-u2)·[U3 결과](#unlink-u3), 나머지 NOT_RUN)
 
 | ID | 경계와 독립 판정 |
 | --- | --- |
@@ -1712,3 +1712,153 @@ scope4 dispatch를 지나는 두 시험은 main `1725df0`에서도 같은 값으
 원인은 시험 기대값이다. split의 scope4 arm(`37a0465`)이 들어올 때 이 기대를 고치지 않았다. 별도 작업("Fix scope 4
 frame routing test")이 시험 두 파일만 고쳤고(독립 D1 ACCEPT, 기록 `module-gate/records/20261106-scope4-relabel-tests.json`),
 그 commit `ec7e4aa`를 U2 브랜치에 merge했다. merge한 상태에서 두 시험은 PASS다.
+
+<a id="unlink-u3"></a>
+### U3 결과
+
+상태는 **2026-11-06 구현·memory 시험 PASS, 독립 D2 대기**다. live DELETE의 DeletePrune이나 rollback한 INSERT의 CLR이
+non-root RowLeaf를 비우면, 정리 drain이 끝난 뒤 그 leaf를 LeafUnlink 또는 RootCollapse로 tree에서 뺀다. SQL 결과·오류는
+같다. 바뀌는 것은 tree 모양(빈 leaf가 route에서 빠지고 anchor 목록에 남음)과, drain마다 unlink 하나에 canonical replay
+1회와 fsync 1회가 붙는 비용이다. 제품 table은 일정 10-1 전까지 CREATE Catalog Job 때문에 note가 버려지므로 unlink하지
+않는다(UNL-L07). native fault cut은 U4다.
+
+구현(C, `plan4_retention/structural_unlink.rs`):
+
+- RAM note(`note`): writer의 control 대여 bytes [65,088..65,536)에 56B note 8칸을 둔다. bank 39행(1,664B씩, 64,896B)
+  뒤, Jobs(65,536) 앞이다. note는 (table ObjectHandle, anchor PageRef, 지운 행의 RowId)이고 들어온 순서로 남는다. 같은 note는
+  두 번 남지 않고, 지우면 뒤 note가 앞으로 당겨지며, 가득 차면 새 note를 버린다. 새 session과 복구 restore는 이 구역을 canonical bank에서 다시 시작하므로 재시작하면 note가
+  사라진다. ControlCut은 이 구역을 포함하므로, note는 그룹 설치가 끝난 뒤에만 쓰고 drain 단계에서만 지운다. 그래서
+  준비한 cut을 쥔 채 note를 쓰는 일은 없다.
+- note를 남기는 곳(`note_emptied_leaf`): 설치가 끝난 그룹의 RowLeaf after image가 cell 0개이고 그 leaf가 table의
+  page일 때다. root인지는 보지 않는다(drain의 route가 NotNeeded로 안다). note를 남기지 못하면 버린다(note는 hint다).
+  - live DeletePrune(`retire_resident`): 준비 전에 RootRetained Job에서 table·anchor·행을 읽는다
+    (`delete_prune_note`. 그룹이 그 Job의 pair를 놓기 때문이다).
+  - live INSERT CLR(`row_apply_clr`): 복구 facade의 CLR(recovery table slot)은 note를 남기지 않는다.
+- `unlink_next`: 첫 note를 돌려준다. non-Free Catalog Job이 있는 table의 note는 먼저 조용히 버린다.
+- `unlink_leaf_live(owner, table, key, private, flusher) -> RowUnlinkStep {Unlinked(opcode), FlushRequired(target),
+  NotNeeded}`. note가 없는 key는 Unchanged `InvalidInput`이다. split과 같은 `structural_shell` 안에서 다음을 한다.
+  1. residency(`unlink_resident`): anchor LOAD, anchor의 현재 root에서 key를 route하며 RowInternal마다 LOAD와 읽기,
+     leaf LOAD와 cell 수, parent의 separator 수. separator ≥2면 LeafUnlink(set 3장)다. separator 1이고 parent가 root
+     (depth 1)면 RootCollapse(survivor를 더한 set 4장)다. 그 밖(root leaf, cell이 있는 leaf, separator 1인 non-root
+     parent)은 부채와 무관하게 NotNeeded다. 그다음 `check_split_debt`(table 자신의 RootReserved Row Job 또는 non-Free
+     Catalog Job → Unchanged `Unsupported`), 그리고 set의 LOAD다. LOAD는 split의 `split_load`이고, dirty victim이
+     필요하면 아무것도 준비하지 않고 `FlushRequired`로 끝난다.
+  2. 별도 frame에서 준비(`prepare_unlink`): 같은 cut의 canonical replay(`validate_live`), Structural bank 칸의 이전
+     owner, 원 Jobs로 `unlink::frame::produce`를 부른다. resident page가 canonical image와 같은지 한 typed read로 보고
+     그 stamp를 설치의 기대 stamp로 쥔다. XOI successor(`prepare_inventory`)와 `check_progress_room`(counter+1은
+     anchor와 LeafUnlink의 P뿐)을 검산하고, WAL prefix와 cut이 그대로인지 본다. canonical candidate가 None이면
+     NotNeeded다. 그 뒤 `check_split_debt`를 준비한 cut에서 한 번 더 본다.
+  3. 설치: `ExistingGroup::Structural(PreparedUnlink)`로 기존 설치 본문 `apply_existing`을 지난다. `check`는 binding·
+     prefix·cut(→ Busy), target마다 `matches_stamp`(→ `Frame(Stale)`)다. after는 anchor와 LeafUnlink의 P뿐이다.
+     control part는 `StructuralControlCommit`의 규칙대로 Structural bank 칸을 frame의 Finished descriptor·LSN·STABLE로
+     바꾸고 XOI successor를 쓴다(복구의 `apply_unlink`가 쓰는 칸과 같다). INIT claim·I/O lease·durable 뒤 canonical
+     replay는 쓰지 않는다.
+  - note: `Unlinked`·`NotNeeded`·Busy 계열이 아닌 Unchanged 거절은 note를 지운다. `FlushRequired`·Busy 계열·Fatal은
+    남긴다. Busy 계열은 `RetentionError::unlink_busy`(Unchanged이고 `Concurrency(Busy)`, `Frame`의 Stale·Busy,
+    `Visibility(Busy)`)다.
+- test seam: `InitPoint::UnlinkPrepared`(cfg(test), 준비 뒤 설치 전)다.
+
+구현(A, `row/insert/driver.rs`):
+
+- `Boundary`에 `unlink_next`·`unlink`, 답 `UnlinkNext {Unlinked, Flush, NotNeeded, Held}`, `Stage::Unlink`,
+  `CLEANUP_UNLINKS` = 8을 더했다.
+- `retire_finished`가 `complete`가 되면 inline되지 않는 `unlink_notes`가 drain의 결과 자리에서 돌아온다.
+  `Unlinked`·`NotNeeded`는 한 번으로 센다. `Flush`는 split과 같은 `flush`(try·continue) 뒤 같은 note를 다시 묻고 세지
+  않는다. `Held`는 `unlink_held` = 1로 unlink를 멈춘다. 그 밖의 오류는 `RetireStop`(`Stage::Unlink`)이고 그때까지의
+  `Retired`를 담는다.
+- `Retired`에 `unlinked`·`unlink_held`(각 u8)를 더했다. `complete` 뒤 padding에 들어가므로 크기는 24B 그대로다.
+
+<a id="unlink-u3-census"></a>
+census(UNL-A03·C03). 값은 memory·native가 같다. 상한은 바꾸지 않았다.
+
+- C unlink(`unlink::source_bytes`, UNL-A03 C 쪽): carriers 961B(입구의 note 조회와 그 Result, tree, table·key, 인수와 closure capture, 단계마다의 답 Result), residency 36,063B,
+  준비 36,561B(공유 입구의 replay 상한 포함), 설치 31,053B(4 target), peak 36,561B. caller 상한 `LIVE_ROW_CLEANUP`
+  4,096B를 더해 40,657 ≤ 44,304B(여유 3,647B)다. live Row 회수와 같이 이름으로 단언하고 charge나 `peak`에 접지
+  않으므로 둘 다 그대로다(charge 44,304B, catalog live peak 44,304B).
+- note 쓰기(`note_source_bytes` 6,724B): `note_emptied_leaf`의 인수와 tree decode, `note::record`, DeletePrune의
+  Job decode 중 큰 쪽이다. 각 호출자가 설치(또는 준비)와 max로 더한다.
+  - live Row 회수(`row_retirement`): 39,566B에서 **39,694B**(+128B, `retire_resident` frame의 note Option과 그
+    Result)다. caller 상한을 더해 43,790 ≤ 44,304B(여유 514B)다.
+  - INSERT CLR(Row forward의 apply 단계): note는 설치와 max로 들어가고 binding 항이 아니어서 live Row lifecycle
+    40,883B와 preflight C 여유 182B가 그대로다(S2W-C01..C06).
+- A 정리 drain(UNL-A03 A 쪽): 새 지점 넷 `cleanup.unlink_next`·`unlink`·`unlink_try_flush`·`unlink_continue_flush`를
+  `cleanup_sites`에 더했다. A 혼자의 frame은 최대 `unlink_try_flush` 3,738B다. 실행기 caller term 816B를 더한 census
+  (`f4_a_autocommit_budgets`·`f4_a_explicit_budgets`·`rdl_a08_*`)에서는 다음과 같고, 모두 `LIVE_ROW_CLEANUP` 4,096B 안이다.
+
+  | 지점 | A 몫(B) | 여유(B) |
+  | --- | ---: | ---: |
+  | `cleanup.try_flush`(이전 최대) | 3,979 | 117 |
+  | `cleanup.unlink_next` | 3,593 | 503 |
+  | `cleanup.unlink` | 3,633 | 463 |
+  | `cleanup.unlink_try_flush`(새 최대) | 4,082 | 14 |
+  | `cleanup.unlink_continue_flush` | 4,074 | 22 |
+
+  그래서 drain의 caller 여유는 117B에서 14B로 줄었다. drain을 부르는 실행기 frame에 값이 더 붙으면 이 지점이 먼저
+  넘는다. [경계 계약](dev3-module-boundaries.md#autocommit-insert)의 두 표 행도 이 값으로 고쳤다.
+- UNL-C03:
+  - note 8칸은 control 대여(caller의 `RETENTION_CONTROL_BYTES` 196,608B) 안의 bytes다. owner·session·recovered runtime·
+    port 어디에도 inline으로 들지 않는다. 그래서 shared layout(fresh·recovered 중 큰 쪽)은 20,208/20,216B(memory/
+    native) 그대로이고, 그 옆 charge도 44,304B 그대로다(합 64,512/64,520 ≤ 65,536B).
+  - drain 결과 필드는 caller frame에 든다: `Retired`가 24B(`(usize, usize, bool)`와 같음) 그대로이므로 drain을 쥐는
+    모든 caller term이 그대로다.
+  - U1에서 남긴 A 생산자 항: group observer의 `decode_anchor`(XTR1 목록 검산 포함) 전체는 1,867B다. 이 호출은
+    `observe` 안에서 돌고 `produce`가 write pass(`images`·`frame`)를 부르기 전에 끝난다. 생산자 inventory는 그 두
+    callee의 carrier 4,132B를 이미 다 넣으므로 decode를 덮는다. inventory 19,436B ≤ `CLR_PRODUCER` 19,456B(여유
+    20B) 그대로다.
+  - fresh·recovered writer: fresh writer의 live Row lifecycle 회계(S2W-C01..C06)는 위처럼 그대로다. recovered writer의
+    peak(S2W-C04 recovered 65,392/65,400B)도 그대로다. U3는 replay·base capture를 바꾸지 않았다.
+
+시험(모두 PASS, memory). `…unlink_rows`는 `storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::unlink_rows`,
+`…retention`은 U2 절과 같다. UNL-L의 기대값은 상태 기계의 사실(답, drain의 unlink 수, pool에서 읽은 도달 leaf의 key
+집합, anchor 목록, 새 statement와 재시작이 읽는 값)이고, 같은 producer가 낸 값을 다시 읽어 만들지 않는다. 표는 SPL-A의
+가장 큰 inline 행 table(leaf 하나에 7행)이다. 15행 autocommit statement 하나가 root 아래 leaf 넷 [3, 3, 3, 6]을 만든다.
+
+| ID | libtest 경로와 판정 |
+| --- | --- |
+| UNL-L01 | `…unlink_rows::unl_l01_*`. 둘째 leaf의 행 셋을 autocommit DELETE(q 3..5)하고 각각 drain한다. 앞 두 drain은 unlink 0, 셋째 drain이 LeafUnlink 1. 도달 leaf 셋에 나머지 12 RowId가 순서대로 있고, anchor 목록이 빈 leaf이고, 새 statement와 재시작이 12개 값을 읽는다 |
+| UNL-L02 | `…unlink_rows::unl_l02_*`. 가장 왼쪽 leaf(첫 separator를 지움). 새 INSERT(q 6)가 지운 separator를 지나 route되고 13개 값을 읽는다 |
+| UNL-L03 | `…unlink_rows::unl_l03_*`. 8행이 한 번 split한 leaf 둘에서 왼쪽 leaf를 비우면 RootCollapse: 오른쪽 leaf가 level 0 root, anchor 목록이 왼쪽 leaf와 옛 root |
+| UNL-L04 | `…unlink_rows::unl_l04_*`. L03의 두 leaf를 한 거래가 모두 DELETE(q 3). note 둘: 첫 note가 RootCollapse(survivor도 빈 leaf), 둘째 note는 그 leaf가 root라 NotNeeded. 빈 root leaf 하나, 새 INSERT(q 4)가 그 leaf로 들어감 |
+| UNL-L05·L12 | `…unlink_rows::unl_l05_l12_*`. 원 split이 만든 level 2 tree(root 아래 P1 [a, b], P2 [c, d]) 위에서 d의 ChildSplit으로 P2 [c, d1, d2]. L05: b를 비우면 parent P1이 separator 1인 non-root라 NotNeeded, b는 빈 child로 남음. L12: d1을 비우면 level 2 아래 LeafUnlink, P2 [c, d2], root level 2 유지. 모든 RowId의 point read(지운 separator key와 이웃 경계 key)와 B cursor가 남은 세 행을 읽고 재시작도 같음 |
+| UNL-L06 | `…unlink_rows::unl_l06_*`. SPL-A03 상태(거래의 8행 statement가 split한 뒤 rollback). CLR이 두 leaf를 비워 note 둘, rollback drain이 RootCollapse 1번, 둘째는 NotNeeded. 그 뒤 INSERT(q 2) 한 행만 읽음 |
+| UNL-L07 | `…unlink_rows::unl_l07_*`. CREATE Catalog Job이 남은 제품 table: DeletePrune의 note를 `unlink_next`가 버려 A가 unlink를 묻지 않음. Job을 회수한 뒤 같은 절차는 note를 돌려주고 root leaf라 NotNeeded |
+| UNL-L08·L13 | `…unlink_rows::unl_l08_l13_*`. 가장 오른쪽 leaf의 6행 DELETE(q 3..8) 뒤 LeafUnlink. L13: 모든 key보다 큰 새 5행(q 9)이 지운 마지막 separator를 지나 셋째 leaf로 route. L08: 그 leaf가 차서 A의 live split이 새 page를 씀(새 leaf ≠ 퇴역 leaf, anchor 목록 그대로). 9 + 5개 값을 읽음 |
+| UNL-L10·L11 | `…unlink_rows::unl_l10_l11_*`. L11: 마지막 DELETE(q 5)의 drain이 DeletePrune을 설치하고 LeafUnlink를 준비한 뒤 `UnlinkPrepared`에서 멈춘 동안 root frame의 수정 counter(dirty면 DPT entry도)를 올린다. 설치의 stamp 대조가 `Frame(Stale)` Unchanged로 거절한다(Busy 계열): drain은 complete, `unlink_held` 1, note 남음, leaf는 비어서 도달, anchor 목록 비어 있음. L10: stamp를 되돌린 뒤 다른 Owner가 읽기 연산을 연다. 다음 drain은 남은 그룹이 없어 shell이 unlink의 것이고, 그 shell이 새 읽기를 닫고 열린 읽기를 기다린다(`ReadGateWaiting`, gate 닫힘·active read 1). 읽기가 끝나면 다시 준비해 설치(groups 0, unlinked 1). 12개 값을 읽음 |
+| UNL-L14 | `…unlink_rows::unl_l14_*`. q 4 snapshot의 읽기 전용 statement가 열린 동안 마지막 DELETE(q 5)의 drain은 DeletePrune을 Busy로 잡는다: 행이 남고 note 없음, unlink 0. statement가 끝난 뒤 drain이 DeletePrune을 설치하고 unlink. 12개 값을 읽음 |
+| UNL-L15 | `…unlink_rows::unl_l15_*`. 빈 leaf의 note가 남은 상태에서 거래의 statement가 INSERT 하나를 Reserve하고, S2W-R18 fixture(`test_release_keeping_reservation`)로 RootReserved Row Job을 남긴 채 놓는다. live Job은 거래 자신의 terminal lease와 그 RootReserved뿐이다. 쉬는 다른 Owner의 C 직접 호출은 Unchanged(Prepare, `Unsupported`)로 거절된다(table 자신의 RootReserved = split 부채). Busy 계열이 아니어서 note를 지우고, file·Jobs·도달 leaf·anchor 목록은 그대로다. fixture 상태는 건강한 끝이 없다(statement를 놓으면 fence) |
+| UNL-A01 | `storage::row::insert::driver::tests::unl_a01_*`(5개). A literal: complete drain이 note를 순서대로 unlink, 미완료 drain은 unlink를 묻지 않음, 상한 8과 FlushRequired 미계수, Busy 계열은 note를 남기고 unlink를 멈춤(`unlink_held`), 그 밖의 거절·Fatal은 `Stage::Unlink`로 끝남 |
+| UNL-A02 | `…retention::create_pair::catalog_live::structural::effect::unlink::tests::unl_a02_notes_keep_eight_and_drop_the_ninth`. note 구역: 8칸 유지·9번째 버림·같은 note 중복 없음, 칸 bytes를 독립 little-endian 값과 대조, 지우면 뒤 note가 당겨지고 빈 칸에 새 note, 없는 note 지우기는 무변화, 해독 불가 칸은 Invariant |
+| UNL-A03 | C: `…retention::source::tests::unl_a03_live_unlink_fits_the_progress_charge`(memory·native. 위 C unlink 값, residency·준비가 입구 carrier와 replay 상한을 포함, peak = 세 단계 max, peak + 4,096 ≤ charge, 회수 + 4,096 ≤ charge). A: `storage::row::insert::driver::budget_tests::f4_a_caller_budgets_{memory,native}`·`f4_a_autocommit_budgets_*`·`f4_a_explicit_budgets_*`·`rdl_a08_*`(새 네 지점 ≤ 4,096) |
+| UNL-C03 | `…retention::source::tests::unl_c03_notes_live_in_the_control_loan`(memory 20,208·native 20,216B: note 구역 65,088..65,536 = 8 × 56B, bank 끝 ≤ 시작, 끝 = Jobs 시작 < control, shared 그대로, charge 44,304B, 합 ≤ 65,536), `storage::row::insert::driver::tests::unl_c03_drain_result_keeps_its_size`, `…::unl_c03_a_producer_bounds_the_anchor_decode`(decode ≤ write pass carrier, 생산자 ≤ `CLR_PRODUCER`), `…retention::source::tests::live_row_retirement_fits_the_progress_charge`(회수 39,694B) |
+
+시험 ID는 한 시험이 두 ID를 함께 본다(L05·L12, L08·L13, L10·L11). 각 L 시험은 재시작 read로 WAL의 unlink frame을 지나는
+제품 rebase의 목록·claim 보존(U2에서 넘어온 B09 부분)도 본다.
+
+기존 시험 하나의 기대값이 바뀌었다. SPL-J02(`…split_rows::spl_j02_active_insert_split_then_rollback_and_insert`)는
+RootSplit 뒤 거래를 rollback한다. 그 CLR이 오른쪽 leaf를 비우므로, 이제 rollback drain이 RootCollapse를 한 번 설치한다
+(`Retired.unlinked` 1, UNL-L06과 같은 경우). 시험은 drain 결과의 `unlinked` 1과 resident leaf 모양을 본다. 퇴역 leaf는
+cell 0개로 남고 root leaf가 7·8을 쥔다. 뒤의 INSERT 13은 root leaf로 들어가 [0, 3]이 된다(unlink가 없으면 separator를
+지나 오른쪽 leaf로 가 [2, 1]이다). 나머지 판정(읽기, 재시작 READY q 3, 행)은 그대로다.
+
+계획과 다르게 남긴 것:
+
+- **UNL-L09(작은 pool의 FlushRequired 왕복) NOT_RUN.** 이 시험 틀에서는 unlink의 LOAD가 dirty victim을 고르는 상태를
+  만들 수 없다. pool을 줄이면 unlink 전에 Begin(24 frame)이나 statement의 table 발급(28 frame)이 `MissingTarget`
+  Unchanged로 먼저 거절한다. 두 입구는 target이 resident해야 하고 LOAD하지 않는다. 29 frame 이상에서는 DELETE와 그
+  정리 그룹이 방금 쓴 anchor·P·L·S가 모두 resident여서 unlink가 바로 설치된다(RootCollapse 표에서 29..40 frame,
+  leaf 넷 표에서 34·36 frame을 실측). A의 FlushRequired 처리(flush 뒤 같은 note, 미계수)는 UNL-A01이 보고, C의 LOAD
+  단계는 live split의 `split_load`와 같은 함수다.
+- **UNL-L15의 allocator Reserved는 live로 만들지 않았다.** 건강한 session에서는 reserved row가 apply나 cancel까지
+  writer를 빌리므로, drain이 도는 동안 RootReserved Job이나 allocator Reserved page가 남지 않는다. live 경로는 준비 전에
+  `check_split_debt`가 table 자신의 RootReserved를 거절한다(L15). 다른 table의 RootReserved나 allocator Reserved는 준비의
+  canonical candidate가 거절하고, 그 경로는 순수 시험 UNL-P08 변형 4·5가 본다.
+
+실행한 명령: 아래 [U3 실행 기록](#unlink-u3-runs).
+
+<a id="unlink-u3-runs"></a>
+U3 실행 기록(작성자 checkout, U2 PR head `7ca3b53` 위의 U3 code. env는 U2와 같다: source·ELF·input hash에 자리표시 hex,
+`RUST_MIN_STACK=33554432`. AGENTS.md에 따라 바뀐 코드에 닿는 시험만 골랐고 전체 suite는 돌리지 않았다):
+
+| 명령(`cargo test -p xadb-engine --lib -- …`) | 결과 |
+| --- | --- |
+| 새 시험 하나씩(`unlink_rows::unl_l01`..`unl_l15`, `unl_a0`, `unl_c03`) | 모두 PASS(UNL-L 하나에 3~5분) |

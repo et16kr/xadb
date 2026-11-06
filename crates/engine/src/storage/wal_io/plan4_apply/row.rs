@@ -52,7 +52,7 @@ pub(crate) use rollback::{
     RowRollbackTask,
 };
 pub(crate) use split::ROW_SPLIT_CALLER_BYTES;
-pub(in crate::storage) use split::RowSplitStep;
+pub(in crate::storage) use split::{RowSplitStep, RowUnlinkStep};
 pub(crate) use write::{
     PreflightRow, PreparedRow, ROW_PREFLIGHT_CALLER_BYTES, ROW_WRITE_CALLER_BYTES, ReservedRow,
     RowApplied, RowCancelled, RowDeleteStep, RowPreflightStep, row_write_charge,

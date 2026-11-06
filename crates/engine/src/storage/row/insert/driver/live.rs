@@ -9,7 +9,7 @@ use super::{
     Boundary, CALL_SITES, CallSite, DriveError, Failure, FlushStep, Loan, PendingRollback,
     Preflight, PreflightNext, Prepared, PreparedTask, ProducerLane, Reserved, RetireNext,
     RetireStop, Retired, Rollback, RollbackNext, RollbackStop, RollbackTask, SplitNext, Stage,
-    StartedRollback, StatementView, Stepped, ValidationLane,
+    StartedRollback, StatementView, Stepped, UnlinkNext, ValidationLane,
     autocommit::{
         Autocommit, abort_transaction, commit_answer, refused, statement_ended, statement_refused,
         table_not_issued,
@@ -27,14 +27,17 @@ use crate::storage::{
         RollbackStep, RowCommitObservation, RowDeleteStep, RowInputPlan, RowMutationObservation,
         RowOwnedError, RowPreflightOperation, RowPreflightStep, RowPreparedOperation,
         RowProducerLane, RowProposal, RowReservedOperation, RowRetireStep, RowRollback,
-        RowRollbackTask, RowSplitStep, RowStatementView, RowTransaction, RowValidationLane,
-        StatementFinishError, TransactionFinishError,
+        RowRollbackTask, RowSplitStep, RowStatementView, RowTransaction, RowUnlinkStep,
+        RowValidationLane, StatementFinishError, TransactionFinishError,
     },
     row::insert::{InsertError, produce_clr, produce_insert, validate_insert},
     row_record::ValueRef,
     semantic_row::Operation,
 };
-use foundation::{identity::RowId, namespace::WriterNamespace};
+use foundation::{
+    identity::{ObjectHandle, RowId},
+    namespace::WriterNamespace,
+};
 use std::{convert::Infallible, marker::PhantomData};
 
 impl StatementView for RowStatementView<'_, '_, '_, '_, '_> {
@@ -387,6 +390,29 @@ impl<'x, 't, 'v, 'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace> Boundar
                 RowSplitStep::NotNeeded => SplitNext::NotNeeded,
             },
         )
+    }
+    fn unlink_next(&mut self) -> Result<Option<(ObjectHandle, RowId)>, RetentionError> {
+        self.port.unlink_next()
+    }
+    /// The unlink's opcode is not needed. C's Busy-class refusal
+    /// (`unlink_busy`) is the one held answer; every other refusal is
+    /// passed on as it is.
+    fn unlink(
+        &mut self,
+        table: ObjectHandle,
+        key: RowId,
+        loan: &mut Loan,
+    ) -> Result<UnlinkNext<Plan4Target>, RetentionError> {
+        match self
+            .port
+            .unlink_leaf_live(self.owner, table, key, loan, self.flusher)
+        {
+            Ok(RowUnlinkStep::Unlinked(_)) => Ok(UnlinkNext::Unlinked),
+            Ok(RowUnlinkStep::FlushRequired(target)) => Ok(UnlinkNext::Flush(target)),
+            Ok(RowUnlinkStep::NotNeeded) => Ok(UnlinkNext::NotNeeded),
+            Err(error) if error.unlink_busy() => Ok(UnlinkNext::Held),
+            Err(error) => Err(error),
+        }
     }
 }
 

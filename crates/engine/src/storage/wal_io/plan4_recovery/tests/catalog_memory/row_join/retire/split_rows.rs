@@ -631,10 +631,13 @@ fn spl_j01_active_insert_split_then_commit_and_prune() {
 /// four Retained roots (two leaves, the six RowIds in order), and the
 /// caller rolls it back: each InsertClr removes its row from the leaf the
 /// current tree routes, and the drain of 4 × 4 + 1 = 17 groups frees every
-/// Row Job. A new statement reads 7 and 8 and none of the rolled back rows;
-/// a second transaction's INSERT of 13 commits at q 3 (6 groups) into the
-/// right leaf. C's restart reaches READY at q 3 with no CLR and B's cursor
-/// reads 7, 8 and 13.
+/// Row Job. The CLRs empty the right leaf, so the complete drain unlinks it
+/// (dev3-tree-smo.md#unlink-u3, UNL-L06's case): a RootCollapse leaves one
+/// root leaf holding 7 and 8; the retired right leaf stays Allocated and
+/// resident with no cell. A new statement reads 7 and 8 and none of the
+/// rolled back rows; a second transaction's INSERT of 13 commits at q 3
+/// (6 groups) into that root leaf, not the retired one. C's restart reaches
+/// READY at q 3 with no CLR and B's cursor reads 7, 8 and 13.
 #[test]
 fn spl_j02_active_insert_split_then_rollback_and_insert() {
     case_within("SPL-J02", std::time::Duration::from_secs(600), || {
@@ -711,10 +714,18 @@ fn spl_j02_active_insert_split_then_rollback_and_insert() {
                 assert!(holder.is_none());
                 assert_eq!(
                     drains!(&mut writer, owner, flush, flusher, private),
-                    [drain(17, true)]
+                    [Retired {
+                        unlinked: 1,
+                        ..drain(17, true)
+                    }]
                 );
                 assert_row_jobs_free(writer.catalog_test_jobs());
-                assert_eq!(shape(&writer.catalog_test_with_pool(leaves)).1, ids(&kept));
+                // `leaves` reads every resident leaf of T: the retired one
+                // (no cell, first) and the root leaf.
+                assert_eq!(
+                    shape(&writer.catalog_test_with_pool(leaves)),
+                    (vec![0, 2], ids(&kept))
+                );
                 let targets: Vec<RowId> = all.iter().map(|(row, _)| *row).collect();
                 assert_eq!(
                     read_rows!(
@@ -750,6 +761,11 @@ fn spl_j02_active_insert_split_then_rollback_and_insert() {
                     kept.iter().map(|(row, v)| (row.get(), *v)).collect();
                 expected.push((added[0].0.get(), 13));
                 let leaves_after = writer.catalog_test_with_pool(leaves);
+                // 13 joins 7 and 8 in the root leaf (without the unlink it
+                // would route past the separator into the right leaf).
+                let mut now = kept.clone();
+                now.extend(added.iter().copied());
+                assert_eq!(shape(&leaves_after), (vec![0, 3], ids(&now)));
                 assert_eq!(
                     leaves_after.last().unwrap().1.last().copied(),
                     Some(added[0].0.get())
