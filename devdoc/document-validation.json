@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-11-06T13:56:11.805479+09:00",
+  "date": "2026-11-06T18:04:33.103399+09:00",
   "status": "PASS",
   "errors": [],
   "markdown_documents": [
@@ -157,9 +157,9 @@
     },
     {
       "file": "devdoc/contracts/dev3-module-boundaries.md",
-      "links": 366,
+      "links": 367,
       "duplicate_ids": 0,
-      "sha256": "87dcfac7f6c035c39e27ad260d59bd294fa3905b0a53b77291504a660a2c83b6"
+      "sha256": "068811364757e8ee199d490673f60d261e9bd8cd6ca7f95ff6baa6b0ac3d87ca"
     },
     {
       "file": "devdoc/contracts/dev3-module-consumers.md",
@@ -427,9 +427,9 @@
     },
     {
       "file": "devdoc/contracts/dev3-task-14-reclamation.md",
-      "links": 33,
+      "links": 35,
       "duplicate_ids": 0,
-      "sha256": "9e5c448088a9d8c3a42a8eeaff3afc886363624ef9e26298d7b4690c6e15a81d"
+      "sha256": "0e3e05e1072eff8551aef9ecd0b0a0a5c4718ed40aab46aa53fc1a017937617c"
     },
     {
       "file": "devdoc/contracts/dev3-task-15-backup-integrity.md",
@@ -463,9 +463,9 @@
     },
     {
       "file": "devdoc/contracts/dev3-tree-smo.md",
-      "links": 52,
+      "links": 60,
       "duplicate_ids": 0,
-      "sha256": "55be03a5c0548e8320b7ed25578d4408a63afc8f3950f1dd61a9a773f1b601c2"
+      "sha256": "f0535c1387f38aaf9e8ca49566d7b1635d8dfb19fbdfb7c50b45ccb782d512bc"
     },
     {
       "file": "devdoc/contracts/dev3-undo-format.md",
@@ -1495,9 +1495,9 @@
     },
     {
       "file": "devdoc/plans/dev3-schedule-baseline.md",
-      "links": 123,
+      "links": 124,
       "duplicate_ids": 0,
-      "sha256": "0651d296072625920dd4d8beebd90036a7f338e5d3ff49c3da6295ae3ef7707c"
+      "sha256": "c897fb65e8c0f7ed6db59fa5acde98a707278c104eb9ca62c980886dd809cf50"
     },
     {
       "file": "devdoc/plans/dev3-test-plan.md",

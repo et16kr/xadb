@@ -8,6 +8,8 @@ use crate::storage::{
 
 #[path = "structural_live.rs"]
 pub(in crate::storage) mod live;
+#[path = "structural_unlink.rs"]
+pub(in crate::storage) mod unlink;
 
 impl<'c, 's> GroupPayload<'c, 's> for PreparedStructural<'_, 'c, 's> {
     fn core(&self) -> &'c PageConcurrency<'s> {

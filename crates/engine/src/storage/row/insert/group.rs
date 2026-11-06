@@ -1534,6 +1534,26 @@ fn current_version(
     })
 }
 
+/// UNL-C03 (dev3-tree-smo.md#unlink-u1, open item): `observe`'s one
+/// `decode_anchor` call, whole (its frame, then the page codec or the XTR1
+/// list check after it, `anchor::whole_decode_source_bytes`), with the
+/// Result `observe` binds; and the carriers of the two write-pass callees
+/// that `local_source_carrier_bytes` adds (`images`, `frame`), which `produce`
+/// calls only after `observe` has returned.
+#[cfg(test)]
+pub(super) fn anchor_decode_terms() -> (usize, usize) {
+    use std::mem::size_of;
+    let decode = 2 * size_of::<
+        std::result::Result<anchor::TreeAnchor, crate::storage::page::PageError>,
+    >() + anchor::whole_decode_source_bytes(
+        crate::storage::semantic_catalog::page_read_codec_bytes(),
+    );
+    (
+        decode,
+        images::local_source_carrier_bytes() + frame::local_source_carrier_bytes(),
+    )
+}
+
 /// Rough nonrecursive carrier inventory of this module; caller loans excluded.
 /// The byte buffers of `Scratch` are A scratch regions of the lane (M2), a
 /// loan, so only their references count. The 256 B allowance stands for the

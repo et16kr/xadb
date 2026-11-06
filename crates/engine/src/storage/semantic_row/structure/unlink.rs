@@ -17,7 +17,7 @@ use foundation::identity::{Generation, ObjectHandle, ObjectId, RowId, SchemaEpoc
 pub(crate) mod candidate;
 pub(crate) mod frame;
 mod source;
-pub(crate) use source::source_bytes;
+pub(crate) use source::{layout_source_bytes, source_bytes};
 #[cfg(test)]
 mod source_tests;
 

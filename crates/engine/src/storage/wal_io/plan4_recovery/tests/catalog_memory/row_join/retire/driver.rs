@@ -24,12 +24,15 @@ macro_rules! drained {
     }};
 }
 
-/// One drain that installed `groups` and held `held`, with nothing else left.
+/// One drain that installed `groups` and held `held`, with nothing else left
+/// and no unlink (these tables' leaves are their roots).
 fn done(groups: usize, held: usize) -> Retired {
     Retired {
         groups,
         held,
         complete: true,
+        unlinked: 0,
+        unlink_held: 0,
     }
 }
 
