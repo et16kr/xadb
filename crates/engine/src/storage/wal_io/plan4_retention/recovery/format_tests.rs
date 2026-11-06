@@ -480,7 +480,9 @@ fn mbc40_v01_profile2_binding_rejected_at_owner_grammar_sites() {
     // An unknown scope under Profile3 has no replay owner: the explicit scope
     // arm rejects it before any effect. A Catalog group relabelled scope3 is
     // routed to the Row arm only, whose exact decoder refuses it (S1-b H03);
-    // it is never retried as Catalog or System.
+    // relabelled scope4 reaches only the structural arm, whose decoder
+    // refuses the Catalog frame length as Corrupt before any digest. Neither
+    // is retried as Catalog or System.
     for scope in [3u16, 0, 4, u16::MAX] {
         let mut frame = case.blob(FRAME).to_vec();
         assert_eq!(u16::from_le_bytes([frame[170], frame[171]]), 2);
@@ -488,10 +490,15 @@ fn mbc40_v01_profile2_binding_rejected_at_owner_grammar_sites() {
         let mut at = cursor(case.number(3) - 1);
         let result = state.apply(p3, &case, &frame, &mut at);
         assert!(
-            if scope == 3 {
-                matches!(result, Err(RetentionCause::RowSemantic(_)))
-            } else {
-                matches!(result, Err(RetentionCause::Unsupported))
+            match scope {
+                3 => matches!(result, Err(RetentionCause::RowSemantic(_))),
+                4 => matches!(
+                    result,
+                    Err(RetentionCause::RowSemantic(
+                        crate::storage::semantic_row::Error::Corrupt
+                    ))
+                ),
+                _ => matches!(result, Err(RetentionCause::Unsupported)),
             },
             "scope{scope}"
         );

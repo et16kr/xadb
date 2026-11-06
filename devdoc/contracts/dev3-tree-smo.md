@@ -1122,8 +1122,8 @@ split 종류 직접 관측. 18-frame pool에서 split 뒤 table issue의 Missing
 <a id="empty-leaf-unlink"></a>
 ## 빈 leaf unlink·root 축소·retirement 등록
 
-상태는 **2026-11-05 설계 / 독립 D2 3회차 ACCEPT, 필수 0 / U1 구현·memory 시험 PASS([U1 결과](#unlink-u1)), U2..U4
-구현 없음**이다. 설계는 1회차 CONDITIONAL(필수 3)과
+상태는 **2026-11-05 설계 / 독립 D2 3회차 ACCEPT, 필수 0 / U1·U2 구현·memory 시험 PASS([U1 결과](#unlink-u1),
+[U2 결과](#unlink-u2)), U3..U4 구현 없음**이다. 설계는 1회차 CONDITIONAL(필수 3)과
 2회차 CONDITIONAL(필수 1)을 반영했다([검토 기록](../../module-gate/evidence/dev3-08-1-unlink-design/review.md)). 08-1의 마지막
 범위(3.06.1.c, T06-06)를 닫는 설계다. 08-1은 아래 U4까지 끝나야 완료로 적립한다.
 
@@ -1362,7 +1362,7 @@ extent를 계속 차지하므로 unlink는 tree를 줄이고 route 비용을 줄
 부하에서는 unlink가 없을 때보다 첫 extent를 먼저 소진할 수 있다. 소진되면 [자동 split](#automatic-split)이
 Capacity로 거절한다. 제품 table은 CREATE Catalog Job 때문에 일정 10-1 전에는 unlink도 하지 않는다.
 
-### 시험 계획 (U1 행의 결과는 [U1 결과](#unlink-u1), 나머지 NOT_RUN)
+### 시험 계획 (U1·U2 행의 결과는 [U1 결과](#unlink-u1)·[U2 결과](#unlink-u2), 나머지 NOT_RUN)
 
 | ID | 경계와 독립 판정 |
 | --- | --- |
@@ -1373,7 +1373,8 @@ Capacity로 거절한다. 제품 table은 CREATE Catalog Job 때문에 일정 10
 | UNL-B01..B06 | Base4: 목록의 leaf/internal 수락, 목록 밖 고아, 도달+목록, 미할당 항목, 비지 않은 퇴역 leaf, wrong incarnation/kind 거절 |
 | UNL-B07..B09 | CREATE leaf(pair[1])를 퇴역시킨 Base4의 `validate_pairs`와 재시작, unlink descriptor가 bank에 있고 그보다 오래된 role5/6 claim이 있는 Base4, unlink 뒤 base 재작성(BaseOnly·다음 rebase)의 목록·claim 보존 |
 | UNL-R01..R03 | canonical replay의 opcode 3·4 수락과 재시작 read·leaf 수·목록, frame 변조 거절, 연속 split→unlink→split의 bank high-water |
-| UNL-L01..L08 | live: 중간 leaf의 행을 모두 DELETE·commit·drain → LeafUnlink, leftmost leaf, RootCollapse, 두 child가 빈 root → 빈 root leaf, non-root unary는 NotNeeded로 남음, rollback한 INSERT의 CLR note → unlink(SPL-A03 상태), CREATE Catalog Job table은 note 버림, unlink 뒤 split이 퇴역 page를 쓰지 않음. 각각 재시작 read |
+| UNL-R04 | (U2에서 더함) unlink replay arm·candidate·frame의 source 회계와 그 독립 목록, scope4 회계 = split·unlink 중 큰 쪽 |
+| UNL-L01..L08 | live: 중간 leaf의 행을 모두 DELETE·commit·drain → LeafUnlink, leftmost leaf, RootCollapse, 두 child가 빈 root → 빈 root leaf, non-root unary는 NotNeeded로 남음, rollback한 INSERT의 CLR note → unlink(SPL-A03 상태), CREATE Catalog Job table은 note 버림, unlink 뒤 split이 퇴역 page를 쓰지 않음. 각각 재시작 read. 재시작 read는 WAL의 unlink frame을 지나는 제품 rebase(`capture_base`)의 목록·claim 보존(U2에서 넘어온 B09 부분)도 본다 |
 | UNL-L09..L15 | 작은 pool의 FlushRequired 왕복, 다른 Owner의 열린 읽기를 shell이 기다린 뒤(`ReadGateWaiting` test point) 읽기가 끝나면 unlink, 준비와 설치 사이 target stamp를 바꾸는 seam의 `Frame(Stale)` Unchanged가 note를 남김(Busy 계열), root level 2 tree에서 non-root P(separator ≥2) 아래 LeafUnlink와 지운 separator·이웃 경계 key의 point/cursor 읽기, 가장 오른쪽 leaf unlink 뒤 새 INSERT의 route, 오래된 snapshot이 DeletePrune을 Busy로 잡는 동안 unlink 없음·끝난 뒤 unlink, C 직접 호출의 RootReserved·allocator Reserved 거절 |
 | UNL-A01..A03 | A literal(drain 순서·상한 8·FlushRequired 미계수·Busy 계열·그 밖의 Unchanged·Fatal·`Stage::Unlink`), 9번째 note 버림, census(C peak + 4,096 ≤ 44,304, A 새 지점) |
 | UNL-C01..C03 | U1: XTR1 decoder·split candidate·Base4와 영향받는 호출자의 source census, U2: opcode dispatch·canonical replay·base capture census, U3: writer의 8개 RAM note를 shared owner/port charge에, drain 결과 필드를 caller frame에 포함한 산정. fresh/recovered writer 양쪽에서 각 단계의 실제 타입·중첩 호출이 기존 charge 안에 드는지 검산하며 상한 증가는 별도 D2 |
@@ -1542,3 +1543,172 @@ G6·G6RC·CATALOG의 source·ELF·input hash와 ALLOCATION·DIRTY·MIXED_OWNER s
 `plan4_pages::tests::g5_bind_boundaries`다(B08이 `XADB_PLAN4_G5_CAPACITY_PADDING`을 요구한다). 그 값을 처음
 수락되는 2048로 주고 따로 돌리면 16/16 PASS다. ignored 7개는 `#[ignore]` 시험(g5 S5 넷, genesis S5 둘)과 native
 worker다. XRB 13개도 이 code에서 다시 돌렸고 결과는 위 표와 같다(H001만 XB_FAIL, H002..H016은 따로 실행해 15/15).
+
+<a id="unlink-u2"></a>
+### U2 결과
+
+상태는 **2026-11-05 구현·memory 시험 PASS, 2026-11-06 U1 위 rebase와 [UNL-C01·C02 census](#unlink-u2-census) 보강,
+독립 D2 ACCEPT·필수 0**이다. D2는 구현을 1회차 CONDITIONAL 뒤 2회차 ACCEPT, rebase와 census 보강을 3회차 ACCEPT(필수 0,
+권고 4)로 받았고, 3회차 권고는 아래 census 절에 반영했다([최종 검토
+기록](../../module-gate/evidence/dev3-08-1-unlink-u2/review.md), 앞 회차는 같은 폴더의 `review-r1.md`·`review-r2.md`).
+복구 replay가 이제 opcode 3·4 frame을
+받는다. 하지만 그 frame을 쓰는 제품 경로는 아직 없다(live 효과·호출자는 U3). 그래서 사용자에게 보이는 동작은
+바뀌지 않는다.
+
+구현:
+
+- `plan4_retention/recovery.rs`의 scope4 dispatch: `history::structure::is_unlink`(frame 길이 35,248·19,032)이면
+  `apply_unlink`, 아니면 split의 `apply`를 부른다. 두 함수는 따로 부르는 frame이라 겹치지 않는다. unlink의 after
+  2장은 기존 after 8장 대여의 앞부분이다.
+- `history/structure.rs`의 `apply_unlink`([복구](#준비효과복구)):
+  1. `unlink::decode_layout`.
+  2. Structural bank 칸의 이전 owner(`observe_structural_bank_row`).
+  3. candidate 입력(table = core의 object, source = core의 leaf).
+  4. `unlink::frame::observe`: 같은 cut에서 준비를 다시 하고 frame bytes를 비교한다.
+  5. 바뀐 target(anchor, LeafUnlink면 P)마다 page_no < 64, page LSN = frame LSN, after image의 identity·kind·level이
+     native target과 같은지 본다.
+  6. 모두 통과한 뒤에만 arena에 after를 쓰고 Structural bank 칸을 frame descriptor·LSN·STABLE로 바꾼다.
+  7. 관측의 `initialized`·`retired`는 비운다. 퇴역 page는 claim과 함께 Allocated로 남고, `retired` 칸은 Free를
+     뜻하기 때문이다.
+- source 회계:
+  - `semantic_row/structure/unlink/source.rs`: unlink candidate·layout·frame 회계. split 회계와 같은 단계 규칙을
+    쓰고, split의 table·audit·previous·parent edit chain을 그대로 쓴다. split frame 회계의 descriptor·redo 항목은
+    함수로 뽑았고 값은 같다.
+  - `history::structure::unlink_source_bytes`: `apply`와 같은 규칙으로 compare 단계(관측이 돌아오기 전)와 finishing
+    단계(`result`·target 검산·공개)를 나눈다.
+  - scope4 회계는 단계마다 split과 unlink 중 큰 쪽이다. unlink compare는 24,876B로 split의 25,036B보다 작고,
+    finishing은 6,026B로 split의 10,170B보다 작다(아래 UNL-C02 dispatch를 더해도 작다). 그래서 다음 값이 모두
+    그대로다: history frame 26,452B, recovered peak 65,392/65,400B(memory/native), live Row lifecycle 40,883B와
+    preflight C 여유 182B(둘 다 U1 UNL-C01 뒤 값).
+  - 처음 계산에서는 compare·finishing을 한 단계로 합쳐 unlink arm이 25,972B였고, history frame이 27,388B가
+    되었다. live Row lifecycle 회계가 이 frame을 포함하므로 preflight의 C 여유가 −744B가 되었다(S2W-C01·C02·C03·C06과
+    S1B 회계 C01·C02 실패). 그래서 위처럼 `apply`의 단계 규칙에 맞췄다. 코드도 그 순서다: `result`는 관측이 돌아온 뒤 선언된다.
+    unlink compare의 split 아래 여유는 arm만으로 160B이고, UNL-C02 dispatch 88B를 더한 지금은 72B다(25,036 −
+    24,964). U3가 이 arm에 값을 더하면 이 여유를 먼저 본다.
+- fixture: `current-tree/author.py`에 `recapture`(capture LSN 96/248과 inventory LSN만 옮기고 다시 봉인)와 아래 두
+  함수를 더했다. 두 fixture는 capture 89이므로 frame LSN은 90이다. 기존 fixture bytes는 같고 `inputs.sha256`을
+  갱신했다.
+  - `leaf_unlink_before`: ChildSplit 85가 빈 leaf 19를 남긴 상태(root 17 [2,3,4] → 11,18,16,19, revision 4).
+    `unlink-leaf-before.xrb`.
+  - `root_collapse_before`: RootSplit 70이 CREATE leaf 11을 비운 상태(root 17 [1], revision 2).
+    `unlink-collapse-before.xrb`.
+
+<a id="unlink-u2-census"></a>
+UNL-C01·C02 census(2026-11-06, U1 UNL-C01 뒤 보강). 값은 memory·native가 같고, 아래 시험이 찍는다.
+
+- UNL-C01(U2 code의 목록 호출): unlink candidate의 목록 호출을 call 전체로 센다.
+  - `build`의 목록 읽기: `retired_source_bytes`(page codec + SHA scratch 2,474B)로 3,843B.
+  - 병합과 anchor encode: `extend`(409B) 또는 `listed_encode_source_bytes`. page 항은 이 chain의 기존 항(tree
+    codec·digest)과 split candidate의 page codec + SHA scratch 중 큰 쪽이다. anchor chain은 2,661B에서 3,790B가 된다.
+  - `verify_after`의 anchor decode: `whole_decode_source_bytes`(decoder 전체 frame + callee)로 2,698B에서 3,403B가 된다.
+  - 셋 다 기존 최대보다 작다. build 쪽 최대는 parent edit 11,705B이고 verify 쪽 최대는 audit 18,908B다. 그래서
+    candidate peak 21,096B와 frame peak 23,084B는 그대로다.
+  - max 회계에서는 binding 항보다 작은 항이 빠져도 peak가 같다. 그래서 peak 비교만으로는 위 세 항이 빠진 것을 잡지
+    못한다(3회차 검토가 세 항을 옛 식으로 되돌려 census 시험 9개가 모두 통과함을 확인했다). 이를 막으려고
+    `candidate_census`가 단계별 호출 최대(`prefix_calls`·`draft_calls`·`verify_calls`)와 세 항(`retired`·`anchor`·
+    `anchor_decode`)을 필드로 낸다. UNL-R04 source 시험은 독립으로 센 각 호출이 census의 그 항 이하이고, 그 항이
+    단계 최대 이하이며, 단계 최대가 peak 식 안에 드는지를 항마다 단언한다. 독립 목록은 3,843/3,843(retired),
+    3,502/3,790(anchor), 3,403/3,403B(decode)다.
+  - UNL-R04 source의 독립 parser 목록에 `decode_core` 자체 frame(256B core, 주소 4개, scalar, decode Result)을 더했다.
+    값은 11,991/17,495B 그대로다(parser 최대는 owner 쪽이다).
+- UNL-C02 dispatch: `recovery::apply_frame`의 scope4 dispatch 값을 `unlink_dispatch_bytes` 88B로 센다.
+  - `is_unlink`(인수, 길이와 frame 길이 둘, bool)는 split frame에서도 돌고 false를 낸다. 하지만 어느 arm보다 먼저
+    돌아오므로 split 쪽은 arm의 최대가 덮는다. unlink 쪽에는 합으로 더했고, 이는 보수적이다.
+  - unlink 쪽에만 있는 값은 after 2장 대여(slice, 묶은 참조, `try_into` Result)다. `apply_unlink` 호출 전체 동안
+    살아 있으므로 두 단계에 모두 더한다.
+  - `unlink_arm_bytes`가 arm 두 단계에 dispatch를 더하고, scope4 회계는 그 값과 split arm의 최대다. 더한 뒤
+    compare는 24,876 + 88 = 24,964B로 split 25,036B보다 작고, finishing은 6,026 + 88 = 6,114B로 split 10,170B보다
+    작다. scope4 최대는 split arm 그대로이고 history frame도 26,452B 그대로다.
+- UNL-C02 canonical replay: `apply_unlink`의 회계(`unlink_source_bytes`)가 observer(`unlink::source_bytes`, 위
+  candidate 포함)를 callee로 갖는다. 그래서 위 UNL-C01 항이 replay에도 그대로 들어간다.
+- UNL-C02 base capture: replay한 unlink 상태의 `capture_base`는 Base4 encoder를 부른다. encoder의 검증은
+  current-tree closure에서 anchor 목록을 읽는다. 이 경로의 값은 다음과 같다.
+  - capture 회계는 두 단계의 최대다: `base_capture = capture_encode.max(owner + common + capture_outer +
+    packing_source_bytes())`.
+  - packing 단계: `pack_bank`가 Structural bank 칸을 읽는다. unlink descriptor가 든 칸도 split과 같은 함수·타입
+    (`check_structural_bank` → `bank::observe`/`validate`, `decode_ram_descriptor`)을 지나고, 다른 것은
+    `bank::validate`의 `consumed_wal` match 갈래뿐이다. 이 경로는 packing 회계 24,887B 안의 structural bank 항
+    12,679B가 덮는다. certificate loop와 `pack_inventory`는 anchor를 decode하지 않는다.
+  - encode 단계: closure 28,928B 안에 목록 읽기 3,609B가 있다(U1 UNL-C01). Base4 row codec 59,675B가 이 closure를
+    포함한다. encode 단계 64,203/64,211B(memory/native)는 owner 1,584/1,592B, capture 인수(rebase Current·Header·
+    Expected·Sections, 오류 둘, 참조 20개, u64 16개), codec과 `decode`의 Result·`VerifiedPlan4Base`의 합이다.
+  - capture는 encode 단계가 정하고(64,203/64,211B), recovered peak 65,392/65,400B 안에 든다.
+  - U2는 capture code를 바꾸지 않았다.
+- fresh·recovered writer:
+  - fresh writer의 live Row lifecycle 회계(S2W-C01..C06)는 history frame을 포함한다. 그 frame이 그대로이므로
+    40,883B도 그대로다.
+  - recovered writer의 회계(`recovery_source_` memory·native, owner 회계)는 peak 65,392/65,400B 그대로다.
+  - 상한은 바꾸지 않았다.
+
+| ID | libtest 경로 |
+| --- | --- |
+| UNL-C02 dispatch | `…retention::history::structure::tests::unl_c02_scope4_dispatch_beside_the_unlink_arm`. 판정: code의 값을 하나씩 센 독립 목록(81B, tuple padding 없음) ≤ `unlink_dispatch_bytes` 88B, `unlink_arm_bytes` = arm + dispatch(두 단계), 그 값 < split arm(두 단계, strict) |
+| UNL-C02 capture | `storage::plan4_recovery_base::row::graph::tests::current_tree_tests::unl_c02_current_tree_closure_counts_the_retired_list`(목록 읽기 ≤ closure ≤ codec 배선), `storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::unl_c02_base_capture_holds_the_row_codec`(memory·native. owner + codec ≤ encode 단계, structural bank 항 ≤ packing, owner + packing ≤ capture ≤ peak) |
+| UNL-C01(U2) | 위 UNL-R04 source 시험. 판정: 목록 읽기·병합과 encode·anchor decode의 독립 호출값 ≤ census의 그 항 ≤ 단계 최대, 단계 최대가 peak 식 안에 듦 |
+
+이 시험들은 각 항이 회계에 배선되어 있고 binding 항 아래라는 산술을 확인한다. binding 항보다 작은 항이 회계
+식에서 빠지는 것은 peak로는 드러나지 않으므로, 항을 필드로 내어 시험이 이름으로 짚는다.
+
+시험(모두 PASS, memory). 경로는 `cargo test -p xadb-engine --lib -- --list`의 libtest 경로다(`…retention`은
+`storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention`).
+
+| ID | libtest 경로와 판정 |
+| --- | --- |
+| UNL-R01 | `…retention::recovery::structural_replay_tests::unlink_replay::unl_r01_*`. 두 before fixture에서 제품 producer로 frame을 만들어 replay한다. 판정: 바뀐 page가 [10] 또는 [10, 17], 행·Job·claim 불변, 64 page 전부가 독립 after fixture와 bytes로 같음, bank 34 = frame descriptor·LSN 90·STABLE. raw capture가 after fixture 전체와 bytes로 같고 Base4로 decode된다(B09). 그 capture에서 다시 시작하면(B07) 행·목록이 같고, 퇴역하지 않은 leaf마다 unlink가 NotNeeded다 |
+| UNL-R02 | `…unlink_replay::unl_r02_*`. 두 opcode 각각 다음을 본다. core revision·separator·retired_after, anchor native의 before digest, anchor redo의 byte 하나: 다시 hash한 뒤에도 `decode_layout`을 통과하지만 replay는 Corrupt로 거절한다. 빈 leaf에 범위 밖 행이 든 cut과 P page 손상은 Tree 오류, 이전 bank 칸 손상은 Invariant다. LeafUnlink frame을 RootCollapse cut에 주면 IdentityMismatch다. dispatch는 길이만 보므로, unlink 길이에 split opcode(1)를 넣은 frame과 split 길이에 unlink opcode(3)를 넣은 frame(둘 다 다시 hash)을 각각 고른 decoder가 Unsupported로 거절하는 것도 본다. 모든 거절에서 replay digest·cursor가 그대로다 |
+| UNL-R03 | `…unlink_replay::unl_r03_*`. 첫 split(RootSplit 70)은 before fixture의 상태이고, replay하는 것은 RootCollapse 90과 그 뒤 root leaf 16의 RootSplit 91이다. 판정: 새 page 2개가 11·16·17이 아님, decode한 목록 항목 [11, 17] 유지, bank 칸이 91, 연쇄 상태의 capture가 Base4로 decode되고 재시작해도 행·목록이 같다 |
+| UNL-R04 | `storage::semantic_row::structure::unlink::source_tests::unl_r04_*`(parser·emitter·candidate 단계와 frame outer의 독립 목록), `…retention::history::structure::tests::unl_r04_*`(replay arm의 compare·finishing 독립 목록과 scope4 최대) |
+| UNL-P08(Catalog 부채) | `storage::semantic_row::structure::weights::tests::candidate::unlink::unl_p08_catalog_job_of_the_table_refuses_before_not_needed`. 독립 job3 literal(RootRetained, Catalog, table 6 generation 1. 원본 TxnRef의 database만 이 profile 것으로 바꿨다)을 넣으면 빈 leaf(unlink 대상)와 행이 있는 leaf(원래 NotNeeded) 모두 Unsupported다. 넣지 않으면 각각 unlink·NotNeeded다 |
+
+U1에서 미룬 것의 처리:
+
+- B07 재시작·B09 다음 capture: R01이 replay 상태의 raw capture를 독립 after fixture와 bytes로 대조하고, 그
+  capture에서 다시 시작한다. 제품 rebase(`RecoveryState::capture_base`, BaseOnly)가 unlink frame을 지나는 경로는
+  WAL에 실제로 쓰인 unlink frame이 있어야 하므로 U3 live 시험(UNL-L의 재시작 read)이 본다.
+- P08 Catalog 부채: 위 단위 시험을 더했다. U3의 UNL-L07이 CREATE Catalog Job table로 다시 본다.
+
+계획과 다르게 남긴 것:
+
+- R02의 "비지 않은 leaf" 변조는 범위 밖 행이 든 잘못된 tree(Tree 오류)다. 범위 안 행이 든 유효한 tree를 만들려면
+  행 record를 정확히 다시 encode해야 한다. 그래서 유효한 NotNeeded는 R01 재시작의 NotNeeded와 U1 P07이 본다.
+- 계획의 R01 "leaf 수"는 page 64개 전체의 bytes 대조로 대신했다.
+
+실행한 명령(작성자 checkout, U1 위 rebase 전 U2 code. `<hex>`는 64자 자리표시 hex이고, 세 XADB_CATALOG_*_SHA256과 두 번째·세
+번째 명령의 XADB_PLAN4_RECOVERY_*_SHA256에 준다. AGENTS.md에 따라 바뀐 코드에 닿는 시험만 골랐고 전체 suite는
+돌리지 않았다):
+
+| 명령(`cargo test -p xadb-engine --lib -- …`) | 결과 |
+| --- | --- |
+| `storage::anchor::tests:: storage::semantic_row::structure:: storage::plan4_recovery_base::row` | 115 passed, 0 ignored(U1의 113개 + UNL-R04 source·UNL-P08 Catalog 부채) |
+| `retention::history::structure:: retention::recovery::structural_ catalog_live::structural:: plan4_recovery::analysis::structural_bank_tests plan4_recovery::tests::row_gate:: retire::driver::structural_ split_rows:: row::census_tests:: retention::owner_tests::` | 79 passed, 1 ignored(`structural_effect_native_worker`). UNL-R01..R03과 history 쪽 UNL-R04(source 쪽 R04는 첫 명령), 바뀐 dispatch를 지나는 split replay·live split·재시작 시험(SPL-A01..A06·A08·A10·SPL-J01..J07·structural effect. SPL-A07·A09는 U2 code에 닿지 않아 고르지 않았다), S1B 회계(26,452B), S2W-C01..C06(live Row 회계·C 여유), owner 회계(recovered peak ≤ 65,536)를 포함한다 |
+| `plan4_recovery::tests::recovery_source_` | 2 passed(바뀐 history 회계가 들어가는 recovery 자원 회계) |
+
+U2는 Base4 decode(`plan4_recovery_base`)를 바꾸지 않으므로 executor 전용 XRB 시험은 다시 돌리지 않았다.
+
+U1 위로 다시 올리고 UNL-C01·C02를 더한 뒤 다시 실행한 것:
+- env: U1의 재실행과 같다. source·ELF·input hash에는 자리표시 hex를 모두 주었고 `RUST_MIN_STACK=33554432`다.
+- 범위: 위 세 명령의 시험, UNL-C02 셋, U1이 재실행한 시험 전부(UNL-C01 census 시험 포함)다. 겹친 것을 뺀 592개를
+  `--exact`로 실행했다.
+- 결과: **584 passed, 1 failed, 7 ignored**. 실패 하나는 executor 전용 `g5_bind_boundaries`다. padding 2048로 따로
+  돌리면 16/16 PASS다.
+
+3회차 D2 권고(항별 단언, dispatch 독립 목록, packing 단계)를 반영한 뒤 바뀐 회계·시험에 닿는 것을 다시 실행했다.
+filter는 `retention::history::structure::`, `storage::semantic_row::structure::unlink::`, `plan4_recovery::tests::unl_c02`,
+`plan4_recovery::tests::recovery_source_`, `plan4_recovery::tests::row_gate::`, `row::census_tests::`,
+`current_tree_tests::`, `storage::anchor::tests::`, `s2w_c0`, `structural_split_source_inventory`다. 결과는 **45 passed, 0
+failed**이고, 값은 위 census 절과 같다(history frame 26,452B, live Row lifecycle 40,883B, C 여유 182B, recovered peak
+65,392/65,400B). fmt·clippy(`-D warnings`)·문서 검사도 PASS다.
+
+그 뒤 U1 PR에 사용자 commit `503802d`(Base4 closure가 퇴역 LSN > Structural high-water를 거절)가 들어와 U2를 그 위로
+다시 올렸다. 충돌은 `current_tree_tests.rs`의 시험 추가 위치 하나였고 두 시험을 모두 남겼다. U2 replay가 bank 칸을
+frame LSN으로 바꾸므로 replay 상태의 high-water는 퇴역 LSN과 같다. 위 filter에 `unlink_replay::`,
+`storage::plan4_recovery_base::row`, `storage::semantic_row::structure::`를 더해 다시 실행했고 **144 passed, 0 failed**다.
+
+scope4 dispatch를 지나는 두 시험은 main `1725df0`에서도 같은 값으로 실패한다. 두 시험은
+`…retention::recovery::row_tests::s1b_scope_routes_only_to_its_own_arm`과 format 시험
+`mbc40_v01_profile2_binding_rejected_at_owner_grammar_sites`다. 두 시험 모두 frame을 scope 4로 바꾸면 Unsupported라고
+기대한다. 실제로는 structural decoder의 길이 검사에서 Corrupt로 거절된다.
+
+원인은 시험 기대값이다. split의 scope4 arm(`37a0465`)이 들어올 때 이 기대를 고치지 않았다. 별도 작업("Fix scope 4
+frame routing test")이 시험 두 파일만 고쳤고(독립 D1 ACCEPT, 기록 `module-gate/records/20261106-scope4-relabel-tests.json`),
+그 commit `ec7e4aa`를 U2 브랜치에 merge했다. merge한 상태에서 두 시험은 PASS다.

@@ -609,12 +609,14 @@ fn census<W: WriterNamespace>(label: &str) {
         recovered.peak,
     );
     // The Row arm is exclusive with the Catalog/System arms of one frame: it
-    // fits under the existing frame-phase maximum. The scope4 split arm
+    // fits under the existing frame-phase maximum. The scope4 arm
     // (dev3-tree-smo.md#current-leaf-consumers) is exclusive with all of
     // them and is the one arm above it: the history frame is exactly the
     // larger of the two, 26,452 B in both writers (26,420 B before the split
     // audit counted the anchor's retired list, dev3-tree-smo.md
-    // #empty-leaf-unlink U1). The other consumers keep their values: the
+    // #empty-leaf-unlink U1). The scope4 arm is the larger of its split and
+    // unlink frames; the unlink frame (U2, #unlink-u2) stays below the split
+    // frame in both phases. The other consumers keep their values: the
     // history peak is still set outside the frame.
     assert!(
         live.history_row <= phases,

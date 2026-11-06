@@ -46,8 +46,13 @@ const _: () = assert!(64 <= SPLIT_REFS);
 #[path = "candidate/source.rs"]
 mod source;
 pub(crate) use source::source_bytes;
+// The unlink candidate (dev3-tree-smo.md#empty-leaf-unlink) shares these
+// helper chains of the split census.
 #[cfg(test)]
 use source::source_census;
+pub(in crate::storage::semantic_row::structure) use source::{
+    allocation_codec, audit_chain, digest, parent_chain, previous_chain, slack, table_chain,
+};
 
 #[cfg(test)]
 #[path = "candidate/source_tests.rs"]

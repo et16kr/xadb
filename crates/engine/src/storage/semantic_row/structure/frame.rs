@@ -394,6 +394,26 @@ fn layout_source_bytes() -> usize {
         .max(1536 + std::mem::size_of::<foundation::codec::ContentHasher>())
 }
 
+/// `finished_descriptor`, shared with the unlink frame body.
+pub(super) fn descriptor_chain() -> usize {
+    use std::mem::size_of;
+    2 * size_of::<DescriptorSpec>()
+        + 2 * size_of::<std::result::Result<DescriptorSpec, obligation::ObligationError>>()
+        + 2 * size_of::<SystemProgress>()
+        + 2 * size_of::<SystemWorkRef>()
+        + 512
+        + obligation::descriptor_source_bytes()
+}
+/// One `Cursor::patch` redo record, shared with the unlink frame body.
+pub(super) fn redo_chain() -> usize {
+    use std::mem::size_of;
+    2 * size_of::<wal_frame::RedoRecordView<'_>>()
+        + 3 * size_of::<RedoTarget>()
+        + 2 * size_of::<WalFrameHeader>()
+        + 1024
+        + crate::storage::semantic_catalog::page_read_codec_bytes()
+        + 1536
+}
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct SourceCensus {
     pub(crate) outer: usize,
@@ -424,18 +444,7 @@ pub(crate) fn source_census() -> SourceCensus {
         + size_of::<Result<Observation>>()
         + 256;
     let outer = calls.max(returning);
-    let descriptor = 2 * size_of::<DescriptorSpec>()
-        + 2 * size_of::<std::result::Result<DescriptorSpec, obligation::ObligationError>>()
-        + 2 * size_of::<SystemProgress>()
-        + 2 * size_of::<SystemWorkRef>()
-        + 512
-        + obligation::descriptor_source_bytes();
-    let redo = 2 * size_of::<wal_frame::RedoRecordView<'_>>()
-        + 3 * size_of::<RedoTarget>()
-        + 2 * size_of::<WalFrameHeader>()
-        + 1024
-        + crate::storage::semantic_catalog::page_read_codec_bytes()
-        + 1536;
+    let (descriptor, redo) = (descriptor_chain(), redo_chain());
     let body = size_of::<[u8; 1536]>()
         + size_of::<[u8; 192]>()
         + size_of::<[u8; 128]>()

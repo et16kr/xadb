@@ -317,6 +317,44 @@ def root_collapse(parent):
     listed_anchor(b,3,90,16,0,[(11,2,1,0,90),(17,2,2,1,90)])
     return finish_unlink(b,90,19032)
 
+def recapture(b,lsn):
+    """Move only the capture LSN (header 96/248 and the inventory LSNs) past
+    the last structural owner, as if non-structural frames followed it;
+    the structural high-water (216) and bank owner stay; reseal."""
+    put(b,96,lsn); put(b,248,lsn)
+    length=get(b,INVENTORY+12,4); put(b,INVENTORY+48,lsn)
+    if get(b,INVENTORY+64):
+        at=INVENTORY+2176; size=get(b,at+12,4); put(b,at+48,lsn)
+        b[at+size-32:at+size]=digest(b[at:at+size-32])
+        b[INVENTORY+88:INVENTORY+120]=digest(b[at:at+size])
+    b[INVENTORY+length-32:INVENTORY+length]=digest(b[INVENTORY:INVENTORY+length-32])
+    for i,(at,size) in enumerate(SECTIONS): b[1280+i*64+32:1280+(i+1)*64]=digest(b[at:at+size])
+    return seal(b)
+
+def leaf_unlink_before(child):
+    """The leaf_unlink state before its unlink: ChildSplit85 left leaf19
+    empty right of16 (root17 [2,3,4] -> 11,18,16,19, revision4); capture89
+    so the unlink frame is LSN90."""
+    b=bytearray(child); original=image(b,11); meta=cells(original)[0]
+    leaf=page(original,19,1,0,85,[meta]); install(b,19,leaf)
+    c=claim(leaf,5,85,2,None,3); c[232:256]=pref(16); b[CLAIMS+19*352:CLAIMS+20*352]=c
+    install(b,17,internal(original,[2,3,4],[11,18,16,19],85))
+    allocator(b,[(19,1)],85); anchor(b,4,85)
+    return recapture(finish(b,85,2),89)
+
+def root_collapse_before(parent):
+    """The root_collapse state before its collapse: RootSplit70 at
+    separator1 (CREATE leaf11 empty, right16 holds every row, root17 [1],
+    revision2); capture89 so the collapse frame is LSN90."""
+    b=bytearray(parent); original=image(b,11); rows=cells(original)
+    left=page(original,11,1,0,70,rows[:1]); right=page(original,16,1,0,70,rows)
+    root=internal(original,[1],[11,16],70)
+    for n,p in ((11,left),(16,right),(17,root)): install(b,n,p)
+    for n,p,role,peer in ((16,right,5,17),(17,root,6,16)):
+        b[CLAIMS+n*352:CLAIMS+(n+1)*352]=claim(p,role,70,1,peer,1)
+    allocator(b,[(16,1),(17,2)],70); anchor(b,2,70)
+    return recapture(finish(b,70,1),89)
+
 PARENTS = {'base4-closure/variants.bin': '4cb06bcb8548f45075be8bde033eff3eca9e9b58e3beb1e124b49399b939fd88', 'base4-closure/live.xrb': '5a446fbf0fab629b7bfc10b5040e0a54b77ea6e2a993ca58db70482f3f5c94d9', 'structural-bank/root.xod': '55a03eeda6771aae4e226dc3615955f71a1509d0b595fa016754bacfe19cfda3', 'structural-bank/child.xod': 'b1de53f096a5c2be5bb891c04fded4da72966873000dc39a13edaf04e2880b73'}
 
 def main():
@@ -339,6 +377,8 @@ def main():
     (ROOT/'child-split.xrb').write_bytes(b)
     (ROOT/'unlink-leaf.xrb').write_bytes(leaf_unlink(b))
     (ROOT/'unlink-collapse.xrb').write_bytes(root_collapse(parent))
+    (ROOT/'unlink-leaf-before.xrb').write_bytes(leaf_unlink_before(b))
+    (ROOT/'unlink-collapse-before.xrb').write_bytes(root_collapse_before(parent))
     for name in ['state-row-reserved','state-ready-writer','state-compensated-writer']:
         (ROOT/(name+'.xrb')).write_bytes(root_split(variant(name)))
     mixed=root_split(effect_state(parent)); (ROOT/'delete-update.xrb').write_bytes(mixed)

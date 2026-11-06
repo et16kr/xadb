@@ -21,13 +21,13 @@ use crate::storage::{
 };
 use std::mem::size_of;
 
-fn slack() -> usize {
+pub(in crate::storage::semantic_row::structure) fn slack() -> usize {
     16 * size_of::<usize>() + 8 * size_of::<&[u8]>() + 8 * size_of::<Result<()>>()
 }
-fn digest() -> usize {
+pub(in crate::storage::semantic_row::structure) fn digest() -> usize {
     size_of::<ContentHasher>() + 32 + 1536
 }
-fn allocation_codec() -> usize {
+pub(in crate::storage::semantic_row::structure) fn allocation_codec() -> usize {
     4 * size_of::<AllocationEntry>()
         + 3 * size_of::<AllocationPage<'_>>()
         + 3 * size_of::<std::result::Result<AllocationEntry, allocation_page::AllocationError>>()
@@ -89,7 +89,7 @@ pub(super) fn weights_chain() -> usize {
             + 1536)
             .max(allocation_codec())
 }
-fn table_chain() -> usize {
+pub(in crate::storage::semantic_row::structure) fn table_chain() -> usize {
     size_of::<(&Inputs<'_>, Namespace)>()
         + 2 * size_of::<TreePageView<'_>>()
         + 2 * size_of::<TreeEntry<'_>>()
@@ -135,7 +135,7 @@ fn retired_chain() -> usize {
                 semantic_catalog::page_read_codec_bytes() + 1536,
             ))
 }
-fn audit_chain() -> usize {
+pub(in crate::storage::semantic_row::structure) fn audit_chain() -> usize {
     let frame = size_of::<(
         &Inputs<'_>,
         &Table<'_>,
@@ -166,7 +166,7 @@ fn audit_chain() -> usize {
             .max(digest())
             .max(retired_chain())
 }
-fn parent_chain() -> usize {
+pub(in crate::storage::semantic_row::structure) fn parent_chain() -> usize {
     size_of::<[&[u8]; SPLIT_REFS]>()
         + size_of::<[u8; 36]>()
         + size_of::<[u8; 32]>()
@@ -190,6 +190,17 @@ fn allocator_chain() -> usize {
         + size_of::<PageView<'_>>()
         + 2 * slack()
         + allocation_codec()
+}
+/// `candidate::previous`: the prior Structural descriptor decode and bank
+/// validation, then its digest.
+pub(in crate::storage::semantic_row::structure) fn previous_chain() -> usize {
+    size_of::<obligation::DescriptorSpec>()
+        + size_of::<std::result::Result<obligation::DescriptorSpec, obligation::ObligationError>>()
+        + 3 * size_of::<SystemWorkRef>()
+        + 3 * slack()
+        + obligation::descriptor_source_bytes()
+            .max(bank::validation_source_bytes())
+            .max(digest())
 }
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct SourceCensus {
@@ -267,13 +278,7 @@ pub(crate) fn source_census() -> SourceCensus {
         + outer;
     let side =
         size_of::<[&[u8]; SPLIT_REFS]>() + size_of::<[u8; 32]>() + 2 * slack() + tree_structure();
-    let previous = size_of::<obligation::DescriptorSpec>()
-        + size_of::<std::result::Result<obligation::DescriptorSpec, obligation::ObligationError>>()
-        + 3 * size_of::<SystemWorkRef>()
-        + 3 * slack()
-        + obligation::descriptor_source_bytes()
-            .max(bank::validation_source_bytes())
-            .max(digest());
+    let previous = previous_chain();
     let (table, audit, weights, parent) = (
         table_chain(),
         audit_chain(),

@@ -558,3 +558,6 @@ fn structural_replay_reserved_allocation_guard_precedes_frame_observation() {
     );
     assert!(world.cursor.allocation.reserved());
 }
+
+#[path = "structural_replay_tests/unlink.rs"]
+mod unlink_replay;

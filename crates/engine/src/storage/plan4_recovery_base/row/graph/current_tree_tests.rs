@@ -655,3 +655,16 @@ fn unl_review_retirement_cannot_exceed_structural_high_water() {
         assert!(decode(&*bytes, expected(), &mut scratch()).is_err());
     }
 }
+
+/// UNL-C02 (dev3-tree-smo.md#unlink-u2-census): the current-tree closure that
+/// Base4 decode and capture validation run counts one whole `retired` call
+/// over the Base page codec, and the Base4 row codec holds that closure.
+#[test]
+fn unl_c02_current_tree_closure_counts_the_retired_list() {
+    use crate::storage::{anchor, plan4_recovery_base::row};
+    let list = anchor::retired_source_bytes(super::super::source::page_codec());
+    let closure = row::current_tree::source_bytes();
+    let codec = row::source_bytes();
+    println!("UNL_C02 base list {list} <= closure {closure} <= codec {codec}");
+    assert!(list <= closure && closure <= codec);
+}
