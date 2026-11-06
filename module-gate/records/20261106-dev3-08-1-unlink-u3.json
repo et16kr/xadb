@@ -2315,6 +2315,42 @@
           ]
         }
       ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs"
+      ],
+      "reason": "Additional PR review: actual A cleanup drain and C live LeafUnlink/RootCollapse under a 31-byte WAL write error or a completed-sync error; fence, note preservation, must-resolve, unchanged home files, and fresh recovery topology/ACK rows. Only these four new cases were selected in the follow-up local run.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::unlink_rows::unl_review_leaf_unlink_partial_wal_write_fences_and_recovers",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::unlink_rows::unl_review_leaf_unlink_sync_error_fences_and_recovers",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::unlink_rows::unl_review_root_collapse_partial_wal_write_fences_and_recovers",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::unlink_rows::unl_review_root_collapse_sync_error_fences_and_recovers",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
     }
   ],
   "na": [],
@@ -2411,6 +2447,20 @@
       },
       "log": "module-gate/evidence/dev3-08-1-unlink-u3/additional-review.md",
       "log_sha256": "0febd5240d626d61c0616f3ca9a410b139d953baa4437a5128df48f5c6ca3b5f"
+    },
+    {
+      "id": "pr58-wal-failure-tests-d1",
+      "class": "D1",
+      "scopes": [],
+      "author": "/root",
+      "reviewer": "/root/independent_review (WAL-failure follow-up session)",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs": "21e5fd0306e2936671906fd7d04de57cc48b1646"
+      },
+      "log": "module-gate/evidence/dev3-08-1-unlink-u3/wal-failure-review.md",
+      "log_sha256": "2d41452f1a1a52d857cc655af5ac2192f698cfee4e198b13599ff58ce599722b"
     }
   ]
 }

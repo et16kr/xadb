@@ -13,6 +13,7 @@ use super::*;
 use crate::storage::dirty_frame::init_test_support as init;
 use crate::storage::row::insert::driver::live::{autocommit_delete_live, transaction_delete_live};
 use crate::storage::tree_page::{TreeExpectation, decode_tree_page};
+use crate::storage::wal_io::disk_api::RetentionPhase;
 use crate::transaction::concurrency::catalog_test_support as hook;
 use foundation::identity::RowId;
 
@@ -2296,5 +2297,231 @@ fn unl_review_four_pending_notes_follow_leaf_unlinks_into_root_collapse() {
             assert_eq!((joined.ready.0, joined.clrs, joined.row_cells), (4, 0, 0));
             assert_eq!(joined.rows, expected);
         },
+    );
+}
+
+/// Check the recovered topology as well as B's rows: a torn unlink keeps
+/// the old anchor; the fully written unlink installs its successor. The RAM
+/// hints must not survive either restart.
+struct UnlinkRecoveryScan((PageRef, u8, Vec<PageRef>));
+
+impl JoinRead for UnlinkRecoveryScan {
+    fn scan<'s, 'c, W: WriterNamespace>(
+        &self,
+        live: &mut Live<'_, 's, 'c, '_, '_, '_, '_, '_, W>,
+        owner: &mut Owner<'c, 's>,
+        flusher: &mut Owner<'c, 's>,
+        reader_private: &mut [u8; PRIVATE_BYTES],
+        ready_files: &Images,
+    ) -> Vec<(u64, i64)> {
+        let rows = BigScan.scan(live, owner, flusher, reader_private, ready_files);
+        assert_eq!(live.catalog_test_with_pool(anchor_of), self.0);
+        let (writer, _, _) = live.split();
+        assert!(writer.test_unlink_notes().is_empty());
+        rows
+    }
+}
+
+/// Unlike a successful drain, an unlink whose durable wait fails must not
+/// report success or discard its note. The existing-group body installs RAM
+/// pages before that wait; only recovery may reconcile them with the WAL.
+/// These memory-port faults are additional U3 coverage, not U4 native cuts.
+fn unlink_wal_failure(collapse: bool, sync: bool) {
+    let oracle = Oracle::new();
+    let (images, expected, recovered_anchor) = with_fresh!(
+        oracle,
+        frames = 56,
+        file_bytes = 64 * 1_048_576,
+        |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+            let (row_status, _) =
+                create_table_with(live, owner, flusher, status, undo, private, true, &spec());
+            retire_create!(live, owner, private);
+            for _ in 0..18 {
+                system_init(live, owner, flusher, true);
+            }
+            let (mut writer, reader, mut flush) = live.split();
+            let count = if collapse { 8 } else { 11 };
+            let (out, slots) = autocommit!(
+                &mut writer,
+                owner,
+                flush,
+                flusher,
+                reader,
+                reader_private,
+                &row_status,
+                private,
+                6,
+                bigs(0..count)
+            );
+            assert_eq!(committed(out), (2, count));
+            let keys = rows_of(&slots);
+            drains!(&mut writer, owner, flush, flusher, private);
+            let before = writer.catalog_test_with_pool(reachable);
+            assert_eq!(
+                shape(&before).0,
+                if collapse { vec![3, 5] } else { vec![3, 3, 5] }
+            );
+            let old_anchor = writer.catalog_test_with_pool(anchor_of);
+            // The leftmost leaf always holds three rows. Leave its note
+            // pending by using C's Row-only retirement, not A's unlink drain.
+            let (emptied, doomed) = &before[0];
+            for (at, row) in doomed.iter().enumerate() {
+                let (out, slot) = delete!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    reader,
+                    reader_private,
+                    &row_status,
+                    private,
+                    *row
+                );
+                assert_eq!(committed(out), (3 + at as u64, 1));
+                assert_eq!(slot.unwrap().row().get(), *row);
+                retire_all!(writer, owner, private, flush, flusher);
+            }
+            let expected = kept_values(&keys, doomed);
+            let notes = writer.test_unlink_notes();
+            assert_eq!(notes.len(), 1);
+            assert_eq!(notes[0].0, 6);
+            assert!(doomed.contains(&notes[0].1));
+            assert_row_jobs_free(writer.catalog_test_jobs());
+            let before_files = state.lock().unwrap().images();
+            let wal = "d3-wal-00000001";
+            let start = before_files[wal].len();
+            {
+                let mut io = state.lock().unwrap();
+                io.events.clear();
+                io.fault_hits = 0;
+                io.fault = Some(port::Fault {
+                    key: port::Key::new(
+                        if sync { "sync" } else { "write" },
+                        wal,
+                        if sync { 0 } else { start as u64 },
+                        1,
+                    ),
+                    action: if sync {
+                        port::Action::AfterError
+                    } else {
+                        port::Action::PrefixErrorBytes(31)
+                    },
+                });
+            }
+            let stop = {
+                let mut call = LiveCall::new(&mut writer, owner, &mut flush, flusher);
+                retire_finished_live(&mut call, private).expect_err("unlink durable wait must fail")
+            };
+            assert_eq!(stop.failure.stage, Stage::Unlink);
+            assert!(stop.failure.must_resolve);
+            assert!(stop.retired.complete);
+            assert_eq!(
+                (
+                    stop.retired.groups,
+                    stop.retired.unlinked,
+                    stop.retired.unlink_held
+                ),
+                (0, 0, 0)
+            );
+            let DriverError::Disk(error) = stop.failure.error else {
+                panic!("expected the disk error");
+            };
+            assert_eq!(
+                (error.phase, error.effect),
+                (RetentionPhase::Durable, Effect::CallerMustResolve)
+            );
+            assert!(matches!(error.cause, RetentionCause::Wal(_)));
+            assert!(fence.is_fenced());
+            assert!(!hook::observe(core).read_gate_closed);
+            assert_eq!(hook::observe(core).active_read_operations, 0);
+            assert_eq!(writer.test_unlink_notes(), notes);
+            // A fenced session must not expose its RAM pages as a healthy
+            // tree. Check topology only after recovery in a fresh session.
+            writer.catalog_test_with_pool(|pool| {
+                let error = pool.target_request(0).unwrap_err();
+                assert_eq!(error.cause, crate::storage::dirty_frame::Cause::Fenced);
+                assert_eq!(error.effect, Effect::CallerMustResolve);
+            });
+            let mut listed = vec![*emptied];
+            if collapse {
+                listed.push(old_anchor.0);
+            }
+            listed.sort_by_key(|page| page.page_no);
+            let successor = if collapse {
+                (before[1].0, 0, listed)
+            } else {
+                (old_anchor.0, 1, listed)
+            };
+            let io = state.lock().unwrap();
+            assert_eq!(io.fault_hits, 1, "the selected fault must be reached");
+            let images = io.images();
+            assert_eq!(images.len(), before_files.len());
+            for (name, bytes) in &before_files {
+                if name != wal {
+                    assert_eq!(
+                        &images[name], bytes,
+                        "unlink must not write home pages: {name}"
+                    );
+                }
+            }
+            assert_eq!(&images[wal][..start], before_files[wal]);
+            if sync {
+                assert!(images[wal].len() > start + 31);
+            } else {
+                assert_eq!(images[wal].len(), start + 31);
+            }
+            println!(
+                "UNL_WAL_FAULT collapse={collapse} sync={sync} error={error:?} wal_added={}",
+                images[wal].len() - start
+            );
+            (images, expected, if sync { successor } else { old_anchor })
+        }
+    );
+    // A torn frame is discarded; a fully written frame is replayed. Neither
+    // result may resurrect the three acknowledged deletes or lose other rows.
+    let joined = join_restart_with(
+        &clone_directory(&images),
+        RowRecoveryPolicy::RejectInitialLosers,
+        None,
+        &Images::new,
+        &UnlinkRecoveryScan(recovered_anchor),
+    );
+    assert_eq!((joined.ready.0, joined.clrs, joined.row_cells), (5, 0, 0));
+    assert_eq!(joined.rows, expected);
+}
+
+#[test]
+fn unl_review_leaf_unlink_partial_wal_write_fences_and_recovers() {
+    case_within(
+        "UNL-REVIEW-LEAF-WRITE",
+        std::time::Duration::from_secs(1200),
+        || unlink_wal_failure(false, false),
+    );
+}
+
+#[test]
+fn unl_review_leaf_unlink_sync_error_fences_and_recovers() {
+    case_within(
+        "UNL-REVIEW-LEAF-SYNC",
+        std::time::Duration::from_secs(1200),
+        || unlink_wal_failure(false, true),
+    );
+}
+
+#[test]
+fn unl_review_root_collapse_partial_wal_write_fences_and_recovers() {
+    case_within(
+        "UNL-REVIEW-ROOT-WRITE",
+        std::time::Duration::from_secs(1200),
+        || unlink_wal_failure(true, false),
+    );
+}
+
+#[test]
+fn unl_review_root_collapse_sync_error_fences_and_recovers() {
+    case_within(
+        "UNL-REVIEW-ROOT-SYNC",
+        std::time::Duration::from_secs(1200),
+        || unlink_wal_failure(true, true),
     );
 }
