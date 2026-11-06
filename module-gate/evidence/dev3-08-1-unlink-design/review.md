@@ -357,3 +357,60 @@ drain의 Busy 분류(1326행)와 UNL-L10(1360행)이 이 서술에 기대고 있
 - **read gate.** shell의 `close_reads_for_retirement`가 durable 대기까지 새 읽기를 막는다(`concurrency/read.rs:133–162`, `structural_effect.rs:262–317`). B는 매 operation마다 anchor에서 route하므로 퇴역 page에 닿지 않는다.
 - **F4 산술.** 44,304 − 4,096 = 40,208B는 맞다. split 효과 단계 37,438B와 live 정리 본문 39,564B에 비추어 들어갈 가능성이 높다. 실측을 U3 census로 미루고, 넘치면 상한을 올리지 않고 계약을 다시 보는 방식은 task-14 270행 규칙과 같다.
 - **기타.** 복구는 unlink를 시작하지 않는다. 단계마다 D2·PR 하나를 두고 U4 뒤에만 적립한다. README·baseline 상태 줄은 본문과 맞다.
+
+<a id="pr55-followup"></a>
+## PR #55 후속 설계·코드 검토와 신규 시험 — 2026-11-06
+
+입력은 PR head `b6dc3a25dac26c45f55c42d83d22f533ccbd4552`, base `1c9486a8f91c62c9c7224b38c652858ea432dcb2`다.
+사용자가 설계·방향·코드 검토, 새로운 시험과 문제 수정 commit을 요청했다. 담당 `/root`, 별도 D1/D2 검토자는
+`/root/unlink_design_review`다. 위 1–3회차 기록은 당시 증거로 보존한다.
+
+### 설계 판정과 수정
+
+즉시 Free하지 않고 object가 XTR1으로 퇴역 page를 소유하며, 기존 RemoveChild와 root level 1→0 축소를 쓰는
+방향은 현재 DISK·회수 계약에 맞는다. `reached ⊎ retired == owned`, 기존 birth claim 보존, INIT 없는 설치 경로는
+필요한 변경이다. 다만 다음 두 계약 오류를 수정했다.
+
+1. **retire LSN은 snapshot horizon이 아니다.** 기존 "그 LSN보다 오래된 reader"는 WAL 순번과 commit sequence q를
+   혼동할 수 있다. 회수 정본 `dev3-task-14-reclamation.md` §5.1·5.6의 `H=min(Q, 등록 q들)` 및 현재 edge·pin·
+   flush claim·DWB·generation 확인을 명시했다. XTR1은 퇴역 이력이며 Free 권한은 아니다. LSN 하나로 반환을
+   결정하는 대안은 기존 회수 불변식에 어긋나므로 채택하지 않았다.
+2. **TreeAnchor 크기 불변은 decoder 비용 불변이 아니다.** `row_preflight.rs`의 `anchor_decode`는 중첩 decode
+   비용도 계산한다. XTR1의 borrowed view·Result·항목을 포함해 U1 codec/candidate/Base4, U2 replay, U3
+   writer의 상주 note·caller frame을 각각 검증하도록 UNL-C01..C03을 추가했다. U3까지 산정을 미루거나 charge를
+   자동 증액하지 않는다. fresh/recovered writer 둘을 포함한다.
+
+이는 기존 제품 방향 안의 D2 구체화이며 unlink의 실제 구현·공간 반환·더 깊은 root 축소를 시작하지 않는다.
+read gate, Retained/RootReserved, scope4 frame 산술·role·dense redo, Base4의 CREATE pair/role5·6 claim 소비자를
+정적으로 대조했으며 추가 필수 수정은 발견하지 않았다. 8개 RAM note의 누락은 이미 허용된 hint 의미다.
+그룹별 canonical replay·fsync와 extent 조기 소진 위험은 남고, 성능 개선을 입증한 것으로 주장하지 않는다.
+
+### 새 시험의 실제 결과
+
+수정한 파일은 `crates/engine/src/storage/tree_page/structure/tests.rs`다. 제품 코드는 변경하지 않았다.
+이번 사용자의 추가 시험 요청에 따라 새 `pr55_*` 두 개만 실행하고 기존 2,359개는 실행하지 않았다.
+기대 page는 기존 독립 literal serializer로 조립하고, 기대 route는 명시한 구간 표로 주며 제품 encoder/search로
+정답을 만들지 않는다. serializer가 공유하는 digest는 checksum 구성용이고 route 정답과 분리된다.
+
+- `pr55_unlink_below_level_two_root_preserves_all_key_ranges`: 두 parent 각각의 leftmost·중간·마지막 child 제거
+  6조합. before audit 9 page → after 8 page, parent after bytes, ancestor 경계 100을 포함한 조합당 key 1..180
+  (총 1,080회)의 route·기존 행 존재 여부와 퇴역 leaf를 load하지 않음을 확인했다.
+- `pr55_root_collapse_does_not_follow_retired_parent_or_empty_leaf`: 양쪽 제거 × survivor의 빈/비지 않은 상태
+  4조합. survivor 1 page만 audit·검색하고, key 경계와 `u64::MAX`, scratch 불변을 확인했다.
+
+Rust 1.95.0에서 신규 **2/2 PASS**, 실패·skip 0. 명령과 원 출력 발췌는 [실행 로그](pr55-tests.log)에 있다.
+시험 파일 Git blob `2197b9dd0bfe33d03bfb84bc2a4f9999aa45d00d`, SHA-256
+`ca419e73a0a3e6625833a694d286f39934c9d42cfda6aaabb392d921622ca679`.
+로그 SHA-256 `7442ea83e6475019c8c1f988842b5da6775368cd02aac439297b0481c8ece1c3`.
+소스 기준은 입력 head와 이 시험 파일 blob의 조합이다. 테스트 target은 기록 뒤 삭제한다.
+
+이 결과는 현재 structural primitive·audit·search의 결합 검증이다. XTR1·unlink candidate·WAL replay·live drain·
+crash recovery는 아직 구현되지 않았으므로 UNL-P/F/B/R/L/A/C/N의 PASS가 아니며 모두 NOT_RUN을 유지한다.
+08-1 일정 적립도 0 그대로다. 미구현 runtime census나 crash 안전성은 이 검토만으로 인증하지 않는다.
+
+### 후속 독립 검토 결론
+
+`/root/unlink_design_review`의 최종 판정은 **ACCEPT — D2 문서·D1 신규 시험, 미해결 필수 지적 0**이다.
+계약 blob `b56bab546b9ce910721574647a30e2a555ed94c4`와 위 시험 blob, 로그·SHA-256 및 NOT_RUN 경계를 직접
+대조했다. 검토자는 재실행하지 않았다. 담당 `/root`가 지적 두 건의 반영과 새 시험 결과를 확인했다.
+향후 XTR1·호출 경로·note 저장 위치·charge가 바뀌면 해당 단계의 census와 독립 검토를 다시 수행한다.

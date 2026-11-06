@@ -1126,6 +1126,10 @@ split 종류 직접 관측. 18-frame pool에서 split 뒤 table issue의 Missing
 2회차 CONDITIONAL(필수 1)을 반영했다([검토 기록](../../module-gate/evidence/dev3-08-1-unlink-design/review.md)). 08-1의 마지막
 범위(3.06.1.c, T06-06)를 닫는 설계다. 08-1은 아래 U4까지 끝나야 완료로 적립한다.
 
+2026-11-06 PR #55 후속 검토는 retire LSN과 snapshot q의 구분 및 U1–U3의 단계별 census 의무를 보강했다.
+기존 구조 primitive를 대상으로 새로 작성한 두 시험의 결과와 미구현 경계는
+[후속 검토 기록](../../module-gate/evidence/dev3-08-1-unlink-design/review.md#pr55-followup)에 둔다.
+
 이 절이 대체하거나 확장하는 앞 서술은 다음과 같다.
 
 - [결정과 범위](#결정과-범위)의 "Finished/잔여0 규칙을 그 opcode에 자동 적용하지 않는다": unlink 그룹의 owner도
@@ -1181,13 +1185,19 @@ L의 parent P에 따라 둘 중 하나다.
 - 항목 검산: file은 첫 file, page_no 9..63, anchor·현재 root·다른 항목과 물리 주소가 다름(incarnation만 다른
   alias도 거절), kind/level은 RowLeaf 0 또는 RowInternal 1..15, retire LSN은 0보다 크고 anchor pageLSN 이하.
   retire LSN은 퇴역시킨 그룹의 complete LSN(그 Structural owner의 id)이므로 Structural high-water 이하이고,
-  퇴역 page는 그 뒤 쓰이지 않으므로 그 page의 pageLSN보다 크다. 3.14.1의 eligibility(그 LSN보다 오래된 reader)가
-  후속 소비자다.
+  퇴역 page는 그 뒤 쓰이지 않으므로 그 page의 pageLSN보다 크다. 이 LSN은 구조 그룹의 순서와 퇴역 이력을
+  나타내며 snapshot의 commit sequence q와 비교하지 않는다. 후속 3.14.1 eligibility는
+  [회수 계약 §5.1](dev3-task-14-reclamation.md#algorithms)의 published Q·등록 q로 구한 horizon과
+  rollback/object/backup 소유, 마지막 영속 edge·transient pin·flush claim·DWB 조건을 실제 반환 시점에 다시
+  검산한다. XTR1의 LSN이나 read gate 통과만으로 Free/reuse 권한을 만들지 않는다.
 - 운반: `TreeAnchor`(lifetime 없는 Copy 값, 여러 census가 `size_of`로 센다)는 바꾸지 않는다. `decode_anchor`는
   cell 1개 또는 2개를 받아 cell 1의 문법만 검산하고, 목록은 별도 borrowed 함수
   `anchor::retired(input, expected) -> RetiredList<'_>`로 Base4 closure와 candidate만 읽는다. 따라서 root만 쓰는
-  나머지 decode 지점과 그 census는 바뀌지 않는다. cell 1은 Row tree anchor에서만 받는다(Catalog·Index anchor는
-  Corrupt). Profile2/Base3 경로는 목록이 있는 anchor를 거절한다.
+  나머지 호출자의 반환 타입은 유지한다. 다만 XTR1 decoder의 borrowed view·항목·Result·반복 지역값은 새 source
+  비용이다. U1에서 anchor codec과 split candidate·Base4 및 decoder를 호출하는 Row preflight·visibility 등
+  영향받는 census의 중첩 frame 비용과 상한을 다시 검산한다. 타입 크기 불변을 census 불변의 근거로 삼지 않는다.
+  cell 1은 Row tree anchor에서만 받는다(Catalog·Index anchor는 Corrupt). Profile2/Base3 경로는 목록이 있는
+  anchor를 거절한다.
 - writer: 지금 Row anchor를 다시 쓰는 곳은 split candidate 하나다. 그 anchor after(revision+1, RootSplit의 root
   교체)는 목록을 bytes 그대로 보존한다. CREATE와 Base INIT 재구성의 anchor는 초기 image라 목록이 없다.
 - 3.03.4가 page를 Free로 만들 때 같은 그룹에서 항목을 지운다(이 절 밖). 그 Free 그룹의 WAL credit은 3.03.4
@@ -1362,6 +1372,7 @@ Capacity로 거절한다. 제품 table은 CREATE Catalog Job 때문에 일정 10
 | UNL-L01..L08 | live: 중간 leaf의 행을 모두 DELETE·commit·drain → LeafUnlink, leftmost leaf, RootCollapse, 두 child가 빈 root → 빈 root leaf, non-root unary는 NotNeeded로 남음, rollback한 INSERT의 CLR note → unlink(SPL-A03 상태), CREATE Catalog Job table은 note 버림, unlink 뒤 split이 퇴역 page를 쓰지 않음. 각각 재시작 read |
 | UNL-L09..L15 | 작은 pool의 FlushRequired 왕복, 다른 Owner의 열린 읽기를 shell이 기다린 뒤(`ReadGateWaiting` test point) 읽기가 끝나면 unlink, 준비와 설치 사이 target stamp를 바꾸는 seam의 `Frame(Stale)` Unchanged가 note를 남김(Busy 계열), root level 2 tree에서 non-root P(separator ≥2) 아래 LeafUnlink와 지운 separator·이웃 경계 key의 point/cursor 읽기, 가장 오른쪽 leaf unlink 뒤 새 INSERT의 route, 오래된 snapshot이 DeletePrune을 Busy로 잡는 동안 unlink 없음·끝난 뒤 unlink, C 직접 호출의 RootReserved·allocator Reserved 거절 |
 | UNL-A01..A03 | A literal(drain 순서·상한 8·FlushRequired 미계수·Busy 계열·그 밖의 Unchanged·Fatal·`Stage::Unlink`), 9번째 note 버림, census(C peak + 4,096 ≤ 44,304, A 새 지점) |
+| UNL-C01..C03 | U1: XTR1 decoder·split candidate·Base4와 영향받는 호출자의 source census, U2: opcode dispatch·canonical replay·base capture census, U3: writer의 8개 RAM note를 shared owner/port charge에, drain 결과 필드를 caller frame에 포함한 산정. fresh/recovered writer 양쪽에서 각 단계의 실제 타입·중첩 호출이 기존 charge 안에 드는지 검산하며 상한 증가는 별도 D2 |
 | UNL-N01..N06 | native fault cut: stage 전후, sync, install, DWB/home, CURRENT 공개와 reopen. 각 cut 뒤 tree·목록·allocator 일치 |
 
 기대값은 typed 정렬 목록·독립 bytes로 만들고 제품 encoder·탐색 결과로 만들지 않는다. AGENTS.md에 따라 새
@@ -1372,9 +1383,9 @@ Capacity로 거절한다. 제품 table은 CREATE Catalog Job 때문에 일정 10
 
 | 단계 | 내용 | 시험 |
 | --- | --- | --- |
-| U1 | XTR1 codec과 `anchor::retired`, split candidate의 anchor 보존과 `audit` 변경, 순수 unlink candidate, opcode 3·4 producer/observer, bank·`decode_layout`, Base4 closure | UNL-P·F·B |
-| U2 | canonical replay dispatch, 복구 관측의 changed/retired 구분, base capture의 목록 | UNL-R |
-| U3 | `ExistingGroup::Structural`·live 효과·RAM note·A drain·census | UNL-L·A |
+| U1 | XTR1 codec과 `anchor::retired`, split candidate의 anchor 보존과 `audit` 변경, 순수 unlink candidate, opcode 3·4 producer/observer, bank·`decode_layout`, Base4 closure·영향받는 census | UNL-P·F·B·C01 |
+| U2 | canonical replay dispatch, 복구 관측의 changed/retired 구분, base capture의 목록·census | UNL-R·C02 |
+| U3 | `ExistingGroup::Structural`·live 효과·RAM note·A drain·census | UNL-L·A·C03 |
 | U4 | native fault cut | UNL-N |
 
 각 단계는 독립 D2와 PR 하나다. U4가 끝나면 08-1(2단위)을 완료로 적립한다. 이 절은 설계이며 어느 단계의
