@@ -1,0 +1,47 @@
+{
+  "schema": "XADB_MODULE_GATE_RECORD_V1",
+  "change": "Test-only: H03 and MBC40-V01 scope4 relabel cases expect the structural arm's length refusal RowSemantic(Corrupt) instead of the stale Unsupported; H03 damaged pinned to RowSemantic(Wal(Corrupt)).",
+  "rust_tests": [
+    {
+      "paths": [
+        "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs",
+        "crates/engine/src/storage/wal_io/plan4_retention/recovery/format_tests.rs"
+      ],
+      "reason": "The two changed cases are the only ones whose expectations changed; each relabels a real frame to scope4 and checks the exact refusal and no effect.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1b_scope_routes_only_to_its_own_arm",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/format_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::format_tests::mbc40_v01_profile2_binding_rejected_at_owner_grammar_sites",
+          "sources": [
+            "head"
+          ],
+          "inputs": []
+        }
+      ]
+    }
+  ],
+  "reviews": [
+    {
+      "id": "scope4-relabel-tests-20261106",
+      "class": "D1",
+      "scopes": [],
+      "author": "/root",
+      "reviewer": "/root/independent_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/wal_io/plan4_retention/recovery/format_tests.rs": "70162b0c5d57ea6f47978872baca7fdbf2b8fa81",
+        "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs": "e6c75508e6a1a26c02c8d25f2a2257a329526c4c"
+      },
+      "log": "module-gate/evidence/scope4-relabel-tests/review.md (sha256 809f0dcd9f091d08270c8b63d0ab1f45e836c037c4a0457b34e93284d0f67c74)"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+   Compiling xadb-engine v0.1.0 (/home/claude/xadb/crates/engine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 21.59s
+     Running unittests src/lib.rs (target/debug/deps/engine-e4e141083d864921)
+
+running 2 tests
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::format_tests::mbc40_v01_profile2_binding_rejected_at_owner_grammar_sites ... MBC40-V01 PASS formats=0,2,4,65535 queue_versions=2,4 scopes=3,0,4,65535 rejected sites=7 authority=NONE
+ok
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1b_scope_routes_only_to_its_own_arm ... S1B_REFUSED	scope2	Some(CatalogSemantic(Wal(Corrupt)))
+S1B_REFUSED	scope1	Some(Invariant)
+S1B_REFUSED	scope0	Some(Unsupported)
+S1B_REFUSED	scope4	Some(RowSemantic(Corrupt))
+S1B_REFUSED	scope65535	Some(Unsupported)
+S1B_REFUSED	version1	Some(Unsupported)
+S1B_REFUSED	version3	Some(Unsupported)
+S1B_REFUSED	damaged	Some(RowSemantic(Wal(Corrupt)))
+ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 2359 filtered out; finished in 0.05s
+
