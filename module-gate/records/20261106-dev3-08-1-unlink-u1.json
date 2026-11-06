@@ -440,6 +440,20 @@
           "sources": [
             "head"
           ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/unlink_frame_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::unlink::frame::unl_review_consecutive_unlinks_collapse_then_split_preserve_rows_and_history",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/unlink_frame_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::unlink::frame::unl_review_every_core_byte_mutation_is_rejected_after_resealing",
+          "sources": [
+            "head"
+          ]
         }
       ]
     },
@@ -844,6 +858,13 @@
         {
           "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests.rs",
           "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_source_native",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::current_tree_tests::unl_review_retirement_cannot_exceed_structural_high_water",
           "sources": [
             "head"
           ]
@@ -2915,6 +2936,22 @@
       },
       "log": "module-gate/evidence/dev3-08-1-unlink-u1/review.md",
       "log_sha256": "451d6abe83ff7da135be388a93717ccab384916b42615b70323a6ad1504dc011"
+    },
+    {
+      "id": "pr56-codex-retirement-bound",
+      "class": "D1",
+      "scopes": [],
+      "author": "/root",
+      "reviewer": "/root/pr56_independent_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/plan4_recovery_base/row/current_tree.rs": "83b6daf7b401fa37055ca9874d4550254c6f7161",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs": "e9ee7ebf3e1f90258676be240a486b4393e767f1",
+        "crates/engine/src/storage/semantic_row/structure/weights/unlink_frame_tests.rs": "36f43acf6749f88302465230f482f6cfcba24a76"
+      },
+      "log": "module-gate/evidence/dev3-08-1-unlink-u1/codex-review.md",
+      "log_sha256": "9e868e9bc8e6095c84387bef6a782c43ec8fcc246b9fae96e0fe14814167bdc8"
     }
   ]
 }

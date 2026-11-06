@@ -335,3 +335,121 @@ fn unl_f03_split_frame_with_changed_retired_list_is_rejected() {
     let mut observed = World::outputs();
     assert!(split_frame::observe(&input, &bad, &mut observed, |p| world.page(p)).is_err());
 }
+
+/// Carry real produced bank descriptors through repeated removals. This is
+/// pure canonical composition, not the U2 replay or U3 live-install path.
+#[test]
+fn unl_review_consecutive_unlinks_collapse_then_split_preserve_rows_and_history() {
+    let mut world = world();
+    world.internal_root();
+    let rows = world.pages[&13].clone();
+    let allocation = world.pages[&0].clone();
+    let first_lsn = world.fixture.lsn + 1;
+    let mut previous = None;
+    let mut descriptor = [0; 1536];
+    for (step, source) in [21, 20, 22].into_iter().enumerate() {
+        let mut input = world.inputs(source);
+        input.previous_high_water = previous.map_or(0, |p: SystemWorkRef| p.id());
+        input.previous = previous.map(|p| (p, &descriptor));
+        let mut after = after();
+        let mut bytes = vec![0; 40_000];
+        let encoded::Produced::Frame(observation) =
+            encoded::produce(&input, &mut after, &mut bytes, |p| world.page(p)).unwrap()
+        else {
+            panic!("removal {step} needed");
+        };
+        bytes.truncate(observation.frame_bytes);
+        let view = layout::decode_layout(&bytes, input.frame, input.profile).unwrap();
+        assert_eq!(view.core().previous_high_water(), input.previous_high_water);
+        assert_eq!(
+            *view.core().previous_digest(),
+            if previous.is_some() {
+                content_digest(&descriptor)
+            } else {
+                [0; 32]
+            }
+        );
+        let mut observed = super::after();
+        encoded::observe(&input, &bytes, &mut observed, |p| world.page(p)).unwrap();
+        assert_eq!(observed, after);
+        let expected_op = if step == 2 {
+            Operation::RootCollapse
+        } else {
+            Operation::LeafUnlink
+        };
+        assert_eq!(observation.operation, expected_op);
+        descriptor.copy_from_slice(view.descriptor());
+        previous = Some(
+            SystemWorkRef::new(
+                profile().spec().namespace,
+                SystemWorkKind::StructuralChange,
+                observation.header.lsn,
+                one(),
+            )
+            .unwrap(),
+        );
+        world.root = anchor::decode_anchor(
+            &after[0],
+            world.header(12, 6, PageKind::TreeAnchor, 0).identity,
+        )
+        .unwrap()
+        .root();
+        world.pages.insert(12, Box::new(after[0]));
+        if step != 2 {
+            world.pages.insert(23, Box::new(after[1]));
+        }
+        world.fixture.lsn = observation.header.lsn;
+        assert_eq!(world.pages[&13], rows);
+        assert_eq!(world.pages[&0], allocation);
+    }
+    assert_eq!(
+        (
+            world.root.page.page_no,
+            world.root.level,
+            world.root.revision
+        ),
+        (13, 0, 8)
+    );
+    let list = xtr1(&[
+        (20, 2, 1, 0, first_lsn + 1),
+        (21, 2, 1, 0, first_lsn),
+        (22, 2, 1, 0, first_lsn + 2),
+        (23, 2, 2, 1, first_lsn + 2),
+    ]);
+    assert_eq!(
+        cells_of(
+            &world.pages[&12],
+            world.header(12, 6, PageKind::TreeAnchor, 0)
+        ),
+        [xta1(13, 0, 8), list.clone()]
+    );
+    let mut input = world.inputs(13);
+    input.previous_high_water = previous.unwrap().id();
+    input.previous = previous.map(|p| (p, &descriptor));
+    let mut after = World::outputs();
+    let plan = product::prepare(&input, &mut after, |p| world.page(p)).unwrap();
+    assert_eq!(plan.operation(), Operation::RootSplit);
+    assert_eq!(cells_of(&after[1], plan.targets()[1])[1], list);
+    for target in &plan.targets()[3..] {
+        assert!(![20, 21, 22, 23].contains(&target.identity.page.page_no));
+    }
+}
+
+#[test]
+fn unl_review_every_core_byte_mutation_is_rejected_after_resealing() {
+    for (world, source) in cases() {
+        let (original, _) = produced(&world, source);
+        let mut after = after();
+        for at in CORE..NATIVE {
+            let mut bad = original.clone();
+            bad[at] ^= 1;
+            seal(&mut bad);
+            assert!(
+                encoded::observe(&world.inputs(source), &bad, &mut after, |p| world.page(p))
+                    .is_err(),
+                "source {source}, core byte {}",
+                at - CORE
+            );
+        }
+    }
+}

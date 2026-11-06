@@ -609,3 +609,49 @@ fn unl_b02_b06_base4_rejects_retired_list_ownership_mismatch() {
         assert!(decode(bytes, expected(), &mut scratch()).is_err());
     }
 }
+
+/// A valid page/checksum is insufficient: retirement must belong to the
+/// Structural history, even when a later capture admits a newer anchor LSN.
+#[test]
+fn unl_review_retirement_cannot_exceed_structural_high_water() {
+    for source in [UNLINK_LEAF, UNLINK_COLLAPSE] {
+        let mut bytes = backing(source);
+        // Advance only the capture (and its inventory binding), not the
+        // Structural bank/high-water at 90. No fixture author is invoked.
+        put(&mut *bytes, 96, 91);
+        put(&mut *bytes, 248, 91);
+        let inventory_len =
+            u32::from_le_bytes(bytes[INVENTORY + 12..INVENTORY + 16].try_into().unwrap()) as usize;
+        put(&mut *bytes, INVENTORY + 48, 91);
+        // The inventory includes the nested Row inventory at this fixed offset.
+        if bytes[INVENTORY + 64..INVENTORY + 72]
+            .iter()
+            .any(|b| *b != 0)
+        {
+            let nested = INVENTORY + 2176;
+            let nested_len =
+                u32::from_le_bytes(bytes[nested + 12..nested + 16].try_into().unwrap()) as usize;
+            put(&mut *bytes, nested + 48, 91);
+            seal(&mut bytes[nested..nested + nested_len]);
+            let digest = content_digest(&bytes[nested..nested + nested_len]);
+            bytes[INVENTORY + 88..INVENTORY + 120].copy_from_slice(&digest);
+        }
+        seal(&mut bytes[INVENTORY..INVENTORY + inventory_len]);
+        change_page(&mut bytes, 10, |p| {
+            put(p, 64, 91);
+        });
+        // A later anchor with the original retirement is still valid.
+        assert_eq!(decode(&*bytes, expected(), &mut scratch()).err(), None);
+        change_page(&mut bytes, 10, |p| {
+            let at = offset(p, 1);
+            put(p, at + 16 + 32, 91);
+        });
+        let layout = decode_layout(&*bytes, expected()).unwrap();
+        assert_eq!(layout.header().system_high_water[1], 90);
+        assert_eq!(
+            current_tree::observe(layout, 0).err(),
+            Some(BaseError::IdentityMismatch),
+        );
+        assert!(decode(&*bytes, expected(), &mut scratch()).is_err());
+    }
+}

@@ -246,7 +246,10 @@ pub(super) fn observe(layout: LayoutView<'_>, index: usize) -> Result<Table<'_>>
             arity: 0,
         };
         let page = tree_page::decode_tree_page(read(layout, expected)?, expected)?;
-        if page.header().lsn.0 >= item.retire_lsn
+        // A page written by a later non-structural operation cannot prove a
+        // retirement that is absent from the selected Structural history.
+        if item.retire_lsn > high
+            || page.header().lsn.0 >= item.retire_lsn
             || item.kind == PageKind::RowLeaf && page.len() != 0
         {
             return Err(Error::IdentityMismatch);
