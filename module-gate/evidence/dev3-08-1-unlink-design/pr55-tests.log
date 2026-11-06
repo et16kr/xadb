@@ -1,0 +1,12 @@
+Command: cargo test -p xadb-engine --lib storage::tree_page::structure::tests::pr55_ --locked -- --nocapture
+Toolchain: Rust 1.95.0, Cargo.lock unchanged
+Base PR head: b6dc3a25dac26c45f55c42d83d22f533ccbd4552
+Target: /workspace/scratch/pr55-target (removed after recording)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 00s
+     Running unittests src/lib.rs (/workspace/scratch/pr55-target/debug/deps/engine-e4e141083d864921)
+
+running 2 tests
+test storage::tree_page::structure::tests::pr55_root_collapse_does_not_follow_retired_parent_or_empty_leaf ... ok
+test storage::tree_page::structure::tests::pr55_unlink_below_level_two_root_preserves_all_key_ranges ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 2359 filtered out; finished in 0.13s

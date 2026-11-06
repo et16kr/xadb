@@ -112,6 +112,219 @@ const INTERNALS: [(PageKind, u8); 3] = [
     (PageKind::IndexInternal, 1),
 ];
 
+// PR55 design probes: independent page literals exercise the existing
+// structural primitive, not the as-yet unimplemented live unlink protocol.
+fn review_expected(page: u64, level: u8) -> TreeExpectation {
+    let mut expected = expectation(
+        if level == 0 {
+            PageKind::RowLeaf
+        } else {
+            PageKind::RowInternal
+        },
+        0,
+        level,
+    );
+    expected.identity.page = reference(page);
+    expected
+}
+
+#[test]
+fn pr55_unlink_below_level_two_root_preserves_all_key_ranges() {
+    use crate::storage::tree_page::{audit::audit_tree_in_images, search::find_leaf_in_images};
+
+    // Every child position of both parents, including the ancestor boundary
+    // at 100. Expected post-edit routing is a literal interval table.
+    for (removed, leftmost, separators, routes) in [
+        (
+            20,
+            21,
+            vec![(40, 22)],
+            vec![(40, 21), (100, 22), (120, 30), (140, 31), (181, 32)],
+        ),
+        (
+            21,
+            20,
+            vec![(40, 22)],
+            vec![(40, 20), (100, 22), (120, 30), (140, 31), (181, 32)],
+        ),
+        (
+            22,
+            20,
+            vec![(20, 21)],
+            vec![(20, 20), (100, 21), (120, 30), (140, 31), (181, 32)],
+        ),
+        (
+            30,
+            31,
+            vec![(140, 32)],
+            vec![(20, 20), (40, 21), (100, 22), (140, 31), (181, 32)],
+        ),
+        (
+            31,
+            30,
+            vec![(140, 32)],
+            vec![(20, 20), (40, 21), (100, 22), (140, 30), (181, 32)],
+        ),
+        (
+            32,
+            30,
+            vec![(120, 31)],
+            vec![(20, 20), (40, 21), (100, 22), (120, 30), (181, 31)],
+        ),
+    ] {
+        let root = review_expected(3, 2);
+        let mut images = std::collections::BTreeMap::new();
+        for (page, level, cells) in [
+            (3, 2, vec![metadata(0, Some(10)), internal_cell(0, 100, 11)]),
+            (
+                10,
+                1,
+                vec![
+                    metadata(0, Some(20)),
+                    internal_cell(0, 20, 21),
+                    internal_cell(0, 40, 22),
+                ],
+            ),
+            (
+                11,
+                1,
+                vec![
+                    metadata(0, Some(30)),
+                    internal_cell(0, 120, 31),
+                    internal_cell(0, 140, 32),
+                ],
+            ),
+        ] {
+            images.insert(page, raw_page(review_expected(page, level), &cells, 7));
+        }
+        let rows = [
+            (20, 10),
+            (21, 30),
+            (22, 50),
+            (30, 110),
+            (31, 130),
+            (32, 150),
+        ];
+        for (page, row) in rows {
+            let mut cells = vec![metadata(0, None)];
+            if page != removed {
+                cells.push(leaf_cell(0, row, 1));
+            }
+            images.insert(page, raw_page(review_expected(page, 0), &cells, 7));
+        }
+        let mut visited = [None; 9];
+        assert_eq!(
+            audit_tree_in_images(
+                root,
+                &mut visited,
+                |e| Ok(&images[&e.identity.page.page_no])
+            )
+            .unwrap(),
+            9
+        );
+        let parent = if removed < 30 { 10 } else { 11 };
+        let expected = review_expected(parent, 1);
+        let view = decode_tree_page(&images[&parent], expected).unwrap();
+        let mut meta = [0; 32];
+        let mut refs = [&[][..]; 3];
+        let InternalEditPlan::Page(plan) = view
+            .prepare_internal_edit(
+                InternalEdit::RemoveChild(reference(removed)),
+                &mut meta,
+                &mut refs,
+            )
+            .unwrap()
+        else {
+            panic!("two children remain");
+        };
+        let mut after = vec![0; PAGE_BYTES];
+        plan.encode(PageLsn(11), &mut after).unwrap();
+        let mut expected_cells = vec![metadata(0, Some(leftmost))];
+        expected_cells.extend(
+            separators
+                .into_iter()
+                .map(|(key, page)| internal_cell(0, key, page)),
+        );
+        assert_eq!(after, raw_page(expected, &expected_cells, 11));
+        images.insert(parent, after);
+        // The retired image remains allocated. Traversal must never load it.
+        assert_eq!(
+            audit_tree_in_images(root, &mut visited, |e| {
+                assert_ne!(e.identity.page.page_no, removed);
+                Ok(&images[&e.identity.page.page_no])
+            })
+            .unwrap(),
+            8
+        );
+        for query in 1_u64..=180 {
+            let leaf = find_leaf_in_images(root, &query.to_be_bytes(), |e| {
+                assert_ne!(e.identity.page.page_no, removed);
+                Ok(&images[&e.identity.page.page_no])
+            })
+            .unwrap();
+            let destination = routes.iter().find(|(upper, _)| query < *upper).unwrap().1;
+            assert_eq!(
+                leaf.header().identity.page,
+                reference(destination),
+                "removed {removed}, key {query}"
+            );
+            assert_eq!(
+                leaf.lower_bound(&query.to_be_bytes()).unwrap().equal,
+                rows.iter()
+                    .any(|(page, row)| *page != removed && *row == query)
+            );
+        }
+    }
+}
+
+#[test]
+fn pr55_root_collapse_does_not_follow_retired_parent_or_empty_leaf() {
+    use crate::storage::tree_page::{audit::audit_tree_in_images, search::find_leaf_in_images};
+
+    for (removed, survivor, row) in [(10, 11, 30), (11, 10, 10)] {
+        for survivor_empty in [false, true] {
+            let expected = review_expected(3, 1);
+            let parent = raw_page(
+                expected,
+                &[metadata(0, Some(10)), internal_cell(0, 20, 11)],
+                7,
+            );
+            let view = decode_tree_page(&parent, expected).unwrap();
+            let mut meta = [0xa5; 32];
+            let InternalEditPlan::Collapse { survivor: actual } = view
+                .prepare_internal_edit(
+                    InternalEdit::RemoveChild(reference(removed)),
+                    &mut meta,
+                    &mut [],
+                )
+                .unwrap()
+            else {
+                panic!("one child remains");
+            };
+            assert_eq!(actual, reference(survivor));
+            let root = review_expected(survivor, 0);
+            let mut cells = vec![metadata(0, None)];
+            if !survivor_empty {
+                cells.push(leaf_cell(0, row, 1));
+            }
+            let image = raw_page(root, &cells, 7);
+            let load = |e: TreeExpectation| {
+                assert_eq!(e, root);
+                Ok(image.as_slice())
+            };
+            assert_eq!(audit_tree_in_images(root, &mut [None; 3], load).unwrap(), 1);
+            for query in [1_u64, 19, 20, 21, row, u64::MAX] {
+                let leaf = find_leaf_in_images(root, &query.to_be_bytes(), load).unwrap();
+                assert_eq!(
+                    leaf.lower_bound(&query.to_be_bytes()).unwrap().equal,
+                    !survivor_empty && query == row
+                );
+            }
+            assert_eq!(meta, [0xa5; 32]);
+        }
+    }
+}
+
 #[test]
 fn internal_insert_and_unlink_match_independent_pages() {
     for (kind, arity) in INTERNALS {

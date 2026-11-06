@@ -8,13 +8,14 @@
 
 DEV3 일정 보고는 [전체 예상 일정·누적 진척률 V1](plans/dev3-schedule-baseline.md)을 따른다. 최신 기준일·적립 대장·누적률·잔여 예측은 그 문서에서 확인한다. 완료 증거가 있는 일정 항목의 고정 예상 기간을 누적하며 날짜 예측과 제품 인수 판정은 구분한다.
 
-현재 작업은 사용자 요청 "codex/dev3-08-tree-generalization을 받아 08-1을 완료하기"의 두 번째 단위인
-**[A 자동 split 호출자](contracts/dev3-tree-smo.md#automatic-split)**다. 작업 branch는 `claude/project-thread-e9itre`
-(main `2102038`)다. A의 INSERT·UPDATE 행이 값 검사나 Reserve에서 leaf 공간 때문에 거절되면 C의 live split
-(`split_row_live`)을 부르고 같은 행을 다시 시도한다. SPL-A01..A10이 split 뒤 Commit·rollback·UPDATE·dirty
-victim flush·거절·예약 D>0을 검산한다. 독립 D2는 2회차 CONDITIONAL(필수 1, D>0 live 증거)이었고 SPL-A10으로
-반영했다. 첫 단위 [current-leaf 소비자 일반화](contracts/dev3-tree-smo.md#current-leaf-consumers)는 PR #53으로
-병합됐다. 빈 leaf unlink·root shrink·retirement는 08-1 잔여라 적립은 0, 누적은 그대로다.
+현재 작업은 사용자 요청 "codex/dev3-08-tree-generalization을 받아 08-1을 완료하기"의 마지막 범위인
+**[빈 leaf unlink·root 축소·retirement 등록](contracts/dev3-tree-smo.md#empty-leaf-unlink)의 설계**다. 작업 branch는
+`claude/project-thread-e9itre`(main `1c9486a`)다. 비어 있는 non-root RowLeaf를 떼는 LeafUnlink와, root의 두 child 중
+하나가 비면 남는 leaf를 root로 올리는 RootCollapse를 scope4 opcode 3·4로 정하고, 퇴역 page를 Free로 만들지 않고
+anchor의 XTR1 목록에 남기며, Base4 closure·복구·live 효과·정리 drain 호출자와 시험·구현 단계(U1–U4)를 정한다.
+코드는 아직 없다. 앞 단위 [current-leaf 소비자 일반화](contracts/dev3-tree-smo.md#current-leaf-consumers)(PR #53)와
+[A 자동 split 호출자](contracts/dev3-tree-smo.md#automatic-split)(PR #54)는 병합됐다. 08-1은 U4가 끝나야 적립하며
+지금 적립은 0, 누적은 그대로다.
 
 직전 작업은 Codex의 [clean Row leaf의 실제 RootSplit/ChildSplit과 복구](evidence/dev3-tree-structure-20261104.md#structural-effect)다.
 [첫 구조 후보 공급](evidence/dev3-tree-structure-20261104.md)은 독립 검토와 신규 선택 시험을 마쳤다.
