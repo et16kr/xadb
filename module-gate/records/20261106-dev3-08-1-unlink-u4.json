@@ -1,6 +1,6 @@
 {
  "schema": "XADB_MODULE_GATE_RECORD_V1",
- "change": "DEV3 08-1 U4 (dev3-tree-smo.md#unlink-u4): native fault cuts UNL-N01..N06 of one live unlink of an emptied RowLeaf, LeafUnlink and RootCollapse each (12 histories, 38 processes PASS at the run commit; memory twins and the inventory rule test in CI, an ignored native worker and its stdlib controller with a frozen inventory), and a test-only per-trace log bound in the native test adapter. No product code changes. The DEV3 schedule baseline credits 08-1 on merge (35/86 = 40.70%).",
+ "change": "DEV3 08-1 U4 (dev3-tree-smo.md#unlink-u4): native fault cuts UNL-N01..N06 of one live unlink of an emptied RowLeaf, LeafUnlink and RootCollapse each (12 histories, 38 processes PASS at the run commit; memory twins and the inventory rule test in CI, an ignored native worker and its stdlib controller with a frozen inventory), and a test-only per-trace log bound in the native test adapter. No product code changes. The DEV3 schedule baseline credits 08-1 on merge (35/86 = 40.70%). PR #59 follow-up: reject short/empty I/O and unsuccessful or wrong-selector barriers in the native controller; add eight independent negative-vector tests.",
  "rust_tests": [
   {
    "paths": [
@@ -148,6 +148,24 @@
    },
    "log": "module-gate/evidence/dev3-08-1-unlink-u4/review.md",
    "log_sha256": "fa4a91a0b53718128e1b3a559b73812d4b91bbe20c674d9405bad6d28aa7d336"
+  },
+  {
+   "id": "pr59-controller-d2-codex",
+   "class": "D2",
+   "scopes": [
+    "joint"
+   ],
+   "author": "/root",
+   "reviewer": "/root/pr59_independent_review",
+   "verdict": "ACCEPT",
+   "required_open": 0,
+   "files": {
+    "scripts/check_dev3_unlink_native.py": "dcb612c7bf6b301b8d8d6003592b53495a2b4e3b",
+    "scripts/test_check_dev3_unlink_native.py": "16cc91dddd38eae79281da3cc493bbfa914d470d",
+    "devdoc/contracts/dev3-tree-smo.md": "d53a2f7020de8601d8d54481ca1e64e3dc780752"
+   },
+   "log": "module-gate/evidence/dev3-08-1-unlink-u4/review-codex.md",
+   "log_sha256": "b6dec93d399bf2fcf62aa0de7ab5777f9907910f6647fb4d3674c366e7466ec0"
   }
  ]
 }

@@ -1993,23 +1993,24 @@ CONDITIONAL(필수 2)을 반영했다([검토 기록](../../module-gate/evidence
   짠 XWF1 header reader에서 온다.
   - produce의 effect trace:
     - hook cut(N01·N02)은 arm 행(HOOK) 뒤에 어떤 파일 변경도 없다. 그리고 arm 뒤의 성공한 WAL read가 drain 직전 WAL
-      prefix 전체를 끊김 없이 덮는다. 즉 drain이 unlink 준비의 같은-cut canonical replay까지 갔다. drain 전에 abort하는
+      prefix 전체를 끊김 없이 덮는다(요청 길이가 아니라 `OK:n`의 실제 완료 길이). 즉 drain이 unlink 준비의 같은-cut canonical replay까지 갔다. drain 전에 abort하는
       process는 여기서 거절된다(D2 1회차 권고 2의 probe).
     - I/O cut(N03·N04·N05)은 arm이 하나이고 마지막 행이 그 cut이다(N03은 WAL write, N04는 WAL sync, N05는 home write).
       N03·N05에서는 그 앞 행이 FIRST_BYTE write이고, 그 앞 행이 막힌 write의 ATTEMPT다. N03의 ATTEMPT는 WAL 끝(drain 직전
       길이)에서 unlink frame 길이(35,248 B 또는 19,032 B)만큼 쓰는 write다. N05의 ATTEMPT는 anchor page 전체(16,384 B)를
-      그 home offset(page × 16,384)에 쓰는 write다. N05에서는 arm 뒤에 DWB image sync도 있다.
+      그 home offset(page × 16,384)에 쓰는 write다. N05에서는 arm 뒤에 DWB image sync도 있다. N04는 cut 직전 행이 같은 WAL의 성공한 sync여야 한다.
     - N06은 arm이 없다. 마지막 성공 sync가 WAL sync이고 그 뒤에는 변경이 없다.
   - WAL: drain 직전 WAL prefix의 SHA-256이 worker의 witness와 같고, cut이 더한 bytes가 inventory와 같다. N03의 1 byte는
     `X`다. 더한 frame은 XWF1 header의 길이, LSN(= prefix의 complete LSN + 1), structural op 3 또는 4, scope 4를 본다.
-  - crash(N06): 마지막 행이 namespace dirsync cut이고 그 앞이 publish다. current-stage publish가 세 번, rebase sync가 한 번
-    있고 remove는 없다.
+  - crash(N06): 마지막은 namespace dirsync cut이며 직전은 성공 dirsync, 그 앞은 CURRENT publish다. 성공한 CURRENT selector의 current-stage publish가 세 번, 성공한 rebase sync가 한 번
+    있고 remove는 없다. 완료된 변경 중 실패가 있으면 거절한다.
   - recover·reenter: 결과 ready, handle 0, READY q 5(recover)·6(reenter), route·level·목록 page·high-water·행 수가
     controller의 기대와 같다. ack q 6은 recover에만 있다.
-  - DWB 수리: N05의 recover만 DWB image를 읽는다. 그 뒤 첫 home write가 anchor page 전체이고, 복구의 첫 공개보다 앞선다.
+  - DWB 수리: N05의 recover만 DWB image를 읽는다. 그 뒤 첫 home write가 anchor page 전체를 요청하고, 실제 완료 bytes가 같은 파일의 연속 구간으로 page 전체를 덮어야 한다.
+    부분 쓰기의 정상 재시도는 허용하며, 완료는 복구의 첫 공개보다 앞선다. DWB read도 실제 읽은 bytes가 있어야 한다.
     다른 사례의 복구와 모든 reenter는 DWB image를 읽지 않는다.
-  - 모든 process의 test log에 `panicked`·`overflowed its stack`·`fatal runtime error`가 없다. 그래서 cut이 아닌 SIGABRT는
-    통과하지 못한다.
+  - 모든 process의 test log에 `panicked`·`overflowed its stack`·`fatal runtime error`가 없다. 이 검사는 panic·stack overflow의 SIGABRT를
+    거절한다. 임의의 abort를 모두 식별하는 증거는 아니며 cut 위치는 위 effect 검사와 worker 코드로 묶는다.
   - 각 process가 namespace 파일을 바꿨고, 세 process(N06은 넷)의 pid가 모두 다르다. 복구 process마다 handle 0, peak 3
     이하, fd peak 6 이하, log 16 MiB 이하다(worker 단언).
 - **trace 한도.** native 시험 adapter(`plan4_pages/native_tests.rs`, cfg(test))의 trace log 한도는 4 MiB였다. 이 이력은
@@ -2039,6 +2040,8 @@ CONDITIONAL(필수 2)을 반영했다([검토 기록](../../module-gate/evidence
     tests/fixtures/dev3-08-unlink/native-inventory.tsv`(사례 id를 주면 그 사례만). ELF는 `cargo test -p xadb-engine --lib
     --no-run`의 unittests binary를 복사해 쓴다.
   - fmt·clippy(`--workspace --all-targets --all-features --locked -D warnings`)·문서 검사는 `cf46cc6`과 `e3efd16`에서 PASS다.
+- **PR #59 추가 검토.** controller의 부분 I/O·sync·CURRENT 공개 판정을 보강하고 독립 부정 vector를 더했다.
+  기존 실행과 구분한 반례·선택 native 재검증은 [추가 검토 기록](../../module-gate/evidence/dev3-08-1-unlink-u4/README.md#pr59-review)에 있다.
 - **한계.**
   - cut은 process 종료다. page cache의 쓰기를 잃는 전원 단절은 아니다. N03·N05의 torn write는 첫 1 byte만 쓰는 write로
     흉내 낸다.

@@ -109,6 +109,15 @@ def ok(row):
     return row[5].startswith('OK') or row[5].endswith('Ok(())')
 
 
+def transferred(row):
+    """Actual syscall bytes; column 4 is only the requested buffer length."""
+    status, count, checksum = row[5].split(':')
+    count = int(count)
+    assert status == 'OK' and 0 <= count <= int(row[4]), row
+    assert len(checksum) == 64 and all(c in '0123456789abcdef' for c in checksum), row
+    return count
+
+
 def check_produce(want, receipt, effects, db):
     """The cut and the WAL it left, from the trace and this reader."""
     wal_name = sorted(p.name for p in db.iterdir() if p.name.startswith('d3-wal-'))[-1]
@@ -128,7 +137,12 @@ def check_cut(want, receipt, effects, wal_name):
         assert receipt['armed'] == label and len(arms) == 1 and effects[arms[0]][2] == label
         last = effects[-1]
         assert last[1] == 'cut' and last[2] == label and last[5].startswith(want['stop'][2]), last
-        if want['cut'] == 'home_first_byte':
+        if want['cut'] == 'wal_synced':
+            # A cut label alone cannot distinguish Before from After sync.
+            assert last[5] == f'sync:{wal_name}', last
+            assert effects[-2][1:] == ['sync', wal_name, '0', '0', 'Ok(())'], effects[-2]
+            assert arms[0] < len(effects) - 2
+        elif want['cut'] == 'home_first_byte':
             # T's anchor: its DWB image synced after the arm, then the first
             # byte of its home write at the anchor's page.
             after = effects[arms[0]:]
@@ -159,7 +173,7 @@ def check_cut(want, receipt, effects, wal_name):
         # The drain reached the unlink's preparation: its same-cut canonical
         # replay read the whole WAL after the arm. Which hook stopped it (stage
         # call or first RAM page) leaves no trace; the worker binds that.
-        reads = sorted((int(row[3]), int(row[3]) + int(row[4])) for row in effects[arms[0]:]
+        reads = sorted((int(row[3]), int(row[3]) + transferred(row)) for row in effects[arms[0]:]
                        if row[1] == 'read' and row[2] == wal_name and ok(row))
         end = 0
         for low, high in reads:
@@ -171,7 +185,7 @@ def check_cut(want, receipt, effects, wal_name):
         assert receipt['cut'] == label and not arms and 'armed' not in receipt
         # After the unlink's WAL sync: no mutation (no Drop either).
         syncs = [i for i, row in enumerate(effects) if row[1] == 'sync' and row[5] == 'Ok(())']
-        assert effects[syncs[-1]][2].startswith('d3-wal-')
+        assert effects[syncs[-1]][2] == wal_name
         assert not {row[1] for row in effects[syncs[-1] + 1:]} & MUTATIONS
 
 
@@ -199,8 +213,11 @@ def check_crash(receipt, effects):
     assert receipt['armed'] == 'UNL_CURRENT_NEW_NEW'
     assert last[1] == 'cut' and last[2] == 'UNL_CURRENT_NEW_NEW' and last[5] == 'dirsync:namespace'
     done = [row for row in effects[:-1] if row[5] != 'ATTEMPT' and row[1] in MUTATIONS]
-    assert done[-1][1] == 'dirsync' and done[-2][1] == 'publish', done[-2:]
-    published = sum(1 for row in done if row[1] == 'publish' and row[2] == 'd3-current-stage')
+    assert all(ok(row) for row in done), 'failed crash-barrier effect'
+    assert done[-1][1:] == ['dirsync', 'namespace', '0', '0', 'Ok(())'], done[-1]
+    assert done[-2][1:] == ['publish', 'd3-current-stage', '0', '0', 'CURRENT:Ok(())'], done[-2]
+    published = sum(1 for row in done if row[1] == 'publish' and
+                    row[2] == 'd3-current-stage' and row[5] == 'CURRENT:Ok(())')
     assert published == 3, published
     assert sum(1 for row in done if row[1] == 'sync' and row[2].startswith('d3-rebase-')) == 1
     assert not any(row[1] == 'remove' for row in done), 'the old WAL is still named'
@@ -220,8 +237,21 @@ def check_repair(want, phase, effects, produced):
     publishes = [i for i, row in enumerate(effects) if row[1] == 'publish' and ok(row)]
     assert dwb and homes and publishes and dwb[0] < homes[0] < publishes[0], \
         (dwb[:1], homes[:1], publishes[:1])
+    assert any(transferred(effects[i]) > 0 for i in dwb if i < homes[0]), 'empty DWB read'
     first = effects[homes[0]]
-    assert first[3:5] == [str(int(produced['anchor_page']) * PAGE_BYTES), str(PAGE_BYTES)], first
+    start = int(produced['anchor_page']) * PAGE_BYTES
+    assert first[3:5] == [str(start), str(PAGE_BYTES)], first
+    # write_all may need several syscalls. Require contiguous completion of
+    # the entire anchor on the same home file before the first publication.
+    end = start
+    for i in homes:
+        if i >= publishes[0] or end == start + PAGE_BYTES:
+            break
+        row = effects[i]
+        assert row[2] == first[2] and int(row[3]) == end, row
+        end += transferred(row)
+        assert end <= start + PAGE_BYTES, row
+    assert end == start + PAGE_BYTES, ('incomplete DWB repair', end - start)
 
 
 def check_ready(want, phase, receipt, produced):

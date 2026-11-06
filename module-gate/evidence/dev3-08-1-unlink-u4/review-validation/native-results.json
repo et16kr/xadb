@@ -1,0 +1,80 @@
+[
+  {
+    "case": "UNL-N01-R",
+    "phase": "produce",
+    "exit": -6,
+    "seconds": 70.24
+  },
+  {
+    "case": "UNL-N01-R",
+    "phase": "recover",
+    "exit": 0,
+    "seconds": 2.32
+  },
+  {
+    "case": "UNL-N01-R",
+    "phase": "reenter",
+    "exit": 0,
+    "seconds": 0.77
+  },
+  {
+    "case": "UNL-N04-R",
+    "phase": "produce",
+    "exit": -6,
+    "seconds": 69.74
+  },
+  {
+    "case": "UNL-N04-R",
+    "phase": "recover",
+    "exit": 0,
+    "seconds": 2.32
+  },
+  {
+    "case": "UNL-N04-R",
+    "phase": "reenter",
+    "exit": 0,
+    "seconds": 0.82
+  },
+  {
+    "case": "UNL-N05-R",
+    "phase": "produce",
+    "exit": -6,
+    "seconds": 74.58
+  },
+  {
+    "case": "UNL-N05-R",
+    "phase": "recover",
+    "exit": 0,
+    "seconds": 2.42
+  },
+  {
+    "case": "UNL-N05-R",
+    "phase": "reenter",
+    "exit": 0,
+    "seconds": 0.77
+  },
+  {
+    "case": "UNL-N06-R",
+    "phase": "produce",
+    "exit": -6,
+    "seconds": 72.97
+  },
+  {
+    "case": "UNL-N06-R",
+    "phase": "crash",
+    "exit": -6,
+    "seconds": 2.58
+  },
+  {
+    "case": "UNL-N06-R",
+    "phase": "recover",
+    "exit": 0,
+    "seconds": 0.82
+  },
+  {
+    "case": "UNL-N06-R",
+    "phase": "reenter",
+    "exit": 0,
+    "seconds": 0.82
+  }
+]
