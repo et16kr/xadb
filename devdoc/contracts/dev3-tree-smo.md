@@ -1710,4 +1710,5 @@ scope4 dispatch를 지나는 두 시험은 main `1725df0`에서도 같은 값으
 기대한다. 실제로는 structural decoder의 길이 검사에서 Corrupt로 거절된다.
 
 원인은 시험 기대값이다. split의 scope4 arm(`37a0465`)이 들어올 때 이 기대를 고치지 않았다. 별도 작업("Fix scope 4
-frame routing test")이 시험 두 파일만 고치고, 그 commit을 이 브랜치에 merge한다. 이 단계에서는 고치지 않았다.
+frame routing test")이 시험 두 파일만 고쳤고(독립 D1 ACCEPT, 기록 `module-gate/records/20261106-scope4-relabel-tests.json`),
+그 commit `ec7e4aa`를 U2 브랜치에 merge했다. merge한 상태에서 두 시험은 PASS다.

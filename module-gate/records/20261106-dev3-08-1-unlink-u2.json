@@ -1,6 +1,6 @@
 {
   "schema": "XADB_MODULE_GATE_RECORD_V1",
-  "change": "DEV3 08-1 U2 (dev3-tree-smo.md#unlink-u2): canonical scope4 replay of LeafUnlink/RootCollapse frames (length dispatch to apply_unlink), unlink replay source census within the existing scope4 values, independent before fixtures, UNL-R01..R04 and the UNL-P08 Catalog debt test. No producer writes these frames yet (live U3).",
+  "change": "DEV3 08-1 U2 (dev3-tree-smo.md#unlink-u2): canonical scope4 replay of LeafUnlink/RootCollapse frames (length dispatch to apply_unlink), unlink replay source census within the existing scope4 values, UNL-C01/C02 census (dispatch, canonical replay, base capture), independent before fixtures, UNL-R01..R04, UNL-C02 and the UNL-P08 Catalog debt test. No producer writes these frames yet (live U3).",
   "rust_tests": [
     {
       "paths": [
@@ -384,6 +384,20 @@
           "sources": [
             "head"
           ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/unlink_frame_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::unlink::frame::unl_review_consecutive_unlinks_collapse_then_split_preserve_rows_and_history",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/structure/weights/unlink_frame_tests.rs",
+          "case": "storage::semantic_row::structure::weights::tests::candidate::unlink::frame::unl_review_every_core_byte_mutation_is_rejected_after_resealing",
+          "sources": [
+            "head"
+          ]
         }
       ]
     },
@@ -400,7 +414,7 @@
         "tests/fixtures/module-row-format/current-tree/unlink-leaf-before.xrb",
         "tests/fixtures/module-row-format/current-tree/unlink-collapse-before.xrb"
       ],
-      "reason": "Scope4 replay dispatch by frame length to apply_unlink (sibling of the split apply): same-cut recompute and byte compare, target checks before any arena/bank write, changed = anchor (+ LeafUnlink parent), initialized/retired empty; history census = larger of split and unlink per phase (unlink compare 24,876 <= split 25,036, finishing 6,026 <= 10,170), so the S1B frame 26,452, recovered peak 65,392/65,400 and live Row lifecycle 40,881 (C margin 184) are unchanged. Independent before fixtures from author.py (existing fixtures byte-identical). UNL-R01..R04, split replay, structural bank, S1B, S2W-C01..C06, live split callers through restart, recovery_source_.",
+      "reason": "Scope4 replay dispatch by frame length to apply_unlink (sibling of the split apply): same-cut recompute and byte compare, target checks before any arena/bank write, changed = anchor (+ LeafUnlink parent), initialized/retired empty; history census = larger of split and unlink per phase (unlink compare 24,876 + dispatch 88 < split 25,036, finishing 6,026 + 88 < 10,170), so the S1B frame 26,452, recovered peak 65,392/65,400 and live Row lifecycle 40,883 (C margin 182) are unchanged; UNL-C02 adds the scope4 dispatch values (88 B) to both unlink phases (unlink_arm_bytes: compare 24,964 < 25,036). Independent before fixtures from author.py (existing fixtures byte-identical). UNL-R01..R04, split replay, structural bank, S1B, S2W-C01..C06, live split callers through restart, recovery_source_.",
       "cases": [
         {
           "file": "crates/engine/src/storage/wal_io/plan4_retention/history/structure.rs",
@@ -412,6 +426,13 @@
         {
           "file": "crates/engine/src/storage/wal_io/plan4_retention/history/structure.rs",
           "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::history::structure::tests::unl_r04_unlink_replay_arm_inventory_and_scope4_maximum",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/history/structure.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::history::structure::tests::unl_c02_scope4_dispatch_beside_the_unlink_arm",
           "sources": [
             "head"
           ]
@@ -847,6 +868,135 @@
           ]
         }
       ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/anchor.rs",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests.rs"
+      ],
+      "reason": "UNL-C01/C02 in U2 (dev3-tree-smo.md#unlink-u2-census): anchor::whole_decode_source_bytes is the existing retired_source_bytes decoder term as a function (values unchanged); the unlink candidate counts its list read, XTR1 merge with listed encode and anchor decode as whole calls and exposes each term (UNL-R04 checks each by name); the Base4 current-tree closure and base capture (encode and packing phases) hold the list read under the recovered peak. Anchor codec tests, the current-tree closure tests (incl. the Structural high-water regression) and the recovery census tests.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_accepts_internal_root_split_and_checks_off_path_internal",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_accepts_root_child_split_with_moved_retained_rows",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_delete_update_distribute_typed_undo_reservations_by_leaf",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_moved_delete_update_reserved_and_release_presence",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_preserves_reserved_absence_and_ready_releasing_states",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_rejects_alias_range_identity_and_anchor_history",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_rejects_orphan_and_global_logical_duplicate",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_retained_current_leaf_cannot_precede_job_step",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_revision_bound_accepts_maximum_high_water_without_wrap",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::current_tree_tests::base4_current_tree_typed_undo_and_same_catalog_schema_are_required",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::current_tree_tests::unl_b01_base4_accepts_listed_retired_leaf_and_internal_pages",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::current_tree_tests::unl_b02_b06_base4_rejects_retired_list_ownership_mismatch",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::current_tree_tests::unl_c02_current_tree_closure_counts_the_retired_list",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::tests::current_tree_tests::unl_review_retirement_cannot_exceed_structural_high_water",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_source_memory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_source_native",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::unl_c02_base_capture_holds_the_row_codec",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
     }
   ],
   "na": [],
@@ -860,24 +1010,26 @@
       "verdict": "ACCEPT",
       "required_open": 0,
       "files": {
+        "crates/engine/src/storage/anchor.rs": "d9c91ca5432a86b5744489c35cdc195d184b22c1",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph/current_tree_tests.rs": "962a6ac354527a00b16250634a473a691dc4fe43",
         "crates/engine/src/storage/semantic_row/structure/bank_tests.rs": "0ffab8c38aae2675acd2b604b489a79d12d11b52",
         "crates/engine/src/storage/semantic_row/structure/candidate.rs": "9bb8ecced253c4f4e17ca9847059b55af1684bdb",
-        "crates/engine/src/storage/semantic_row/structure/candidate/source.rs": "730228fd5f36e3034314268dadf9e422db8d107a",
+        "crates/engine/src/storage/semantic_row/structure/candidate/source.rs": "61799eac77785da73b13cb84e05d7fa19ee308cd",
         "crates/engine/src/storage/semantic_row/structure/candidate/source_tests.rs": "dde87d420ee0f66893a397c7a3dab8027034ac80",
         "crates/engine/src/storage/semantic_row/structure/frame.rs": "e6a1668e5ba88d88f820f642fd00b1ca3115d957",
         "crates/engine/src/storage/semantic_row/structure/frame/source_tests.rs": "7ede690722629fd47419d7bf007f1a8fdcf56c07",
         "crates/engine/src/storage/semantic_row/structure/tests.rs": "c75fbd0655f6df8312fbb857ab6f71285a33d87b",
         "crates/engine/src/storage/semantic_row/structure/unlink.rs": "a57ff3cc0f19e5196d0f952f2fb72fdb36cd2675",
-        "crates/engine/src/storage/semantic_row/structure/unlink/source.rs": "7183cdbb131c534ea10cff063f849ba4ee948675",
-        "crates/engine/src/storage/semantic_row/structure/unlink/source_tests.rs": "8bb805b85a01030a5a9366e50dd8e22fa3a95b4b",
+        "crates/engine/src/storage/semantic_row/structure/unlink/source.rs": "97db10cf7a757109fb54fb63a37f97a9fc7d521c",
+        "crates/engine/src/storage/semantic_row/structure/unlink/source_tests.rs": "b29f7ff6ab4d3e76175b2f4f141ebfdfd8258cea",
         "crates/engine/src/storage/semantic_row/structure/weights/candidate_density_tests.rs": "8539c8b8ffd6fa8e948439198d84b696918b7e22",
         "crates/engine/src/storage/semantic_row/structure/weights/candidate_tests.rs": "a9fc0f44c1e87b52bcde21a765e07d06e7ddea75",
         "crates/engine/src/storage/semantic_row/structure/weights/frame_tests.rs": "414b869d23b76b173fbc5f3bae2c575b186bdf7d",
         "crates/engine/src/storage/semantic_row/structure/weights/tests.rs": "f6f50625997c84ad73501a6387f03896967533a3",
-        "crates/engine/src/storage/semantic_row/structure/weights/unlink_frame_tests.rs": "585d9b6205f32bb75a0de05794c6be4f0b0d5d25",
+        "crates/engine/src/storage/semantic_row/structure/weights/unlink_frame_tests.rs": "36f43acf6749f88302465230f482f6cfcba24a76",
         "crates/engine/src/storage/semantic_row/structure/weights/unlink_tests.rs": "0d0c32ab1f5bdf7878806b3a0f7e0b7fb3913729",
-        "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs": "e174719c2ab4d8df3be253950de2a6f4ad18c7fc",
-        "crates/engine/src/storage/wal_io/plan4_recovery/tests.rs": "9260df57a540f768154085f8d787262b940c2a93",
+        "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs": "82aa2cfba8b44863e23c498cb2ba4835be9ab2df",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests.rs": "fdf80e53fb94f5b7c5145bb658bc144e4344c2e8",
         "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/auto_split.rs": "6b7a91d6eeecd108e1bcb6f021aa7983877d4b85",
         "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/split_rows.rs": "93b9037912c150d433ef58c0609444619b714f64",
         "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_effect.rs": "e544dcb8c5805c924e30941de076e200a31f5e5b",
@@ -886,11 +1038,12 @@
         "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_prepare.rs": "75373a6127ba43790aa3d86027df7e514d321ab0",
         "crates/engine/src/storage/wal_io/plan4_recovery/tests/row_gate.rs": "9bb12db2f7e5ca947dc87eae8889ca5deaee3ff4",
         "crates/engine/src/storage/wal_io/plan4_retention/history.rs": "16e4295c908153185c2dcf209175cd0a1fa1909d",
-        "crates/engine/src/storage/wal_io/plan4_retention/history/structure.rs": "798593b434d234509c84522310a2371cc6e76419",
+        "crates/engine/src/storage/wal_io/plan4_retention/history/structure.rs": "a51cdb264338def3dd3aed6eab71088cbcc7ed7a",
         "crates/engine/src/storage/wal_io/plan4_retention/recovery.rs": "e62e0d5d78d83aa353a6c320200ea6e60bc48f30",
         "crates/engine/src/storage/wal_io/plan4_retention/recovery/structural_bank_tests.rs": "3e8ac0964c80c829e70d7794061a7c6f0f7e6f6f",
         "crates/engine/src/storage/wal_io/plan4_retention/recovery/structural_replay_tests.rs": "dd44ba6f22f7a36e42685e91bfb897d4dcbb97e9",
         "crates/engine/src/storage/wal_io/plan4_retention/recovery/structural_replay_tests/unlink.rs": "a449a7f0e84ee208ce9d007ceb2e0c86440df9c1",
+        "devdoc/contracts/dev3-tree-smo.md": "2be9f9b594784a7d160a83aa45614b4b3d3a4d45",
         "tests/fixtures/module-row-format/current-tree/author.py": "66be745d3c12cc7cbad9334ab8ae70af22e77ec3",
         "tests/fixtures/module-row-format/current-tree/inputs.sha256": "518708c9344ab74dd13436dc806a77108d220dc7",
         "tests/fixtures/module-row-format/current-tree/unlink-collapse-before.xrb": "75e9065a988fbd482310d202d69292faeba3752b",
@@ -899,7 +1052,7 @@
         "tests/fixtures/module-row-format/current-tree/unlink-leaf.xrb": "7c9376e6e8bddd8603c2bb1048f27b6acf373dce"
       },
       "log": "module-gate/evidence/dev3-08-1-unlink-u2/review.md",
-      "log_sha256": "2228b643bd3f6797c5abfb3c150c16921963d4572f641e163dacb81fb90d962e"
+      "log_sha256": "c18731e39d3a51da43465b02b17c6bdc23bcf70ee4a0d4070e96035a299ce259"
     }
   ]
 }
