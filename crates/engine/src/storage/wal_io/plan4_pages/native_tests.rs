@@ -34,6 +34,8 @@ pub(in crate::storage) struct Trace {
     mutations: usize,
     entropy: usize,
     log_bytes: usize,
+    /// The bound of `log_bytes` (4 MiB unless a worker raises it).
+    log_bound: usize,
     undo_home_cut: Option<UndoHomeCut>,
     catalog_home_cut: Option<CatalogHomeCut>,
     catalog_sync_after_error: Option<u64>,
@@ -49,7 +51,7 @@ impl Trace {
             self.events
         );
         self.log_bytes += row.len();
-        assert!(self.log_bytes <= 4 * 1024 * 1024, "native trace bound");
+        assert!(self.log_bytes <= self.log_bound, "native trace bound");
         self.output.write_all(row.as_bytes()).unwrap();
         self.output.flush().unwrap();
         self.events += 1;
@@ -178,6 +180,14 @@ pub(in crate::storage) fn arm_row_cut(
         mode,
     });
     trace.event("arm", name, steps.len() as u64, 0, &format!("{mode:?}"));
+}
+/// Raises this trace's log bound to `bytes` for a worker whose history
+/// replays a long WAL (UNL-N: each live group's canonical replay reads the
+/// whole WAL, two rows per read). Every other worker keeps 4 MiB.
+pub(in crate::storage) fn raise_log_bound(trace: &Arc<Mutex<Trace>>, bytes: usize) {
+    let mut trace = trace.lock().unwrap();
+    assert!(bytes >= trace.log_bound && trace.events == 0);
+    trace.log_bound = bytes;
 }
 /// One `arm` row for an S10 cut armed outside this adapter (a C hook).
 pub(in crate::storage) fn note_arm(trace: &Arc<Mutex<Trace>>, name: &'static str) {
@@ -722,7 +732,7 @@ fn worker_g5_clean() {
         assert_eq!(fs::read_dir(&root).unwrap().count(), 0);
         let trace_file = OpenOptions::new().create_new(true).write(true).open(output.join("effects.tsv")).unwrap();
         let entropy_file = OpenOptions::new().create_new(true).write(true).open(output.join("entropy.tsv")).unwrap();
-        let trace = Arc::new(Mutex::new(Trace { root: root.clone(), output: trace_file, entropy_output: entropy_file, readonly: false, handles: 0, peak: 0, fd_peak: 0, events: 0, mutations: 0, entropy: 0, log_bytes: 0, undo_home_cut: None, catalog_home_cut: None, catalog_sync_after_error: None, catalog_wal_write_end: 0, row_cut: None, row_action: None, last_group_op: None }));
+        let trace = Arc::new(Mutex::new(Trace { root: root.clone(), output: trace_file, entropy_output: entropy_file, readonly: false, handles: 0, peak: 0, fd_peak: 0, events: 0, mutations: 0, entropy: 0, log_bytes: 0, log_bound: 4 * 1024 * 1024, undo_home_cut: None, catalog_home_cut: None, catalog_sync_after_error: None, catalog_wal_write_end: 0, row_cut: None, row_action: None, last_group_op: None }));
         let directory = Directory { inner: Some(LinuxDirectory::open_existing(&root).unwrap()), trace: Arc::clone(&trace) };
         let writer = directory.acquire_writer().unwrap();
         drop(directory);
@@ -794,6 +804,7 @@ pub(in crate::storage) fn open_native(
         mutations: 0,
         entropy: 0,
         log_bytes: 0,
+        log_bound: 4 * 1024 * 1024,
         undo_home_cut: None,
         catalog_home_cut: None,
         catalog_sync_after_error: None,
