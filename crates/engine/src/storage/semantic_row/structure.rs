@@ -27,19 +27,29 @@ const REDO_AT: usize = NATIVE_AT + 5 * 128;
 pub(crate) mod bank;
 pub(crate) mod candidate;
 pub(crate) mod frame;
+pub(crate) mod unlink;
 pub(crate) mod weights;
 
+/// Scope4 opcode. Splits (1, 2) and unlinks (3, 4) have disjoint frame
+/// grammars: `decode_layout` accepts only splits, `unlink::decode_layout`
+/// only unlinks.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[repr(u16)]
 pub(crate) enum Operation {
     RootSplit = 1,
     ChildSplit = 2,
+    /// Empty non-root leaf removed from a parent with two or more separators.
+    LeafUnlink = 3,
+    /// Level-1 root with one separator replaced by its other (leaf) child.
+    RootCollapse = 4,
 }
 impl Operation {
     fn decode(value: u16) -> Result<Self> {
         match value {
             1 => Ok(Self::RootSplit),
             2 => Ok(Self::ChildSplit),
+            3 => Ok(Self::LeafUnlink),
+            4 => Ok(Self::RootCollapse),
             _ => Err(Error::Unsupported),
         }
     }
@@ -47,10 +57,16 @@ impl Operation {
         match self {
             Self::RootSplit => 84_744,
             Self::ChildSplit => 84_640,
+            Self::LeafUnlink => 35_248,
+            Self::RootCollapse => 19_032,
         }
     }
+    pub(crate) fn is_split(self) -> bool {
+        matches!(self, Self::RootSplit | Self::ChildSplit)
+    }
+    /// Split INIT roles only; an unlink initializes no page.
     fn init(self, role: u8) -> bool {
-        role == 3 || role == 4 && self == Self::RootSplit
+        self.is_split() && (role == 3 || role == 4 && self == Self::RootSplit)
     }
 }
 
@@ -127,7 +143,8 @@ fn same_address(a: PageRef, b: PageRef) -> bool {
 /// boundary, costs, parent link and root revision in a later semantic check.
 pub(crate) fn decode_core(bytes: &[u8], operation: Operation) -> Result<CoreView<'_>> {
     let bytes: &[u8; 256] = bytes.try_into().map_err(|_| Error::Corrupt)?;
-    if &bytes[..4] != b"XSM1"
+    if !operation.is_split()
+        || &bytes[..4] != b"XSM1"
         || u16_at(bytes, 4) != 1
         || Operation::decode(u16_at(bytes, 6))? != operation
     {
@@ -315,6 +332,9 @@ pub(crate) fn decode_layout(
         return Err(Error::Unsupported);
     }
     let operation = Operation::decode(u16_at(group, 6))?;
+    if !operation.is_split() {
+        return Err(Error::Unsupported);
+    }
     if bytes.len() != operation.frame_bytes()
         || envelope.record_count != 5
         || u16_at(group, 8) != 192
@@ -354,19 +374,37 @@ pub(crate) fn decode_layout(
 }
 
 fn validate_owner(view: LayoutView<'_>, group: &[u8], profile: Profile) -> Result<()> {
+    validate_finished_owner(
+        view.header,
+        view.descriptor(),
+        view.bytes.len(),
+        group,
+        profile,
+    )
+}
+
+/// The one Finished/zero-residue Structural owner of a scope4 group, for
+/// both split and unlink frames (consumed WAL = exact frame bytes).
+pub(super) fn validate_finished_owner(
+    header: WalFrameHeader,
+    descriptor: &[u8; 1536],
+    frame_bytes: usize,
+    group: &[u8],
+    profile: Profile,
+) -> Result<()> {
     if group[32] != 2 || !zero(&group[33..40]) {
         return Err(Error::Corrupt);
     }
     let owner = SystemWorkRef::decode(&group[40..88]).map_err(|_| Error::Corrupt)?;
     if owner.namespace() != profile.spec().namespace
         || owner.kind() != SystemWorkKind::StructuralChange
-        || owner.id() != view.header.lsn
-        || owner.generation().get() != u64::from(view.header.stream.writer_epoch)
+        || owner.id() != header.lsn
+        || owner.generation().get() != u64::from(header.stream.writer_epoch)
     {
         return Err(Error::IdentityMismatch);
     }
     let spec = obligation::decode_descriptor(
-        view.descriptor(),
+        descriptor,
         ReservationOwner::System(owner),
         profile_reference(profile),
     )?;
@@ -379,9 +417,9 @@ fn validate_owner(view: LayoutView<'_>, group: &[u8], profile: Profile) -> Resul
         || progress.limit != 1
         || spec.chain
             != (OwnerChain {
-                apply: view.header.lsn,
+                apply: header.lsn,
                 previous: 0,
-                birth: view.header.lsn,
+                birth: header.lsn,
                 groups: 1,
             })
     {
@@ -389,12 +427,12 @@ fn validate_owner(view: LayoutView<'_>, group: &[u8], profile: Profile) -> Resul
     }
     if spec.inventory
         != (InventoryClaim {
-            change_lsn: view.header.lsn,
+            change_lsn: header.lsn,
             items: 0,
             digest: content_digest(&[]),
             growth_extents: 0,
         })
-        || spec.consumed_wal != view.bytes.len() as u64
+        || spec.consumed_wal != frame_bytes as u64
         || spec.consumed_control != 0
         || spec.remaining != [RemainingBudget::default(); 5]
         || spec.minimum_wal_lsn != 0

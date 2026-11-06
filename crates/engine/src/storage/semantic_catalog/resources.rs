@@ -236,7 +236,9 @@ fn catalog_image() -> usize {
                     + returned::<CatalogRecordView<'_>, CatalogError>()
                     + size_of::<(TreeEntry<'_>, [u8; 8], CatalogExpectation)>(),
             )
-            .max(page_codec())
+            // The Catalog anchor decode: one page codec, or the XTR1 walk
+            // after it (UNL-C01).
+            .max(crate::storage::anchor::decode_source_bytes(page_codec()))
 }
 
 fn undo_codec() -> usize {

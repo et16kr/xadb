@@ -692,4 +692,10 @@ pub(in crate::storage::plan4_recovery_base) fn source_bytes<'a, G: Seam<'a>>() -
         + 4 * size_of::<InitProvenance<'_>>()
         + 8 * size_of::<Result<()>>()
         + 2 * size_of::<[RemainingBudget; 5]>()
+        // What the XTR1 list adds to the Catalog and table anchor decodes
+        // inside the nested allowance; the INIT encode is the unchanged
+        // root-only `encode_anchor` (UNL-C01).
+        + crate::storage::anchor::decode_increment_bytes(
+            crate::storage::semantic_catalog::page_read_codec_bytes(),
+        )
 }

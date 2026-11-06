@@ -188,9 +188,12 @@ fn structural_bank_ram_source_covers_metadata_and_observer_frames() {
         + size_of::<[u8; 8]>()
         + size_of::<std::array::TryFromSliceError>()
         + 3 * size_of::<&[u8]>()
-        + size_of::<ObservationResult<Option<bank::FinishedSplit>>>()
+        + size_of::<ObservationResult<Option<bank::FinishedStructural>>>()
         + size_of::<
-            std::result::Result<Option<bank::FinishedSplit>, crate::storage::semantic_row::Error>,
+            std::result::Result<
+                Option<bank::FinishedStructural>,
+                crate::storage::semantic_row::Error,
+            >,
         >();
     assert!(frame + bank::source_bytes() <= control::structural_bank_source_bytes());
     let helper = size_of::<(

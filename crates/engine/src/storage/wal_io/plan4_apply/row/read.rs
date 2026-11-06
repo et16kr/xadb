@@ -1480,7 +1480,10 @@ impl<W: WriterNamespace> ReadPort<'_, '_, '_, '_, '_, '_, '_, '_, W> {
                                     crate::storage::page::PageError,
                                 >,
                             >()
-                            + super::super::read::undo_decode_source_bytes(),
+                            // The page decode, or the XTR1 walk after it (UNL-C01).
+                            + anchor::decode_source_bytes(
+                                super::super::read::undo_decode_source_bytes(),
+                            ),
                     )
         };
         let internal = read(

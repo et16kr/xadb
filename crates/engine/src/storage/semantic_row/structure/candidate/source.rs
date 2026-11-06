@@ -104,8 +104,36 @@ fn table_chain() -> usize {
         + 2 * size_of::<Table<'_>>()
         + 2 * size_of::<Result<Table<'_>>>()
         + 4 * slack()
-        + transition::tree_source_bytes().max(semantic_catalog::catalog_read_codec_bytes())
+        + transition::tree_source_bytes()
+            .max(semantic_catalog::catalog_read_codec_bytes())
+            // The anchor decode: one page codec, or the XTR1 walk after it
+            // (UNL-C01).
+            .max(anchor::decode_source_bytes(
+                semantic_catalog::page_read_codec_bytes(),
+            ))
         + 1536
+}
+/// `retired_pages` plus the anchor list decode that precedes it: one item's
+/// allocation entry and its page decode, children never followed. The list
+/// decode is one whole `retired` call (UNL-C01).
+fn retired_chain() -> usize {
+    let frame = size_of::<(
+        &Table<'_>,
+        &AllocationPage<'_>,
+        anchor::RetiredList<'_>,
+        &[u8],
+        &mut (),
+    )>() + 2 * size_of::<anchor::RetiredPage>()
+        + 2 * size_of::<AllocationEntry>()
+        + size_of::<TreeExpectation>()
+        + 2 * size_of::<TreePageView<'_>>()
+        + 2 * slack();
+    frame
+        + (transition::tree_source_bytes() + 1536)
+            .max(allocation_codec())
+            .max(anchor::retired_source_bytes(
+                semantic_catalog::page_read_codec_bytes() + 1536,
+            ))
 }
 fn audit_chain() -> usize {
     let frame = size_of::<(
@@ -115,6 +143,7 @@ fn audit_chain() -> usize {
         u64,
         &mut [u8; 64],
     )>() + size_of::<[usize; MAX_LEAF_ROWS]>()
+        + size_of::<anchor::RetiredList<'_>>()
         + size_of::<ContentHasher>()
         + 4 * size_of::<TreeExpectation>()
         + 2 * size_of::<(TreePageView<'_>, TreeEntry<'_>, SearchPosition)>()
@@ -131,7 +160,11 @@ fn audit_chain() -> usize {
     let traversal = tree_page::audit::frame_source_bytes()
         .max(tree_page::search::frame_source_bytes())
         + callback.max(transition::tree_source_bytes() + 1536);
-    frame + traversal.max(weights_chain()).max(digest())
+    frame
+        + traversal
+            .max(weights_chain())
+            .max(digest())
+            .max(retired_chain())
 }
 fn parent_chain() -> usize {
     size_of::<[&[u8]; SPLIT_REFS]>()
@@ -210,6 +243,7 @@ pub(crate) fn source_census() -> SourceCensus {
         + size_of::<[Option<PageRef>; 2]>()
         + size_of::<([u8; 32], [u8; 40], [u8; 32], [u8; 32], [u64; 2], [u64; 2])>()
         + 2 * size_of::<Result<(usize, [u8; 32])>>()
+        + 2 * size_of::<anchor::RetiredList<'_>>()
         + 2 * slack();
     let after_outer = size_of::<(
         &Inputs<'_>,
@@ -223,6 +257,7 @@ pub(crate) fn source_census() -> SourceCensus {
         + size_of::<Result<(usize, [u8; 32])>>()
         + size_of::<(&[PageHeader; 5], &[[u8; PAGE_BYTES]; 5], &mut ())>()
         + size_of::<(PageRef, Option<usize>)>()
+        + 2 * size_of::<anchor::RetiredList<'_>>()
         + slack();
     // Constructing either result is separate from every nested helper.
     let returning = build_outer
@@ -246,15 +281,25 @@ pub(crate) fn source_census() -> SourceCensus {
         parent_chain(),
     );
     let allocator = allocator_chain();
+    // build reads the anchor's list and encodes the anchor after with it:
+    // one whole `retired` or `encode_listed_anchor` call over the page codec
+    // with its SHA scratch, as `retired_chain` (UNL-C01).
+    let page = semantic_catalog::page_read_codec_bytes() + 1536;
+    let anchor_codec =
+        anchor::retired_source_bytes(page).max(anchor::listed_encode_source_bytes(page));
     let nested_build = build_outer
         + weights
             .max(parent)
             .max(allocator)
             .max(side)
             .max(allocation_codec())
-            .max(tree_structure());
+            .max(tree_structure())
+            .max(anchor_codec);
     let building =
         (args + 128 + before_outer + table.max(audit).max(previous)).max(args + 128 + nested_build);
+    // `verify_after` reads the before and after lists (`retired`) and decodes
+    // the anchor after: `audit` holds `retired_chain`, a whole `retired` call
+    // at least as large, and `table` the anchor decode (UNL-C01).
     let verifying = outer + after_outer + audit.max(table).max(allocation_codec());
     let peak = building.max(verifying).max(returning);
     SourceCensus {

@@ -196,6 +196,8 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                 order.sort_unstable_by_key(|at| target_rank(request(observed.targets[*at])));
                 let requests = order.map(|at| request(observed.targets[at]));
                 let roles = order.map(|at| at as u8);
+                // A split Observation carries only RootSplit or ChildSplit; the
+                // unlink arms keep the match exhaustive.
                 let stamps = match observed.operation {
                     smo::Operation::RootSplit => read_split_before::<3, W>(
                         storage,
@@ -213,6 +215,9 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                         before,
                         replay.bytes(),
                     ),
+                    smo::Operation::LeafUnlink | smo::Operation::RootCollapse => {
+                        Err(semantic(row::Error::Unsupported))
+                    }
                 }?;
                 let root = history::arena_page(replay.bytes(), 1);
                 let future = prepare_inventory(
@@ -461,7 +466,8 @@ fn source_census<W: WriterNamespace>() -> SourceCensus {
         + 2 * size_of::<Result<history::runtime::ReplayLoan<'_, '_, '_, '_>>>();
     let semantic = size_of::<candidate::Inputs<'_>>()
         + 2 * size_of::<Result<split_frame::Observation>>()
-        + 2 * size_of::<Option<crate::storage::semantic_row::structure::bank::FinishedSplit>>()
+        + 2 * size_of::<Option<crate::storage::semantic_row::structure::bank::FinishedStructural>>(
+        )
         + 8 * size_of::<&[u8]>()
         + split_frame::source_bytes();
     let allocation = 4 * size_of::<AllocationEntry>()
@@ -481,7 +487,8 @@ fn source_census<W: WriterNamespace>() -> SourceCensus {
         + crate::storage::semantic_catalog::page_read_codec_bytes()
         + 1536; // SHA block/output/compression closure inside page decode
     let physical = size_of::<candidate::Inputs<'_>>()
-        + 2 * size_of::<Option<crate::storage::semantic_row::structure::bank::FinishedSplit>>()
+        + 2 * size_of::<Option<crate::storage::semantic_row::structure::bank::FinishedStructural>>(
+        )
         + 2 * size_of::<Result<split_frame::Observation>>()
         + size_of::<split_frame::Observation>()
         + size_of::<[TargetRequest; 5]>()
@@ -504,7 +511,8 @@ fn source_census<W: WriterNamespace>() -> SourceCensus {
     // while the original XOI encoder and progress checker run sequentially.
     let inventory = size_of::<Packet>()
         + size_of::<candidate::Inputs<'_>>()
-        + 2 * size_of::<Option<crate::storage::semantic_row::structure::bank::FinishedSplit>>()
+        + 2 * size_of::<Option<crate::storage::semantic_row::structure::bank::FinishedStructural>>(
+        )
         + 2 * size_of::<Result<split_frame::Observation>>()
         + size_of::<ProjectedInventory<'_, '_, '_, '_, '_>>()
         + size_of::<GroupRows<'_>>()

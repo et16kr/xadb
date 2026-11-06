@@ -189,6 +189,8 @@ fn s2w_c02_row_write_phase_census_native() {
 /// action a never-inlined frame that returns its input packet: the shell no
 /// longer holds a forwarded `Result<PreparedRowGroup>`, and the action's
 /// entry packets are not below the preparation. 40881 B in both writers.
+/// The XTR1 retired list (dev3-tree-smo.md#unlink-u1, UNL-C01) adds the
+/// root-only anchor decoder's `check_list` Result, 2 B: 40883 B.
 /// The Row write census repeats some split census terms;
 /// its own recomputation of the Row lifecycle must equal the split value, so
 /// the copies cannot drift.
@@ -212,8 +214,8 @@ fn s2w_c03_row_lifecycle_unchanged_beside_the_row_write_layout() {
         assert_eq!(charge, 44_304);
         assert!(phases.row_lifecycle <= charge);
     }
-    inspect::<Memory>("memory", 40_881);
-    inspect::<Native>("native", 40_881);
+    inspect::<Memory>("memory", 40_883);
+    inspect::<Native>("native", 40_883);
 }
 
 /// S2W-C04: the live and recovered short-source peaks are unchanged. No port

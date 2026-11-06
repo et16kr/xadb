@@ -363,12 +363,13 @@ pub(super) fn graph() -> usize {
         + 4 * size_of::<Result<()>>()
 }
 
-/// Stable anchor → single RowLeaf (`table_leaf`).
+/// Stable anchor → single RowLeaf (`table_leaf`): the page proof, then the
+/// anchor decode (one page codec, or the XTR1 walk after it, UNL-C01).
 fn anchor() -> usize {
     size_of::<(TableSource<'_>, PageIdentity, TreeAnchor, AnchorRoot)>()
         + returned::<TreeAnchor, PageError>()
         + returned::<PageRef, Error>()
-        + before_page()
+        + before_page().max(crate::storage::anchor::decode_source_bytes(page_codec()))
 }
 
 /// `LeafSource`: expectation, schema, before image and the typed entries'

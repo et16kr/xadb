@@ -49,7 +49,7 @@ fn structural_bank_independent_finished_root_child_and_prior_epoch() {
                     .unwrap();
                 assert_eq!(
                     result,
-                    FinishedSplit {
+                    FinishedStructural {
                         owner: owner(),
                         operation
                     }
@@ -182,8 +182,8 @@ fn structural_bank_source_covers_typed_validation_and_raw_decode() {
     )>() + size_of::<OwnerChain>()
         + size_of::<InventoryClaim>()
         + size_of::<[RemainingBudget; 5]>()
-        + size_of::<FinishedSplit>()
-        + size_of::<Result<FinishedSplit>>()
+        + size_of::<FinishedStructural>()
+        + size_of::<Result<FinishedStructural>>()
         + size_of::<(Profile, control::ProfileSpec, control::ControlRef)>()
         + size_of::<(&[u8], [u8; 32], foundation::codec::ContentHasher)>()
         + 1536;
@@ -197,7 +197,7 @@ fn structural_bank_source_covers_typed_validation_and_raw_decode() {
         DescriptorSpec,
     )>() + size_of::<
         std::result::Result<DescriptorSpec, obligation::ObligationError>,
-    >() + size_of::<Result<Option<FinishedSplit>>>()
+    >() + size_of::<Result<Option<FinishedStructural>>>()
         + size_of::<(ReservationOwner, control::ControlRef)>()
         + size_of::<
             std::result::Result<SystemWorkRef, crate::storage::allocation_page::AllocationError>,
@@ -225,4 +225,35 @@ fn structural_bank_source_covers_typed_validation_and_raw_decode() {
     assert!(
         raw_frame + validate_frame.max(obligation::descriptor_source_bytes()) <= source_bytes()
     );
+}
+
+/// UNL-F04 (dev3-tree-smo.md#empty-leaf-unlink): the bank's latest Finished
+/// descriptor may be an unlink, named by its exact frame bytes; lengths next
+/// to the four exact values are refused.
+#[test]
+fn unl_f04_bank_accepts_exact_unlink_frame_bytes_only() {
+    for (wal, operation) in [
+        (35_248u64, Some(Operation::LeafUnlink)),
+        (19_032, Some(Operation::RootCollapse)),
+        (35_247, None),
+        (35_249, None),
+        (19_031, None),
+        (19_033, None),
+    ] {
+        // Independent raw edit of the descriptor's consumed-WAL field.
+        let mut raw = *CHILD;
+        raw[608..616].copy_from_slice(&wal.to_le_bytes());
+        seal(&mut raw);
+        let observed = observe(profile(), 100, 1, 70, Some(&raw));
+        match operation {
+            Some(operation) => assert_eq!(
+                observed.unwrap(),
+                Some(FinishedStructural {
+                    owner: owner(),
+                    operation
+                })
+            ),
+            None => assert_eq!(observed.err(), Some(Error::BudgetMismatch), "wal {wal}"),
+        }
+    }
 }
