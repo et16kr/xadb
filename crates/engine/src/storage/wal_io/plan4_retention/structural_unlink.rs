@@ -248,9 +248,11 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     /// cell: the live DeletePrune and INSERT CLR call it after their install
     /// returned. Whether the leaf is the root is the drain's route to see
     /// (`NotNeeded`). The group is installed and durable, so a note that
-    /// cannot be kept is dropped: a note is only a hint. A note slot that
-    /// does not decode is dropped here too; the drain's next `unlink_next`
-    /// or `unlink_leaf_live` reads it and ends Fatal (Census).
+    /// cannot be kept is dropped: a note is only a hint. A slot that does
+    /// not decode drops every new note whose `record` reaches it; the
+    /// drain's `unlink_next` (slot 0 only) and `unlink_leaf_live` (`find`,
+    /// from slot 0 to the first match) reach it only once the notes before
+    /// it are used up, and then end Fatal (Census).
     #[inline(never)]
     pub(in super::super::super::super) fn note_emptied_leaf<'x>(
         &mut self,

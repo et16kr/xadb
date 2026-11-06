@@ -1716,7 +1716,7 @@ frame routing test")이 시험 두 파일만 고쳤고(독립 D1 ACCEPT, 기록 
 <a id="unlink-u3"></a>
 ### U3 결과
 
-상태는 **2026-11-06 구현·memory 시험 PASS, 독립 D2 1회차 CONDITIONAL(필수 2) 반영, 2회차 대기**다. live DELETE의 DeletePrune이나 rollback한 INSERT의 CLR이
+상태는 **2026-11-06 구현·memory 시험 PASS, 독립 D2 2회차 ACCEPT(필수 0)**다. 1회차 CONDITIONAL(필수 2)을 반영했다([검토 기록](../../module-gate/evidence/dev3-08-1-unlink-u3/review.md)). live DELETE의 DeletePrune이나 rollback한 INSERT의 CLR이
 non-root RowLeaf를 비우면, 정리 drain이 끝난 뒤 그 leaf를 LeafUnlink 또는 RootCollapse로 tree에서 뺀다. SQL 결과·오류는
 같다. 바뀌는 것은 tree 모양(빈 leaf가 route에서 빠지고 anchor 목록에 남음)과, drain마다 unlink 하나에 canonical replay
 1회와 fsync 1회가 붙는 비용이다. 제품 table은 일정 10-1 전까지 CREATE Catalog Job 때문에 note가 버려지므로 unlink하지
@@ -1739,8 +1739,9 @@ non-root RowLeaf를 비우면, 정리 drain이 끝난 뒤 그 leaf를 LeafUnlink
   cut 밖으로 옮기거나 이 불변식을 다시 본다.
 - note를 남기는 곳(`note_emptied_leaf`): 설치가 끝난 그룹의 RowLeaf after image가 cell 0개이고 그 leaf가 table의
   page일 때다. root인지는 보지 않는다(drain의 route가 NotNeeded로 안다). 그룹은 이미 설치되어 durable하므로, note를 남기지
-  못하면 버린다(note는 hint다). 해독할 수 없는 note 칸도 여기서는 버리고, drain의 다음 `unlink_next`나
-  `unlink_leaf_live`가 그 칸을 읽어 Fatal(Census)로 끝난다.
+  못하면 버린다(note는 hint다). 해독할 수 없는 note 칸이 있으면 `record`가 그 칸까지 간 새 note는 버려진다. drain의
+  `unlink_next`(칸 0만 읽음)와 `unlink_leaf_live`(`find`, 칸 0부터 처음 맞는 note까지)는 그 앞의 note를 다 쓴 뒤에야 그 칸에
+  닿고, 그때 Fatal(Census)로 끝난다.
   - live DeletePrune(`retire_resident`): 준비 전에 RootRetained Job에서 table·anchor·행을 읽는다
     (`delete_prune_note`. 그룹이 그 Job의 pair를 놓기 때문이다). Jobs 밖 ordinal은 아무것도 준비하기 전의 Unchanged
     `Invariant`로 생산자 자신의 거절과 같다(호출자 자신의 Job scan이 ordinal을 주므로 닿지 않는다).
@@ -1929,5 +1930,6 @@ U3 실행 기록. env는 U2와 같다: source·ELF·input hash에 64자 자리�
 - A의 cleanup 지점: `f4_a_*` 6개, `rdl_a08_*` 4개, LRC-A01..05(`budget_tests::`와 driver literal 시험).
 - census: S2W-C01..C06(`row::census_tests::` 6개), `live_row_retirement_fits_the_progress_charge`(`retention::source::tests::`).
 
-fmt·clippy(`--workspace --all-targets --all-features --locked -D warnings`)·문서 검사도 PASS다. clippy의 `manual_bits` 지적
-(`8 * size_of::<usize>()`)은 같은 값의 `size_of::<[usize; 8]>()`로 고쳤다.
+fmt·clippy(`--workspace --all-targets --all-features --locked -D warnings`)·문서 검사는 D2 1회차 반영 commit `3b0fd72`에서 PASS다
+(독립 D2 2회차도 같은 commit에서 다시 돌려 PASS). 그 전 clippy의 `manual_bits` 지적(`8 * size_of::<usize>()`)은 같은 값의
+`size_of::<[usize; 8]>()`로 고쳤다. D2 2회차 NIT 두 개의 반영은 주석과 문서뿐이다.
