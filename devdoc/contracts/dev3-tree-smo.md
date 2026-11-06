@@ -1699,6 +1699,11 @@ filter는 `retention::history::structure::`, `storage::semantic_row::structure::
 failed**이고, 값은 위 census 절과 같다(history frame 26,452B, live Row lifecycle 40,883B, C 여유 182B, recovered peak
 65,392/65,400B). fmt·clippy(`-D warnings`)·문서 검사도 PASS다.
 
+그 뒤 U1 PR에 사용자 commit `503802d`(Base4 closure가 퇴역 LSN > Structural high-water를 거절)가 들어와 U2를 그 위로
+다시 올렸다. 충돌은 `current_tree_tests.rs`의 시험 추가 위치 하나였고 두 시험을 모두 남겼다. U2 replay가 bank 칸을
+frame LSN으로 바꾸므로 replay 상태의 high-water는 퇴역 LSN과 같다. 위 filter에 `unlink_replay::`,
+`storage::plan4_recovery_base::row`, `storage::semantic_row::structure::`를 더해 다시 실행했고 **144 passed, 0 failed**다.
+
 scope4 dispatch를 지나는 두 시험은 main `1725df0`에서도 같은 값으로 실패한다. 두 시험은
 `…retention::recovery::row_tests::s1b_scope_routes_only_to_its_own_arm`과 format 시험
 `mbc40_v01_profile2_binding_rejected_at_owner_grammar_sites`다. 두 시험 모두 frame을 scope 4로 바꾸면 Unsupported라고
