@@ -455,6 +455,9 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
 
     /// A DeletePrune's table, anchor and row from its RootRetained Job cell
     /// alone (`note_emptied_leaf`'s note). The producer checks the Job again.
+    /// It runs before anything is prepared, so an ordinal past the Jobs (the
+    /// caller's own Job scan never yields one) is an Unchanged `Invariant`
+    /// refusal like the producer's own.
     #[inline(never)]
     fn delete_prune_note(&self, ordinal: usize) -> Result<Option<(ObjectHandle, PageRef, RowId)>> {
         let invalid = || unchanged(RetentionPhase::Prepare, RetentionCause::Invariant);

@@ -52,21 +52,31 @@ enum UnlinkResidency {
 const ROUTE: usize = 16;
 
 /// RAM unlink notes (dev3-tree-smo.md#empty-leaf-unlink, 호출자): at most
-/// eight per writer, in the control loan's bank region past its 39 rows of
-/// 1,664 B (64,896 B), as the region's last 448 B. A note is a hint, never
-/// authority: `unlink_leaf_live` checks every condition again. The canonical
-/// comparison of `validate_live` covers the first 36 rows, the ledger checks
-/// read named rows, and a new session or a recovery restore starts the region
-/// from the canonical bank, so notes vanish at restart. A note is written
-/// only after a group installed and removed only by the drain's steps, so no
-/// prepared cut is held across either write.
+/// eight per writer, as the last 448 B of the control loan's bank region
+/// (up to `BANK_END`, where the Jobs start). The bank names rows up to
+/// `STRUCTURAL_SLOT` and the canonical comparison of `validate_live` covers
+/// its first 36 rows; the notes start past every whole 1,664-B row the
+/// region can hold (39 rows, 64,896 B), so no bank row reaches them. A note
+/// is a hint, never authority: `unlink_leaf_live` checks every condition
+/// again. The ledger checks read named rows, and a new session or a recovery
+/// restore starts the region from the canonical bank, so notes vanish at
+/// restart. The region lies inside `ControlCut`'s bank digest, so a note
+/// written between a group's preparation and its install would refuse that
+/// install (Busy). A note is written only after a group installed and
+/// removed only by the drain's steps, each its own call on the exclusively
+/// borrowed writer, so no prepared cut is held across either write.
 pub(in super::super::super::super) mod note {
+    use super::super::super::super::BANK_END;
     use super::*;
 
     pub(in crate::storage) const COUNT: usize = 8;
     const BYTES: usize = 56;
-    const START: usize = 65_536 - COUNT * BYTES;
-    const _: () = assert!(START >= 39 * control::SLOT_BYTES);
+    /// The end of the last whole row the bank region can hold.
+    const ROWS_END: usize = BANK_END / control::SLOT_BYTES * control::SLOT_BYTES;
+    const START: usize = BANK_END - COUNT * BYTES;
+    const _: () = assert!(
+        (control::STRUCTURAL_SLOT + 1) * control::SLOT_BYTES <= ROWS_END && ROWS_END <= START
+    );
 
     /// One note: the table, its anchor and the RowId of the row whose
     /// removal left its routed leaf empty.
@@ -132,14 +142,19 @@ pub(in super::super::super::super) mod note {
         Ok(())
     }
 
-    /// UNL-C03: the notes' bytes in the control loan, the end of the
-    /// bank's slots before them and the start of the Jobs after them.
+    /// UNL-C03: the notes' bytes in the control loan, and from the control
+    /// layout's constants the end of the bank's named rows (through
+    /// `STRUCTURAL_SLOT`), the end of its whole rows, and `BANK_END` (the end
+    /// of `ControlCut`'s bank digest, where the Jobs begin).
     #[cfg(test)]
-    pub(in crate::storage) fn region() -> (std::ops::Range<usize>, usize, usize) {
+    pub(in crate::storage) fn region() -> (std::ops::Range<usize>, [usize; 3]) {
         (
             START..START + COUNT * BYTES,
-            39 * control::SLOT_BYTES,
-            65_536,
+            [
+                (control::STRUCTURAL_SLOT + 1) * control::SLOT_BYTES,
+                ROWS_END,
+                BANK_END,
+            ],
         )
     }
 
@@ -233,7 +248,9 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     /// cell: the live DeletePrune and INSERT CLR call it after their install
     /// returned. Whether the leaf is the root is the drain's route to see
     /// (`NotNeeded`). The group is installed and durable, so a note that
-    /// cannot be kept is dropped: a note is only a hint.
+    /// cannot be kept is dropped: a note is only a hint. A note slot that
+    /// does not decode is dropped here too; the drain's next `unlink_next`
+    /// or `unlink_leaf_live` reads it and ends Fatal (Census).
     #[inline(never)]
     pub(in super::super::super::super) fn note_emptied_leaf<'x>(
         &mut self,
@@ -372,9 +389,10 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     /// root parent of one separator, the survivor), the table's split debt
     /// (`check_split_debt`), then the group's pages made resident with each
     /// LOAD protecting the set. Each LOAD is the one retention LOAD body; no
-    /// pin survives a step. A route that ends at the root, a leaf that holds
-    /// a cell and a non-root parent of one separator are NotNeeded, whatever
-    /// the table's debt.
+    /// pin survives a step, so every page read after a LOAD is one that LOAD
+    /// protected (the leaf's LOAD keeps the parent read after it). A route
+    /// that ends at the root, a leaf that holds a cell and a non-root parent
+    /// of one separator are NotNeeded, whatever the table's debt.
     #[inline(never)]
     fn unlink_resident(
         &self,
@@ -415,13 +433,17 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             return Ok(UnlinkResidency::NotNeeded);
         }
         let leaf = route.leaf(tree);
-        if let Some(target) = self.split_load(owner, &mut cursor, leaf, &[anchor, leaf], private)? {
+        // The parent is read after this LOAD (`unlink_parent_shape`), so the
+        // LOAD keeps it beside the anchor: it can never be the victim.
+        let parent = path[depth - 1];
+        if let Some(target) =
+            self.split_load(owner, &mut cursor, leaf, &[anchor, parent, leaf], private)?
+        {
             return Ok(UnlinkResidency::Flush(target));
         }
         if !self.unlink_leaf_empty(owner, leaf)? {
             return Ok(UnlinkResidency::NotNeeded);
         }
-        let parent = path[depth - 1];
         let mut set = [anchor, parent, leaf, leaf];
         let count = match self.unlink_parent_shape(owner, parent, leaf)? {
             (separators, _) if separators >= 2 => 3,
@@ -942,6 +964,9 @@ pub(in crate::storage) fn source_bytes<W: WriterNamespace>() -> UnlinkSource {
         + 2 * size_of::<Result<()>>()
         + 2 * size_of::<RetentionError>()
         + size_of::<[usize; 8]>()
+        // The LOADs' protected sets ([anchor], [anchor, internal],
+        // [anchor, parent, leaf]) and the set loop's request copy.
+        + size_of::<[TargetRequest; 7]>()
         + 16 * reference;
     // A brief typed read: the request, the read and its page, the closure's
     // values and Results (the child walk's expectations and position),
@@ -1148,7 +1173,7 @@ fn install_source_bytes<W: WriterNamespace>() -> usize {
 
 /// UNL-C03: `note::region` for the census beside the shared layout.
 #[cfg(test)]
-pub(in crate::storage) fn note_region() -> (std::ops::Range<usize>, usize, usize) {
+pub(in crate::storage) fn note_region() -> (std::ops::Range<usize>, [usize; 3]) {
     note::region()
 }
 
@@ -1216,10 +1241,11 @@ mod tests {
     }
 
     /// UNL-A02 (dev3-tree-smo.md#empty-leaf-unlink, 호출자): the RAM notes
-    /// are at most eight, in arrival order, in the bank tail past the 39
-    /// rows; a kept note is not kept twice, a ninth is dropped, a removed
-    /// note's later notes move up, and an all-zero slot is empty. Each field
-    /// is checked against independent little-endian bytes.
+    /// are at most eight, in arrival order, in the bank region's last 448 B
+    /// past its whole rows; a kept note is not kept twice, a ninth is
+    /// dropped, a removed note's later notes move up, and an all-zero slot is
+    /// empty. The integer fields are checked against independent
+    /// little-endian bytes, the anchor reference against `PageRef::encode`.
     #[test]
     fn unl_a02_notes_keep_eight_and_drop_the_ninth() {
         let mut bytes = Box::new([0u8; RETENTION_CONTROL_BYTES]);
@@ -1249,7 +1275,7 @@ mod tests {
         // The first slot's bytes: object, generation, schema epoch, the
         // anchor reference, the row.
         let start = 65_536 - 8 * 56;
-        assert!(start >= 39 * control::SLOT_BYTES);
+        assert!(start >= (control::STRUCTURAL_SLOT + 1) * control::SLOT_BYTES);
         let slot = &control.bytes[start..start + 56];
         assert_eq!(&slot[0..8], &41u64.to_le_bytes());
         assert_eq!(&slot[8..16], &1u64.to_le_bytes());

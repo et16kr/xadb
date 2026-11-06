@@ -370,11 +370,13 @@ fn spl_a02_one_statement_splits_root_and_child_and_commits() {
 /// rows splits T's leaf at its eighth row, whose value check finds the leaf
 /// full (a RootSplit beside the transaction's seven Retained INSERT roots,
 /// which reserve nothing), then the caller rolls the transaction back. No
-/// row stands, but the split does: two leaves, now empty (`leaves` reads
-/// every registered leaf; the rollback's drain then collapses the root over
-/// them, which UNL-L06 checks). A later autocommit INSERT commits at q 2
-/// into the current tree, and a new statement and C's restart read only
-/// that row.
+/// row stands, but the split does: the anchor's root is still the level-one
+/// root over the two leaves, now empty, and nothing is retired. The
+/// rollback's complete drain then unlinks once (dev3-tree-smo.md#unlink-u3,
+/// UNL-L06's case): a RootCollapse makes one of the two leaves T's level-0
+/// root and the anchor lists the other leaf and the old root. A later
+/// autocommit INSERT commits at q 2 into that root leaf, and a new
+/// statement and C's restart read only that row.
 #[test]
 fn spl_a03_split_survives_the_rollback_of_its_transaction() {
     case_within("SPL-A03", std::time::Duration::from_secs(900), || {
@@ -415,15 +417,35 @@ fn spl_a03_split_survives_the_rollback_of_its_transaction() {
                 );
                 assert_eq!(done(out), 8);
                 let losers = rows_of(&slots);
-                assert_leaves(&writer.catalog_test_with_pool(leaves), 2, &losers, false);
+                let split = writer.catalog_test_with_pool(leaves);
+                assert_leaves(&split, 2, &losers, false);
+                let (old_root, level, listed) = writer.catalog_test_with_pool(anchor_of);
+                assert_eq!((level, listed), (1, vec![]));
                 let out = rollback!(&mut writer, owner, flush, flusher, &mut holder, private);
                 assert!(
                     matches!(out, Explicit::RolledBack),
                     "expected RolledBack, got {out:?}"
                 );
-                drains!(&mut writer, owner, flush, flusher, private);
-                assert_row_jobs_free(writer.catalog_test_jobs());
+                // The rollback leaves the split: the same root over the
+                // two leaves, now empty.
+                assert_eq!(
+                    writer.catalog_test_with_pool(anchor_of),
+                    (old_root, 1, vec![])
+                );
                 assert_leaves(&writer.catalog_test_with_pool(leaves), 2, &[], true);
+                let drained = drains!(&mut writer, owner, flush, flusher, private);
+                let last = drained.last().unwrap();
+                assert!(last.complete && last.unlink_held == 0, "{drained:?}");
+                assert_eq!(drained.iter().map(|d| d.unlinked).sum::<u8>(), 1);
+                assert_row_jobs_free(writer.catalog_test_jobs());
+                // Its drain collapses the root onto one of the two leaves.
+                let pages: Vec<PageRef> = split.iter().map(|(page, _)| *page).collect();
+                let (root, level, mut listed) = writer.catalog_test_with_pool(anchor_of);
+                assert!(level == 0 && pages.contains(&root), "{root:?} {level}");
+                listed.sort_by_key(|page| page.page_no);
+                let mut want = vec![*pages.iter().find(|page| **page != root).unwrap(), old_root];
+                want.sort_by_key(|page| page.page_no);
+                assert_eq!(listed, want);
                 assert_eq!(
                     read_big!(writer, reader, core, reader_private, flush, flusher),
                     []
@@ -443,7 +465,10 @@ fn spl_a03_split_survives_the_rollback_of_its_transaction() {
                 assert_eq!(committed(out), (2, 1));
                 let kept = rows_of(&slots);
                 drains!(&mut writer, owner, flush, flusher, private);
-                assert_leaves(&writer.catalog_test_with_pool(leaves), 2, &kept, true);
+                // The row is in the root leaf; the retired leaf holds none.
+                let after = writer.catalog_test_with_pool(leaves);
+                assert_leaves(&after, 2, &kept, true);
+                assert!(after.contains(&(root, kept.clone())), "{after:?}");
                 let expected = vec![(kept[0], tagged(8, BIG))];
                 assert_eq!(
                     read_big!(writer, reader, core, reader_private, flush, flusher),

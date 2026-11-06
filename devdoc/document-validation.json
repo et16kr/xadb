@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-11-06T16:34:04.925329+09:00",
+  "date": "2026-11-06T17:19:55.688294+09:00",
   "status": "PASS",
   "errors": [],
   "markdown_documents": [
@@ -427,9 +427,9 @@
     },
     {
       "file": "devdoc/contracts/dev3-task-14-reclamation.md",
-      "links": 34,
+      "links": 35,
       "duplicate_ids": 0,
-      "sha256": "6a1d9e8e72776cbad78d6ad30890351a0ee8ee70316137260fcce7d80e139f7d"
+      "sha256": "0e3e05e1072eff8551aef9ecd0b0a0a5c4718ed40aab46aa53fc1a017937617c"
     },
     {
       "file": "devdoc/contracts/dev3-task-15-backup-integrity.md",
@@ -463,9 +463,9 @@
     },
     {
       "file": "devdoc/contracts/dev3-tree-smo.md",
-      "links": 56,
+      "links": 59,
       "duplicate_ids": 0,
-      "sha256": "8e962382221a5d7562cbbef3fb06fdd84e361cbdccf206d95bcd05b2f45bf6b9"
+      "sha256": "6bb6fbf14122032a71ea8b7f9c0dc7332895ca4b75cd23e84e893196361c86d1"
     },
     {
       "file": "devdoc/contracts/dev3-undo-format.md",
@@ -1495,9 +1495,9 @@
     },
     {
       "file": "devdoc/plans/dev3-schedule-baseline.md",
-      "links": 123,
+      "links": 124,
       "duplicate_ids": 0,
-      "sha256": "0651d296072625920dd4d8beebd90036a7f338e5d3ff49c3da6295ae3ef7707c"
+      "sha256": "c897fb65e8c0f7ed6db59fa5acde98a707278c104eb9ca62c980886dd809cf50"
     },
     {
       "file": "devdoc/plans/dev3-test-plan.md",

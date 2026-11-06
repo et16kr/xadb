@@ -11,11 +11,8 @@
 //! never values read back from the same producer.
 use super::*;
 use crate::storage::dirty_frame::init_test_support as init;
+use crate::storage::row::insert::driver::live::{autocommit_delete_live, transaction_delete_live};
 use crate::storage::tree_page::{TreeExpectation, decode_tree_page};
-use crate::storage::{
-    anchor,
-    row::insert::driver::live::{autocommit_delete_live, transaction_delete_live},
-};
 use crate::transaction::concurrency::catalog_test_support as hook;
 use foundation::identity::RowId;
 
@@ -109,33 +106,41 @@ fn kept_values(keys: &[u64], gone: &[u64]) -> Vec<(u64, i64)> {
         .collect()
 }
 
-/// T's anchor in the pool: its current root page and level, and the pages
-/// its XTR1 list holds, in list order.
-fn anchor_of(pool: &SharedPool<'_, '_, '_, '_>) -> (PageRef, u8, Vec<PageRef>) {
-    let mut image = vec![0; PAGE_BYTES].into_boxed_slice();
-    for at in (0..64).filter_map(|number| probe::registered_index(pool, number)) {
-        let request = pool.target_request(at).unwrap();
-        if request.kind != PageKind::TreeAnchor || request.identity.owner.get() != 6 {
-            continue;
-        }
-        probe::diagnose(pool, at, image.as_mut().try_into().unwrap());
-        let root = anchor::decode_anchor(&image, request.identity)
-            .unwrap()
-            .root();
-        let list = anchor::retired(&image, request.identity).unwrap();
-        let pages = (0..list.len()).map(|i| list.get(i).unwrap().page).collect();
-        return (root.page, root.level, pages);
-    }
-    panic!("T has no anchor in the pool");
-}
-
-/// T's RowLeafs the current tree still reaches (every leaf `leaves` reads
-/// except the anchor's retired pages), in key order.
+/// T's RowLeafs the current tree reaches: the leaves the route from the
+/// anchor's root through the RowInternal pages' children names, in the
+/// order `leaves` reads them. Every leaf `leaves` reads is either reached or
+/// in the anchor's retired list, never both, and every reached leaf is
+/// resident, so a separator that names a retired leaf, or a leaf the tree
+/// lost without listing it, fails here.
 fn reachable(pool: &SharedPool<'_, '_, '_, '_>) -> Vec<(PageRef, Vec<u64>)> {
-    let (_, _, retired) = anchor_of(pool);
-    leaves(pool)
-        .into_iter()
-        .filter(|(page, _)| !retired.contains(page))
+    let (root, level, retired) = anchor_of(pool);
+    let inner = internals(pool);
+    let mut route = vec![root];
+    for at in (1..=level).rev() {
+        route = route
+            .iter()
+            .flat_map(|page| {
+                let (_, _, children) = inner
+                    .iter()
+                    .find(|(l, p, _)| *l == at && p == page)
+                    .unwrap_or_else(|| panic!("no level-{at} RowInternal {page:?}"));
+                children.clone()
+            })
+            .collect();
+    }
+    let all = leaves(pool);
+    for (page, _) in &all {
+        assert!(
+            route.contains(page) != retired.contains(page),
+            "leaf {page:?}: route {route:?}, retired {retired:?}"
+        );
+    }
+    assert!(
+        route.iter().all(|page| all.iter().any(|(p, _)| p == page)),
+        "route {route:?} names a leaf that is not resident"
+    );
+    all.into_iter()
+        .filter(|(page, _)| route.contains(page))
         .collect()
 }
 
@@ -1707,5 +1712,228 @@ fn unl_l15_reserved_root_refuses_the_direct_unlink() {
                 drop(row);
             }
         );
+    });
+}
+
+/// Whether frame `at` of the pool holds a dirty page.
+fn frame_dirty(live: &impl CatalogTestState, at: usize) -> bool {
+    let mut image = vec![0; PAGE_BYTES].into_boxed_slice();
+    live.catalog_test_with_pool(|pool| {
+        probe::diagnose(pool, at, image.as_mut().try_into().unwrap()).dirty
+    })
+}
+
+/// The pool's pin counts and their total (read through frame `at`).
+fn frame_pins(live: &impl CatalogTestState, at: usize) -> (Vec<u16>, u16) {
+    let mut image = vec![0; PAGE_BYTES].into_boxed_slice();
+    live.catalog_test_with_pool(|pool| {
+        let snapshot = probe::diagnose(pool, at, image.as_mut().try_into().unwrap());
+        (snapshot.pins.to_vec(), snapshot.total)
+    })
+}
+
+/// UNL-L09: the FlushRequired round trip of the live unlink's residency,
+/// with the parent kept through the leaf's LOAD. L01's four leaves in a
+/// pool of 34 frames; DELETEs of the second leaf's three rows commit at
+/// q 3..5, the first two drained and the third's groups retired through C
+/// alone, so the emptied leaf L keeps its note and nothing is unlinked. The
+/// pool is then arranged with the original pages only: L and the parent P
+/// (the root) are flushed, L's frame takes a non-resident system or genesis
+/// Jobs page, and every frame except the anchor's, P's and one frame X
+/// holding a dirty page carries a test pin. So the leaf's LOAD can take
+/// only P (clean) or X (dirty). C's live unlink, asked directly, keeps P
+/// and names X: FlushRequired(X), the note kept. After X is flushed, the
+/// same call loads L into X's frame and installs the LeafUnlink: P is still
+/// in its frame, the note is gone, three leaves stay reachable and the
+/// anchor lists L. With the test pins gone, a new statement and C's restart
+/// read the 12 values. A leaf LOAD that kept only the anchor and the leaf
+/// would evict the clean P and refuse the parent's read with
+/// `MissingTarget`, dropping the note.
+#[test]
+fn unl_l09_flush_required_round_trip_keeps_the_parent() {
+    use crate::storage::wal_io::disk_api::RowUnlinkStep;
+    case_within("UNL-L09", std::time::Duration::from_secs(1500), || {
+        let oracle = Oracle::new();
+        let (images, expected) = with_fresh!(
+            oracle,
+            frames = 34,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let (row_status, _) =
+                    create_table_with(live, owner, flusher, status, undo, private, true, &spec());
+                retire_create!(live, owner, private);
+                let mut system = Vec::new();
+                for _ in 0..18 {
+                    system.push(system_init(live, owner, flusher, true));
+                }
+                let (keys, emptied, doomed) = {
+                    let (mut writer, reader, mut flush) = live.split();
+                    let (out, slots) = autocommit!(
+                        &mut writer,
+                        owner,
+                        flush,
+                        flusher,
+                        reader,
+                        reader_private,
+                        &row_status,
+                        private,
+                        6,
+                        bigs(0..15)
+                    );
+                    assert_eq!(committed(out), (2, 15));
+                    let keys = rows_of(&slots);
+                    drains!(&mut writer, owner, flush, flusher, private);
+                    let before = writer.catalog_test_with_pool(reachable);
+                    assert_eq!(shape(&before).0, [3, 3, 3, 6]);
+                    let (emptied, doomed) = (before[1].0, before[1].1.clone());
+                    let unlinked = delete_each!(
+                        &mut writer,
+                        owner,
+                        flush,
+                        flusher,
+                        reader,
+                        reader_private,
+                        &row_status,
+                        private,
+                        3,
+                        doomed[..2]
+                    );
+                    assert_eq!(unlinked, [0, 0]);
+                    let (out, _) = delete!(
+                        &mut writer,
+                        owner,
+                        flush,
+                        flusher,
+                        reader,
+                        reader_private,
+                        &row_status,
+                        private,
+                        doomed[2]
+                    );
+                    assert_eq!(committed(out), (5, 1));
+                    assert!(!retire_all!(writer, owner, private, flush, flusher).is_empty());
+                    assert_eq!(writer.test_unlink_notes(), [(6, doomed[2])]);
+                    (keys, emptied, doomed)
+                };
+                let (root, level, listed) = live.catalog_test_with_pool(anchor_of);
+                assert_eq!((level, listed.len()), (1, 0));
+                let anchor = live
+                    .catalog_test_with_pool(|pool| {
+                        (1..34).find(|at| {
+                            pool.target_request(*at).is_ok_and(|r| {
+                                r.kind == PageKind::TreeAnchor && r.identity.owner.get() == 6
+                            })
+                        })
+                    })
+                    .expect("T's anchor resident");
+                let parent = resident_index(live, root.page_no).expect("the root resident");
+                let at_leaf =
+                    resident_index(live, emptied.page_no).expect("the emptied leaf resident");
+                for at in [parent, at_leaf] {
+                    let target = live.row_test_resident_target(at).unwrap();
+                    drive_flush(live, flusher, Some(&target));
+                }
+                let jobs: Vec<_> = (0..5)
+                    .map(|index| live.target(Plan4Page::Jobs { index }).unwrap())
+                    .collect();
+                let other = system
+                    .iter()
+                    .chain(jobs.iter())
+                    .copied()
+                    .find(|target| resident_index(live, target.identity().page.page_no).is_none())
+                    .unwrap_or_else(|| {
+                        let registered = live.catalog_test_with_pool(|pool| {
+                            (0..64)
+                                .filter(|number| probe::registered_index(pool, *number).is_some())
+                                .count()
+                        });
+                        panic!("no system or genesis Jobs page is non-resident ({registered} registered)")
+                    });
+                live.load_into(at_leaf, &other).unwrap();
+                assert_eq!(resident_index(live, emptied.page_no), None);
+                assert!(!frame_dirty(live, parent));
+                let victim = (1..34)
+                    .find(|at| ![anchor, parent, at_leaf].contains(at) && frame_dirty(live, *at))
+                    .expect("a dirty frame besides the anchor, P and L's");
+                let victim_page = live.catalog_test_with_pool(|pool| {
+                    pool.target_request(victim).unwrap().identity.page
+                });
+                // Test pins on every other frame (the counts' total kept
+                // equal to their sum), restored before the reads below.
+                let (pins, total) = frame_pins(live, anchor);
+                let pinned: Vec<usize> = (1..34)
+                    .filter(|at| ![anchor, parent, victim].contains(at))
+                    .collect();
+                live.catalog_test_with_pool(|pool| {
+                    let mut sum = total;
+                    for at in &pinned {
+                        sum += 1;
+                        probe::seed_pins(pool, *at, pins[*at] + 1, sum);
+                    }
+                });
+
+                let (mut writer, reader, mut flush) = live.split();
+                let key = RowId::new(doomed[2]).unwrap();
+                let step = writer
+                    .unlink_leaf_live(owner, object(), key, private, &mut flush)
+                    .unwrap();
+                let target = match step {
+                    RowUnlinkStep::FlushRequired(target) => target,
+                    other => panic!("expected FlushRequired, got {other:?}"),
+                };
+                assert_eq!(target.identity().page, victim_page);
+                owner.check_idle().unwrap();
+                assert_eq!(writer.test_unlink_notes(), [(6, doomed[2])]);
+                flush_target!(flush, flusher, target);
+                let step = writer
+                    .unlink_leaf_live(owner, object(), key, private, &mut flush)
+                    .unwrap();
+                assert!(matches!(step, RowUnlinkStep::Unlinked(_)), "{step:?}");
+                owner.check_idle().unwrap();
+                assert_eq!(writer.test_unlink_notes(), []);
+                writer.catalog_test_with_pool(|pool| {
+                    assert_eq!(probe::registered_index(pool, emptied.page_no), Some(victim));
+                    assert_eq!(probe::registered_index(pool, root.page_no), Some(parent));
+                    let mut sum = total + pinned.len() as u16;
+                    for at in &pinned {
+                        sum -= 1;
+                        probe::seed_pins(pool, *at, pins[*at], sum);
+                    }
+                });
+
+                let after = writer.catalog_test_with_pool(reachable);
+                let kept: Vec<u64> = keys
+                    .iter()
+                    .copied()
+                    .filter(|k| !doomed.contains(k))
+                    .collect();
+                assert_leaves(&after, 3, &kept, false);
+                assert!(after.iter().all(|(page, _)| *page != emptied));
+                assert_eq!(
+                    writer.catalog_test_with_pool(anchor_of),
+                    (root, 1, vec![emptied])
+                );
+                let expected: Vec<(u64, i64)> = kept_values(&keys, &doomed);
+                assert_eq!(
+                    read_big!(writer, reader, core, reader_private, flush, flusher),
+                    expected
+                );
+                assert!(!fence.is_fenced());
+                println!(
+                    "UNL_L09 anchor={anchor} parent={parent} leaf_frame={at_leaf} victim={victim} \
+                     victim_page={victim_page:?} other={:?}",
+                    other.identity().page
+                );
+                (state.lock().unwrap().images(), expected)
+            }
+        );
+        let joined = join_restart_with(
+            &clone_directory(&images),
+            RowRecoveryPolicy::RejectInitialLosers,
+            None,
+            &Images::new,
+            &BigScan,
+        );
+        assert_eq!((joined.ready.0, joined.clrs, joined.row_cells), (5, 0, 0));
+        assert_eq!(joined.rows, expected);
     });
 }
