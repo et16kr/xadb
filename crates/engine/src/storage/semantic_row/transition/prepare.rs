@@ -11,6 +11,7 @@ use super::{
     cells::{self, RELEASE_BYTES, TERMINAL_BYTES, put, require, same, set_budget},
     frame,
     graph::{self, AUX_BYTES, Aux, Core},
+    overflow,
     source::{self, ROW_EDIT_CELLS, SHA},
 };
 use crate::storage::{
@@ -106,7 +107,7 @@ pub(super) fn new_prepared<'a, 's>(
 
 /// Reserve/Prune record scratch: the descriptor bytes, which nothing writes
 /// before prepare's descriptor step. Each user clears it after its last use.
-fn record_scratch(descriptors: &mut [[u8; 1536]; 2]) -> &mut [u8; MAX_RECORD] {
+pub(super) fn record_scratch(descriptors: &mut [[u8; 1536]; 2]) -> &mut [u8; MAX_RECORD] {
     descriptors
         .as_flattened_mut()
         .first_chunk_mut::<MAX_RECORD>()
@@ -312,13 +313,14 @@ fn typed_leaf<'a>(
             RecordExpectation { namespace, row },
             table.schema,
         )?;
+        // An overflow row is an INSERT row with its head (C = 244,
+        // dev3-row-overflow.md#inline-gates); its chain is not read here.
         match record.payload() {
-            RowPayload::Inline(_) => {}
+            RowPayload::Inline(_) | RowPayload::Overflow(_) => {}
             RowPayload::Deleted
                 if matches!(record.version().stamp, VersionStamp::Transaction(_))
                     && record.version().undo.is_some() => {}
             RowPayload::Deleted => return Err(Error::Corrupt),
-            RowPayload::Overflow(_) => return Err(Error::Unsupported),
         }
         // Entry cost: the 12-byte cell head, the record and its 4-byte slot.
         used += value.len() + 16;
@@ -391,7 +393,7 @@ fn table_leaf(
     )?;
     Ok(leaf)
 }
-fn current_version(job: JobView<'_>, actor: TxnRef) -> Result<RecordVersion> {
+pub(super) fn current_version(job: JobView<'_>, actor: TxnRef) -> Result<RecordVersion> {
     Ok(RecordVersion {
         row: job.row_id().ok_or(Error::IdentityMismatch)?,
         stamp: VersionStamp::Transaction(actor),
@@ -399,13 +401,17 @@ fn current_version(job: JobView<'_>, actor: TxnRef) -> Result<RecordVersion> {
         undo: Some(job.undo().ok_or(Error::IdentityMismatch)?),
     })
 }
-/// One U-owned Missing INSERT record: version, C and the sealed projection.
+/// One U-owned Missing INSERT record: version, C and the sealed projection,
+/// with the record's own projection. An inline root's record is its
+/// projection; an overflow root's is its head record, whose root-free
+/// projection the Job sealed (dev3-row-overflow.md#overflow-row), and the
+/// core takes the record's own projection, root included.
 fn check_record<'a>(
     source: &LeafSource<'_>,
     job: JobView<'_>,
     actor: TxnRef,
     record: &'a [u8],
-) -> Result<row_record::RowRecordView<'a>> {
+) -> Result<(row_record::RowRecordView<'a>, [u8; 32])> {
     let row = job.row_id().ok_or(Error::IdentityMismatch)?;
     let view = row_record::decode_row_record_with_schema(
         record,
@@ -418,17 +424,21 @@ fn check_record<'a>(
         },
         source.schema,
     )?;
+    let table = job.object().ok_or(Error::IdentityMismatch)?;
+    let actual = cells::projection(table, row, Some(record))?;
+    let sealed = match view.payload() {
+        RowPayload::Inline(_) if !job.overflow() => actual,
+        RowPayload::Overflow(_) if job.overflow() => {
+            overflow::sealed_projection(table, row, record)?
+        }
+        _ => return Err(Error::IdentityMismatch),
+    };
     same(
         view.version() == current_version(job, actor)?
-            && matches!(view.payload(), RowPayload::Inline(_))
             && record.len() + 12 == job.cell_bytes() as usize
-            && cells::projection(
-                job.object().ok_or(Error::IdentityMismatch)?,
-                row,
-                Some(record),
-            )? == *job.projection_digest(),
+            && sealed == *job.projection_digest(),
     )?;
-    Ok(view)
+    Ok((view, actual))
 }
 
 /// Row native slot and the after cell plan; also the core projections.
@@ -466,29 +476,41 @@ fn prepare_leaf<'a>(
                     && usize::from(u16::from_le_bytes([cell[2], cell[3]])) + 12 == cell.len()
                     && cell[4..12] == key,
             )?;
-            check_record(&source, job, actor, &cell[12..])?;
+            let (record, actual) = check_record(&source, job, actor, &cell[12..])?;
+            // An overflow root's pending chain replaces the inline value's
+            // schema decode (dev3-row-overflow.md#forward-check).
+            if let RowPayload::Overflow(head) = record.payload() {
+                overflow::forward_chain(inputs, job, head, source.schema)?;
+            }
             let plan = view
                 .prepare_leaf_edit(edit::LeafEdit::Insert(cell), &mut refs)
                 .map_err(cells::edit_error)?;
             // Reserve proved the fit under the leaf reservation; it holds still.
             require(plan.entry_bytes() + reserved <= tree_page::TREE_ENTRY_CAPACITY)?;
             out.leaf = Some((LeafEdit::Insert(cell), source.expected, source.schema));
-            (None, Some(slot), missing, *job.projection_digest())
+            (None, Some(slot), missing, actual)
         }
         Operation::Clr | Operation::Prune => {
             same(position.equal)?;
             let EntryPayload::Value(record) = view.entry(position.index)?.payload else {
                 return Err(Error::Unsupported);
             };
-            let old = check_record(&source, job, actor, record)?;
+            let (old, actual) = check_record(&source, job, actor, record)?;
             if op == Operation::Clr {
                 view.prepare_leaf_edit(edit::LeafEdit::Remove(&key), &mut refs)
                     .map_err(cells::edit_error)?;
+                // The compensated overflow root keeps the chain it has to
+                // return (dev3-row-overflow.md#job-overflow).
+                if let RowPayload::Overflow(head) = old.payload() {
+                    overflow::clr_chain(out.job, job, head)?;
+                }
                 out.leaf = Some((LeafEdit::Remove(row), source.expected, source.schema));
-                (Some(slot), None, *job.projection_digest(), missing)
+                (Some(slot), None, actual, missing)
             } else {
-                let RowPayload::Inline(canonical) = old.payload() else {
-                    return Err(Error::Unsupported);
+                // An overflow row is restamped with its head as it is.
+                let payload = match old.payload() {
+                    payload @ (RowPayload::Inline(_) | RowPayload::Overflow(_)) => payload,
+                    RowPayload::Deleted => return Err(Error::Unsupported),
                 };
                 let version = RecordVersion {
                     stamp: VersionStamp::Committed(
@@ -505,7 +527,7 @@ fn prepare_leaf<'a>(
                     },
                     source.schema,
                     version,
-                    RowPayload::Inline(canonical),
+                    payload,
                     record_bytes,
                 )?;
                 same(length == record.len())?;
@@ -525,7 +547,7 @@ fn prepare_leaf<'a>(
                     .map_err(cells::edit_error)?;
                 require(!plan.needs_split())?;
                 out.leaf = Some((LeafEdit::Replace, source.expected, source.schema));
-                (Some(slot), Some(slot), *job.projection_digest(), after)
+                (Some(slot), Some(slot), actual, after)
             }
         }
         _ => return Err(Error::InvalidInput),
@@ -628,6 +650,11 @@ fn reserve_target(
     };
     let expected = RecordExpectation { namespace, row };
     let old = row_record::decode_row_record_with_schema(value, expected, source.schema)?;
+    // DELETE and UPDATE of a big row are 08-4's (dev3-row-overflow.md
+    // #inline-gates).
+    if matches!(old.payload(), RowPayload::Overflow(_)) {
+        return Err(Error::Unsupported);
+    }
     same(
         matches!(old.payload(), RowPayload::Inline(_))
             && matches!(old.version().stamp, VersionStamp::Committed(_))
@@ -1236,8 +1263,11 @@ pub(super) fn prepare<'a>(
         Change::Reserve(_)
         | Change::ReserveDelete(_)
         | Change::ReserveUpdate(_)
+        | Change::ReserveOverflow(_)
         | Change::ReserveAdopted { .. } => Some(cells::first_free(root, inputs.jobs, namespace)?),
+        Change::ChunkWrite(plan) => Some(plan.ordinal),
         Change::Forward { ordinal, .. }
+        | Change::ForwardOverflow { ordinal, .. }
         | Change::Cancel { ordinal }
         | Change::Clr { ordinal, .. }
         | Change::Prune { ordinal }
@@ -1267,6 +1297,10 @@ pub(super) fn prepare<'a>(
             (Some(actor), Some(status))
         }
         Change::ReserveUpdate(plan) => {
+            let (actor, status) = terminal_actor(inputs, plan.terminal)?;
+            (Some(actor), Some(status))
+        }
+        Change::ReserveOverflow(plan) => {
             let (actor, status) = terminal_actor(inputs, plan.terminal)?;
             (Some(actor), Some(status))
         }
@@ -1385,6 +1419,7 @@ pub(super) fn prepare<'a>(
         Change::Reserve(_)
         | Change::ReserveDelete(_)
         | Change::ReserveUpdate(_)
+        | Change::ReserveOverflow(_)
         | Change::ReserveAdopted { .. } => {
             // Live passes its plan and no cell. Replay passes the candidate's
             // kind-9 Job after and adopts only its C and projection (INSERT),
@@ -1415,6 +1450,11 @@ pub(super) fn prepare<'a>(
                     &plan.statement,
                     Some((plan.row, row::RowEffect::Update)),
                 ),
+                // A big row: no value bytes, its length and digest only
+                // (dev3-row-overflow.md#transitions).
+                (Change::ReserveOverflow(plan), None) => {
+                    (None, &plan.container, &plan.table, &plan.statement, None)
+                }
                 (
                     Change::ReserveAdopted {
                         container,
@@ -1447,15 +1487,16 @@ pub(super) fn prepare<'a>(
             let canonical = value
                 .map(|value| row_record::decode_canonical_row_with_schema(value, table.schema))
                 .transpose()?;
-            let planned = match (value, inserted) {
-                (Some(value), _) => {
+            let planned = match (value, inserted, inputs.change) {
+                (_, _, Change::ReserveOverflow(plan)) => overflow::reserve_total(plan.total)?,
+                (Some(value), _, _) => {
                     if !(5..=crate::storage::overflow::INLINE_ROW_BYTES).contains(&value.len()) {
                         return Err(Error::Unsupported);
                     }
                     180 + value.len()
                 }
                 _ if target_effect(target) == row::RowEffect::Delete => 0,
-                (None, adopted) => {
+                (None, adopted, _) => {
                     let adopted = adopted.ok_or(Error::InvalidInput)?;
                     let bytes = if target_effect(target) == row::RowEffect::Update {
                         u32::from(u16::from_le_bytes([adopted[286], adopted[287]]))
@@ -1517,8 +1558,8 @@ pub(super) fn prepare<'a>(
                 }
                 None => {
                     let cell_bytes = planned;
-                    let length = match canonical {
-                        Some(canonical) => {
+                    let length = match (canonical, inputs.change) {
+                        (Some(canonical), _) => {
                             let length = row_record::encode_row_record_with_schema(
                                 RecordExpectation { namespace, row },
                                 table.schema,
@@ -1534,7 +1575,23 @@ pub(super) fn prepare<'a>(
                             same(length + 12 == cell_bytes)?;
                             length
                         }
-                        None => {
+                        // The head record with the anchor as its root's
+                        // placeholder; only its root-free projection is
+                        // sealed (dev3-row-overflow.md#overflow-row).
+                        (None, Change::ReserveOverflow(plan)) => overflow::planned_record(
+                            namespace,
+                            RecordVersion {
+                                row,
+                                stamp: VersionStamp::Transaction(actor),
+                                logical: LogicalRowVersion::new(actor.id(), mutation)?,
+                                undo: Some(undo),
+                            },
+                            plan.total,
+                            plan.digest,
+                            table.anchor,
+                            record,
+                        )?,
+                        (None, _) => {
                             // The version check the record encode would make. The
                             // leaf fit depends only on the key and the record length
                             // (tree_page.rs:399-424, tree_page/edit.rs:48-90), so a
@@ -1548,6 +1605,9 @@ pub(super) fn prepare<'a>(
                     out.cell.fill(0);
                     let projection = match (canonical, inserted) {
                         (Some(_), _) => cells::projection(*handle, row, Some(&record[..length]))?,
+                        (None, None) if matches!(inputs.change, Change::ReserveOverflow(_)) => {
+                            overflow::sealed_projection(*handle, row, &record[..length])?
+                        }
                         (None, adopted) => adopted.ok_or(Error::InvalidInput)?[288..320]
                             .try_into()
                             .expect("projection"),
@@ -1585,6 +1645,9 @@ pub(super) fn prepare<'a>(
             cells::put16(job, 286, new_cell as u16);
             job[288..320].copy_from_slice(&projection);
             put(job, 320, row.get());
+            if let Change::ReserveOverflow(plan) = inputs.change {
+                overflow::reserve_job(job, plan.total);
+            }
             set_budget(
                 job,
                 5,
@@ -1613,10 +1676,26 @@ pub(super) fn prepare<'a>(
                 ..Core::default()
             };
         }
+        Change::ChunkWrite(plan) => {
+            let actor = actor.expect("actor");
+            let status = occupied(status_before.expect("status"), actor)?;
+            require(
+                status.state() == TransactionState::Active
+                    && summary.as_ref().expect("actor").reserved == selected,
+            )?;
+            core = overflow::chunk_write(inputs, plan, before.expect("selected"), actor, out)?;
+            credit = true;
+        }
         Change::Cancel { .. } => {
             let job = before.expect("selected");
             let actor = actor.expect("actor");
             require(job.state() == JobState::RootReserved)?;
+            // An overflow root with written chunks returns them through
+            // OverflowCancel; Cancel takes one with none
+            // (dev3-row-overflow.md#transitions).
+            if job.pending().is_some_and(|pending| pending.written != 0) {
+                return Err(Error::InvalidInput);
+            }
             let status = occupied(status_before.expect("status"), actor)?;
             require(status.state() == TransactionState::Active)?;
             let undo = job.undo().ok_or(Error::IdentityMismatch)?;
@@ -1770,6 +1849,7 @@ pub(super) fn prepare<'a>(
             core.q = q;
         }
         Change::Forward { .. }
+        | Change::ForwardOverflow { .. }
         | Change::Clr { .. }
         | Change::Prune { .. }
         | Change::DeleteForward { .. }
@@ -1784,6 +1864,13 @@ pub(super) fn prepare<'a>(
             // dev3-row-update.md#update-states).
             let job = before.expect("selected");
             same(job.effect() == op_effect(op))?;
+            // An overflow root's Forward carries its chain images and no
+            // other one does (dev3-row-overflow.md#forward-check).
+            if matches!(inputs.change, Change::ForwardOverflow { .. })
+                != (op == Operation::Forward && job.overflow())
+            {
+                return Err(Error::InvalidInput);
+            }
             let actor = actor.expect("actor");
             let home_before = status_before.expect("status");
             let status = occupied(home_before, actor)?;
@@ -1811,6 +1898,7 @@ pub(super) fn prepare<'a>(
             let (state, new_head, count) = match op.role() {
                 Operation::Forward => {
                     let (Change::Forward { statement, .. }
+                    | Change::ForwardOverflow { statement, .. }
                     | Change::DeleteForward { statement, .. }
                     | Change::UpdateForward { statement, .. }) = inputs.change
                     else {
@@ -1923,7 +2011,14 @@ pub(super) fn prepare<'a>(
                     if op.role() == Operation::Prune {
                         put(jobs, 264, q);
                     }
-                    set_budget(jobs, 4, 4 * RELEASE_BYTES);
+                    // A compensated overflow root still returns its chain
+                    // first (dev3-row-overflow.md#ledger): `(5, 4R + X)`;
+                    // `prepare_leaf` writes the chain it returns.
+                    if op == Operation::Clr && job.overflow() {
+                        set_budget(jobs, 5, 4 * RELEASE_BYTES + row::CHAIN_RETIRE_WAL);
+                    } else {
+                        set_budget(jobs, 4, 4 * RELEASE_BYTES);
+                    }
                     (
                         state,
                         next,
@@ -1980,6 +2075,11 @@ pub(super) fn prepare<'a>(
             let summary = summary.as_ref().expect("actor");
             let terminal = decode_job(inputs, summary.terminal.ok_or(Error::IdentityMismatch)?)?;
             require(terminal.state() == JobState::TerminalReady && job.state().is_releasing())?;
+            // A compensated overflow root returns its chain (ChainRetire)
+            // before any release step (dev3-row-overflow.md#transitions).
+            if job.chain().is_some() {
+                return Err(Error::InvalidInput);
+            }
             let cursor = job.release_cursor();
             require(if op == Operation::RootFree {
                 cursor == 3
@@ -2338,6 +2438,10 @@ pub(super) fn write_pages(
             &mut after[JOB],
         )?;
     }
+    // ChunkWrite's other two pages are the allocator and the new chunk.
+    if prepared.op == Operation::ChunkWrite {
+        return overflow::write_chunk(inputs, prepared, after);
+    }
     for role in [STATUS, UNDO] {
         let Some(page) = prepared.pages[role] else {
             continue;
@@ -2531,6 +2635,7 @@ pub(super) fn callee_bytes() -> usize {
         .max(source::delete())
         .max(source::job_edit())
         .max(source::graph())
+        .max(overflow::chunk_write_bytes())
 }
 pub(super) fn source_bytes() -> usize {
     locals_bytes() + callee_bytes() + SHA
@@ -2573,5 +2678,6 @@ pub(super) fn write_source_bytes() -> usize {
             .max(source::leaf_edit())
             .max(source::status_codec())
             .max(source::page_codec())
+            .max(overflow::write_chunk_bytes())
         + SHA
 }

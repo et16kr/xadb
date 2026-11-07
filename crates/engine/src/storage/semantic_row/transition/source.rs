@@ -245,11 +245,15 @@ fn ledger_observe() -> usize {
         + row::source_bytes()
 }
 
-/// `ledger::remaining`: the five rows and their per-row scratch.
+/// `ledger::remaining`: the five rows and their per-row scratch, and row
+/// 1's two Job reads (`forward_steps`, `forward_wal`: their results and the
+/// pending chain each reads, dev3-row-overflow.md#ledger).
 fn ledger_remaining() -> usize {
     size_of::<[RemainingBudget; 5]>()
         + 3 * size_of::<RemainingBudget>()
         + size_of::<(TransactionStatus, bool, u64)>()
+        + 2 * size_of::<Option<u64>>()
+        + size_of::<Option<row::PendingChain>>()
 }
 
 /// `ledger::validate_transaction`/`validate_actor`/`transaction_remaining`:
@@ -425,12 +429,17 @@ pub(super) fn leaf() -> usize {
         + returned::<&[u8], TreeError>()
         + returned::<(Option<u16>, Option<u16>, [u8; 32], [u8; 32]), Error>()
         + returned::<usize, Error>()
-        + size_of::<usize>();
+        + size_of::<usize>()
+        // `check_record`'s table, the record's own projection and the sealed
+        // one it compares (dev3-row-overflow.md#overflow-row), the first
+        // returned beside the view.
+        + size_of::<(ObjectHandle, [u8; 32], [u8; 32], [u8; 32])>();
     edit + reservation()
         .max(typed)
         .max(leaf_edit())
         .max(row_codec())
         .max(projection())
+        .max(super::overflow::forward_chain_bytes())
 }
 
 /// `cells::delete_material`: its before, the record it returns and the Job

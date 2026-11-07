@@ -571,6 +571,11 @@ struct World {
     /// Each produced INSERT or UPDATE RowReserve's RowId and sealed canonical
     /// value, for leaf.rs's Forward observation.
     sealed: Vec<(RowId, Vec<u8>)>,
+    /// The first extent's allocator page and the overflow chunk pages
+    /// ChunkWrite writes (its STATUS and UNDO roles,
+    /// dev3-row-overflow.md#transitions); only the overflow tests set them.
+    allocator: Option<Page>,
+    chunks: Vec<(u64, Page)>,
     /// Counts R- variants checked against the before state of their base.
     rejects: Option<Cell<usize>>,
 }
@@ -589,6 +594,8 @@ impl World {
             aging: None,
             columns: columns(),
             sealed: Vec::new(),
+            allocator: None,
+            chunks: Vec::new(),
             rejects: None,
         })
     }
@@ -852,6 +859,7 @@ impl World {
         let jobs = JobCells::original(&self.bank);
         let statement = match change {
             Change::Forward { statement, .. }
+            | Change::ForwardOverflow { statement, .. }
             | Change::DeleteForward { statement, .. }
             | Change::UpdateForward { statement, .. }
             | Change::StatementFinish { statement, .. } => Some(statement),
@@ -886,7 +894,11 @@ impl World {
             },
             _ => None,
         };
-        let status_images = present(STATUS).then(|| status::StatusImages {
+        // ChunkWrite's STATUS and UNDO roles are the allocator and the new
+        // chunk (dev3-row-overflow.md#transitions), which status.rs and
+        // undo.rs do not read; jobs.rs sees its Job.
+        let chunk = op == Operation::ChunkWrite;
+        let status_images = (present(STATUS) && !chunk).then(|| status::StatusImages {
             before: status_before.unwrap(),
             after: &after[STATUS],
         });
@@ -905,7 +917,7 @@ impl World {
             .unwrap_or_else(|error| panic!("{name}: status.rs {error:?}"));
         }
         let ordinal = observed.job_ordinal;
-        if present(UNDO) {
+        if present(UNDO) && !chunk {
             let row = matches!(
                 op.role(),
                 Operation::Forward | Operation::Clr | Operation::Prune
@@ -914,6 +926,7 @@ impl World {
                 Change::Reserve(plan) => Some(plan.statement),
                 Change::ReserveDelete(plan) => Some(plan.statement),
                 Change::ReserveUpdate(plan) => Some(plan.statement),
+                Change::ReserveOverflow(plan) => Some(plan.statement),
                 _ => None,
             };
             let source = match (planned, observed.issued) {
@@ -1098,6 +1111,25 @@ impl World {
                         predecessor: head_before.is_some(),
                         effect: row::RowEffect::Insert,
                         new_cell: 0,
+                        overflow: None,
+                    })
+                }
+                (Change::ReserveOverflow(plan), Some(issued)) => {
+                    let job = cell(&after[JOB], ordinal % 15);
+                    Some(jobs::ReservePlan {
+                        undo: issued.undo,
+                        sequence: issued.sequence,
+                        table: plan.table,
+                        pair: [page_ref(12, 2), leaf_ref(self.leaf.as_ref().unwrap())],
+                        statement: plan.statement,
+                        mutation: issued.mutation,
+                        row: issued.row,
+                        cell_bytes: row::OVERFLOW_CELL,
+                        projection: job[288..320].try_into().unwrap(),
+                        predecessor: head_before.is_some(),
+                        effect: row::RowEffect::Insert,
+                        new_cell: 0,
+                        overflow: Some(plan.total as u32),
                     })
                 }
                 (Change::ReserveDelete(plan), Some(issued)) => {
@@ -1117,6 +1149,7 @@ impl World {
                         predecessor: head_before.is_some(),
                         effect: row::RowEffect::Delete,
                         new_cell: 0,
+                        overflow: None,
                     })
                 }
                 (Change::ReserveUpdate(plan), Some(issued)) => {
@@ -1137,6 +1170,7 @@ impl World {
                         predecessor: head_before.is_some(),
                         effect: row::RowEffect::Update,
                         new_cell: (180 + plan.canonical.len()) as u32,
+                        overflow: None,
                     })
                 }
                 _ => None,
@@ -1187,6 +1221,9 @@ impl World {
         let layout = decode_layout(frame, expectation(self.lsn), profile()).unwrap();
         let (ordinal, statement) = match change {
             Change::Forward { ordinal, statement }
+            | Change::ForwardOverflow {
+                ordinal, statement, ..
+            }
             | Change::DeleteForward { ordinal, statement } => (ordinal, Some(statement)),
             Change::Clr { ordinal, statement } | Change::DeleteClr { ordinal, statement } => {
                 (ordinal, statement)
@@ -1275,6 +1312,9 @@ impl World {
     fn install(&mut self, name: &str, observation: &Observation, after: &[Page; 5], frame: &[u8]) {
         let layout = decode_layout(frame, expectation(self.lsn), profile()).unwrap();
         let lsn = layout.header().lsn;
+        // ChunkWrite patches the allocator entry and INITs a new chunk page
+        // (its STATUS and UNDO roles, dev3-row-overflow.md#opcodes).
+        let chunk = layout.operation() == Operation::ChunkWrite;
         let mut redo = layout.redo();
         for index in 0..usize::from(observation.count) {
             let role = usize::from(observation.order[index]);
@@ -1286,6 +1326,8 @@ impl World {
             let before = match role {
                 ROOT => self.root,
                 JOB => self.jobs[observation.job_ordinal.unwrap() / 15].unwrap(),
+                STATUS if chunk => self.allocator.expect("allocator"),
+                UNDO if chunk => [0; PAGE_BYTES],
                 STATUS => *Self::find(&self.status, page_no),
                 UNDO => *Self::find(&self.undo, page_no),
                 LEAF => self.leaf.unwrap(),
@@ -1306,6 +1348,8 @@ impl World {
                     self.jobs[ordinal / 15] = Some(*image);
                     self.bank[ordinal].copy_from_slice(cell(image, ordinal % 15));
                 }
+                STATUS if chunk => self.allocator = Some(*image),
+                UNDO if chunk => Self::replace(&mut self.chunks, page_no, image),
                 STATUS => Self::replace(&mut self.status, page_no, image),
                 UNDO => Self::replace(&mut self.undo, page_no, image),
                 _ => self.leaf = Some(*image),
@@ -2329,6 +2373,9 @@ pub(crate) mod delete;
 
 #[path = "transition_update_tests.rs"]
 pub(crate) mod update;
+
+#[path = "transition_overflow_tests.rs"]
+mod overflow;
 
 mod measured {
     use super::super::source::returned;

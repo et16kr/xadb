@@ -202,7 +202,17 @@ pub(crate) fn observe(
             predecessor: None,
         });
     }
-    require(before.header().lsn.0 >= selected.last_step())?;
+    // A Reserved overflow root's ChunkWrites move its last step but not its
+    // U (dev3-row-overflow.md#transitions); its Forward reads U at the lease
+    // (exactly, below).
+    require(
+        before.header().lsn.0
+            >= if role == Operation::Forward {
+                selected.lease_lsn()
+            } else {
+                selected.last_step()
+            },
+    )?;
     let active_edge = matches!(role, Operation::Forward | Operation::Clr | Operation::Prune);
     let predecessor = if active_edge {
         let previous = predecessor(jobs, selected, context)?;

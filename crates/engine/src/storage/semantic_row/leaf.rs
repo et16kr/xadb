@@ -257,7 +257,15 @@ pub(crate) fn observe(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<LeafO
                     RowEffect::Delete => TOMBSTONE_CELL,
                     RowEffect::Update => job.new_cell() as usize,
                 }
-            && projection(table.handle, row, Some(original))? == *job.projection_digest(),
+            && match record.payload() {
+                // An overflow root seals its head record with the root
+                // zero (dev3-row-overflow.md#overflow-row).
+                RowPayload::Overflow(_) if job.overflow() => {
+                    root_free_projection(table.handle, row, original)?
+                }
+                _ if job.overflow() => return Err(Error::IdentityMismatch),
+                _ => projection(table.handle, row, Some(original))?,
+            } == *job.projection_digest(),
     )?;
     let expected = RecordExpectation { namespace, row };
     let schema = RowSchemaInput::Catalog(schema);
@@ -326,22 +334,44 @@ fn insert_rows(
     schema: RowSchemaInput<'_>,
 ) -> Result<()> {
     let version = record.version();
-    let canonical = inline(record)?;
+    let (length, digest) = sealed_value(record)?;
     if let Some(sealed) = input.sealed {
-        require(sealed.length == canonical.len() && sealed.digest == content_digest(canonical))?;
+        require(sealed.length == length && sealed.digest == digest)?;
     }
     if op == Operation::Prune {
         let new =
             row_record::decode_row_record_with_schema(a.ok_or(Error::Corrupt)?, expected, schema)?;
         let q = input.status.commit.ok_or(Error::InvalidInput)?;
+        sealed_value(new)?;
         require(
             new.version().stamp == VersionStamp::Committed(q)
                 && new.version().logical == version.logical
                 && new.version().undo.is_none()
-                && inline(new)? == canonical,
+                && new.payload() == record.payload(),
         )?;
     }
     Ok(())
+}
+/// The value an INSERT row seals: an inline row's canonical length and
+/// SHA-256, or an overflow row's head total and digest, which is the
+/// canonical row's SHA-256 (dev3-row-overflow.md#overflow-row).
+fn sealed_value(row: RowRecordView<'_>) -> Result<(usize, [u8; 32])> {
+    match row.payload() {
+        RowPayload::Overflow(head) => Ok((head.total(), head.digest())),
+        _ => {
+            let canonical = inline(row)?;
+            Ok((canonical.len(), content_digest(canonical)))
+        }
+    }
+}
+/// The XRP1 projection of an overflow head record with its root `[168,192)`
+/// as zero (dev3-row-overflow.md#overflow-row), from a copy.
+fn root_free_projection(table: ObjectHandle, row: RowId, record: &[u8]) -> Result<[u8; 32]> {
+    let mut copy = [0; 232];
+    require(record.len() == copy.len())?;
+    copy.copy_from_slice(record);
+    copy[168..192].fill(0);
+    projection(table, row, Some(&copy))
 }
 /// DELETE's and UPDATE's U and committed row (dev3-row-delete.md
 /// #delete-states, #delete-undo; dev3-row-update.md#update-states). U's Live
@@ -458,13 +488,20 @@ fn validate_rows(
             RecordExpectation { namespace, row },
             RowSchemaInput::Catalog(schema),
         )?;
-        if decoded.payload() == RowPayload::Deleted {
-            let version = decoded.version();
-            if !matches!(version.stamp, VersionStamp::Transaction(_)) || version.undo.is_none() {
-                return Err(Error::Corrupt);
+        // An overflow row is an INSERT row with its head
+        // (dev3-row-overflow.md#inline-gates).
+        match decoded.payload() {
+            RowPayload::Deleted => {
+                let version = decoded.version();
+                if !matches!(version.stamp, VersionStamp::Transaction(_)) || version.undo.is_none()
+                {
+                    return Err(Error::Corrupt);
+                }
             }
-        } else {
-            inline(decoded)?;
+            RowPayload::Overflow(_) => {}
+            RowPayload::Inline(_) => {
+                inline(decoded)?;
+            }
         }
         used += bytes.len() + 16;
     }
