@@ -213,6 +213,17 @@ impl LiveCursor<'_, '_, '_, '_, '_, '_> {
         self.inner.close()
     }
 }
+#[cfg(test)]
+impl LiveCursor<'_, '_, '_, '_, '_, '_> {
+    /// The last examined and last returned RowIds the cursor keeps between
+    /// calls (CUR-J02, dev3-cursor-locator.md#cursor-tests).
+    pub(in crate::storage) fn test_progress(&self) -> (Option<RowId>, Option<RowId>) {
+        (
+            self.inner.progress.last_examined,
+            self.inner.progress.last_returned,
+        )
+    }
+}
 
 pub(in crate::storage) fn open_cursor_live<'r, 't, 'v, 'a, 'c, 's>(
     view: &'r RowStatementView<'t, 'v, 'a, 'c, 's>,

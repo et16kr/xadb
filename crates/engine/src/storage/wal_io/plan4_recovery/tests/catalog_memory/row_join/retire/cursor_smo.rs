@@ -241,9 +241,11 @@ fn cur_j01_cursor_reads_its_snapshot_across_foreign_splits() {
 /// DELETEs the second leaf's three rows and commits (q 3) with no drain. A
 /// Serializable statement R (q 3) reads the first leaf's three rows, then
 /// asks the next row with a 16-byte output: it examines the three
-/// tombstones (deleted for R) and finds the third leaf's first row too big.
-/// The drain then prunes the tombstones (R does not need them) and unlinks
-/// the emptied leaf, the one that held R's last examined key. R's next call
+/// tombstones (deleted for R) and finds the third leaf's first row too big:
+/// its last examined key is now the emptied leaf's last row, its last
+/// returned key the first leaf's last row. The drain then prunes the
+/// tombstones (R does not need them) and unlinks the emptied leaf, the one
+/// that holds R's last examined key. R's next call
 /// with a full output returns exactly that row, and the cursor reads the
 /// other kept rows once each and ends.
 #[test]
@@ -333,6 +335,13 @@ fn cur_j02_cursor_resumes_after_the_unlink_of_its_last_examined_leaf() {
                     }
                     other => panic!("expected OutputTooSmall, got {other:?}"),
                 }
+                assert_eq!(
+                    cursor.test_progress(),
+                    (
+                        Some(RowId::new(*doomed.last().unwrap()).unwrap()),
+                        Some(RowId::new(keys[2]).unwrap())
+                    )
+                );
 
                 let drained = drains!(&mut writer, owner, flush, flusher, private);
                 let last = drained.last().unwrap();
@@ -372,11 +381,12 @@ fn cur_j02_cursor_resumes_after_the_unlink_of_its_last_examined_leaf() {
 /// transaction DELETEs the left leaf's rows and commits (q 3) with no
 /// drain. A ReadCommitted statement R (q 3) opens a cursor over all of T and
 /// a ranged cursor from the first deleted key up to (not including) the
-/// survivor's third row; the first reads the survivor's first row. The
-/// drain then prunes the left leaf and collapses the root: the survivor is
-/// T's level-0 root. Both cursors continue on it: the first reads the
-/// survivor's other rows and ends, the ranged one reads the survivor's
-/// first two rows and ends. Another statement's eight rows (q 4) split the
+/// survivor's third row; each reads one row, the survivor's first (the
+/// ranged one examines the deleted rows first). The drain then prunes the
+/// left leaf and collapses the root: the survivor is T's level-0 root. Both
+/// cursors continue on it: the first reads the survivor's other rows and
+/// ends, the ranged one reads the survivor's second row and ends at its
+/// range end. Another statement's eight rows (q 4) split the
 /// root leaf again, and the first cursor stays ended; R's transaction ends
 /// Ok (ReadCommitted). A new statement reads the survivor's rows and the
 /// eight new rows.
@@ -467,6 +477,8 @@ fn cur_j03_cursors_continue_across_a_root_collapse() {
                 let mut got = rows!(reader, r, reader_private, cursor, 1, flush, flusher);
                 let visible = kept_values(&keys, &doomed);
                 assert_eq!(got, visible[..1].to_vec());
+                let mut ranged_got = rows!(reader, r, reader_private, ranged, 1, flush, flusher);
+                assert_eq!(ranged_got, visible[..1].to_vec());
 
                 let drained = drains!(&mut writer, owner, flush, flusher, private);
                 let last = drained.last().unwrap();
@@ -477,10 +489,8 @@ fn cur_j03_cursors_continue_across_a_root_collapse() {
 
                 got.extend(rest!(reader, r, reader_private, cursor, flush, flusher));
                 assert_eq!(got, visible);
-                assert_eq!(
-                    rest!(reader, r, reader_private, ranged, flush, flusher),
-                    visible[..2].to_vec()
-                );
+                ranged_got.extend(rest!(reader, r, reader_private, ranged, flush, flusher));
+                assert_eq!(ranged_got, visible[..2].to_vec());
 
                 let (out, slots) = autocommit!(
                     &mut writer,
@@ -522,9 +532,11 @@ fn cur_j03_cursors_continue_across_a_root_collapse() {
 
 /// CUR-J04: T's one leaf holds seven of the largest rows and a 100-byte
 /// row (q 2). A Serializable statement R (q 2) reads the first two rows.
-/// One explicit transaction DELETEs the fourth row, UPDATEs the small row
-/// to the largest value (its value check finds the leaf full and C splits
-/// it) and INSERTs a new row, and commits (q 3); the drain is held by R. R's
+/// One explicit transaction DELETEs the fourth row (T stays one leaf),
+/// UPDATEs the small row to the largest value (its value check finds the
+/// leaf full and C splits it: two leaves under a level-one root right after
+/// that statement) and INSERTs a new row, and commits (q 3); the drain is
+/// held by R. R's
 /// cursor reads the other six rows at q 2 across the two leaves: the
 /// deleted row and the small row's old value from their U, not the new
 /// row. R ends Rejected for SerializationConflict (MCI01-V06). A new
@@ -601,6 +613,8 @@ fn cur_j04_cursor_keeps_its_snapshot_across_a_growing_update_split() {
                     RowId::new(keys[3]).unwrap()
                 );
                 assert_eq!(done(out), 1);
+                assert_eq!(writer.catalog_test_with_pool(leaves).len(), 1);
+                assert_eq!(writer.catalog_test_with_pool(anchor_of).1, 0);
                 let (out, _) = update_statement!(
                     &mut writer,
                     owner,
@@ -615,6 +629,9 @@ fn cur_j04_cursor_keeps_its_snapshot_across_a_growing_update_split() {
                     big(8)
                 );
                 assert_eq!(done(out), 1);
+                // The UPDATE's own value check split T.
+                assert_eq!(writer.catalog_test_with_pool(leaves).len(), 2);
+                assert_eq!(writer.catalog_test_with_pool(anchor_of).1, 1);
                 let (out, slots) = statement!(
                     &mut writer,
                     owner,
