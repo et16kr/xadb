@@ -1,0 +1,126 @@
+{
+  "schema": "XADB_MODULE_GATE_RECORD_V1",
+  "change": "DEV3 08-2b (dev3-cursor-locator.md#locator, #implementation-2b): C RowLocator, the bounded physical hint cache of B's point read. Each locator takes one of the core's LOCATOR_SHARES (32) shares of 32,768 B, so a session's live locators stay within the existing 1 MiB locator allocation (dev3-concurrency-admission.md#locator-shares: lock-free byte ledger, no admission order, Drop returns, core size unchanged); key = whole anchor PageIdentity + RowId; a hit loads the hinted leaf and checks the RowId, else re-routes from the root and must confirm the hint; a recorded revision above the current one, bounds not holding the RowId or a differing recheck are fatal Invariant; another core's table is BindingMismatch before any read. Credits schedule 08-2 (35 -> 36/86) on merge.",
+  "rust_tests": [
+    {
+      "paths": [
+        "crates/engine/src/transaction/concurrency.rs",
+        "crates/engine/src/storage/wal_io/plan4_apply/row/locator.rs",
+        "crates/engine/src/storage/wal_io/plan4_apply/row/locator_tests.rs",
+        "crates/engine/src/storage/wal_io/plan4_apply/row.rs"
+      ],
+      "reason": "C RowLocator on literal keys (dev3-cursor-locator.md#locator L1-L10): the core's 32 locator shares (take/return, 33rd refused, other core's own), 256-entry table within one 32 KiB share, whole-PageIdentity key, hit/stale/miss/damaged classification, confirm and eviction; GA07 re-checks the core's size ceiling after the share byte; row.rs only declares the modules.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/locator_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::locator::tests::loc_b01_lookup_record_and_eviction",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/locator_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::locator::tests::loc_b02_locators_of_a_core_stay_within_one_mebibyte",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/transaction/concurrency/tests.rs",
+          "case": "transaction::concurrency::tests::concurrency_ga07_resource_and_oracle_negatives",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/wal_io/plan4_apply/row/read.rs",
+        "crates/engine/src/storage/tree_page/search.rs",
+        "crates/engine/src/storage/row/read/driver/live.rs",
+        "crates/engine/src/storage/wal_io/plan4_apply.rs",
+        "crates/engine/src/storage/wal_io/disk_api.rs",
+        "crates/engine/src/storage/disk.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/locator_smo.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_census.rs"
+      ],
+      "reason": "Actual C page_located/load_leaf_located/leaf_holds (row_leaf_holds) under B's read_point_located_live across a child split, a Prune and LeafUnlink, a root collapse and a new split, with damaged hints (Source/Tree(Corrupt) and recheck Census/Invariant, both fenced); the located.* RowRead census phases within Full 34,588 B (memory and instrumented native) and the unchanged original Full admission; plan4_apply.rs, disk_api.rs and disk.rs only re-export RowLocator/LocatorCounts; unlink_rows.rs only declares the locator_smo module.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/locator_smo.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::unlink_rows::locator_smo::loc_j01_hits_misses_and_stale_hints_across_a_child_split",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/locator_smo.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::unlink_rows::locator_smo::loc_j02_pruned_and_unlinked_rows_and_a_damaged_hint",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/locator_smo.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::unlink_rows::locator_smo::loc_j03_root_collapse_new_split_and_a_recheck",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_census.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_read_census::s5r_c01_memory_source_inventory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_census.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_read_census::s5r_c02_native_source_inventory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_live.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_read_live::s5r_c03_original_full_admission_boundary_and_foreign_owner",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    }
+  ],
+  "na": [],
+  "reviews": [
+    {
+      "id": "dev3-08-2-locator-d2",
+      "class": "D2",
+      "scopes": [
+        "common"
+      ],
+      "author": "claude-thread-session/claude-project-thread-gfugms",
+      "reviewer": "claude-independent-review/dev3-08-2-locator",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/disk.rs": "41674341cf2a9a0d6eb62ba614bf38245f5b1ec6",
+        "crates/engine/src/storage/row/read/driver/live.rs": "b9634a3055875776cc2df2fcfa330b8d9b262676",
+        "crates/engine/src/storage/tree_page/search.rs": "25a44d1c27a23dc696c2f0ee1cfa6a5240f2a51b",
+        "crates/engine/src/storage/wal_io/disk_api.rs": "05d6fbda8deaff6e6971c831ce4c0f0236d151b5",
+        "crates/engine/src/storage/wal_io/plan4_apply.rs": "4b4261d1e228d5d936c9154e7462c759a34e88c5",
+        "crates/engine/src/storage/wal_io/plan4_apply/row.rs": "0e841c32b9f2c7c98523ea2839d5eef1bfbf73ec",
+        "crates/engine/src/storage/wal_io/plan4_apply/row/locator.rs": "a84c9ebad42aef94d946b752527896b55fa7d0ce",
+        "crates/engine/src/storage/wal_io/plan4_apply/row/locator_tests.rs": "3279413f9c602463800dda91e23ef0896e3ecf82",
+        "crates/engine/src/storage/wal_io/plan4_apply/row/read.rs": "7d8fe5060e3da8da1e4bb138d1b6fd51375321f9",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/locator_smo.rs": "e70d78eeb042b1224137dc230ebe2a83f511a725",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs": "38c6b72506c2c3b1f35c9e636150e3f415d20a0a",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_census.rs": "84b9f3768fbc07c4a30293027e9e106a788ad9c0",
+        "crates/engine/src/transaction/concurrency.rs": "ba31a22aa078b125d2ecdd742a59b21c7f0d2cdd"
+      },
+      "log": "module-gate/evidence/dev3-08-2-locator/review.md (sha256 b512676446c641d573da5b9bdd94df2facd48e42dcad03cc6dd36b076edd523b; r3 ACCEPT at 668f6ec, required 0). r2 ACCEPT at 86c6c2a: module-gate/evidence/dev3-08-2-locator/review-r2.md (sha256 88c951233b184cf95a04921d8026f3a8b82f920795cdb8df544bb67c67b7d917), its recommendation 3 (share last field) fixed in 668f6ec. r1 CONDITIONAL at fc1fc94: module-gate/evidence/dev3-08-2-locator/review-r1.md (sha256 45b65b36a7a569378b19ba5f35ea6701c4a1b31ba043aaffbc447cf023bfba21), both required items fixed in 86c6c2a"
+    }
+  ]
+}

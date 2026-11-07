@@ -159,7 +159,7 @@ T06-13 대응: hit·이동·stale은 LOC-J01·J02·J03, eviction은 LOC-B01, cac
 - 권고 2(module-gate 기록)는 PR 직전의 record가 한다.
 - NIT 1은 L3·§10의 문구를 code대로("file을 뺀 identity") 고쳤다. NIT 2는 `document-validation.json`을 다시 만들었다. NIT 3은 census의 non-LOAD 항이 두 열기 closure 반환 중 큰 쪽을 세게 했다. 그래서 B의 non-LOAD caller 항이 5,688 B에서 5,696 B로 8 B 커지고 그것을 공유하는 non-LOAD phase 여섯도 8 B씩 커졌으며 모두 Full 안이다. §10 표의 phase 값은 그대로다.
 
-2회차(`review-r2.md`, commit `86c6c2a`)는 ACCEPT였다(필수 0, 권고 3, NIT 1). 권고 1(§10 실행표를 `86c6c2a`의 실행으로)은 `86afd10`이 했다. 권고 3(field 순서 때문에 몫이 표보다 먼저 반환되어, drop과 생성이 둘 이상 겹치면 잠시 1 MiB를 넘을 수 있음)은 `share`를 마지막 field로 옮겨 고쳤다(L2). NIT(census 값 문구)는 위 NIT 3 항목을 고쳤다. 권고 2는 PR 직전의 record가 한다. 3회차(`review.md`)가 field 순서 변경을 확인한다.
+2회차(`review-r2.md`, commit `86c6c2a`)는 ACCEPT였다(필수 0, 권고 3, NIT 1). 권고 1(§10 실행표를 `86c6c2a`의 실행으로)은 `86afd10`이 했다. 권고 3(field 순서 때문에 몫이 표보다 먼저 반환되어, drop과 생성이 둘 이상 겹치면 잠시 1 MiB를 넘을 수 있음)은 `share`를 마지막 field로 옮겨 고쳤다(L2). NIT(census 값 문구)는 위 NIT 3 항목을 고쳤다. 권고 2는 PR 직전의 record가 한다. 3회차(`review.md`, commit `668f6ec`)는 ACCEPT였다(필수 0). field 순서 변경으로 drop이 표를 먼저 놓고 몫을 돌려줌을 확인했고, 남은 권고(실행표 source, module-gate 기록)와 NIT(§14의 반환 문구)는 이 판이 반영했다.
 
 <a id="implementation-2b"></a>
 ## 10. 08-2b 구현 기록
@@ -193,15 +193,15 @@ census(S5R-C01 memory, S5R-C02 instrumented native, 같은 값, Full 34,588 B):
 
 located.row_load의 여유는 37 B다. recheck의 다시 route는 `located.row_route`와 같은 frame을 쓰고, hint leaf의 brief read는 LOAD가 끝난 뒤 별도 never-inline 호출이라 `located.holds`로 센다.
 
-실행(2026-11-07, debug, 정확한 이름 filter와 `--test-threads=1`). source는 commit `86c6c2a`(D2 1회차 반영)의 tree이고, Rust 파일 13개의 blob은 08-2b module-gate 기록(`module-gate/records/20261107-dev3-08-2-locator.json`)의 목록과 같다. clippy(`-p xadb-engine --all-targets -D warnings`)와 rustfmt도 그 tree에서 통과했다.
+실행(2026-11-07, debug, 정확한 이름 filter와 `--test-threads=1`). source는 commit `668f6ec`(D2 2회차 반영)의 tree이고, Rust 파일 13개의 blob은 08-2b module-gate 기록(`module-gate/records/20261107-dev3-08-2-locator.json`)의 목록과 같다. clippy(`-p xadb-engine --all-targets -D warnings`)와 rustfmt도 그 tree에서 통과했다.
 
 | 시험 | 결과 | 확인한 값 |
 | --- | --- | --- |
 | LOC-B01 | PASS | 분류·계수, 다른 incarnation·owner_generation·database의 miss, 연속 RowId 256개의 slot, 역행과 bounds 밖의 손상(기록 revision과 그보다 뒤 revision 모두, hit·stale로 세지 않음), recheck의 confirm, 다른 core |
 | LOC-B02 | PASS | 위 크기, 32개와 33번째 거절, drop 뒤 다시 생성, 다른 core의 따로 센 몫 |
-| LOC-J01 | PASS(206.2 s) | lookups 71(손상 조회 1 포함), hits 36, stale 15, misses 19, rechecks 0, working set 19. split이 옮긴 행 3개, 기록 revision은 anchor image와 같고 split 뒤 +1. 다른 세션 core의 locator는 `Census/BindingMismatch/Unchanged`이고 계수 0. bounds 손상은 `Census/Invariant/CallerMustResolve`와 fence |
-| LOC-J02 | PASS(173.6 s) | Prune 뒤 hit 6(그중 recheck 1), unlink 뒤 stale 15와 hit 15(recheck 4), 손상은 `Source/Tree(Corrupt)/CallerMustResolve`와 fence |
-| LOC-J03 | PASS(119.2 s) | 축소 뒤 조회·기록 0(8개 hint가 q2의 revision·leaf 그대로), 다시 split 뒤 stale 8, 손상은 recheck의 `Census/Invariant/CallerMustResolve`와 fence |
+| LOC-J01 | PASS(211.1 s) | lookups 71(손상 조회 1 포함), hits 36, stale 15, misses 19, rechecks 0, working set 19. split이 옮긴 행 3개, 기록 revision은 anchor image와 같고 split 뒤 +1. 다른 세션 core의 locator는 `Census/BindingMismatch/Unchanged`이고 계수 0. bounds 손상은 `Census/Invariant/CallerMustResolve`와 fence |
+| LOC-J02 | PASS(180.7 s) | Prune 뒤 hit 6(그중 recheck 1), unlink 뒤 stale 15와 hit 15(recheck 4), 손상은 `Source/Tree(Corrupt)/CallerMustResolve`와 fence |
+| LOC-J03 | PASS(124.2 s) | 축소 뒤 조회·기록 0(8개 hint가 q2의 revision·leaf 그대로), 다시 split 뒤 stale 8, 손상은 recheck의 `Census/Invariant/CallerMustResolve`와 fence |
 | LOC-C01 | PASS | S5R-C01·C02 위 표, S5R-C03(원 Full admission 경계) PASS |
 | GA07 | PASS | `locator_shares`를 더한 core가 §7의 2048 B ceiling 안([동시성 admission §14](dev3-concurrency-admission.md#locator-shares)) |
 
