@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-11-07T09:55:43.273701+09:00",
+  "date": "2026-11-07T09:57:28.794937+09:00",
   "status": "PASS",
   "errors": [],
   "markdown_documents": [
@@ -607,9 +607,9 @@
     },
     {
       "file": "devdoc/evidence/README.md",
-      "links": 411,
+      "links": 412,
       "duplicate_ids": 0,
-      "sha256": "9ee134a495625c29cab3a08d771896ef54403df825100664a13d4cd418b2a972"
+      "sha256": "ecbcca86a72b3f19565e75cc548f07c9d69130f1e1d3e62226cf617163cd7416"
     },
     {
       "file": "devdoc/evidence/autocommit-insert-20261102.md",
@@ -973,9 +973,9 @@
     },
     {
       "file": "devdoc/evidence/dev3-recovery-control-base-20261024.md",
-      "links": 3,
+      "links": 5,
       "duplicate_ids": 0,
-      "sha256": "4aa4e6fe5374d4c6986506366dc94dea5ae2772f6b7f20c37b6619e99d33f922"
+      "sha256": "d9448303b356b7d07363e6c357196440b395bd154d12f935d0a7dc1a4f2fa6f7"
     },
     {
       "file": "devdoc/evidence/dev3-recovery-effects-20261023.md",
@@ -1363,9 +1363,9 @@
     },
     {
       "file": "devdoc/evidence/main-preexisting-failures-20261030.md",
-      "links": 46,
+      "links": 49,
       "duplicate_ids": 0,
-      "sha256": "ad5e4d54131bcba3e926d014ab150e92bb1a676ccde4a057e31a1cff72eb3bb9"
+      "sha256": "5796f6c3a4f0e423beaa69e1183732f3aaa8712c84ff731f18cc60f1cdf43e2a"
     },
     {
       "file": "devdoc/evidence/module-independence-survey-20261026.md",

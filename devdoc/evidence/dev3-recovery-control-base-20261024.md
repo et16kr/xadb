@@ -31,3 +31,5 @@ base 순수 호출의 deep/return 수명과 caller를 포함한 독립 상계는
 ## 남은 범위
 
 S5 추가23,886은 NOT_RUN이며 최종 DEV3 인수에서 필수272와 함께 실행한다. 실제 CURRENT 공개·intent·base capture/INIT provenance·REBASE/LOG_OPEN·loser 정리·VERIFY/STABILIZE·같은 pool 재진입과3PID는 아직 미완료다. Catalog CREATE/CLR·첫 행 ACK·AI 소비자2/3·DEV3 전체 완료를 이 결과로 승격하지 않는다. 문서 verifier·push는 실행하지 않았다.
+
+2026-11-05 후속: XB-H001의 원 기대(version@4=2 → `Unsupported`)는 다음 날 [Free Undo 계약](../contracts/dev3-plan4-free-undo.md)이 version 2를 지원 형식 V2System으로 정하면서 낡았다. 시험만 고쳤고 위 272개 PASS는 원 source의 결과로 남는다([기존 실패 기록 §9](main-preexisting-failures-20261030.md#xrb-header-version)).
