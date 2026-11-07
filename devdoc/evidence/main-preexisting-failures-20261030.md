@@ -432,7 +432,7 @@ decoder 결함이 아니라 시험 기대가 낡았다.
 
 - XB-H001의 입력(`tests/fixtures/dev3-plan4-recovery-base/input-plan.json`, recipe `version@4=2`)은 2026-10-24 XRB1 codec에 v1(Status 전용)만 있을 때 작성됐다. 그 source에서는 PASS했다([원 증거](dev3-recovery-control-base-20261024.md)).
 - 다음 날 [D3-PLAN4-FREE-UNDO-001](../contracts/dev3-plan4-free-undo.md)이 "XRB1 version u16@4=2 자체가 fixed Plan4SystemInit scope"로 정하고 `BaseFormat::V2System`을 넣었다. 같은 legacy `decode`가 v1과 v2를 함께 읽고, current-build runtime은 v2만 capture한다. `plan4_recovery_base/row_tests.rs`의 header mode 시험도 Legacy mode에서 V1·V2를 허용으로 단언한다. 그 단위는 변경 시험만 실행했으므로 XB-H001은 다시 실행되지 않았다.
-- v2는 v1의 Status 전용 내용을 그대로 담을 수 있고, Undo record·terminal3(InitializedUndo)·System descriptor를 더 허용한다. 그래서 `active`의 version만 2로 바꾼 base는 Status 페이지만 있는 정상 v2 base다.
+- v2는 FreeUndo record·Undo 페이지·terminal3(InitializedUndo)을 더 허용하고, Prepared reserve의 예약은 38208/70976B를 요구한다(v1은 38000/70768B). `active`에는 Prepared reserve가 없고 끝난 Status INIT의 소비량(59200B)은 두 형식에서 같아, version만 2로 바꾼 base는 Status 페이지만 있는 정상 v2 base다.
 
 진단으로 15개 fixture 각각의 version을 0·1·2·3·4·5·65535로 바꿔 다시 봉인하고 `decode` 결과를 한 번 봤다. 임시 시험이며 commit하지 않았다.
 
@@ -446,7 +446,7 @@ decoder 결함이 아니라 시험 기대가 낡았다.
 
 ### 9.2 수정
 
-`crates/engine/src/storage/plan4_recovery_base_tests.rs`의 XB-H001만 바꿨다. version 2 대신 Legacy decoder가 거절해야 하는 0, Catalog·Row 형식 번호 3·4, 다음 미사용 번호 5, 최댓값 65535를 하나씩 넣어 다시 봉인하고 모두 `Unsupported`인지 본다. 지원하지 않는 version을 거절한다는 원래 의도는 유지하고, Catalog·Row base가 legacy `decode`에 들어오는 경우까지 전체 decode로 덮는다. 제품 코드는 바꾸지 않았다.
+`crates/engine/src/storage/plan4_recovery_base_tests.rs`의 XB-H001만 바꿨다. version 2 대신 Legacy decoder가 거절해야 하는 0, Catalog·Row 형식 번호 3·4, 다음 미사용 번호 5, 최댓값 65535를 하나씩 넣어 다시 봉인하고 모두 `Unsupported`인지 본다. 지원하지 않는 version을 거절한다는 원래 의도는 유지하고, 1MiB base에 Catalog·Row 형식 번호가 붙은 경우의 거절까지 전체 decode로 확인한다. 실제 Catalog·Row base는 2MiB라 legacy `decode`가 version을 읽기 전 길이 검사에서 `Corrupt`로 거절하므로 이 case가 덮는 범위가 아니다. 제품 코드는 바꾸지 않았다.
 
 frozen 입력 `input-plan.json`의 XB-H001 recipe는 그대로 둔다. fixture `vectors/p1/manifest.json`이 그 파일의 SHA-256 `86d008ca5ffad39385e9fa8b9aa512443dda80574d6ede9aa2f442c25db63fab`을 묶고 있고, 원 입력은 당시 기록으로 보존한다. XB-H001의 현재 recipe는 이 절과 시험 source다. 2026-10-24의 원 PASS는 그 source의 결과로 남는다.
 
@@ -459,4 +459,4 @@ frozen 입력 `input-plan.json`의 XB-H001 recipe는 그대로 둔다. fixture `
 | 수정 전 main `1c9486a` | `18b2a915a0d3501d9726068d7e9f88d86c9c8b75b23609e98b9589fea39279e9` | FAIL `plan4_recovery_base_tests.rs:295`, invalid base accepted |
 | 수정 후 | `9fbc93c785af9fd779e1a6badb07bdf292f41c8d7134d05ea45bd84200b7612c` | PASS, XB-H002..H016 SKIP |
 
-바꾼 case가 XB-H001뿐이므로 XB-H002..H016과 다른 `xrb_*` 함수는 실행하지 않았다. 두 실행 로그와 §9.1 진단의 임시 시험 source·출력은 공유 폴더 `xrb-header-version-20261105/`에 `SHA256SUMS`와 함께 있다(`before-h001.log` `d4d96cc2…`, `after-h001.log` `841c7804…`, `diag-relabel.log` `e27827ca…`). ELF는 지웠다. 진도표([DEV3 일정 기준선](../plans/dev3-schedule-baseline.md))는 이 수정과 관계없어 바꾸지 않았다(33/86 = 38.37%).
+바꾼 case가 XB-H001뿐이므로 XB-H002..H016과 다른 `xrb_*` 함수는 실행하지 않았다. 두 실행 로그와 §9.1 진단의 임시 시험 source·출력은 공유 폴더 `xrb-header-version-20261105/`에 `SHA256SUMS`와 함께 있다(`before-h001.log` `d4d96cc2…`, `after-h001.log` `841c7804…`, `diag-relabel.log` `e27827ca…`). ELF 사본은 보존하지 않았다. 진도표([DEV3 일정 기준선](../plans/dev3-schedule-baseline.md))는 이 수정과 관계없어 바꾸지 않았다(33/86 = 38.37%).
