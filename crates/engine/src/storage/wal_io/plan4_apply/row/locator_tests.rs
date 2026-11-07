@@ -238,3 +238,102 @@ fn loc_b02_locators_of_a_core_stay_within_one_mebibyte() {
     );
     println!("LOC_B02 shares=32 total={total}");
 }
+
+/// LOC-B03: race 64 actual callers for 32 shares, hold every result until
+/// the observer samples the ledger, then return them concurrently. Two
+/// bounded waves prove both refusal and reuse without relying on a winner.
+#[test]
+fn loc_b03_concurrent_share_admission_and_return() {
+    use std::sync::Barrier;
+    let fence = SessionFence::new();
+    let core = PageConcurrency::new(&fence).unwrap();
+    for _ in 0..2 {
+        let start = Barrier::new(65);
+        let acquired = Barrier::new(65);
+        let release = Barrier::new(65);
+        let (held, admitted, bytes) = std::thread::scope(|scope| {
+            let handles: Vec<_> = (0..64)
+                .map(|_| {
+                    scope.spawn(|| {
+                        start.wait();
+                        let locator = RowLocator::new(&core);
+                        let bytes = locator.as_ref().map(RowLocator::bytes);
+                        acquired.wait();
+                        release.wait();
+                        drop(locator);
+                        bytes
+                    })
+                })
+                .collect();
+            start.wait();
+            acquired.wait();
+            let held = core.test_locator_shares();
+            // Release before assertions so a failed oracle cannot strand workers.
+            release.wait();
+            let sizes: Vec<_> = handles
+                .into_iter()
+                .filter_map(|h| h.join().unwrap())
+                .collect();
+            (held, sizes.len(), sizes.iter().sum::<usize>())
+        });
+        assert_eq!((held, admitted), (32, 32));
+        assert!(bytes <= 1_048_576);
+        assert_eq!(core.test_locator_shares(), 0);
+    }
+}
+
+/// LOC-B04: the file omitted from the slot hash remains part of equality.
+/// Also cover owner equality and the inclusive/exclusive RowId endpoints.
+#[test]
+fn loc_b04_file_collision_owner_and_rowid_boundaries() {
+    let fence = SessionFence::new();
+    let core = PageConcurrency::new(&fence).unwrap();
+    let mut locator = RowLocator::new(&core).unwrap();
+    let t = anchor(20, 2);
+    let other_file = PageIdentity {
+        page: PageRef {
+            file: FileId::new((1 << 32) | 2).unwrap(),
+            ..t.page
+        },
+        ..t
+    };
+    let other_owner = PageIdentity {
+        owner: ObjectId::new(192).unwrap(),
+        ..t
+    };
+    let key = row(u64::MAX);
+    let edge = bounds(Some(u64::MAX), None);
+    assert_eq!(
+        RowLocator::test_slot(t, key),
+        RowLocator::test_slot(other_file, key)
+    );
+    assert_eq!(
+        RowLocator::test_slot(t, key),
+        RowLocator::test_slot(other_owner, key)
+    );
+    locator.record(t, key, 1, page(33, 2), edge);
+    assert_eq!(locator.lookup(other_file, key, 1), Ok(None));
+    assert_eq!(locator.lookup(other_owner, key, 1), Ok(None));
+    assert!(locator.lookup(t, key, 1).unwrap().is_some());
+    locator.record(other_file, key, 1, page(34, 2), edge);
+    assert_eq!(locator.counts().evictions, 1);
+    assert_eq!(locator.lookup(t, key, 1), Ok(None));
+    assert_eq!(
+        locator.lookup(other_file, key, 1).unwrap().unwrap().leaf,
+        page(34, 2)
+    );
+    assert_eq!(locator.working_set(), 1);
+
+    for (value, range, accepted) in [
+        (1, bounds(None, Some(1)), false),
+        (1, bounds(Some(1), Some(2)), true),
+        (2, bounds(Some(1), Some(2)), false),
+        (u64::MAX, bounds(None, Some(u64::MAX)), false),
+        (u64::MAX, edge, true),
+    ] {
+        let mut fresh = RowLocator::new(&core).unwrap();
+        fresh.record(t, row(value), 1, page(33, 2), range);
+        assert_eq!(fresh.lookup(t, row(value), 1).unwrap().is_some(), accepted);
+        assert_eq!(fresh.working_set(), usize::from(accepted));
+    }
+}

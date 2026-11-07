@@ -1067,3 +1067,197 @@ fn loc_j03_root_collapse_new_split_and_a_recheck() {
         );
     });
 }
+
+/// LOC-J04: a failed copy may leave a valid route hint. Retry it after
+/// real leaf movement, then use it through a level-two root and own writes.
+/// The expected values come from the writes, never a cached/plain read.
+#[test]
+fn loc_j04_retry_level_two_and_own_write_visibility() {
+    use crate::storage::row::insert::driver::live::commit_live;
+    use crate::storage::row::read::ReadError;
+    case_within("LOC-J04", std::time::Duration::from_secs(300), || {
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 32,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let _ = state;
+                let (row_status, _) =
+                    create_table(live, owner, flusher, status, undo, private, true);
+                retire_create!(live, owner, private);
+                for _ in 0..6 {
+                    system_init(live, owner, flusher, true);
+                }
+                let (mut writer, reader, mut flush) = live.split();
+                let txn = writer
+                    .begin_row_transaction(
+                        owner,
+                        IsolationLevel::Serializable,
+                        &row_status,
+                        private,
+                        &mut flush,
+                    )
+                    .unwrap();
+                let view = writer.begin_statement(owner, &txn).unwrap();
+                let table = issue_table!(reader, owner, view, reader_private, flush, flusher);
+                let mut expected = Vec::new();
+                for value in [7, 8, 9, 10] {
+                    expected.push((
+                        put!(writer, owner, view, table, private, flush, flusher, value),
+                        value,
+                    ));
+                }
+                let root = writer.catalog_test_with_pool(leaves)[0].0;
+                split!(writer, owner, flush, private, root, Split::RootSplit);
+                let mut locator = RowLocator::new(core).unwrap();
+                let cancel = Cancellation::default();
+                // Preserve residency on FlushRequired, and bound retries.
+                macro_rules! read_int {
+                    ($row:expr, $size:expr, $cancel:expr, $located:expr) => {{
+                        let mut residency = Plan4ResidencyCursor::new();
+                        let mut output = vec![0xA5; $size];
+                        let mut attempts = 0;
+                        loop {
+                            attempts += 1;
+                            assert!(attempts <= 64, "read made no progress");
+                            let call = ReadCall {
+                                port: &reader,
+                                owner,
+                                private: reader_private,
+                                residency: &mut residency,
+                            };
+                            let result = if $located {
+                                read_point_located_live(
+                                    call,
+                                    &mut locator,
+                                    &view,
+                                    &table,
+                                    $row,
+                                    &mut output,
+                                    $cancel,
+                                )
+                            } else {
+                                read_point_live(call, &view, &table, $row, &mut output, $cancel)
+                            };
+                            match result {
+                                Ok(ReadStep::Ready(PointRead::Found(copy))) => {
+                                    assert_eq!(copy.version().row, $row);
+                                    break Ok(Some(int_of(&output, copy.len())));
+                                }
+                                Ok(ReadStep::Ready(PointRead::Missing)) => {
+                                    assert!(output.iter().all(|&b| b == 0xA5));
+                                    break Ok(None);
+                                }
+                                Ok(ReadStep::FlushRequired { target }) => {
+                                    flush_target!(flush, flusher, target)
+                                }
+                                Err(error) => {
+                                    assert!(output.iter().all(|&b| b == 0xA5));
+                                    break Err(error);
+                                }
+                            }
+                        }
+                    }};
+                }
+                let key = expected[1].0;
+                assert!(matches!(
+                    read_int!(key, 12, &cancel, true),
+                    Err(RowReadError::Read(ReadError::OutputTooSmall {
+                        required: 13
+                    }))
+                ));
+                let anchor = table.test_identity().2;
+                let old_hint = locator.test_entry(anchor, key).unwrap();
+                assert_eq!(locator.counts(), counts(1, 0, 0, 1, 0));
+                let stop = Cancellation::default();
+                stop.cancel();
+                assert!(matches!(
+                    read_int!(key, 64, &stop, true),
+                    Err(RowReadError::Read(ReadError::Cancelled))
+                ));
+                assert_eq!(locator.counts(), counts(1, 0, 0, 1, 0));
+                let children = writer.catalog_test_with_pool(leaves);
+                split!(
+                    writer,
+                    owner,
+                    flush,
+                    private,
+                    children[0].0,
+                    Split::ChildSplit
+                );
+                let moved = writer.catalog_test_with_pool(leaves);
+                assert_ne!(
+                    holder(&moved, key.get()),
+                    old_hint.1,
+                    "the pending row actually moved"
+                );
+                assert_eq!(read_int!(key, 64, &cancel, true).unwrap(), Some(8));
+                assert_eq!(locator.counts(), counts(2, 0, 1, 1, 0));
+                assert_eq!(
+                    locator.test_entry(anchor, key),
+                    Some((
+                        writer.catalog_test_with_pool(anchor_revision),
+                        holder(&moved, key.get())
+                    ))
+                );
+                split!(
+                    writer,
+                    owner,
+                    flush,
+                    private,
+                    children[1].0,
+                    Split::ChildSplit
+                );
+                let internal = writer.catalog_test_with_pool(internals);
+                split!(
+                    writer,
+                    owner,
+                    flush,
+                    private,
+                    internal[0].1,
+                    Split::RootSplit
+                );
+                assert_eq!(writer.catalog_test_with_pool(anchor_of).1, 2);
+                assert_eq!(
+                    shape(&writer.catalog_test_with_pool(leaves)).0,
+                    [1, 1, 1, 1]
+                );
+                for _ in 0..2 {
+                    for &(row, value) in &expected {
+                        assert_eq!(read_int!(row, 64, &cancel, true).unwrap(), Some(value));
+                        assert_eq!(read_int!(row, 64, &cancel, false).unwrap(), Some(value));
+                    }
+                }
+                // Negative hints cannot cache visibility: the next issued RowId
+                // is missing, then inserted without a structural revision change.
+                let next = RowId::new(expected[3].0.get() + 1).unwrap();
+                assert_eq!(read_int!(next, 64, &cancel, true).unwrap(), None);
+                assert_eq!(read_int!(next, 64, &cancel, true).unwrap(), None);
+                assert_eq!(locator.counts().rechecks, 1);
+                let revision = writer.catalog_test_with_pool(anchor_revision);
+                let inserted = put!(writer, owner, view, table, private, flush, flusher, 11);
+                assert_eq!(inserted, next);
+                assert_eq!(writer.catalog_test_with_pool(anchor_revision), revision);
+                let before = locator.counts();
+                assert_eq!(read_int!(next, 64, &cancel, true).unwrap(), Some(11));
+                assert_eq!(read_int!(next, 64, &cancel, false).unwrap(), Some(11));
+                assert_eq!(
+                    locator.counts(),
+                    LocatorCounts {
+                        lookups: before.lookups + 1,
+                        hits: before.hits + 1,
+                        ..before
+                    }
+                );
+                assert!(writer.finish_statement(owner, view).is_ok());
+                assert_eq!(
+                    a_commit!(&mut writer, owner, flush, flusher, txn, private),
+                    2
+                );
+                drains!(&mut writer, owner, flush, flusher, private);
+                assert_row_jobs_free(writer.catalog_test_jobs());
+                assert!(!fence.is_fenced());
+            }
+        );
+    });
+}

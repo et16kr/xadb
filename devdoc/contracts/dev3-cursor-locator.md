@@ -210,3 +210,10 @@ located.row_load의 여유는 37 B다. recheck의 다시 route는 `located.row_r
 검토와 실행이 적은 commit `fc1fc94`·`86c6c2a`·`668f6ec`는 PR #62 병합 전, 08-2a 위에서 만든 작업 commit이다. main(`9669c96`, PR #62 병합) 위로 옮긴 commit은 각각 `15e2f9d`·`0f9ed43`·`1f2c92d`이고, 이 PR이 바꾸는 Rust 파일 13개의 blob은 옮기기 전과 같다(module-gate 기록의 blob 목록). 옮긴 뒤 crate에서 달라진 것은 main에 먼저 병합된 08-2a 후속 시험 두 파일(`smo_tests.rs`, `cursor_smo.rs`)뿐이며, 옮긴 head에서 clippy(`-D warnings`)와 rustfmt를 다시 통과했다.
 
 일정: 08-2a의 cursor 인수와 08-2b의 locator가 모두 끝났으므로 PR #65의 병합으로 08-2의 1일을 적립한다(35 → 36/86 = 41.86%, [진도표](../plans/dev3-schedule-baseline.md#items)).
+
+<a id="pr65-followup"></a>
+### PR #65 추가 검증(2026-11-07)
+
+PR의 설계·방향·코드와 L1–L12를 재검토했다. route hint와 행 가시성의 분리, SMO read admission, 전체 anchor identity와 core 결속, 손상의 fatal 전달, 몫의 RAII와 drop 순서는 현재 계약에 맞는다. 필수 제품 수정 결함은 발견하지 않았다. 고정 256-entry 표와 anchor 전체 revision 무효화의 성능은 PF09에서 확인할 대상으로 유지하며, 현재 profile 검증을 XADB-SCOPE-002의 확장형 목표 인수로 보지 않는다.
+
+기존 시험을 반복하지 않고 LOC-B03(64 thread의 32몫 경쟁·반환·재사용 두 wave), LOC-B04(같은 slot의 다른 file·owner, RowId 양 끝과 반개구간), LOC-J04(출력 부족 뒤 실제 ChildSplit 이동·취소·재시도, level 2 route, 같은 revision에서 Missing hint 뒤 자기 INSERT 가시성)를 추가했다. 실행 결과·source identity·별도 검토는 [추가 검증 기록](../../module-gate/evidence/dev3-08-2-locator/review-followup.md)에 보존한다. native 복구·대형 working set·성능 시험 결과를 추가한 것은 아니다.
