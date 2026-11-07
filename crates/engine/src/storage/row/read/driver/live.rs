@@ -11,8 +11,8 @@ use super::{
 use crate::storage::{
     disk::{
         CallerCredit, CheckedTable, MissingRowEvidence, Owner, Plan4ResidencyCursor, Plan4Target,
-        ReadPort, ReadStep, RetentionError, RowCandidate, RowCopyObservation, RowReadOperation,
-        RowSearchPage, RowStatementView, RowValueBefore,
+        ReadPort, ReadStep, RetentionError, RowCandidate, RowCopyObservation, RowLocator,
+        RowReadOperation, RowSearchPage, RowStatementView, RowValueBefore,
     },
     row_record::RecordVersion,
     transaction_record::{TransactionState, TxnRef},
@@ -166,6 +166,77 @@ impl<'b, 'a, 's, 'c, 'p, 'd, W: WriterNamespace> ReadSource
     }
 }
 
+/// `LiveSource` whose leaf route asks the caller's locator
+/// (dev3-cursor-locator.md#locator). Only `page` differs; every other phase
+/// is the live source's own.
+struct LocatedSource<'x, 'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> {
+    live: LiveSource<'x, 'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W>,
+    locator: &'x mut RowLocator<'c, 's>,
+}
+
+impl<'b, 'a, 's, 'c, 'p, 'd, W: WriterNamespace> ReadSource
+    for LocatedSource<'_, '_, '_, '_, '_, '_, 'b, 'a, 's, 'c, 'p, 'd, '_, '_, W>
+{
+    type Target = Plan4Target;
+    type Candidate = RowCandidate<'b>;
+    type Missing = MissingRowEvidence;
+    type Before = RowValueBefore<'b>;
+    type Copied = RowCopyObservation;
+    type Page<'g>
+        = RowSearchPage<'g, 'b, 'a, 's, 'c, 'p, 'd>
+    where
+        Self: 'g;
+    fn page(
+        &mut self,
+        key: RowId,
+    ) -> Result<Step<RowSearchPage<'_, 'b, 'a, 's, 'c, 'p, 'd>, Plan4Target>, RetentionError> {
+        let live = &mut self.live;
+        live.operation
+            .page_located(live.table, live.residency, key, self.locator)
+    }
+    fn upper(&self) -> Option<RowId> {
+        self.live.upper()
+    }
+    fn status(
+        &mut self,
+        candidate: &RowCandidate<'b>,
+    ) -> Result<Step<TransactionState, Plan4Target>, RetentionError> {
+        self.live.status(candidate)
+    }
+    fn missing_before(
+        &mut self,
+        candidate: &RowCandidate<'b>,
+    ) -> Result<Step<MissingRowEvidence, Plan4Target>, RetentionError> {
+        self.live.missing_before(candidate)
+    }
+    fn value_before(
+        &mut self,
+        candidate: &RowCandidate<'b>,
+    ) -> Result<Step<RowValueBefore<'b>, Plan4Target>, RetentionError> {
+        self.live.value_before(candidate)
+    }
+    fn copy_candidate(
+        &mut self,
+        candidate: &RowCandidate<'b>,
+        output: &mut [u8],
+    ) -> Result<RowCopyObservation, RetentionError> {
+        self.live.copy_candidate(candidate, output)
+    }
+    fn copy_before(
+        &mut self,
+        before: &RowValueBefore<'b>,
+        output: &mut [u8],
+    ) -> Result<RowCopyObservation, RetentionError> {
+        self.live.copy_before(before, output)
+    }
+    fn release_candidate(&mut self, candidate: RowCandidate<'b>) -> Result<(), RetentionError> {
+        self.live.release_candidate(candidate)
+    }
+    fn finish(self) -> Result<(), RetentionError> {
+        self.live.finish()
+    }
+}
+
 /// The caller's original port, Owner, private loan and residency cursor for
 /// one call. The entry opens the operation from them; none is kept.
 pub(in crate::storage) struct LiveCall<'x, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace> {
@@ -197,6 +268,45 @@ pub(in crate::storage) fn read_point_live<'a, 'c, 's, W: WriterNamespace>(
                 operation: port.row_operation(owner, view, private)?,
                 table,
                 residency,
+            })
+        },
+        row,
+        output,
+        cancel,
+    )
+}
+
+/// `read_point_live` whose leaf route uses the caller's `locator`
+/// (dev3-cursor-locator.md#locator); the answer is the same as without it.
+#[allow(
+    clippy::too_many_arguments,
+    reason = "read_point_live's arguments and the caller's locator"
+)]
+pub(in crate::storage) fn read_point_located_live<'a, 'c, 's, W: WriterNamespace>(
+    call: LiveCall<'_, '_, 'a, 's, 'c, '_, '_, '_, '_, W>,
+    locator: &mut RowLocator<'c, 's>,
+    view: &RowStatementView<'_, '_, 'a, 'c, 's>,
+    table: &CheckedTable<'c, 's>,
+    row: RowId,
+    output: &mut [u8],
+    cancel: &Cancellation,
+) -> Result<ReadStep<PointRead<RowCopyObservation>>, RowReadError> {
+    let LiveCall {
+        port,
+        owner,
+        private,
+        residency,
+    } = call;
+    read_point(
+        view,
+        move |view| {
+            Ok(LocatedSource {
+                live: LiveSource {
+                    operation: port.row_operation(owner, view, private)?,
+                    table,
+                    residency,
+                },
+                locator,
             })
         },
         row,
@@ -264,7 +374,7 @@ pub(in crate::storage) fn next_live<'a, 'c, 's, W: WriterNamespace>(
 /// LOAD-path frame inventory before leaf-temporary bounds. This is a partial
 /// diagnostic, not the complete S5 source bound.
 #[cfg(test)]
-pub(in crate::storage) fn test_load_callers<W: WriterNamespace>() -> [usize; 8] {
+pub(in crate::storage) fn test_load_callers<W: WriterNamespace>() -> [usize; 12] {
     use super::super::{SeekPosition, Visibility};
     use super::{Scan, ViewSample};
     use std::mem::size_of as n;
@@ -333,6 +443,14 @@ pub(in crate::storage) fn test_load_callers<W: WriterNamespace>() -> [usize; 8] 
     // (dev3-tree-smo.md#current-leaf-consumers).
     let route = n::<RowId>() + n::<Option<RowId>>();
     let delta = cursor_outer + next + scan + route + 2 * r - outer - point - select;
+    // The located point read (dev3-cursor-locator.md#locator): the locator
+    // argument and its closure capture, the LocatedSource's locator field in
+    // place of the LiveSource, and LocatedSource::page's reborrow of `live`
+    // beside the locator.
+    let located_open =
+        n::<C<LocatedSource<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, W>>>()
+            - n::<RowReadOperation<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, W>>();
+    let located = 2 * r + (located_open - open) + r;
     [
         page,
         status,
@@ -342,6 +460,10 @@ pub(in crate::storage) fn test_load_callers<W: WriterNamespace>() -> [usize; 8] 
         status + delta,
         missing + delta,
         before + delta,
+        page + located,
+        status + located,
+        missing + located,
+        before + located,
     ]
 }
 

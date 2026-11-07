@@ -113,11 +113,11 @@ pub(crate) use transaction::{
 mod row;
 #[allow(unused_imports)]
 pub(crate) use row::{
-    CheckedTable, MissingRowEvidence, PreflightRow, PreparedRollbackTask, PreparedRow,
-    ROW_PREFLIGHT_CALLER_BYTES, ROW_SPLIT_CALLER_BYTES, ROW_WRITE_CALLER_BYTES, ReservedRow,
-    RollbackScope, RollbackStep, RowApplied, RowCancelled, RowCandidate, RowCommitObservation,
-    RowCopyObservation, RowDeleteStep, RowMutationObservation, RowOwnedError,
-    RowPreflightOperation, RowPreflightStep, RowPreparedOperation, RowReadOperation,
+    CheckedTable, LocatorCounts, MissingRowEvidence, PreflightRow, PreparedRollbackTask,
+    PreparedRow, ROW_PREFLIGHT_CALLER_BYTES, ROW_SPLIT_CALLER_BYTES, ROW_WRITE_CALLER_BYTES,
+    ReservedRow, RollbackScope, RollbackStep, RowApplied, RowCancelled, RowCandidate,
+    RowCommitObservation, RowCopyObservation, RowDeleteStep, RowLocator, RowMutationObservation,
+    RowOwnedError, RowPreflightOperation, RowPreflightStep, RowPreparedOperation, RowReadOperation,
     RowReservedOperation, RowRollback, RowRollbackDone, RowRollbackTask, RowSearchPage,
     RowValueBefore, row_write_charge,
 };

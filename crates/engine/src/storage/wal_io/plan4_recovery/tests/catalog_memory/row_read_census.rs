@@ -29,20 +29,26 @@ fn row_read_census<W: WriterNamespace>(kind: &str) {
     let load = c[7];
     let full = c[8];
     let mut phases = Vec::new();
-    for (name, offset) in [("point", 0), ("cursor", 4)] {
+    // The located point read (dev3-cursor-locator.md#locator) takes C's
+    // page_located/load_leaf_located (c[13], c[14]) in place of page/load_leaf.
+    for (name, offset, page, leaf_frame) in [
+        ("point", 0, c[0], c[2]),
+        ("cursor", 4, c[0], c[2]),
+        ("located", 8, c[13], c[14]),
+    ] {
         phases.push((
             format!("{name}.catalog_load"),
-            operation + load + c[0] + c[1] + b[offset] + load_temporaries,
+            operation + load + page + c[1] + b[offset] + load_temporaries,
         ));
         phases.push((
             format!("{name}.row_load"),
-            operation + load + c[0] + c[2] + b[offset] + load_temporaries,
+            operation + load + page + leaf_frame + b[offset] + load_temporaries,
         ));
         // One RowInternal route step of a split tree beside the leaf frame
         // (dev3-tree-smo.md#current-leaf-consumers).
         phases.push((
             format!("{name}.row_route"),
-            operation + c[12] + c[0] + c[2] + b[offset] + load_temporaries,
+            operation + c[12] + page + leaf_frame + b[offset] + load_temporaries,
         ));
         phases.push((
             format!("{name}.status_load"),
@@ -69,7 +75,17 @@ fn row_read_census<W: WriterNamespace>(kind: &str) {
             operation + leaf[3] + c[11] + b[offset + 3] + load_temporaries,
         ));
     }
-    let parent = c[0].max(c[9]).max(c[10]).max(c[11]);
+    // The locator's lookup under load_leaf_located, and its record after
+    // the issue under page_located; neither beside a LOAD.
+    phases.push((
+        "located.lookup".into(),
+        operation + c[13] + c[14] + c[15] + b[8] + load_temporaries,
+    ));
+    phases.push((
+        "located.record".into(),
+        operation + c[13] + c[15] + b[8] + load_temporaries,
+    ));
+    let parent = c[0].max(c[13]).max(c[9]).max(c[10]).max(c[11]);
     for (at, name) in [
         (0, "admission"),
         (1, "prepare_pages"),
