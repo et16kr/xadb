@@ -379,7 +379,7 @@ pub(crate) mod source {
             + size_of::<[u8; 32]>()
             + size_of::<Result<(usize, [u8; 32]), RowError>>()
             + input_len()
-                .max(emit() + sha)
+                .max(emit() + size_of::<(&mut ContentHasher, &[u8])>() + sha)
                 .max(crate::storage::overflow::source::hasher_digest(sha))
     }
 

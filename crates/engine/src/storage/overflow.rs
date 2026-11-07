@@ -538,7 +538,9 @@ fn put_u32(bytes: &mut [u8], at: usize, value: u32) {
 
 /// Source models of the O1 chunk readers (dev3-row-overflow.md#o1-record),
 /// explicit sums of each frame's typed carriers, not ABI stack samples. A
-/// caller adds the term to its own census; `page` is that census's page codec.
+/// caller adds the term to its own census; `page` is that census's page codec,
+/// which holds the page digest's hash state and output but not the SHA
+/// closure: the caller's census adds SHA once, as it already does.
 pub(crate) mod source {
     use super::*;
     use crate::storage::page::PageView;
