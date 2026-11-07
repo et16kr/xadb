@@ -1,0 +1,27 @@
+{
+  "schema": "XADB_MODULE_GATE_RECORD_V1",
+  "change": "XB-H001: version 2 is the supported V2System format since D3-PLAN4-FREE-UNDO-001, so the stale case now checks that the legacy decoder refuses 0, 3, 4, 5 and 65535; test only, no product or frozen input change.",
+  "na": [
+    {
+      "paths": [
+        "crates/engine/src/storage/plan4_recovery_base_tests.rs"
+      ],
+      "reason": "Only case XB-H001 of the executor-only storage::plan4_recovery_base::tests::xrb_header_rejections changes; CI cannot run it (evidence.executor_only: XADB_XRB_INCLUDE and the frozen p1 fixture). Executor result with XADB_XRB_INCLUDE=XB-H001, fixture tests/fixtures/dev3-plan4-recovery-base/vectors/p1 (index b3f7e7f0...): main 1c9486a ELF 18b2a915... FAIL at plan4_recovery_base_tests.rs:295 (invalid base accepted); this change ELF 9fbc93c7... PASS (XB-H002..H016 SKIP, unchanged). Logs: shared folder xrb-header-version-20261105/ (SHA256SUMS); evidence devdoc/evidence/main-preexisting-failures-20261030.md#xrb-header-version."
+    }
+  ],
+  "reviews": [
+    {
+      "id": "xrb-header-version-20261106",
+      "class": "D1",
+      "scopes": [],
+      "author": "claude-thread-session/claude-project-thread-m0owu0",
+      "reviewer": "claude-independent-review/xrb-header-version",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/plan4_recovery_base_tests.rs": "e0a4cf18c0fda1bd19487e1b382b1e02166cbe20"
+      },
+      "log": "module-gate/evidence/xrb-header-version/review.md (sha256 f0a26ff4f279953817ef1d35246b0364439fa29d2d5f97f55861dc9c8f2dbc54; r1 ACCEPT WITH REQUIRED CHANGES at 1766019, R1 fixed in c192a4f, r2 ACCEPT)"
+    }
+  ]
+}

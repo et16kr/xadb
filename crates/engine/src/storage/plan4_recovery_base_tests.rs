@@ -362,8 +362,17 @@ fn xrb_header_rejections() {
         let mut raw = f.raw("active");
         let want = match i {
             1 => {
-                set16(&mut raw, 4, 2);
-                Error::Unsupported
+                // Tag 2 is V2System (D3-PLAN4-FREE-UNDO-001), which this
+                // legacy decoder supports, and this Status-only base is
+                // valid v2 content. Every other tag stays refused: 0, the
+                // Catalog/Row tags 3/4, the next unused 5 and the maximum.
+                for version in [0, 3, 4, 5, u16::MAX] {
+                    let mut raw = raw.clone();
+                    set16(&mut raw, 4, version);
+                    base_seal(&mut raw);
+                    rejected(&raw, f.expected, Error::Unsupported);
+                }
+                return;
             }
             2 => {
                 set16(&mut raw, 6, 2);
