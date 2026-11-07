@@ -31,7 +31,7 @@ SQL은 넓은 관계형 기능을 지향한다. 기존에 논의한 Oracle 계�
 <a id="scope-002"></a>
 ## XADB-SCOPE-002 — 목표 등급: Oracle·PostgreSQL 단일 인스턴스급
 
-2026-11-07 · **D3 사용자 결정 / 아래 목표 수치는 이 문서 PR의 병합으로 확정 / 계약·형식·구현·일정 변경은 각 owner의 후속 작업**
+2026-11-07 · **D3 사용자 결정 / 목표 등급과 설계 목표는 이 문서 PR의 병합으로 채택 / 인수 기준 수치는 초안이며 DEV9 F06·DEV8 F10에서 후속 동결 / 계약·형식·구현·일정 변경은 각 owner의 후속 작업**
 
 project thread의 결정 카드 "XADB 최종 목표 등급을 어느 수준으로 정할까요?"에서 사용자가 **"Oracle·PG 단일 인스턴스급"**을 골랐다. 카드에 적힌 결과는 "규모, 거래 크기, HA 목표를 지금 확정하고 계획 전체를 다시 설계합니다. 범위가 크게 늘어납니다."였다. 다른 선택지는 "현재 방향 유지"와 "단계형: 구조는 PG급 대비"였다. 입력은 [대용량·고가용성 검토](../evidence/dev3-scalability-ha-plan-review-20261104.md)와 [구조 검토의 사용자 결정 U1](../evidence/dev3-improved-plan-structural-review-20261104.md#order)이다. 이 기록은 결정과 목표를 정하며, 목표를 만족하는 설계를 승인하거나 현재 구현의 성능을 입증한 기록이 아니다.
 
@@ -54,7 +54,7 @@ SCOPE-001의 실험 주제, 정확성·실패 원자성·복구·자원 상한�
 | 데이터 규모 | 단일 DB 64 TiB 이상을 형식·주소로 표현한다. 파일·extent·catalog 항목 수가 DB 크기 확장을 막지 않는다 | 1 TiB 이상. dataset은 buffer의 10배 이상이며 사용 가능한 RAM의 1.5배 이상 | 두 제품 모두 단일 DB 수십 TB를 운영한다 |
 | 메모리·WAL | buffer·작업 메모리·WAL 보존량은 RAM·disk에 맞춰 설정한다. 형식은 최솟값과 표현 상한만 정한다 | buffer 32 GiB 이상 설정에서 동작과 성능 측정 | PostgreSQL `shared_buffers`·`max_wal_size`, Oracle SGA·redo log |
 | 거래 크기 | 한 거래의 변경 행 수와 논리 변경량을 메모리가 아니라 Undo·WAL의 disk 공간으로만 제한한다. 잠금·write-set·Undo·WAL·rollback 예약 어느 것도 메모리 상한에 묶이지 않는다 | 단일 거래로 1천만 행 UPDATE, 그 rollback과 crash 뒤 복구 | 두 제품 모두 거래당 행 수 상한이 없다 |
-| 동시성 | 서로 다른 행을 쓰는 writer가 전역 독점으로 직렬화되지 않는다. reader와 writer가 서로 막지 않는다 | 동시 연결 1,000·동시 활성 거래 1,000 설정에서 정확성과 진행 | 행 단위 잠금, MVCC |
+| 동시성 | 서로 다른 행을 쓰는 writer의 준비·적용이 전역 독점으로 직렬화되지 않는다. 무관한 writer의 준비·I/O·sync 동안 reader가 전역 gate로 막히지 않는다. 같은 page의 짧은 content latch 대기는 구분하되, latch를 쥔 채 I/O·sync·거래 대기는 하지 않는다 | 동시 연결 1,000·동시 활성 거래 1,000 설정에서 정확성과 진행. reader 대기를 같은 page와 다른 page로 나눠 원인·시간을 계측한다 | 행 단위 잠금, MVCC. [A4 구조 목표와 계측 경계](../evidence/dev3-improved-plan-structural-review-20261104.md#structural-targets) |
 | 비용 구조 | 정상 연산·commit·checkpoint의 일이 WAL 길이나 DB 크기에 비례하지 않는다. 정상 redo는 바뀐 bytes와 고정 header에 비례한다. 여러 거래의 sync를 묶는다 | 작은 계수 사례([D3-ADOPT](dev3-test-plan.md#review-adoption-20261104))로 비례 관계 확인 | [A1·A2·A3·A6 구조 목표](../evidence/dev3-improved-plan-structural-review-20261104.md#structural-targets) |
 | 성능 | 같은 장비, 같은 durability(fsync와 동기 commit), 같은 격리의 PostgreSQL과 비교한다 | 단일 행 OLTP(TPC-B류)·읽기 위주·같은 행 경합 workload에서 처리량은 PostgreSQL의 50% 이상, p99 지연은 2배 이내 | 절대 TPS는 장비에 달려 있어 비율로 정한다 |
 | 가용성: 복제 | strict RPO=0. 보호 standby 둘 이상의 quorum으로 standby 한 대가 장애여도 strict 쓰기를 이어 간다 | 장애 셀별 RPO=0과 쓰기 지속 확인 | PostgreSQL `synchronous_standby_names`의 `ANY`, Oracle의 여러 SYNC 목적지 |
