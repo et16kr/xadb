@@ -33,6 +33,11 @@
       "role": "contracts",
       "title": "DEV3 SMO를 건너는 stable cursor와 locator"
     },
+    "dev3-row-overflow.md": {
+      "path": "contracts/dev3-row-overflow.md",
+      "role": "contracts",
+      "title": "DEV3 큰 행 overflow chain — 쓰기·읽기·반환 설계"
+    },
     "dev3-module-boundaries.md": {
       "path": "contracts/dev3-module-boundaries.md",
       "role": "contracts",
