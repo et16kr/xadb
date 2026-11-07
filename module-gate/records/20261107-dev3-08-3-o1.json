@@ -167,7 +167,7 @@
         "crates/engine/src/storage/retention_page/row/job_tests.rs",
         "crates/engine/src/storage/retention_page/row/census.rs"
       ],
-      "reason": "Job3 overflow root (PendingChain/ReturnChain, @285 decode, validate_root Reserved-pending/Releasing-chain rules, cleanup() chain branch; OVF-F02) and the two census rules now reading cleanup_started(): the job3_census_* cases exercise census.rs, the job3/rdl/rup literal cases show existing roots unchanged; row_codec_source_bounds_cover_measured_frames calls retention_page/row.rs source_bytes with the new validate_root term, which max(hashing) hides, so its output is unchanged.",
+      "reason": "Job3 overflow root (PendingChain/ReturnChain, @285 decode, validate_root Reserved-pending/Releasing-chain rules, cleanup() chain branch; OVF-F02) and the two census rules now reading cleanup_started(): the job3_census_* cases exercise census.rs, the job3/rdl/rup literal cases show existing roots unchanged; row_codec_source_bounds_cover_measured_frames calls retention_page/row.rs source_bytes with the new validate_root term, which the outer max with root_decode_source_bytes() (6,540 B) hides, so its output is unchanged.",
       "cases": [
         {
           "file": "crates/engine/src/storage/retention_page/row/job_tests.rs",
@@ -995,6 +995,25 @@
         "devdoc/contracts/dev3-module-consumers.md": "286d7da304fbd17bd9c33e0d7145dcf6d0788a3b"
       },
       "log": "2026-11-07 independent read-only D2 of the whole O1 diff (code, tests and the revised canonical contracts incl. dev3-module-consumers.md#row-shape), four rounds: module-gate/evidence/dev3-08-3-o1/review-r1.md (sha256 48e11d6e46560b9acef1c70c933a2faf09e4143746f5158dcf93d32d9fac9571; CONDITIONAL, 3 required: role 7 cell check moved to O2 and recorded, inventory action test, source models + OVF-F07), review-r2.md (sha256 4c48635b187cfcdb578e1b4d4eb7bb2e576ba273633aab979e0e1caa7598f51e; CONDITIONAL, 1 required: digest hasher term), review-r3.md (sha256 e04bf159e60fd89646d19ccecd75b52276e73722826e24fd8622d7bd6c7d9378; CONDITIONAL, 1 required: page codec SHA wording), review-r4.md (sha256 860c26b10c37960953e58951e9a4138a00dd4d2a19ac5c8da399ffe7d315ea92; ACCEPT at deef07d, required 0). The listed blobs equal deef07d's: the later commits add the review texts, merge the main design edition (PR #66) and add one ledger test (reviewed in dev3-08-3-o1-record), none touching a listed path. Reviewer runs: ovf_/overflow_/stream/row_record::/semantic_row::wire 72 PASS, census family 322 PASS (5 harness cases need vector inputs), clippy and fmt clean."
+    },
+    {
+      "id": "dev3-08-3-o1-record",
+      "class": "D2",
+      "scopes": [
+        "policy"
+      ],
+      "author": "claude-thread-session/claude-project-thread-y6amas",
+      "reviewer": "claude-independent-review/dev3-08-3-o1-record",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/semantic_row/ledger_tests.rs": "d8c16145d3dbb114fbdf3deb4b205b632c061cf0",
+        "crates/engine/src/storage/retention_page/row/source_tests.rs": "97d1e793cb710493fbfca37d5eb4d01471f110f9",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph/source_tests.rs": "cffd31782fe8cd6c709add3238d8023d65cd9436",
+        "crates/engine/src/storage/semantic_row/transition_delete_tests.rs": "62255821879777437c6d87c8d0016600e516c9d2",
+        "crates/engine/src/storage/semantic_row/undo_tests.rs": "0a5117c8266d439b475d3413161ee98724c9fd27"
+      },
+      "log": "2026-11-07 independent read-only D2 of this record (case selection, reasons, N/A, review coverage) and of the ledger test it added, three rounds: module-gate/evidence/dev3-08-3-o1/record-check.md (sha256 176ffb471cf493ba7a9456ac4b602cdb9b3ae1810059fad0f47a40367a9e9751; CONDITIONAL, 1 required R1: ledger.rs cleanup_started() change had no case reaching it, fixed by ovf_f02_ledger_returned_chain_needs_the_terminal in cde4166; S1-S7 wording), module-gate/evidence/dev3-08-3-o1/record-check-r2.md (sha256 09f41d373e5ee8f43b7057f23ff8d11ce4b065563b35cd9d5eef203f1dbbe596; CONDITIONAL, 1 required R2: ledger_tests.rs in no group's paths, fixed in ac0795e with T1-T3 wording), module-gate/evidence/dev3-08-3-o1/record-check-r3.md (sha256 208f92682dabd4130e8bfd2cf5aee71e989c9748925cad91097bf98e33497ab4; ACCEPT at ac0795e, required 0; its U1 wording for rust_tests[2] and U2 trailing newline applied after). Reviewer ran the 120 selected cases from these blobs: 120 passed, 0 failed (r2 2.88 s, r3 2.51 s), and simulated this entry in a scratch clone: gate PASS, 0 errors."
     }
   ]
 }
