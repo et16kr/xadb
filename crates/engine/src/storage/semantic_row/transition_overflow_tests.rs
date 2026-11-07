@@ -983,7 +983,7 @@ fn ovf_c02_forward_checks_the_chain_then_commit_or_rollback() {
     // there rehomed to page 17 (its header page number, the page digest
     // resealed), the page, the allocator entry and the chunk index all
     // match, so only the verifier's read-address set refuses it
-    // (dev3-row-overflow.md#overflow-chain). With chunk 0's image there
+    // (dev3-row-overflow.md#chunk-revision). With chunk 0's image there
     // the chunk index (0, not 2) refuses it first.
     let mut cycle = Box::new(*refs[1]);
     let start = usize::from(u16::from_le_bytes([cycle[128], cycle[129]]));
