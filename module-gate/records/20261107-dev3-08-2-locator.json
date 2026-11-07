@@ -118,9 +118,11 @@
         "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/locator_smo.rs": "e70d78eeb042b1224137dc230ebe2a83f511a725",
         "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs": "38c6b72506c2c3b1f35c9e636150e3f415d20a0a",
         "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_census.rs": "84b9f3768fbc07c4a30293027e9e106a788ad9c0",
-        "crates/engine/src/transaction/concurrency.rs": "ba31a22aa078b125d2ecdd742a59b21c7f0d2cdd"
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_live.rs": "b0c150bf36920c516025956917790d4b74fc6c01",
+        "crates/engine/src/transaction/concurrency.rs": "ba31a22aa078b125d2ecdd742a59b21c7f0d2cdd",
+        "crates/engine/src/transaction/concurrency/tests.rs": "962998a772b720d952363fc1c71e98417a878d48"
       },
-      "log": "module-gate/evidence/dev3-08-2-locator/review.md (sha256 b512676446c641d573da5b9bdd94df2facd48e42dcad03cc6dd36b076edd523b; r3 ACCEPT at 668f6ec, required 0). r2 ACCEPT at 86c6c2a: module-gate/evidence/dev3-08-2-locator/review-r2.md (sha256 88c951233b184cf95a04921d8026f3a8b82f920795cdb8df544bb67c67b7d917), its recommendation 3 (share last field) fixed in 668f6ec. r1 CONDITIONAL at fc1fc94: module-gate/evidence/dev3-08-2-locator/review-r1.md (sha256 45b65b36a7a569378b19ba5f35ea6701c4a1b31ba043aaffbc447cf023bfba21), both required items fixed in 86c6c2a"
+      "log": "module-gate/evidence/dev3-08-2-locator/review.md (sha256 b512676446c641d573da5b9bdd94df2facd48e42dcad03cc6dd36b076edd523b; r3 ACCEPT at 668f6ec, required 0). r2 ACCEPT at 86c6c2a: module-gate/evidence/dev3-08-2-locator/review-r2.md (sha256 88c951233b184cf95a04921d8026f3a8b82f920795cdb8df544bb67c67b7d917), its recommendation 3 (share last field) fixed in 668f6ec. r1 CONDITIONAL at fc1fc94: module-gate/evidence/dev3-08-2-locator/review-r1.md (sha256 45b65b36a7a569378b19ba5f35ea6701c4a1b31ba043aaffbc447cf023bfba21), both required items fixed in 86c6c2a. Case files transaction/concurrency/tests.rs (GA07) and row_read_live.rs (S5R-C03) are unchanged from the base; the reviewer ran both cases from these blobs in r1 and r2"
     }
   ]
 }
