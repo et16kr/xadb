@@ -1,0 +1,19 @@
+{
+  "schema": "XADB_MODULE_GATE_RECORD_V1",
+  "change": "D3 user decision record (decision card in the project thread): product goal class set to Oracle/PostgreSQL single-instance level as XADB-SCOPE-002 in devdoc/plans/project-direction.md, with design targets, draft qualification criteria, remaining user decisions U2/U4/U6 and the impact on existing plans; README entry. No product code, contract, format, schedule credit or test changes; original decision was D3; the follow-up wording received independent D2 review. PR review follow-up: distinguish adopted design goals from draft acceptance numbers and restore A4 short-latch/measurement boundaries; numerical choices unchanged.",
+  "reviews": [
+    {
+      "id": "scope-002-pr-review",
+      "class": "D2",
+      "scopes": [],
+      "author": "codex/root",
+      "reviewer": "codex/root/direction_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "devdoc/plans/project-direction.md": "57052cf744a2e02f34e095fd76338826ace6f54a"
+      },
+      "log": "2026-11-07 independent read-only review against 3139be60127c7b09be438a743ad751a6699c7d94: resolved contradictory adoption/freeze timing and the omission of short same-page latch waits allowed by A4. Checked the structural review and owner contracts. All D3 numerical choices unchanged. No runtime tests: documentation-only clarification. ACCEPT, required_open=0."
+    }
+  ]
+}
