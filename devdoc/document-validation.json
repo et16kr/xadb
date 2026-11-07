@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-11-07T09:57:28.794937+09:00",
+  "date": "2026-11-07T09:57:53.197838+09:00",
   "status": "PASS",
   "errors": [],
   "markdown_documents": [
@@ -1501,9 +1501,9 @@
     },
     {
       "file": "devdoc/plans/dev3-schedule-baseline.md",
-      "links": 134,
+      "links": 135,
       "duplicate_ids": 0,
-      "sha256": "8aae698f6bffc12115affd09ee5f9f6ef5fdc177461fdc69f2ece718f2adb4dc"
+      "sha256": "768a24734dda94b67efce8f7a0bdeb4e1a8becd68d5ba67ee681bab8247983bd"
     },
     {
       "file": "devdoc/plans/dev3-test-plan.md",
