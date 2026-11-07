@@ -1,6 +1,6 @@
 # DEV3 큰 행 overflow chain — 쓰기·읽기·반환 설계
 
-2026-11-07 · `D3-ROW-OVERFLOW-001` · **설계(O0) 3판 / 독립 D2 3회차 ACCEPT(권고 S1·NIT T3·T4 반영) / O1 형식 계층 구현·OVF-F PASS([§14](#o1-record), 독립 D2 대기) / O2–O4 NOT_RUN**
+2026-11-07 · `D3-ROW-OVERFLOW-001` · **설계(O0) 3판 / 독립 D2 3회차 ACCEPT(권고 S1·NIT T3·T4 반영) / O1 형식 계층 구현·OVF-F PASS([§14](#o1-record), 독립 D2 4회차 ACCEPT) / O2–O4 NOT_RUN**
 
 [overflow 표현](dev3-overflow-format.md) · [행 표현](dev3-row-format.md) · [행 owner R6·§5.4](dev3-task-06-tree-rows.md#algorithms) · [첫 Row profile](dev3-module-consumers.md#profile) · [WAL shape](dev3-module-consumers.md#row-shape) · [scope3 wire](dev3-module-consumers.md#row-scope3-wire) · [unlink retired 목록](dev3-tree-smo.md#empty-leaf-unlink) · [자원 정본](dev3-resource-bounds.md) · [목표 등급 SCOPE-002](../plans/project-direction.md#scope-002) · [일정 08-3](../plans/dev3-schedule-baseline.md#items) · [D2 1회차](../../module-gate/evidence/dev3-08-3-design/review-r1.md) · [D2 2회차](../../module-gate/evidence/dev3-08-3-design/review-r2.md) · [D2 3회차](../../module-gate/evidence/dev3-08-3-design/review.md)
 
