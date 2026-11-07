@@ -2530,3 +2530,8 @@ fn unl_review_root_collapse_sync_error_fences_and_recovers() {
 #[cfg(target_os = "linux")]
 #[path = "unlink_native.rs"]
 mod native;
+
+/// CUR-J: B's cursor across splits, prunes, unlinks and a root collapse
+/// made between two of its calls (dev3-cursor-locator.md#cursor).
+#[path = "cursor_smo.rs"]
+mod cursor_smo;
