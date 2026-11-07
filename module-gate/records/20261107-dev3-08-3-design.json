@@ -1,0 +1,19 @@
+{
+  "schema": "XADB_MODULE_GATE_RECORD_V1",
+  "change": "DEV3 08-3 O0 design (devdoc/contracts/dev3-row-overflow.md, D3-ROW-OVERFLOW-001): big-row INSERT 2,049..131,072 B writes its overflow chain back to front, one chunk per ChunkWrite group (opcode 14) with no allocator reservation; the Reserved Job root carries the pending chain; Forward checks the whole chain and the canonical row stream and inserts the 64-byte head row (C = 244); B materializes into caller output; rollback/loser return moves the chain to the anchor XTR1 retired list (OverflowCancel 15, ChainRetire 25); Base4 provenance role 7 and kind-7 ownership closures; stages O1-O4, schedule 08-3 stays 진행(적립 0) until O4 merges. Documentation only: no product code, format, test or schedule credit change.",
+  "reviews": [
+    {
+      "id": "dev3-08-3-design",
+      "class": "D2",
+      "scopes": [],
+      "author": "claude/thread-y6amas",
+      "reviewer": "claude/thread-y6amas/independent-d2",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "devdoc/contracts/dev3-row-overflow.md": "1aa9322a6f8e7c3abf722dfd597d06eb0b094d4d"
+      },
+      "log": "2026-11-07 independent read-only D2, three rounds (module-gate/evidence/dev3-08-3-design/review-r1.md, review-r2.md, review.md). r1 CONDITIONAL, 5 required (XTR1 revision, Job3/ledger/descriptor LSN, Base4 certificate/provenance, SMO closure and inline gates, opcode arithmetic/role); r2 CONDITIONAL, 2 required (Base4 consumers reading role 7 as a CREATE pair, Job table projection cell); r3 ACCEPT with recommendation S1 and NITs T3/T4 applied as wording. All frame/ledger integers recomputed independently (frames-r1.py, frames-r2.py). No runtime tests: design only. Reviewed head e11387232633."
+    }
+  ]
+}
