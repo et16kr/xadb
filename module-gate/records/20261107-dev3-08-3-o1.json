@@ -157,6 +157,13 @@
           "sources": [
             "head"
           ]
+        },
+        {
+          "file": "crates/engine/src/storage/overflow_tests.rs",
+          "case": "storage::overflow::tests::pr67_maximum_pending_suffixes_preserve_walk_on_rejected_identity",
+          "sources": [
+            "head"
+          ]
         }
       ]
     },
@@ -477,6 +484,20 @@
         {
           "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
           "case": "storage::semantic_row::transition::tests::ovf_f07_new_codec_frames",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row_record/stream_tests.rs",
+          "case": "storage::row_record::stream::tests::pr67_maximum_row_matches_independent_bytes_and_digest",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row_record/stream_tests.rs",
+          "case": "storage::row_record::stream::tests::pr67_utf8_stream_exhaustive_pairs_and_scalar_boundaries",
           "sources": [
             "head"
           ]
@@ -1014,6 +1035,20 @@
         "crates/engine/src/storage/semantic_row/undo_tests.rs": "0a5117c8266d439b475d3413161ee98724c9fd27"
       },
       "log": "2026-11-07 independent read-only D2 of this record (case selection, reasons, N/A, review coverage) and of the ledger test it added, three rounds: module-gate/evidence/dev3-08-3-o1/record-check.md (sha256 176ffb471cf493ba7a9456ac4b602cdb9b3ae1810059fad0f47a40367a9e9751; CONDITIONAL, 1 required R1: ledger.rs cleanup_started() change had no case reaching it, fixed by ovf_f02_ledger_returned_chain_needs_the_terminal in cde4166; S1-S7 wording), module-gate/evidence/dev3-08-3-o1/record-check-r2.md (sha256 09f41d373e5ee8f43b7057f23ff8d11ce4b065563b35cd9d5eef203f1dbbe596; CONDITIONAL, 1 required R2: ledger_tests.rs in no group's paths, fixed in ac0795e with T1-T3 wording), module-gate/evidence/dev3-08-3-o1/record-check-r3.md (sha256 208f92682dabd4130e8bfd2cf5aee71e989c9748925cad91097bf98e33497ab4; ACCEPT at ac0795e, required 0; its U1 wording for rust_tests[2] and U2 trailing newline applied after). Reviewer ran the 120 selected cases from these blobs: 120 passed, 0 failed (r2 2.88 s, r3 2.51 s), and simulated this entry in a scratch clone: gate PASS, 0 errors."
+    },
+    {
+      "id": "dev3-08-3-o1-codex-additional-tests",
+      "class": "D1",
+      "scopes": [],
+      "author": "codex-pr67/root",
+      "reviewer": "codex-pr67/root/independent_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/overflow_tests.rs": "d4ec2f6473e25d971143da03a08fbb872f2f0053",
+        "crates/engine/src/storage/row_record/stream_tests.rs": "ff6f4a82468af3a0e1c694234b13855ea3185b30"
+      },
+      "log": "module-gate/evidence/dev3-08-3-o1/review-codex.md: independent D1 of three added tests, their literal oracle and exact source blobs; required findings 0. Prior review identities and test results remain unchanged."
     }
   ]
 }

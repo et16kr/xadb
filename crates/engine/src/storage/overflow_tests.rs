@@ -589,3 +589,31 @@ fn ovf_f01_inspect_and_segment_walk() {
         }
     }
 }
+
+/// The maximum nine-chunk chain has nine possible nonempty pending suffixes.
+/// Retry after a foreign incarnation at every position, including chunk 8:
+/// rejection must not advance the expected edge or consume a visited slot.
+#[test]
+fn pr67_maximum_pending_suffixes_preserve_walk_on_rejected_identity() {
+    let data = payload(131_072);
+    let owner = head(&data);
+    let pages: Vec<_> = (0..9).map(|i| make_page(owner, i, &data)).collect();
+    for first in 0..9 {
+        let mut walk =
+            OverflowSegmentWalk::new(header(first).identity, owner.chain(), first).unwrap();
+        for (index, page) in pages.iter().enumerate().skip(first) {
+            let mut foreign = header(index);
+            foreign.identity.page.incarnation = Generation::new(5).unwrap();
+            let foreign_page = raw_page(foreign, &make_cell(owner, index, &data));
+            let foreign_view = inspect_overflow_page(&foreign_page, foreign.identity).unwrap();
+            assert_eq!(walk.push(&foreign_view), Err(OverflowError::OrderMismatch));
+            assert_eq!(walk.expected(), Some(header(index).identity));
+            assert_eq!(walk.finish().err(), Some(OverflowError::Incomplete));
+            let view = inspect_overflow_page(page, header(index).identity).unwrap();
+            walk.push(&view).unwrap();
+        }
+        let expected: Vec<_> = (first..9).map(|i| Some(address(i))).collect();
+        assert_eq!(walk.finish().unwrap(), expected.as_slice());
+        assert_eq!(walk.expected(), None);
+    }
+}

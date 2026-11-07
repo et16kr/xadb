@@ -99,6 +99,108 @@ impl Row {
 
 const TOTALS: [usize; 6] = [2049, 16_092, 16_093, 32_184, 32_185, 131_072];
 
+/// PR67 independent oracle: no product encoder constructs the expected row.
+/// SHA-256 was calculated with Python struct.pack/hashlib; the first value
+/// reaches 64 KiB and the two-column row reaches 128 KiB exactly.
+#[test]
+fn pr67_maximum_row_matches_independent_bytes_and_digest() {
+    let columns = [
+        column(DataType::Binary, false, 0),
+        column(DataType::Binary, false, 1),
+    ];
+    let schema = RowSchemaInput::Columns(&columns);
+    let first: Vec<u8> = (0..65_536).map(|i| i as u8).collect();
+    let second = vec![0xa5; 65_522];
+    let values = [ValueRef::Binary(&first), ValueRef::Binary(&second)];
+    let mut expected = vec![2, 0, 0, 0, 4, 0, 0, 1, 0];
+    expected.extend_from_slice(&first);
+    expected.extend_from_slice(&[4, 0xf2, 0xff, 0, 0]);
+    expected.extend_from_slice(&second);
+    assert_eq!(expected.len(), 131_072);
+    let digest = [
+        0xbd, 0xfd, 0xc6, 0xb6, 0x32, 0x24, 0x54, 0x72, 0x3e, 0x0f, 0x03, 0x49, 0x41, 0x21, 0xb0,
+        0x82, 0xf3, 0x58, 0xa1, 0xa2, 0xa2, 0x1a, 0xb7, 0xb9, 0xba, 0xb6, 0xa0, 0x45, 0x3c, 0x7f,
+        0x9b, 0x2e,
+    ];
+    assert_eq!(
+        canonical_row_digest_borrowed(schema, &values),
+        Ok((131_072, digest))
+    );
+    // Read the nine windows back to front, as the planned writer does.
+    for start in (0..131_072).step_by(16_092).rev() {
+        let mut out = [0x77; 16_092];
+        let used = encode_canonical_window_borrowed(schema, &values, start, &mut out).unwrap();
+        assert_eq!(used, (131_072 - start).min(16_092));
+        assert_eq!(&out[..used], &expected[start..start + used]);
+        assert!(out[used..].iter().all(|b| *b == 0x77));
+    }
+    // Cuts inside the second length field and a one-byte final piece.
+    for sizes in [&[65_546, 1, 1][..], &[16_092], &[131_071, 1]] {
+        assert_eq!(stream(schema, &expected, sizes), Ok(()));
+    }
+    let too_long = vec![0xa5; 65_523];
+    let values = [ValueRef::Binary(&first), ValueRef::Binary(&too_long)];
+    let mut out = [0x77; 7];
+    assert_eq!(
+        canonical_row_digest_borrowed(schema, &values),
+        Err(RowError::TooLarge)
+    );
+    assert_eq!(
+        encode_canonical_window_borrowed(schema, &values, 0, &mut out),
+        Err(RowError::TooLarge)
+    );
+    assert_eq!(out, [0x77; 7]);
+}
+
+/// Exhaust all two-byte payloads, using std's UTF-8 judgement rather than
+/// another row decoder as the oracle. Every split includes empty pushes.
+/// Longer vectors cover overlong encodings, surrogates and U+10FFFF.
+#[test]
+fn pr67_utf8_stream_exhaustive_pairs_and_scalar_boundaries() {
+    let columns = [column(DataType::Utf8, false, 0)];
+    let schema = RowSchemaInput::Columns(&columns);
+    let check = |payload: &[u8]| {
+        let expected = std::str::from_utf8(payload)
+            .map(|_| ())
+            .map_err(|_| RowError::Corrupt);
+        let mut row = vec![1, 0, 0, 0, 3];
+        row.extend_from_slice(&(payload.len() as u32).to_le_bytes());
+        row.extend_from_slice(payload);
+        for cut in 0..=row.len() {
+            let mut reader = CanonicalRowStream::new(schema, row.len()).unwrap();
+            let actual = reader
+                .push(&row[..cut])
+                .and_then(|()| reader.push(&[]))
+                .and_then(|()| reader.push(&row[cut..]))
+                .and_then(|()| reader.finish());
+            assert_eq!(actual, expected, "payload {payload:02x?}, cut {cut}");
+            if actual.is_err() {
+                assert_eq!(reader.push(&[]), Err(RowError::Corrupt));
+                assert_eq!(reader.finish(), Err(RowError::Corrupt));
+            }
+        }
+    };
+    for pair in 0..=u16::MAX {
+        check(&pair.to_be_bytes());
+    }
+    for payload in [
+        &b""[..],
+        &[0xe0, 0xa0, 0x80],
+        &[0xe0, 0x9f, 0xbf],
+        &[0xed, 0x9f, 0xbf],
+        &[0xed, 0xa0, 0x80],
+        &[0xef, 0xbf, 0xbf],
+        &[0xf0, 0x90, 0x80, 0x80],
+        &[0xf0, 0x8f, 0xbf, 0xbf],
+        &[0xf4, 0x8f, 0xbf, 0xbf],
+        &[0xf4, 0x90, 0x80, 0x80],
+        &[0xf0, 0x90, 0x80],
+        &[0xe0, 0xa0],
+    ] {
+        check(payload);
+    }
+}
+
 #[test]
 fn ovf_f05_digest_and_windows_equal_the_whole_encoder() {
     for total in TOTALS {
