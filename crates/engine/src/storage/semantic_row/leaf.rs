@@ -257,20 +257,23 @@ pub(crate) fn observe(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<LeafO
                     RowEffect::Delete => TOMBSTONE_CELL,
                     RowEffect::Update => job.new_cell() as usize,
                 }
-            && match record.payload() {
+            && match (record.payload(), job.overflow()) {
                 // An overflow root seals its head record with the root
-                // zero (dev3-row-overflow.md#overflow-row).
-                RowPayload::Overflow(_) if job.overflow() => {
+                // zero, and only an overflow root has a head record
+                // (dev3-row-overflow.md#overflow-row).
+                (RowPayload::Overflow(_), true) => {
                     root_free_projection(table.handle, row, original)?
                 }
-                _ if job.overflow() => return Err(Error::IdentityMismatch),
+                (RowPayload::Overflow(_), false) | (_, true) => {
+                    return Err(Error::IdentityMismatch);
+                }
                 _ => projection(table.handle, row, Some(original))?,
             } == *job.projection_digest(),
     )?;
     let expected = RecordExpectation { namespace, row };
     let schema = RowSchemaInput::Catalog(schema);
     match effect {
-        RowEffect::Insert => insert_rows(role, input, record, a, expected, schema)?,
+        RowEffect::Insert => insert_rows(role, input, job, record, a, expected, schema)?,
         RowEffect::Delete => {
             require(record.payload() == RowPayload::Deleted)?;
             delete_rows(
@@ -288,7 +291,7 @@ pub(crate) fn observe(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<LeafO
         // Forward and the restored row after Clr (dev3-row-update.md
         // #update-states).
         RowEffect::Update => {
-            insert_rows(role, input, record, a, expected, schema)?;
+            insert_rows(role, input, job, record, a, expected, schema)?;
             delete_rows(
                 role,
                 input,
@@ -328,13 +331,14 @@ pub(crate) fn observe(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<LeafO
 fn insert_rows(
     op: Operation,
     input: Inputs<'_>,
+    job: JobView<'_>,
     record: RowRecordView<'_>,
     a: Option<&[u8]>,
     expected: RecordExpectation,
     schema: RowSchemaInput<'_>,
 ) -> Result<()> {
     let version = record.version();
-    let (length, digest) = sealed_value(record)?;
+    let (length, digest) = sealed_value(record, job.overflow())?;
     if let Some(sealed) = input.sealed {
         require(sealed.length == length && sealed.digest == digest)?;
     }
@@ -342,7 +346,7 @@ fn insert_rows(
         let new =
             row_record::decode_row_record_with_schema(a.ok_or(Error::Corrupt)?, expected, schema)?;
         let q = input.status.commit.ok_or(Error::InvalidInput)?;
-        sealed_value(new)?;
+        sealed_value(new, job.overflow())?;
         require(
             new.version().stamp == VersionStamp::Committed(q)
                 && new.version().logical == version.logical
@@ -354,10 +358,12 @@ fn insert_rows(
 }
 /// The value an INSERT row seals: an inline row's canonical length and
 /// SHA-256, or an overflow row's head total and digest, which is the
-/// canonical row's SHA-256 (dev3-row-overflow.md#overflow-row).
-fn sealed_value(row: RowRecordView<'_>) -> Result<(usize, [u8; 32])> {
-    match row.payload() {
-        RowPayload::Overflow(head) => Ok((head.total(), head.digest())),
+/// canonical row's SHA-256 (dev3-row-overflow.md#overflow-row). The row's
+/// payload kind is the Job's: a head record only for an overflow root.
+fn sealed_value(row: RowRecordView<'_>, overflow: bool) -> Result<(usize, [u8; 32])> {
+    match (row.payload(), overflow) {
+        (RowPayload::Overflow(head), true) => Ok((head.total(), head.digest())),
+        (RowPayload::Overflow(_), false) | (_, true) => Err(Error::IdentityMismatch),
         _ => {
             let canonical = inline(row)?;
             Ok((canonical.len(), content_digest(canonical)))

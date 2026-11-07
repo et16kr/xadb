@@ -1487,7 +1487,7 @@ pub(super) fn prepare<'a>(
             let canonical = value
                 .map(|value| row_record::decode_canonical_row_with_schema(value, table.schema))
                 .transpose()?;
-            let planned = match (value, inserted, inputs.change) {
+            let planned = match (value, inserted, &inputs.change) {
                 (_, _, Change::ReserveOverflow(plan)) => overflow::reserve_total(plan.total)?,
                 (Some(value), _, _) => {
                     if !(5..=crate::storage::overflow::INLINE_ROW_BYTES).contains(&value.len()) {
@@ -1558,7 +1558,7 @@ pub(super) fn prepare<'a>(
                 }
                 None => {
                     let cell_bytes = planned;
-                    let length = match (canonical, inputs.change) {
+                    let length = match (canonical, &inputs.change) {
                         (Some(canonical), _) => {
                             let length = row_record::encode_row_record_with_schema(
                                 RecordExpectation { namespace, row },

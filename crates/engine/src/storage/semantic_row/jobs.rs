@@ -249,7 +249,10 @@ pub(crate) fn observe(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<JobOb
         }
         Operation::ReleaseRole => {
             // A compensated overflow root returns its chain first
-            // (dev3-row-overflow.md#transitions).
+            // (dev3-row-overflow.md#transitions). The Job codec already
+            // implies it: a chain is held only at cursor 0, and the after
+            // keeps `[200,248)` at cursor 1, so such an after does not
+            // decode (retention_page/row/job.rs); the rule states it here.
             require(
                 before.state().is_releasing()
                     && before.chain().is_none()

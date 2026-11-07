@@ -472,14 +472,138 @@ fn chain_pages(world: &World) -> (Box<Page>, Vec<Box<Page>>) {
     (Box::new(world.allocator.unwrap()), chain)
 }
 
+/// The accepted ChunkWrite `frame` (before LSN `previous_lsn`) with its
+/// chunk cell header edited by `patch` in both the kind-12 native after and
+/// the INIT image, the page, native body and frame digests resealed: the
+/// candidate stays framing-valid, so only a semantic check refuses it.
+fn rechunk(frame: &[u8], previous_lsn: u64, patch: impl FnOnce(&mut [u8])) -> Vec<u8> {
+    let layout = decode_layout(frame, expectation(previous_lsn), profile()).unwrap();
+    let native = layout.native_records().find(|n| n.kind() == 12).unwrap();
+    let body = native.after().unwrap();
+    assert_eq!(body.len(), 128);
+    let body = body.as_ptr() as usize - frame.as_ptr() as usize;
+    let header = body - 128;
+    let mut redo = layout.redo().as_ptr() as usize - frame.as_ptr() as usize;
+    for _ in 0..native.redo_index() {
+        redo += u32_at(frame, redo + 4);
+    }
+    let mut out = frame.to_vec();
+    let image = redo + 64;
+    let page: &mut Page = (&mut out[image..image + PAGE_BYTES]).try_into().unwrap();
+    let start = usize::from(u16::from_le_bytes([page[128], page[129]]));
+    patch(&mut page[start..start + 128]);
+    let digest = content_digest(&page[..DIGEST_OFFSET]);
+    page[DIGEST_OFFSET..].copy_from_slice(&digest);
+    let cell: [u8; 128] = page[start..start + 128].try_into().unwrap();
+    out[body..body + 128].copy_from_slice(&cell);
+    out[header + 56..header + 88].copy_from_slice(&content_digest(&cell));
+    let digest = content_digest(&out[..128]);
+    out[128..160].copy_from_slice(&digest);
+    let end = out.len() - 32;
+    let digest = content_digest(&out[..end]);
+    out[end..].copy_from_slice(&digest);
+    out
+}
+/// `image` with its pageLSN `lsn` (page digest resealed).
+fn restamped(image: &Page, lsn: u64) -> Box<Page> {
+    let mut page = Box::new(*image);
+    page[64..72].copy_from_slice(&lsn.to_le_bytes());
+    let digest = content_digest(&page[..DIGEST_OFFSET]);
+    page[DIGEST_OFFSET..].copy_from_slice(&digest);
+    page
+}
+
+/// jobs.rs alone over a ChunkWrite of the root's next chunk at `world`
+/// (dev3-row-overflow.md#job-overflow): the accepted group passes, and each
+/// Job after that breaks the pending chain's step (written +2, the old
+/// front kept, another total) is refused there (its rule failures are
+/// IdentityMismatch), the Job native, its redo image and the frame
+/// resealed, so no binding check sees the edit.
+fn chunk_job_refusals(world: &World, plan: &OverflowReservePlan, value: &[u8]) {
+    let pending = job(world).pending().unwrap();
+    let index = usize::from(pending.count() - 1 - pending.written);
+    let allocator = Box::new(world.allocator.unwrap());
+    let chunk_plan = ChunkPlan {
+        ordinal: ORDINAL,
+        allocator: &allocator,
+        digest: plan.digest,
+        payload: window(value, index),
+    };
+    let inputs = world.inputs(Change::ChunkWrite(&chunk_plan), chunk_pages());
+    let mut after = loans(0xa5);
+    let mut frame = vec![0; FRAME_BYTES];
+    let observation = produce(&inputs, &mut after, &mut frame).unwrap();
+    frame.truncate(observation.frame_bytes);
+    let context = undo::UndoContext {
+        profile: profile(),
+        actor: observation.actor.unwrap(),
+        location: observation.status.unwrap(),
+    };
+    let observe_job = |frame: &[u8], job_after: &Page| {
+        jobs::observe(
+            decode_layout(frame, expectation(world.lsn), profile()).unwrap(),
+            jobs::Inputs {
+                context,
+                jobs: JobCells::original(&world.bank),
+                ordinal: ORDINAL,
+                images: jobs::JobImages {
+                    before: world.jobs[ORDINAL / 15].as_ref().unwrap(),
+                    after: job_after,
+                },
+                reserve: None,
+                sender: None,
+                commit: None,
+            },
+        )
+        .map(|_| ())
+    };
+    assert_eq!(observe_job(&frame, &after[JOB]), Ok(()));
+    // The rebinding itself keeps the group bound: an unedited Job passes.
+    let (same_frame, same_job) = rebind(&frame, world.lsn, 9, &after[JOB], |_| {});
+    assert_eq!(observe_job(&same_frame, &same_job), Ok(()));
+    let front = pending.front.unwrap();
+    for (label, patch) in [
+        (
+            "written +2",
+            Box::new(move |cell: &mut [u8]| {
+                cell[356..358].copy_from_slice(&(pending.written + 2).to_le_bytes())
+            }) as Box<dyn Fn(&mut [u8])>,
+        ),
+        (
+            "front kept",
+            Box::new(move |cell: &mut [u8]| front.encode(&mut cell[328..352]).unwrap()),
+        ),
+        (
+            "total",
+            Box::new(move |cell: &mut [u8]| {
+                cell[352..356].copy_from_slice(&(pending.total - 1).to_le_bytes())
+            }),
+        ),
+    ] {
+        let (mutant, job_after) = rebind(&frame, world.lsn, 9, &after[JOB], |cell| patch(cell));
+        row::decode_job(cell(&job_after[..], ORDINAL % 15), namespace())
+            .unwrap_or_else(|error| panic!("{label}: canonical Job {error:?}"));
+        // jobs.rs's own rule failures are IdentityMismatch.
+        assert_eq!(
+            observe_job(&mutant, &job_after),
+            Err(Error::IdentityMismatch),
+            "jobs.rs ChunkWrite {label}"
+        );
+        println!("OVF_REJECT\tjobs.rs ChunkWrite {label}\tIdentityMismatch");
+    }
+}
+
 /// OVF-C01: ChunkWrite (dev3-row-overflow.md#transitions). The overflow
 /// RowReserve seals the root-free head; three ChunkWrites write chunks 2,
 /// 1, 0 back to front onto the lowest allocator-eligible Free pages 15, 16
-/// and 17; and each refusal (payload length, digest, an allocator with a
-/// Reserved entry or no eligible Free page or a later LSN, an inline or
-/// Retained root, every chunk written, Cancel of a written root) comes
-/// before any output. The observer refuses a ChunkWrite whose chunk INIT
-/// or allocator patch differs.
+/// and 17; and each refusal (a total outside 2,049..=131,072, payload
+/// length, digest, an allocator with a Reserved entry or no eligible Free
+/// page or a later LSN, an allocator whose front entry is Free or another
+/// object's or kind's, an inline or Retained root, every chunk written,
+/// Cancel of a written root) comes before any output. The observer refuses
+/// a ChunkWrite whose chunk INIT (payload, index, next, count, total) or
+/// allocator patch differs, and jobs.rs alone one whose Job after breaks
+/// the pending chain's step.
 #[test]
 fn ovf_c01_chunk_write_allocates_and_inits_back_to_front() {
     let value = value();
@@ -508,6 +632,27 @@ fn ovf_c01_chunk_write_allocates_and_inits_back_to_front() {
         FRAME_BYTES,
         Error::InvalidInput,
     );
+
+    // A big row is 2,049..=131,072 bytes (dev3-row-overflow.md#transitions).
+    for total in [
+        crate::storage::overflow::INLINE_ROW_BYTES,
+        crate::storage::overflow::MAX_ROW_BYTES + 1,
+    ] {
+        let plan = OverflowReservePlan {
+            terminal: 14,
+            container: page_ref(14, 2),
+            table: table(),
+            statement: 4,
+            total,
+            digest: content_digest(&value),
+        };
+        refuses(
+            &format!("OVF-C01 Reserve total {total}"),
+            &world.inputs(Change::ReserveOverflow(&plan), reserve_pages()),
+            FRAME_BYTES,
+            Error::Unsupported,
+        );
+    }
 
     let reserved = reserve(&mut world, &value);
     let allocator = Box::new(world.allocator.unwrap());
@@ -601,8 +746,53 @@ fn ovf_c01_chunk_write_allocates_and_inits_back_to_front() {
     // lowest Free page from ordinal 9 (15, 16, 17).
     let before = world.clone();
     for written in 0..3 {
+        if written == 1 {
+            chunk_job_refusals(&world, &reserved, &value);
+        }
         chunk(&mut world, &reserved, &value, 15 + written);
         if written == 0 {
+            // The front (page 15) is this root's own chunk: an allocator
+            // where it is still Free (the image before the first
+            // ChunkWrite) or Allocated to another object or as another kind
+            // is refused before any output, before the pick could choose
+            // page 15 again.
+            let stale = Box::new(before.allocator.unwrap());
+            let mut foreign = entries(&world);
+            foreign[15] = AllocationEntry::Allocated {
+                generation: generation(2),
+                object: ObjectId::new(7).unwrap(),
+                object_generation: generation(1),
+                kind: PageKind::Overflow,
+            };
+            let foreign = allocator_page(&foreign, 5);
+            let mut kind = entries(&world);
+            kind[15] = AllocationEntry::Allocated {
+                generation: generation(2),
+                object: table().object,
+                object_generation: table().generation,
+                kind: PageKind::RowLeaf,
+            };
+            let kind = allocator_page(&kind, 5);
+            assert_eq!(entry(&stale, 15), AllocationEntry::Free(generation(1)));
+            for (label, allocator) in [
+                ("front Free", &stale),
+                ("front of another object", &foreign),
+                ("front of another kind", &kind),
+            ] {
+                refuses(
+                    &format!("OVF-C01 {label}"),
+                    &world.inputs(
+                        Change::ChunkWrite(&ChunkPlan {
+                            allocator,
+                            payload: window(&value, 1),
+                            ..good
+                        }),
+                        chunk_pages(),
+                    ),
+                    FRAME_BYTES,
+                    Error::IdentityMismatch,
+                );
+            }
             // A written root leaves only through OverflowCancel (O2b).
             refuses(
                 "OVF-C01 Cancel of a written root",
@@ -684,6 +874,41 @@ fn ovf_c01_chunk_write_allocates_and_inits_back_to_front() {
         );
         println!("OVF_REJECT\tChunkWrite {label}\tCorrupt");
     }
+    // The chunk cell's index @6, next @48..72, count @8 and total @12 (the
+    // tail chunk 2 of 3, no next), in the native kind-12 after and the INIT
+    // image alike.
+    let total = u32::try_from(value.len()).unwrap();
+    for (label, patch) in [
+        (
+            "chunk index",
+            Box::new(|cell: &mut [u8]| cell[6..8].copy_from_slice(&1u16.to_le_bytes()))
+                as Box<dyn Fn(&mut [u8])>,
+        ),
+        (
+            "chunk next",
+            Box::new(|cell: &mut [u8]| page_ref(16, 2).encode(&mut cell[48..72]).unwrap()),
+        ),
+        (
+            "chunk count",
+            Box::new(|cell: &mut [u8]| cell[8..10].copy_from_slice(&4u16.to_le_bytes())),
+        ),
+        (
+            "chunk total",
+            Box::new(move |cell: &mut [u8]| {
+                cell[12..16].copy_from_slice(&(total - 1).to_le_bytes())
+            }),
+        ),
+    ] {
+        let mutant = rechunk(&frame, before.lsn, |cell| patch(cell));
+        decode_layout(&mutant, inputs.frame, profile()).expect("framing-valid");
+        let mut out = loans(0);
+        assert_eq!(
+            observe(&inputs, &mutant, &mut out).map(|_| ()),
+            Err(Error::Corrupt),
+            "{label}"
+        );
+        println!("OVF_REJECT\tChunkWrite {label}\tCorrupt");
+    }
 }
 
 /// OVF-C02: the Forward of an overflow root (dev3-row-overflow.md
@@ -692,7 +917,9 @@ fn ovf_c01_chunk_write_allocates_and_inits_back_to_front() {
 /// stream. Refused before output: fewer chunks written than k, a head root
 /// or total other than the pending one, a damaged chunk (payload digest), a
 /// canonical row the schema refuses (with its own digest), the chain pages
-/// in another order or count, an allocator entry that is not the chunk's,
+/// in another order or count, a chain that walks back to an address it
+/// read, a chunk stamped at the lease or after the frame's previous LSN, an
+/// allocator entry that is not the chunk's,
 /// the plain Forward of an overflow root and an overflow Forward of an
 /// inline root. Then the Forward: Retained, the sender digest over the
 /// pending chain, ledger row 1 cleared; and from there Commit with Prune
@@ -750,6 +977,20 @@ fn ovf_c02_forward_checks_the_chain_then_commit_or_rollback() {
         kind: PageKind::Overflow,
     };
     let stale = allocator_page(&stale, 5);
+    // Chunk 1 (page 16) naming the root page 17 as its next: the chain
+    // walks back to an address it already read.
+    let mut cycle = Box::new(*refs[1]);
+    let start = usize::from(u16::from_le_bytes([cycle[128], cycle[129]]));
+    front.encode(&mut cycle[start + 48..start + 72]).unwrap();
+    let digest = content_digest(&cycle[..DIGEST_OFFSET]);
+    cycle[DIGEST_OFFSET..].copy_from_slice(&digest);
+    let duplicate = [refs[0], &*cycle, refs[0]];
+    // Chunk 1 stamped at the lease (not after it) or after the frame's
+    // previous LSN.
+    let leased = restamped(refs[1], job(&world).lease_lsn());
+    let leased = [refs[0], &*leased, refs[2]];
+    let later = restamped(refs[1], world.lsn + 1);
+    let later = [refs[0], &*later, refs[2]];
     // A head variant is A's cell, so only the producer side sees it; a
     // chain variant is an input, so C's observer also refuses the accepted
     // Forward over it.
@@ -777,6 +1018,27 @@ fn ovf_c02_forward_checks_the_chain_then_commit_or_rollback() {
             Error::Corrupt,
         ),
         ("chain order", &reversed[..], &*allocator, &row_after, order),
+        (
+            "duplicate address",
+            &duplicate[..],
+            &*allocator,
+            &row_after,
+            Error::OrderMismatch,
+        ),
+        (
+            "chunk at the lease LSN",
+            &leased[..],
+            &*allocator,
+            &row_after,
+            Error::OrderMismatch,
+        ),
+        (
+            "chunk after the previous LSN",
+            &later[..],
+            &*allocator,
+            &row_after,
+            Error::OrderMismatch,
+        ),
         (
             "chain count",
             &refs[..2],
@@ -880,9 +1142,10 @@ fn ovf_c02_forward_checks_the_chain_then_commit_or_rollback() {
         row_pages(),
     );
     let refusal = a_group(&bad_inputs, Some(&bad_cell)).map(|_| ());
-    assert!(
-        matches!(refusal, Err(Error::Row(_))),
-        "OVF-C02 schema: {refusal:?}"
+    assert_eq!(
+        refusal,
+        Err(Error::Row(row_record::RowError::Corrupt)),
+        "OVF-C02 schema"
     );
     println!("OVF_REFUSAL\tOVF-C02 schema\t{refusal:?}");
 
@@ -1058,6 +1321,38 @@ fn ovf_c02_forward_checks_the_chain_then_commit_or_rollback() {
             ..pages()
         },
     );
+}
+
+/// The head record encoder `encode_overflow_record` is the schema
+/// encoder's Overflow arm, byte for byte, for the Reserved root's version
+/// (dev3-row-overflow.md#overflow-row).
+#[test]
+fn ovf_c_head_record_is_the_schema_encoders_overflow_arm() {
+    let value = value();
+    let (world, plan) = written(&value);
+    let head = OverflowHead::new(page_ref(17, 2), value.len(), plan.digest).unwrap();
+    let job = job(&world);
+    let actor = job.source().unwrap();
+    let row = job.row_id().unwrap();
+    let mut schema = vec![0xa5; 232];
+    let length = row_record::encode_row_record_with_schema(
+        RecordExpectation {
+            namespace: namespace(),
+            row,
+        },
+        RowSchemaInput::Columns(&world.columns),
+        RecordVersion {
+            row,
+            stamp: VersionStamp::Transaction(actor),
+            logical: LogicalRowVersion::new(actor.id(), job.mutation()).unwrap(),
+            undo: job.undo(),
+        },
+        RowPayload::Overflow(head),
+        &mut schema,
+    )
+    .unwrap();
+    assert_eq!(length, 232);
+    assert_eq!(schema, head_record(&world, head));
 }
 
 /// S1-a and S1-d over the overflow groups: every C production of the

@@ -433,13 +433,17 @@ pub(super) fn leaf() -> usize {
         // `check_record`'s table, the record's own projection and the sealed
         // one it compares (dev3-row-overflow.md#overflow-row), the first
         // returned beside the view.
-        + size_of::<(ObjectHandle, [u8; 32], [u8; 32], [u8; 32])>();
+        + size_of::<(ObjectHandle, [u8; 32], [u8; 32], [u8; 32])>()
+        // An overflow row's head, Prune's restamped payload and the root's
+        // zero piece the sealed projection hashes.
+        + size_of::<(OverflowHead, RowPayload<'_>, [u8; 24])>();
     edit + reservation()
         .max(typed)
         .max(leaf_edit())
         .max(row_codec())
         .max(projection())
         .max(super::overflow::forward_chain_bytes())
+        .max(super::overflow::clr_chain_bytes())
 }
 
 /// `cells::delete_material`: its before, the record it returns and the Job

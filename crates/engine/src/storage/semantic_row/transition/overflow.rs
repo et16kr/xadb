@@ -416,6 +416,18 @@ pub(super) fn forward_chain(
     Ok(())
 }
 
+/// Source term of `clr_chain`: its arguments and result and the anchor.
+pub(super) fn clr_chain_bytes() -> usize {
+    use std::mem::size_of;
+    size_of::<(
+        &mut [u8; crate::storage::retention_page::JOB_BYTES],
+        JobView<'_>,
+        OverflowHead,
+        PageRef,
+    )>() + size_of::<Result<()>>()
+        + size_of::<std::result::Result<(), page::PageError>>()
+}
+
 /// The allocator codec: one allocation page decode or encode with its
 /// entry parse over the page codec (the structure candidate's
 /// `allocation_codec` inventory), the SHA closure excluded (the caller
@@ -457,16 +469,26 @@ fn record_bytes() -> usize {
         + source::row_codec()
 }
 /// Source term of `chunk_write`, the SHA closure excluded: its arguments
-/// and result, the pending chain, handles, indexes, record reference,
+/// and result, the pending chain, namespace, identities, front, range,
+/// handles, indexes, record reference,
 /// projection, chain, length, allocator view, selected page and entry
 /// beside the deepest of the head record encode, the sealed projection
 /// (`source::projection` with the two extra root-zero pieces), the
 /// allocator decode and lookups and the Job reference encode.
 pub(super) fn chunk_write_bytes() -> usize {
     use std::mem::size_of;
-    size_of::<(&Inputs<'_>, &ChunkPlan<'_>, JobView<'_>, TxnRef, &mut [u8])>()
-        + source::returned::<Core, Error>()
+    size_of::<(
+        &Inputs<'_>,
+        &ChunkPlan<'_>,
+        JobView<'_>,
+        TxnRef,
+        &mut Prepared<'_, '_>,
+    )>() + source::returned::<Core, Error>()
         + size_of::<crate::storage::retention_page::row::PendingChain>()
+        // The namespace, the front's and the new page's identities, the
+        // front and the ordinal range.
+        + size_of::<(Namespace, PageIdentity, PageIdentity, PageRef)>()
+        + size_of::<std::ops::Range<usize>>()
         + size_of::<(ObjectHandle, RowId, usize, usize)>()
         + size_of::<&mut [u8; MAX_RECORD]>()
         + source::returned::<[u8; 32], Error>()
@@ -530,6 +552,8 @@ pub(super) fn forward_chain_bytes() -> usize {
     use std::mem::size_of;
     size_of::<(&Inputs<'_>, JobView<'_>, OverflowHead, RowSchemaInput<'_>)>()
         + size_of::<ChainImages<'_>>()
+        // The namespace, the image in hand and `Some(head.root())`.
+        + size_of::<(Namespace, &[u8; PAGE_BYTES], Option<PageRef>)>()
         + size_of::<crate::storage::retention_page::row::PendingChain>()
         + size_of::<(
             ObjectHandle,
