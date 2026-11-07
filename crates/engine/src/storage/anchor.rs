@@ -504,13 +504,14 @@ pub(crate) fn extend_source_bytes() -> usize {
 }
 
 /// `check_retired`: arguments, the first file, the walk cursor and previous
-/// ordinal, one entry and its Results, the `same` closure, then the entry
-/// decode it nests.
+/// ordinal, the tree-entry flag (dev3-row-overflow.md#retired-overflow), one
+/// entry and its Results, the `same` closure, then the entry decode it nests.
 fn walk_source_bytes() -> usize {
     use std::mem::size_of;
     size_of::<(&[u8], PageRef, AnchorRoot, u64)>()
         + size_of::<FileId>()
         + size_of::<Option<u64>>()
+        + size_of::<bool>()
         + size_of::<std::iter::StepBy<std::ops::Range<usize>>>()
         + 2 * size_of::<usize>()
         + 2 * size_of::<RetiredPage>()

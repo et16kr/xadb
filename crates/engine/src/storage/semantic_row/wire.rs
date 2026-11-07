@@ -411,7 +411,7 @@ fn validate_native_shape(view: LayoutView<'_>) -> Result<()> {
         // dev3-row-update.md#update-shape): a DELETE/UPDATE leaf and U change
         // size; every other native keeps its fixed size.
         let (presence, before_size, after_size) =
-            super::operation::native_sides(view.operation, kind, view.shape)
+            super::operation::native_sides(view.operation, kind, &view.shape)
                 .ok_or(Error::Corrupt)?;
         if bytes[1] != presence {
             return Err(Error::Corrupt);

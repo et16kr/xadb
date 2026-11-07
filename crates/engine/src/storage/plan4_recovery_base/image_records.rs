@@ -386,8 +386,10 @@ fn validate_structural(raw: &[u8; INIT_BYTES], cert: Certificate, e: Expected) -
 }
 
 /// Shared provenance grammar plus its borrowed accessors. This is an explicit
-/// sum of both exclusive branches' typed carriers and codec results, not an ABI
-/// stack sample. The caller accounts for its own layout/group loop frames.
+/// sum of the exclusive branches' typed carriers and codec results, not an ABI
+/// stack sample: the System and CREATE branches, then a chunk's role 7
+/// branch (dev3-row-overflow.md#base4) with its actor, anchor and position.
+/// The caller accounts for its own layout/group loop frames.
 pub(super) fn provenance_source_bytes() -> usize {
     use crate::storage::{allocation_page::AllocationError, page::PageError};
     use std::mem::size_of;
@@ -408,4 +410,9 @@ pub(super) fn provenance_source_bytes() -> usize {
         + 4 * size_of::<Result<()>>()
         + 16 * size_of::<&[u8]>()
         + 16 * size_of::<u64>()
+        + size_of::<TxnRef>()
+        + size_of::<std::result::Result<TxnRef, PageError>>()
+        + size_of::<PageRef>()
+        + size_of::<std::result::Result<PageRef, PageError>>()
+        + size_of::<(u16, u16, u32)>()
 }

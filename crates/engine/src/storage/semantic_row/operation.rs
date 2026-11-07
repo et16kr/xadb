@@ -11,7 +11,7 @@
 //! ChunkWrite/OverflowCancel/ChainRetire (14, 15, 25) write, cancel and
 //! return a big row's overflow chain (contract dev3-row-overflow.md#opcodes).
 //! ChunkWrite's shape is fixed; the two return groups carry the anchor's
-//! XTR1 cell before and after (`Shape::list_before`, `Shape::list_after`).
+//! XTR1 cell before and after (`Shape::list_sides`).
 use super::{Error, MAX_CELL, MIN_CELL, Result};
 use crate::storage::{
     allocation_page::ALLOCATION_ENTRY_BYTES, anchor::MAX_RETIRED,
@@ -258,8 +258,14 @@ impl Operation {
             cell: 0,
             new_cell: 0,
             predecessor: false,
-            list_before: before as u16,
-            list_after: after as u16,
+            // Entry counts fit the padding `Shape` already has, so no
+            // census that holds a `Shape` grows.
+            list_before: if before == 0 {
+                0
+            } else {
+                (before - 16) / 40 + 1
+            } as u8,
+            list_after: ((after - 16) / 40) as u8,
         })
     }
     /// `frame_bytes` of `shape_list`.
@@ -324,10 +330,11 @@ pub(crate) struct Shape {
     /// padding holds); 0 for every other operation.
     pub(crate) new_cell: u16,
     pub(crate) predecessor: bool,
-    /// OverflowCancel's and ChainRetire's anchor XTR1 cell before (0 for no
-    /// list) and after; 0 for every other operation.
-    pub(crate) list_before: u16,
-    pub(crate) list_after: u16,
+    /// OverflowCancel's and ChainRetire's anchor XTR1 entries before (n + 1,
+    /// or 0 when the anchor had no list) and after (n); 0 for every other
+    /// operation. `list_sides` gives their cell bytes.
+    list_before: u8,
+    list_after: u8,
 }
 /// Size of a tombstone tree cell (XRW1 header 168 plus the 12-byte cell head).
 pub(crate) const TOMBSTONE_CELL: usize = ROW_HEADER_BYTES + 12;
@@ -341,11 +348,11 @@ const UNDO_RECORD: usize = UNDO_RECORD_BYTES;
 /// size. `new_cell` is UPDATE's C' (0 for every other operation). The
 /// overflow kinds (dev3-row-overflow.md#opcodes): 6 one allocator entry, 12
 /// the new chunk's cell header (after only), 10 the anchor's XTR1 cell
-/// (`list_before`, `list_after`; no before side when the anchor had none).
+/// (`Shape::list_sides`; no before side when the anchor had none).
 pub(super) fn native_sides(
     operation: Operation,
     kind: u8,
-    shape: Shape,
+    shape: &Shape,
 ) -> Option<(u8, usize, usize)> {
     let (cell, new_cell) = (shape.cell, usize::from(shape.new_cell));
     // The Live delete/update U: 432 plus the old row's canonical L = C - 180.
@@ -374,10 +381,7 @@ pub(super) fn native_sides(
         (6, Operation::ChunkWrite) => (3, ALLOCATION_ENTRY_BYTES, ALLOCATION_ENTRY_BYTES),
         (12, Operation::ChunkWrite) => (2, 0, OVERFLOW_CELL_HEADER_BYTES),
         (10, Operation::OverflowCancel | Operation::ChainRetire) => {
-            let (before, after) = (
-                usize::from(shape.list_before),
-                usize::from(shape.list_after),
-            );
+            let (before, after) = shape.list_sides();
             (if before == 0 { 2 } else { 3 }, before, after)
         }
         (5, _) => (3, 224, 224),
@@ -509,6 +513,17 @@ pub(super) fn list_from_native(natives: &[u8]) -> Result<(usize, usize)> {
 }
 
 impl Shape {
+    /// The anchor's XTR1 cell bytes before (0 for no list) and after of a
+    /// chain-return shape; (0, 16) for every other operation, which never
+    /// reads them.
+    pub(crate) fn list_sides(self) -> (usize, usize) {
+        let bytes = |entries: u8| 16 + 40 * usize::from(entries);
+        let before = match self.list_before {
+            0 => 0,
+            entries => bytes(entries - 1),
+        };
+        (before, bytes(self.list_after))
+    }
     /// The whole frame: the XHG/XSG header and section table, then the body.
     pub(super) fn frame_bytes(self, handoff: bool) -> usize {
         (if handoff { 3776 } else { 2176 }) + self.body_bytes()

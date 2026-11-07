@@ -155,7 +155,15 @@ pub(crate) fn source_bytes() -> usize {
         // validate_budget's debt/peak and 14-entry (offset, value) table.
         + 3 * size_of::<RemainingBudget>()
         + 2 * size_of::<ResourcePeak>()
-        + 2 * size_of::<std::array::IntoIter<(usize, u64), 14>>();
+        + 2 * size_of::<std::array::IntoIter<(usize, u64), 14>>()
+        // validate_root's overflow root (dev3-row-overflow.md#job-overflow):
+        // the Releasing chain's presence flags, anchor, root and total, or
+        // the Reserved pending chain and its front's decode Result.
+        + size_of::<[bool; 3]>()
+        + 2 * size_of::<PageRef>()
+        + size_of::<u32>()
+        + size_of::<Option<job::PendingChain>>()
+        + size_of::<std::result::Result<PageRef, PageError>>();
     // Cell/page hashing and the aggregate digest never nest in a pair check.
     let hashing = 2 * size_of::<ContentHasher>() + 4 * size_of::<[u8; 32]>() + 1536;
     root_decode_source_bytes().max(frames + pair_and_cell.max(hashing))

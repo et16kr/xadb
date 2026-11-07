@@ -99,7 +99,16 @@ impl OverflowHead {
         total: usize,
         digest: [u8; 32],
     ) -> Result<Self, OverflowError> {
-        Ok(OverflowChain::new(total, digest)?.head(root))
+        // The same range as `OverflowChain::new`, without its Result: the
+        // row decode census counts this frame as it was.
+        if !(INLINE_ROW_BYTES + 1..=MAX_ROW_BYTES).contains(&total) {
+            return Err(OverflowError::InvalidInput);
+        }
+        Ok(Self {
+            root,
+            total,
+            digest,
+        })
     }
 
     pub(crate) fn root(self) -> PageRef {
@@ -111,7 +120,7 @@ impl OverflowHead {
     }
 
     pub(crate) fn count(self) -> usize {
-        self.chain().count()
+        self.total.div_ceil(MAX_OVERFLOW_PAYLOAD)
     }
 
     pub(crate) fn digest(self) -> [u8; 32] {

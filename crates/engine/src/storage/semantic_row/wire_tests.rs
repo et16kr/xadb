@@ -1670,6 +1670,12 @@ fn ovf_f04_chain_opcodes_decode_role_outer_handoff() {
 /// refused, and the list groups have no cell shape.
 #[test]
 fn ovf_f04_chain_shapes_and_frame_equations() {
+    // The list sides sit in the padding: every census holding a Shape keeps
+    // its size.
+    assert_eq!(
+        size_of::<crate::storage::semantic_row::operation::Shape>(),
+        40
+    );
     assert_eq!(Operation::ChunkWrite.frame_bytes(0, false).unwrap(), 56_976);
     let shape = Operation::ChunkWrite.shape(0, false).unwrap();
     assert_eq!(
@@ -1690,10 +1696,7 @@ fn ovf_f04_chain_shapes_and_frame_equations() {
         assert_eq!(cancel, 56_472 + b + a);
         assert_eq!(retire, 54_664 + b + a);
         let shape = Operation::OverflowCancel.shape_list(b, a).unwrap();
-        assert_eq!(
-            (shape.items, shape.list_before, shape.list_after),
-            (1, b as u16, a as u16)
-        );
+        assert_eq!((shape.items, shape.list_sides()), (1, (b, a)));
         assert_eq!(Operation::ChainRetire.shape_list(b, a).unwrap().items, 0);
     }
     assert_eq!(
@@ -1755,7 +1758,7 @@ fn ovf_f04_chain_frames_decode() {
             let v = check(&frame).unwrap();
             assert_eq!(v.operation(), op);
             let shape = v.shape();
-            assert_eq!((shape.list_before, shape.list_after), (b as u16, a as u16));
+            assert_eq!(shape.list_sides(), (b, a));
             assert_eq!(
                 v.native_records().map(|n| n.kind()).collect::<Vec<_>>(),
                 [8, 9, 10]
