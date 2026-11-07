@@ -207,4 +207,6 @@ located.row_load의 여유는 37 B다. recheck의 다시 route는 `located.row_r
 
 08-2b의 독립 D2 기록은 `module-gate/evidence/dev3-08-2-locator/`에 둔다.
 
+검토와 실행이 적은 commit `fc1fc94`·`86c6c2a`·`668f6ec`는 PR #62 병합 전, 08-2a 위에서 만든 작업 commit이다. main(`9669c96`, PR #62 병합) 위로 옮긴 commit은 각각 `15e2f9d`·`0f9ed43`·`1f2c92d`이고, 이 PR이 바꾸는 Rust 파일 13개의 blob은 옮기기 전과 같다(module-gate 기록의 blob 목록). 옮긴 뒤 crate에서 달라진 것은 main에 먼저 병합된 08-2a 후속 시험 두 파일(`smo_tests.rs`, `cursor_smo.rs`)뿐이며, 옮긴 head에서 clippy(`-D warnings`)와 rustfmt를 다시 통과했다.
+
 일정: 08-2a의 cursor 인수와 08-2b의 locator가 모두 끝났으므로 PR_082B의 병합으로 08-2의 1일을 적립한다(35 → 36/86 = 41.86%, [진도표](../plans/dev3-schedule-baseline.md#items)).
