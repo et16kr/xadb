@@ -567,3 +567,51 @@ fn rup_f07_ledger_rows_of_update_roots() {
         assert!(converted > 0);
     }
 }
+/// OVF-F02 in the ledger (dev3-row-overflow.md#job-overflow): the
+/// ReleasingCompensated arm reads `cleanup_started`. An overflow root whose
+/// chain ChainRetire returned (`@285 = 1`, chain zero, last_step past the
+/// release start) has started its cleanup at cursor 0, so beside a
+/// non-terminal actor it is refused like a cursor-1 root and beside a
+/// Committed or Aborted one it is accepted; a root still holding its chain
+/// (budget `(5, 4R + X)`) has not started and is accepted beside the Active
+/// actor. The cells are the fixture's cursor-0 compensated roots (case 6
+/// Active, 11 Committed, 14 Aborted) edited here.
+#[test]
+fn ovf_f02_ledger_returned_chain_needs_the_terminal() {
+    fn page(no: u64) -> [u8; 24] {
+        let mut bytes = [0; 24];
+        bytes[..8].copy_from_slice(&0x0000_0001_0000_0001u64.to_le_bytes());
+        bytes[8..16].copy_from_slice(&no.to_le_bytes());
+        bytes[16..24].copy_from_slice(&1u64.to_le_bytes());
+        bytes
+    }
+    let returned = |n: usize, j: usize| {
+        let mut bank = *jobs(n);
+        let view = row::decode_job(&jobs(n)[j], profile().spec().namespace).unwrap();
+        assert_eq!(
+            (view.state(), view.release_cursor(), view.last_step()),
+            (JobState::RootReleasingCompensated, 0, view.release_start())
+        );
+        let start = view.release_start();
+        bank[j][285] = 1;
+        put(&mut bank[j], 376, start + 1);
+        let view = row::decode_job(&bank[j], profile().spec().namespace).unwrap();
+        assert!(view.chain().is_none() && view.cleanup_started());
+        bank
+    };
+    assert_eq!(residual(6, &returned(6, 2)), Err(Error::OrderMismatch));
+    for (n, j) in [(11, 3), (14, 1), (14, 2)] {
+        assert!(residual(n, &returned(n, j)).is_ok(), "case {n} job {j}");
+    }
+    let mut held = *jobs(6);
+    held[2][285] = 1;
+    held[2][200..224].copy_from_slice(&page(10));
+    held[2][224..248].copy_from_slice(&page(41));
+    held[2][288..292].copy_from_slice(&16_093u32.to_le_bytes());
+    put(&mut held[2], 776, 5);
+    put(&mut held[2], 784, 281_168);
+    put(&mut held[2], 880, 281_168);
+    let view = row::decode_job(&held[2], profile().spec().namespace).unwrap();
+    assert!(view.chain().is_some() && !view.cleanup_started());
+    assert!(residual(6, &held).is_ok());
+}

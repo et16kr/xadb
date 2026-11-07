@@ -16,6 +16,9 @@ use foundation::{
     value::{MAX_VALUE_BYTES, Value},
 };
 
+/// Chunked canonical bytes for overflow rows (dev3-row-overflow.md#plan).
+pub(crate) mod stream;
+
 pub(crate) const MAX_ROW_COLUMNS: usize = 32;
 pub(crate) const ROW_HEADER_BYTES: usize = 168;
 pub(crate) const INDEX_RECORD_BYTES: usize = 160;
@@ -605,10 +608,20 @@ pub(crate) fn decode_materialized_row<'a>(
     bytes: &'a [u8],
     columns: &[Column],
 ) -> Result<CanonicalRowView<'a>, RowError> {
+    decode_materialized_row_with_schema(head, bytes, RowSchemaInput::Columns(columns))
+}
+
+/// `decode_materialized_row` against borrowed (e.g. Catalog) schema input,
+/// for B's copy of an overflow row (dev3-row-overflow.md#read).
+pub(crate) fn decode_materialized_row_with_schema<'a>(
+    head: OverflowHead,
+    bytes: &'a [u8],
+    schema: RowSchemaInput<'_>,
+) -> Result<CanonicalRowView<'a>, RowError> {
     if bytes.len() != head.total() || content_digest(bytes) != head.digest() {
         return Err(RowError::OverflowMismatch);
     }
-    decode_canonical_row(bytes, columns)
+    decode_canonical_row_with_schema(bytes, schema)
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -653,6 +666,58 @@ pub(crate) fn decode_index_record(
         version: decode_version(input, input[7] == 1, expected)?,
         present: input[6] == 1,
     })
+}
+
+/// Source models of the O1 row helpers (dev3-row-overflow.md#o1-record):
+/// explicit sums of each frame's typed carriers, not ABI stack samples.
+pub(crate) mod source {
+    use super::*;
+    use crate::storage::catalog_record::{CatalogColumn, CatalogError};
+    use std::mem::size_of;
+
+    pub(super) fn returned<T, E>() -> usize {
+        size_of::<T>() + size_of::<Result<T, E>>()
+    }
+
+    /// `RowSchemaInput::column` at its widest (a Catalog column decode) with
+    /// `validate` and `matches`.
+    pub(crate) fn schema_lookup() -> usize {
+        size_of::<(&RowSchemaInput<'_>, usize)>()
+            + returned::<CatalogColumn<'_>, CatalogError>()
+            + returned::<(DataType, bool), RowError>()
+            + size_of::<Result<(), RowError>>()
+            + size_of::<((DataType, bool), ValueRef<'_>)>()
+    }
+
+    /// `canonical_row_input_len`, which the digest and window helpers call
+    /// first as `encode_canonical_row_borrowed` does: arguments, the running
+    /// total, index, payload and value lengths, the value and the Result,
+    /// then the schema lookup.
+    pub(crate) fn input_len() -> usize {
+        size_of::<(RowSchemaInput<'_>, RowValuesInput<'_>)>()
+            + size_of::<[usize; 4]>()
+            + size_of::<ValueRef<'_>>()
+            + size_of::<Result<usize, RowError>>()
+            + schema_lookup()
+    }
+
+    /// `decode_materialized_row_with_schema`: arguments, the row digest and
+    /// the returned view, then `content_digest` over the caller's SHA
+    /// closure `sha` or the canonical decode `canonical`. The `&[Column]`
+    /// wrapper adds its own arguments and Result (`materialized_columns`).
+    pub(crate) fn materialized(canonical: usize, sha: usize) -> usize {
+        size_of::<(OverflowHead, &[u8], RowSchemaInput<'_>)>()
+            + size_of::<[u8; 32]>()
+            + size_of::<Result<CanonicalRowView<'_>, RowError>>()
+            + crate::storage::overflow::source::content_digest(sha).max(canonical)
+    }
+
+    /// `decode_materialized_row` over `materialized`.
+    pub(crate) fn materialized_columns(canonical: usize, sha: usize) -> usize {
+        size_of::<(OverflowHead, &[u8], &[Column])>()
+            + size_of::<Result<CanonicalRowView<'_>, RowError>>()
+            + materialized(canonical, sha)
+    }
 }
 
 #[cfg(test)]

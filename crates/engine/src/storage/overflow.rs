@@ -1,6 +1,9 @@
 //! Fixed row overflow chunks without allocation, I/O, or lifetime ownership.
-//! See `devdoc/contracts/dev3-overflow-format.md`. The owner must keep the
-//! published chain immutable and pinned for the duration of these borrowed views.
+//! See `devdoc/contracts/dev3-overflow-format.md` and its revision in
+//! `dev3-row-overflow.md#chunk-revision`: chunks are written back to front,
+//! so a chunk carries the chain's total and digest but not its root. The
+//! owner must keep the published chain immutable and pinned for the duration
+//! of these borrowed views.
 // Remove when the row storage consumer connects this expression.
 #![allow(dead_code)]
 
@@ -35,6 +38,53 @@ impl From<PageError> for OverflowError {
     }
 }
 
+/// What every chunk of one chain carries: the row's total bytes and digest.
+/// Without a root it names no page; it is known before the first chunk is
+/// written (dev3-row-overflow.md#chunk-revision).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct OverflowChain {
+    total: usize,
+    digest: [u8; 32],
+}
+
+impl OverflowChain {
+    pub(crate) fn new(total: usize, digest: [u8; 32]) -> Result<Self, OverflowError> {
+        if !(INLINE_ROW_BYTES + 1..=MAX_ROW_BYTES).contains(&total) {
+            return Err(OverflowError::InvalidInput);
+        }
+        Ok(Self { total, digest })
+    }
+
+    pub(crate) fn total(self) -> usize {
+        self.total
+    }
+
+    pub(crate) fn count(self) -> usize {
+        self.total.div_ceil(MAX_OVERFLOW_PAYLOAD)
+    }
+
+    pub(crate) fn digest(self) -> [u8; 32] {
+        self.digest
+    }
+
+    /// Chunk `index`'s payload length: 16,092 except the last.
+    pub(crate) fn payload_len(self, index: usize) -> Result<usize, OverflowError> {
+        if index >= self.count() {
+            return Err(OverflowError::InvalidInput);
+        }
+        Ok((self.total - index * MAX_OVERFLOW_PAYLOAD).min(MAX_OVERFLOW_PAYLOAD))
+    }
+
+    /// The row's head once chunk 0 is written at `root`.
+    pub(crate) fn head(self, root: PageRef) -> OverflowHead {
+        OverflowHead {
+            root,
+            total: self.total,
+            digest: self.digest,
+        }
+    }
+}
+
 /// Stored by the owning row. This identity is not a pin or allocation token.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct OverflowHead {
@@ -49,6 +99,8 @@ impl OverflowHead {
         total: usize,
         digest: [u8; 32],
     ) -> Result<Self, OverflowError> {
+        // The same range as `OverflowChain::new`, without its Result: the
+        // row decode census counts this frame as it was.
         if !(INLINE_ROW_BYTES + 1..=MAX_ROW_BYTES).contains(&total) {
             return Err(OverflowError::InvalidInput);
         }
@@ -75,11 +127,12 @@ impl OverflowHead {
         self.digest
     }
 
-    fn payload_len(self, index: usize) -> Result<usize, OverflowError> {
-        if index >= self.count() {
-            return Err(OverflowError::InvalidInput);
+    /// The root-free part that each chunk of this row's chain carries.
+    pub(crate) fn chain(self) -> OverflowChain {
+        OverflowChain {
+            total: self.total,
+            digest: self.digest,
         }
-        Ok((self.total - index * MAX_OVERFLOW_PAYLOAD).min(MAX_OVERFLOW_PAYLOAD))
     }
 
     /// Exact-size output; no write occurs on failure.
@@ -113,7 +166,7 @@ impl OverflowHead {
 
 pub(crate) struct OverflowPageView<'a> {
     header: PageHeader,
-    head: OverflowHead,
+    chain: OverflowChain,
     index: usize,
     next: Option<PageRef>,
     payload: &'a [u8],
@@ -124,8 +177,8 @@ impl<'a> OverflowPageView<'a> {
         self.header
     }
 
-    pub(crate) fn head(&self) -> OverflowHead {
-        self.head
+    pub(crate) fn chain(&self) -> OverflowChain {
+        self.chain
     }
 
     pub(crate) fn index(&self) -> usize {
@@ -145,28 +198,22 @@ fn same_address(a: PageRef, b: PageRef) -> bool {
     a.file == b.file && a.page_no == b.page_no
 }
 
+/// The local checks of one chunk. Root identity and repeated addresses
+/// across the chain belong to `OverflowChainVerifier`, whose visited set
+/// starts with the root (dev3-row-overflow.md#chunk-revision).
 fn validate_position(
-    head: OverflowHead,
+    chain: OverflowChain,
     index: usize,
     current: PageRef,
     next: Option<PageRef>,
     payload_len: usize,
 ) -> Result<(), OverflowError> {
-    if payload_len != head.payload_len(index)?
-        || (index == 0 && current != head.root)
-        || (index > 0 && same_address(current, head.root))
-    {
+    if payload_len != chain.payload_len(index)? {
         return Err(OverflowError::InvalidInput);
     }
     match next {
-        Some(next)
-            if index + 1 < head.count()
-                && !same_address(next, current)
-                && !same_address(next, head.root) =>
-        {
-            Ok(())
-        }
-        None if index + 1 == head.count() => Ok(()),
+        Some(next) if index + 1 < chain.count() && !same_address(next, current) => Ok(()),
+        None if index + 1 == chain.count() => Ok(()),
         _ => Err(OverflowError::InvalidInput),
     }
 }
@@ -174,14 +221,14 @@ fn validate_position(
 /// Encode into a caller-owned prefix; errors preserve the entire output and
 /// success preserves its unused tail. The caller supplies any scratch storage.
 pub(crate) fn encode_overflow_cell(
-    head: OverflowHead,
+    chain: OverflowChain,
     index: usize,
     current: PageRef,
     next: Option<PageRef>,
     payload: &[u8],
     output: &mut [u8],
 ) -> Result<usize, OverflowError> {
-    validate_position(head, index, current, next, payload.len())?;
+    validate_position(chain, index, current, next, payload.len())?;
     let length = OVERFLOW_HEADER_BYTES + payload.len();
     if output.len() < length {
         return Err(OverflowError::InvalidInput);
@@ -191,14 +238,13 @@ pub(crate) fn encode_overflow_cell(
     output[..4].copy_from_slice(b"XOV1");
     put_u16(output, 4, 1);
     put_u16(output, 6, index as u16);
-    put_u16(output, 8, head.count() as u16);
-    put_u32(output, 12, head.total as u32);
+    put_u16(output, 8, chain.count() as u16);
+    put_u32(output, 12, chain.total as u32);
     put_u32(output, 16, payload.len() as u32);
-    head.root.encode(&mut output[24..48])?;
     if let Some(next) = next {
         next.encode(&mut output[48..72])?;
     }
-    output[72..104].copy_from_slice(&head.digest);
+    output[72..104].copy_from_slice(&chain.digest);
     output[OVERFLOW_HEADER_BYTES..length].copy_from_slice(payload);
     Ok(length)
 }
@@ -206,7 +252,7 @@ pub(crate) fn encode_overflow_cell(
 fn parse_cell<'a>(
     cell: &'a [u8],
     header: PageHeader,
-    expected: OverflowHead,
+    expected: OverflowChain,
     expected_index: usize,
 ) -> Result<OverflowPageView<'a>, OverflowError> {
     if cell.len() < OVERFLOW_HEADER_BYTES || &cell[..4] != b"XOV1" {
@@ -215,19 +261,19 @@ fn parse_cell<'a>(
     if read_u16(cell, 4) != 1 {
         return Err(OverflowError::UnsupportedFormat);
     }
+    // `[24,48)` held the root before the chunk revision; it is reserved zero.
     if cell[10..12] != [0, 0]
-        || cell[20..24].iter().any(|b| *b != 0)
+        || cell[20..48].iter().any(|b| *b != 0)
         || cell[104..128].iter().any(|b| *b != 0)
     {
         return Err(OverflowError::Corrupt);
     }
     let mut digest = [0; 32];
     digest.copy_from_slice(&cell[72..104]);
-    let root = PageRef::decode(&cell[24..48]).map_err(|_| OverflowError::Corrupt)?;
-    let head = OverflowHead::new(root, read_u32(cell, 12) as usize, digest)
+    let chain = OverflowChain::new(read_u32(cell, 12) as usize, digest)
         .map_err(|_| OverflowError::Corrupt)?;
     let index = usize::from(read_u16(cell, 6));
-    if usize::from(read_u16(cell, 8)) != head.count() || index >= head.count() {
+    if usize::from(read_u16(cell, 8)) != chain.count() || index >= chain.count() {
         return Err(OverflowError::Corrupt);
     }
     let next = if cell[48..72].iter().all(|b| *b == 0) {
@@ -239,9 +285,9 @@ fn parse_cell<'a>(
     if read_u32(cell, 16) as usize != payload.len() {
         return Err(OverflowError::Corrupt);
     }
-    validate_position(head, index, header.identity.page, next, payload.len())
+    validate_position(chain, index, header.identity.page, next, payload.len())
         .map_err(|_| OverflowError::Corrupt)?;
-    if head != expected {
+    if chain != expected {
         return Err(OverflowError::HeadMismatch);
     }
     if index != expected_index {
@@ -249,7 +295,7 @@ fn parse_cell<'a>(
     }
     Ok(OverflowPageView {
         header,
-        head,
+        chain,
         index,
         next,
         payload,
@@ -258,7 +304,7 @@ fn parse_cell<'a>(
 
 pub(crate) fn encode_overflow_page(
     header: PageHeader,
-    head: OverflowHead,
+    chain: OverflowChain,
     index: usize,
     cell: &[u8],
     output: &mut [u8],
@@ -266,24 +312,25 @@ pub(crate) fn encode_overflow_page(
     if header.kind != PageKind::Overflow
         || header.level != 0
         || output.len() != PAGE_BYTES
-        || index >= head.count()
+        || index >= chain.count()
     {
         return Err(OverflowError::InvalidInput);
     }
-    parse_cell(cell, header, head, index).map_err(|_| OverflowError::InvalidInput)?;
+    parse_cell(cell, header, chain, index).map_err(|_| OverflowError::InvalidInput)?;
     encode_page(header, &[cell], output)?;
     Ok(())
 }
 
 /// The caller's expected identity comes from a stabilized row/previous edge,
 /// never from the input page. This function does not acquire a frame guard.
+/// Whether index 0 sits at the row's root is `OverflowChainVerifier`'s check.
 pub(crate) fn decode_overflow_page(
     input: &[u8],
     expected: PageIdentity,
-    head: OverflowHead,
+    chain: OverflowChain,
     index: usize,
 ) -> Result<OverflowPageView<'_>, OverflowError> {
-    if index >= head.count() {
+    if index >= chain.count() {
         return Err(OverflowError::InvalidInput);
     }
     let page = decode_page(input, expected, PageKind::Overflow)?;
@@ -293,13 +340,119 @@ pub(crate) fn decode_overflow_page(
     parse_cell(
         page.cell(0).ok_or(OverflowError::Corrupt)?,
         page.header(),
-        head,
+        chain,
         index,
     )
 }
 
+/// Decode a chunk page whose chain is not known in advance: a returned or
+/// pending chain, or a retired chunk (dev3-row-overflow.md#chunk-revision).
+/// The envelope is checked against `expected` and the cell grammar fully;
+/// the caller compares the returned chain, index and next with its owner.
+pub(crate) fn inspect_overflow_page(
+    input: &[u8],
+    expected: PageIdentity,
+) -> Result<OverflowPageView<'_>, OverflowError> {
+    let page = decode_page(input, expected, PageKind::Overflow)?;
+    let cell = match (page.len(), page.cell(0)) {
+        (1, Some(cell)) => cell,
+        _ => return Err(OverflowError::Corrupt),
+    };
+    // parse_cell's own order: magic, then version, then fields.
+    if cell.len() < OVERFLOW_HEADER_BYTES || &cell[..4] != b"XOV1" {
+        return Err(OverflowError::Corrupt);
+    }
+    if read_u16(cell, 4) != 1 {
+        return Err(OverflowError::UnsupportedFormat);
+    }
+    let mut digest = [0; 32];
+    digest.copy_from_slice(&cell[72..104]);
+    let chain = OverflowChain::new(read_u32(cell, 12) as usize, digest)
+        .map_err(|_| OverflowError::Corrupt)?;
+    let index = usize::from(read_u16(cell, 6));
+    if index >= chain.count() {
+        return Err(OverflowError::Corrupt);
+    }
+    parse_cell(cell, page.header(), chain, index)
+}
+
+/// Walk part of a chain front to back without its head: a pending chain
+/// from its front (first index k−written) or a returned chain from its root
+/// (first index 0). Each chunk follows the previous next, has the next
+/// index and the same chain, and repeats no address; the last ends at index
+/// k−1 with no next. No payload digest is checked (dev3-row-overflow.md
+/// #chunk-revision). Failed pushes preserve the walk.
+pub(crate) struct OverflowSegmentWalk {
+    identity: PageIdentity,
+    chain: OverflowChain,
+    next: Option<PageRef>,
+    index: usize,
+    seen: [Option<PageRef>; MAX_OVERFLOW_CHUNKS],
+    pushed: usize,
+}
+
+impl OverflowSegmentWalk {
+    pub(crate) fn new(
+        front: PageIdentity,
+        chain: OverflowChain,
+        first: usize,
+    ) -> Result<Self, OverflowError> {
+        if first >= chain.count() {
+            return Err(OverflowError::InvalidInput);
+        }
+        Ok(Self {
+            identity: front,
+            chain,
+            next: Some(front.page),
+            index: first,
+            seen: [None; MAX_OVERFLOW_CHUNKS],
+            pushed: 0,
+        })
+    }
+
+    /// The identity the next chunk must have; None once the walk ended.
+    pub(crate) fn expected(&self) -> Option<PageIdentity> {
+        self.next.map(|page| PageIdentity {
+            page,
+            ..self.identity
+        })
+    }
+
+    pub(crate) fn push(&mut self, view: &OverflowPageView<'_>) -> Result<(), OverflowError> {
+        let expected = self.expected().ok_or(OverflowError::InvalidInput)?;
+        if view.chain != self.chain {
+            return Err(OverflowError::HeadMismatch);
+        }
+        if view.index != self.index
+            || view.header.identity != expected
+            || self
+                .seen
+                .iter()
+                .flatten()
+                .any(|old| same_address(*old, expected.page))
+        {
+            return Err(OverflowError::OrderMismatch);
+        }
+        self.seen[self.pushed] = Some(expected.page);
+        self.pushed += 1;
+        self.index += 1;
+        self.next = view.next;
+        Ok(())
+    }
+
+    /// The pages pushed, in chain order, once the last chunk ended the walk.
+    pub(crate) fn finish(&self) -> Result<&[Option<PageRef>], OverflowError> {
+        if self.next.is_some() || self.index != self.chain.count() {
+            return Err(OverflowError::Incomplete);
+        }
+        Ok(&self.seen[..self.pushed])
+    }
+}
+
 /// Bounded streaming verification. Payload storage belongs to the caller.
 /// Failed pushes preserve this verifier, including its digest and next address.
+/// Chunk 0 must sit at the root identity; the visited set, which starts with
+/// the root, rejects a later chunk at the root's or any visited address.
 pub(crate) struct OverflowChainVerifier {
     root_identity: PageIdentity,
     head: OverflowHead,
@@ -329,7 +482,7 @@ impl OverflowChainVerifier {
 
     pub(crate) fn push(&mut self, view: &OverflowPageView<'_>) -> Result<(), OverflowError> {
         let next = self.next.ok_or(OverflowError::InvalidInput)?;
-        if view.head != self.head {
+        if view.chain != self.head.chain() {
             return Err(OverflowError::HeadMismatch);
         }
         if view.index != self.index
@@ -381,6 +534,102 @@ fn put_u16(bytes: &mut [u8], at: usize, value: u16) {
 
 fn put_u32(bytes: &mut [u8], at: usize, value: u32) {
     bytes[at..at + 4].copy_from_slice(&value.to_le_bytes());
+}
+
+/// Source models of the O1 chunk readers (dev3-row-overflow.md#o1-record),
+/// explicit sums of each frame's typed carriers, not ABI stack samples. A
+/// caller adds the term to its own census; `page` is that census's page codec,
+/// which holds the page digest's hash state and output but not the SHA
+/// closure: the caller's census adds SHA once, as it already does.
+pub(crate) mod source {
+    use super::*;
+    use crate::storage::page::PageView;
+    use std::mem::size_of;
+
+    fn returned<T, E>() -> usize {
+        size_of::<T>() + size_of::<Result<T, E>>()
+    }
+
+    /// `validate_position`: arguments, the expected length and its Result.
+    fn position() -> usize {
+        size_of::<(OverflowChain, usize, PageRef, Option<PageRef>, usize)>()
+            + returned::<usize, OverflowError>()
+            + size_of::<Result<(), OverflowError>>()
+    }
+
+    /// `parse_cell`: arguments, digest, chain, index, next and payload with
+    /// their Results, the returned view, then the next decode or
+    /// `validate_position`.
+    fn parse() -> usize {
+        size_of::<(&[u8], PageHeader, OverflowChain, usize)>()
+            + size_of::<[u8; 32]>()
+            + returned::<OverflowChain, OverflowError>()
+            + size_of::<usize>()
+            + size_of::<Option<PageRef>>()
+            + size_of::<&[u8]>()
+            + size_of::<Result<OverflowPageView<'_>, OverflowError>>()
+            + returned::<PageRef, PageError>().max(position())
+    }
+
+    /// `inspect_overflow_page`: arguments, the page view and its Result, the
+    /// cell, digest, chain and index, the returned view, then the page decode
+    /// or `parse_cell`.
+    pub(crate) fn inspect(page: usize) -> usize {
+        size_of::<(&[u8], PageIdentity)>()
+            + returned::<PageView<'_>, PageError>()
+            + size_of::<&[u8]>()
+            + size_of::<[u8; 32]>()
+            + returned::<OverflowChain, OverflowError>()
+            + size_of::<usize>()
+            + size_of::<Result<OverflowPageView<'_>, OverflowError>>()
+            + page.max(parse())
+    }
+
+    /// The walk a caller holds across its chunk loads.
+    pub(crate) fn segment_walk() -> usize {
+        size_of::<OverflowSegmentWalk>()
+    }
+
+    /// `OverflowSegmentWalk::push`: arguments, the expected identity and its
+    /// Result, the visited-set scan and the push Result.
+    pub(crate) fn segment_push() -> usize {
+        size_of::<(&mut OverflowSegmentWalk, &OverflowPageView<'_>)>()
+            + size_of::<Option<PageIdentity>>()
+            + returned::<PageIdentity, OverflowError>()
+            + size_of::<std::iter::Flatten<std::slice::Iter<'_, Option<PageRef>>>>()
+            + size_of::<(&PageRef, &PageRef)>()
+            + size_of::<Result<(), OverflowError>>()
+    }
+
+    /// `foundation::codec::content_digest` with the caller's SHA closure
+    /// `sha`: the input, the hash state it builds and the digest it returns.
+    pub(crate) fn content_digest(sha: usize) -> usize {
+        size_of::<&[u8]>() + size_of::<ContentHasher>() + size_of::<[u8; 32]>() + sha
+    }
+
+    /// `ContentHasher::digest` with the caller's SHA closure `sha`: the
+    /// receiver, the hash state it clones and the digest it returns.
+    pub(crate) fn hasher_digest(sha: usize) -> usize {
+        size_of::<&ContentHasher>() + size_of::<ContentHasher>() + size_of::<[u8; 32]>() + sha
+    }
+
+    /// `OverflowChainVerifier::push`: arguments, next and its Result, the
+    /// head's chain, the expected identity, the visited-set scan and its
+    /// closure, the cloned hasher, the compared digest and the Result, then
+    /// the hasher update or `ContentHasher::digest`, each over the caller's
+    /// SHA closure `sha`.
+    pub(crate) fn verifier_push(sha: usize) -> usize {
+        size_of::<(&mut OverflowChainVerifier, &OverflowPageView<'_>)>()
+            + returned::<PageRef, OverflowError>()
+            + size_of::<OverflowChain>()
+            + size_of::<PageIdentity>()
+            + size_of::<std::iter::Flatten<std::slice::Iter<'_, Option<PageRef>>>>()
+            + size_of::<(&PageRef, &PageRef)>()
+            + size_of::<ContentHasher>()
+            + size_of::<[u8; 32]>()
+            + size_of::<Result<(), OverflowError>>()
+            + (size_of::<(&mut ContentHasher, &[u8])>() + sha).max(hasher_digest(sha))
+    }
 }
 
 #[cfg(test)]

@@ -1,0 +1,1054 @@
+{
+  "schema": "XADB_MODULE_GATE_RECORD_V1",
+  "change": "DEV3 08-3 O1 (dev3-row-overflow.md#implementation-o1): formats and pure codecs of the overflow chain only. Revised chunk cell/page (chain total+digest, root-free verifier, segment walk), Job3 overflow root (pending/return chain, cleanup_started), XTR1 (Overflow, 0) entries, opcodes ChunkWrite 14/OverflowCancel 15/ChainRetire 25 with their wire shapes and natives, A canonical row stream/digest/window helpers and Catalog-schema materialize, Base4 Overflow certificate role and provenance role 7. No product path calls them yet: overflow rows are still refused before the first effect, replay refuses 14/15/25 and Base4 consumers refuse role 7, so user-visible behavior is unchanged; census peaks/charges unchanged. Schedule 08-3 stays 진행(적립 0) until O4 merges.",
+  "rust_tests": [
+    {
+      "paths": [
+        "crates/engine/src/storage/anchor.rs",
+        "crates/engine/src/storage/anchor_tests.rs"
+      ],
+      "reason": "XTR1 (Overflow, 0) entries and the revision >= 2 tree-entry rule (dev3-row-overflow.md#retired-list, OVF-F03) beside the existing XTR1/anchor literals UNL-P01..P04, whose decoder the new kind changes; UNL-C01 checks its check > walk bound with walk_source_bytes' new +1 B tree-entry flag term (no independent measurement).",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/anchor_tests.rs",
+          "case": "storage::anchor::tests::anchor_cell_matches_independent_literal_and_validates_every_tree_level",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/anchor_tests.rs",
+          "case": "storage::anchor::tests::anchor_rejects_checksummed_semantic_damage_and_wrong_cell_count",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/anchor_tests.rs",
+          "case": "storage::anchor::tests::every_encode_validation_error_preserves_anchor_output",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/anchor_tests.rs",
+          "case": "storage::anchor::tests::root_load_requires_database_owner_reference_kind_and_level",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/anchor_tests.rs",
+          "case": "storage::anchor::tests::unl_p01_retired_list_matches_independent_literal_for_1_2_and_55",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/anchor_tests.rs",
+          "case": "storage::anchor::tests::unl_p02_retired_list_count_and_length_bounds",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/anchor_tests.rs",
+          "case": "storage::anchor::tests::unl_p03_retired_list_rejects_order_alias_range_kind_and_lsn",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/anchor_tests.rs",
+          "case": "storage::anchor::tests::unl_p04_list_is_row_only_and_one_cell_anchor_is_unchanged",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/anchor_tests.rs",
+          "case": "storage::anchor::tests::ovf_f03_retired_list_overflow_entries",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/anchor_tests.rs",
+          "case": "storage::anchor::tests::unl_c01_xtr1_codec_cost_per_decoder_path",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/overflow.rs",
+        "crates/engine/src/storage/overflow_tests.rs"
+      ],
+      "reason": "Revised chunk cell/page codec (OverflowChain total+digest, [24,48) zero, OverflowChainVerifier, inspect_overflow_page, OverflowSegmentWalk; OVF-F01): the fixed literals were recomputed by module-gate/evidence/dev3-08-3-o1/overflow_literal.py, so every overflow_tests case re-checks the new bytes and refusals; OVF-F07 pins the new overflow::source frame values.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/overflow_tests.rs",
+          "case": "storage::overflow::tests::overflow_head_literal_and_limits",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/overflow_tests.rs",
+          "case": "storage::overflow::tests::overflow_page_literal",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/overflow_tests.rs",
+          "case": "storage::overflow::tests::overflow_chain_fixed_boundaries",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/overflow_tests.rs",
+          "case": "storage::overflow::tests::overflow_rejects_checksummed_damage",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/overflow_tests.rs",
+          "case": "storage::overflow::tests::overflow_rejects_links_and_identity",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/overflow_tests.rs",
+          "case": "storage::overflow::tests::overflow_verifier_requires_complete_order_and_digest",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/overflow_tests.rs",
+          "case": "storage::overflow::tests::overflow_streaming_profiles",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/overflow_tests.rs",
+          "case": "storage::overflow::tests::overflow_encoders_preserve_outputs",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/overflow_tests.rs",
+          "case": "storage::overflow::tests::ovf_f01_inspect_and_segment_walk",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+          "case": "storage::semantic_row::transition::tests::ovf_f07_new_codec_frames",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/overflow_tests.rs",
+          "case": "storage::overflow::tests::pr67_maximum_pending_suffixes_preserve_walk_on_rejected_identity",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/retention_page/row.rs",
+        "crates/engine/src/storage/retention_page/row/job.rs",
+        "crates/engine/src/storage/retention_page/row/job_tests.rs",
+        "crates/engine/src/storage/retention_page/row/census.rs"
+      ],
+      "reason": "Job3 overflow root (PendingChain/ReturnChain, @285 decode, validate_root Reserved-pending/Releasing-chain rules, cleanup() chain branch; OVF-F02) and the two census rules now reading cleanup_started(): the job3_census_* cases exercise census.rs, the job3/rdl/rup literal cases show existing roots unchanged; row_codec_source_bounds_cover_measured_frames calls retention_page/row.rs source_bytes with the new validate_root term, which the outer max with root_decode_source_bytes() (6,540 B) hides, so its output is unchanged.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/retention_page/row/job_tests.rs",
+          "case": "storage::retention_page::row::job_tests::job3_literal_views_and_exact_recipes",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/retention_page/row/job_tests.rs",
+          "case": "storage::retention_page::row::job_tests::job3_closed_grammar_and_identity_rejections",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/retention_page/row/job_tests.rs",
+          "case": "storage::retention_page::row::job_tests::job3_budget_every_byte_is_checked",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/retention_page/row/job_tests.rs",
+          "case": "storage::retention_page::row::job_tests::job3_encode_errors_preserve_output",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/retention_page/row/job_tests.rs",
+          "case": "storage::retention_page::row::job_tests::job3_independent_multi_root_censuses",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/retention_page/row/job_tests.rs",
+          "case": "storage::retention_page::row::job_tests::job3_census_rejects_identity_and_high_water_conflicts",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/retention_page/row/job_tests.rs",
+          "case": "storage::retention_page::row::job_tests::job3_census_binds_root_and_job_namespace",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/retention_page/row/job_tests.rs",
+          "case": "storage::retention_page::row::job_tests::job3_census_checks_terminal_causal_boundaries",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/retention_page/row/job_tests.rs",
+          "case": "storage::retention_page::row::job_tests::job3_census_active_actor_limit",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/retention_page/row/job_tests.rs",
+          "case": "storage::retention_page::row::job_tests::job3_census_terminal_scope_and_create_visibility",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/retention_page/row/job_tests.rs",
+          "case": "storage::retention_page::row::job_tests::job3_selected_cell_borrows_original_census",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/retention_page/row/job_tests.rs",
+          "case": "storage::retention_page::row::job_tests::rdl_f05_effect_byte_accept_and_reject",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/retention_page/row/job_tests.rs",
+          "case": "storage::retention_page::row::job_tests::rdl_f06_effect_recipes_and_has_previous",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/retention_page/row/job_tests.rs",
+          "case": "storage::retention_page::row::job_tests::rup_f05_update_effect_accept_and_reject",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/retention_page/row/job_tests.rs",
+          "case": "storage::retention_page::row::job_tests::rup_f06_update_recipes_and_has_previous",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/retention_page/row/job_tests.rs",
+          "case": "storage::retention_page::row::job_tests::ovf_f02_overflow_root_states_and_recipes",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/retention_page/row/job_tests.rs",
+          "case": "storage::retention_page::row::job_tests::ovf_f02_overflow_root_rejections",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/retention_page/row/job_tests.rs",
+          "case": "storage::retention_page::row::job_tests::ovf_f02_returned_chain_starts_cleanup",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/retention_page/row/source_tests.rs",
+          "case": "storage::retention_page::row::source_tests::row_codec_source_bounds_cover_measured_frames",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/row_record.rs",
+        "crates/engine/src/storage/row_record/stream.rs",
+        "crates/engine/src/storage/row_record/stream_tests.rs",
+        "crates/engine/src/storage/row_record_tests.rs"
+      ],
+      "reason": "A-side canonical row helpers (canonical_row_digest_borrowed, encode_canonical_window_borrowed, CanonicalRowStream) and decode_materialized_row_with_schema on a Catalog schema (OVF-F05, eight cases); the existing row_record cases are the oracle the borrowed helpers must equal (the whole-row encoder and decoder literals); OVF-F07 pins the new row_record::source and stream::source frame values.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/row_record/stream_tests.rs",
+          "case": "storage::row_record::stream::tests::ovf_f05_digest_and_windows_equal_the_whole_encoder",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row_record/stream_tests.rs",
+          "case": "storage::row_record::stream::tests::ovf_f05_helpers_keep_the_encoder_error_order",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row_record/stream_tests.rs",
+          "case": "storage::row_record::stream::tests::ovf_f05_stream_accepts_every_split_of_valid_rows",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row_record/stream_tests.rs",
+          "case": "storage::row_record::stream::tests::ovf_f05_stream_judges_damage_as_the_joined_decoder",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row_record/stream_tests.rs",
+          "case": "storage::row_record::stream::tests::ovf_f05_stream_judges_large_row_damage_at_chunk_boundaries",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row_record/stream_tests.rs",
+          "case": "storage::row_record::stream::tests::ovf_f05_stream_rejects_misuse",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row_record/stream_tests.rs",
+          "case": "storage::row_record::stream::tests::ovf_f05_stream_with_catalog_schema",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row_record_tests.rs",
+          "case": "storage::row_record::tests::spl_canonical_values_len_is_the_literal_length",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row_record_tests.rs",
+          "case": "storage::row_record::tests::borrowed_schema_and_values_match_independent_canonical_literals",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row_record_tests.rs",
+          "case": "storage::row_record::tests::borrowed_schema_errors_preserve_output_and_wire_error_precedence",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row_record_tests.rs",
+          "case": "storage::row_record::tests::borrowed_catalog_schema_preserves_row_record_literals_and_failures",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row_record_tests.rs",
+          "case": "storage::row_record::tests::borrowed_schema_keeps_value_row_and_inline_size_limits_distinct",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row_record_tests.rs",
+          "case": "storage::row_record::tests::canonical_row_literals_and_borrowed_values",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row_record_tests.rs",
+          "case": "storage::row_record::tests::canonical_schema_and_size_boundaries",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row_record_tests.rs",
+          "case": "storage::row_record::tests::versioned_row_and_index_literals",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row_record_tests.rs",
+          "case": "storage::row_record::tests::every_short_buffer_and_trailing_input_is_rejected",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row_record_tests.rs",
+          "case": "storage::row_record::tests::fixed_noncanonical_fields_are_rejected",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row_record_tests.rs",
+          "case": "storage::row_record::tests::record_namespace_and_logical_identity_are_bound",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row_record_tests.rs",
+          "case": "storage::row_record::tests::row_payload_and_index_presence_matrices",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row_record_tests.rs",
+          "case": "storage::row_record::tests::materialized_overflow_requires_digest_and_schema",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row_record_tests.rs",
+          "case": "storage::row_record::tests::ovf_f05_materialized_row_against_catalog_schema",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row_record_tests.rs",
+          "case": "storage::row_record::tests::tree_values_bind_expected_row_ids",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row_record_tests.rs",
+          "case": "storage::row_record::tests::fixed_seed_rows_match_independent_wire_fields",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+          "case": "storage::semantic_row::transition::tests::ovf_f07_new_codec_frames",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row_record/stream_tests.rs",
+          "case": "storage::row_record::stream::tests::pr67_maximum_row_matches_independent_bytes_and_digest",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row_record/stream_tests.rs",
+          "case": "storage::row_record::stream::tests::pr67_utf8_stream_exhaustive_pairs_and_scalar_boundaries",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/semantic_row/core.rs",
+        "crates/engine/src/storage/semantic_row/operation.rs",
+        "crates/engine/src/storage/semantic_row/wire.rs",
+        "crates/engine/src/storage/semantic_row/wire_tests.rs"
+      ],
+      "reason": "Opcodes 14/15/25 (role, delete(), list(), Shape list sides, native kinds 6/10/12, core refs/cursor rules; OVF-F04) with the existing frame/shape/role cases that the new arms must leave unchanged (DELETE/UPDATE opcode cases, unknown opcodes moved to 18/26), and the graph::inventory action per role in transition_tests.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+          "case": "storage::semantic_row::wire_tests::wire_independent_thirty_frames_and_profile_ids",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+          "case": "storage::semantic_row::wire_tests::wire_rejects_profile_scope_opcode_and_outer_aliases",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+          "case": "storage::semantic_row::wire_tests::wire_rejects_owner_and_prior_chain_mismatches",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+          "case": "storage::semantic_row::wire_tests::wire_core_multiple_statement_and_mark_relations",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+          "case": "storage::semantic_row::wire_tests::wire_rejects_section_lengths_and_frame_corruption",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+          "case": "storage::semantic_row::wire_tests::wire_rejects_native_kind_length_presence_digest_and_order",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+          "case": "storage::semantic_row::wire_tests::wire_rejects_redo_init_kind_level_span_order_and_aliases",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+          "case": "storage::semantic_row::wire_tests::wire_closed_shape_equations_and_boundaries",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+          "case": "storage::semantic_row::wire_tests::wire_present_native_slot_and_directory_bounds",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+          "case": "storage::semantic_row::wire_tests::wire_dialect_reports_unsupported_before_semantic_use",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+          "case": "storage::semantic_row::wire_tests::rdl_f01_delete_opcodes_decode_role_outer_handoff",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+          "case": "storage::semantic_row::wire_tests::rdl_f02_delete_shape_and_frame_equations",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+          "case": "storage::semantic_row::wire_tests::rdl_f03_delete_frames_decode_with_contract_native_sides",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+          "case": "storage::semantic_row::wire_tests::rdl_f04_delete_native_totals_and_sides_refused",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+          "case": "storage::semantic_row::wire_tests::rdl_f04_delete_core_role_rules",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+          "case": "storage::semantic_row::wire_tests::rup_f01_update_opcodes_decode_role_outer_handoff",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+          "case": "storage::semantic_row::wire_tests::rup_f02_update_shape_and_frame_equations",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+          "case": "storage::semantic_row::wire_tests::rup_f03_update_frames_decode_with_contract_native_sides",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+          "case": "storage::semantic_row::wire_tests::rup_f04_update_cell_derivation_refused",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+          "case": "storage::semantic_row::wire_tests::rup_f08_update_core_role_rules",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+          "case": "storage::semantic_row::wire_tests::ovf_f04_chain_opcodes_decode_role_outer_handoff",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+          "case": "storage::semantic_row::wire_tests::ovf_f04_chain_shapes_and_frame_equations",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+          "case": "storage::semantic_row::wire_tests::ovf_f04_chain_frames_decode",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/wire_tests.rs",
+          "case": "storage::semantic_row::wire_tests::ovf_f04_chain_frame_damage",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+          "case": "storage::semantic_row::transition::tests::ovf_f04_inventory_action_follows_the_role",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/semantic_row/transition/source.rs",
+        "crates/engine/src/storage/semantic_row/transition_tests.rs"
+      ],
+      "reason": "decode_layout source model gains the native closure and list cell terms (+64 B): N1 checks the transition source bounds with the larger model term (its measured side has no new term); OVF-F07 pins the new codec function frames (dev3-row-overflow.md#o1-record).",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+          "case": "storage::semantic_row::transition::tests::n1_transition_source_bounds_cover_measured_frames",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+          "case": "storage::semantic_row::transition::tests::ovf_f07_new_codec_frames",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/semantic_row/ledger.rs",
+        "crates/engine/src/storage/semantic_row/ledger_tests.rs"
+      ],
+      "reason": "ReleasingCompensated row rule now reads cleanup_started() instead of release_cursor() != 0. They differ only for an overflow root whose chain ChainRetire returned at cursor 0: ovf_f02_ledger_returned_chain_needs_the_terminal edits the fixture's cursor-0 compensated roots into that root (refused beside the Active actor, accepted beside Committed/Aborted ones) and into one still holding its chain (accepted); the old expression fails it. The existing ledger literal/state cases show non-overflow roots unchanged.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/semantic_row/ledger_tests.rs",
+          "case": "storage::semantic_row::ledger::tests::row_ledger_literal_states_and_residuals",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/ledger_tests.rs",
+          "case": "storage::semantic_row::ledger::tests::row_ledger_actor_and_terminal_identity",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/ledger_tests.rs",
+          "case": "storage::semantic_row::ledger::tests::row_ledger_root_order_head_and_counts",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/ledger_tests.rs",
+          "case": "storage::semantic_row::ledger::tests::row_ledger_rollback_and_cleanup_states",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/ledger_tests.rs",
+          "case": "storage::semantic_row::ledger::tests::row_ledger_exact_budget_and_statement_credit",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/ledger_tests.rs",
+          "case": "storage::semantic_row::ledger::tests::row_ledger_descriptor_identity_and_order",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/ledger_tests.rs",
+          "case": "storage::semantic_row::ledger::tests::row_ledger_terminal_descriptor_lifetime_and_gaps",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/ledger_tests.rs",
+          "case": "storage::semantic_row::ledger::tests::row_ledger_observation_scope_and_borrowed_replacement",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/ledger_tests.rs",
+          "case": "storage::semantic_row::ledger::tests::row_ledger_full_abort_next_must_match_head",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/ledger_tests.rs",
+          "case": "storage::semantic_row::ledger::tests::rdl_f09_ledger_rows_follow_each_root_effect",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/ledger_tests.rs",
+          "case": "storage::semantic_row::ledger::tests::rup_f07_ledger_rows_of_update_roots",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/ledger_tests.rs",
+          "case": "storage::semantic_row::ledger::tests::ovf_f02_ledger_returned_chain_needs_the_terminal",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/semantic_row/undo.rs",
+        "crates/engine/src/storage/semantic_row/transition/prepare.rs"
+      ],
+      "reason": "op != op.role() became op.delete() (OverflowCancel's role is Cancel but it is not a DELETE operation). The two differ only for OverflowCancel, whose value no caller reads in O1 (each caller uses it only for the Forward/Clr/Prune roles). The DELETE transition cases reach the DELETE branch through prepare::op_effect and the cross-checked undo/jobs/leaf observers; the undo cases that reach opcode_effect show the INSERT branch unchanged; undo_release_cursor_material_and_same_generation_free (ends at the role check) and undo_rejects_operations_without_undo_native (ends at Unsupported first) are module regression cases that do not reach the changed line.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
+          "case": "storage::semantic_row::transition::tests::delete::rdl_c_delete_history_matches_literals",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
+          "case": "storage::semantic_row::transition::tests::delete::rdl_c_delete_history_rejects_variants",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
+          "case": "storage::semantic_row::transition::tests::delete::rdl_c_delete_history_borrowed_observer",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
+          "case": "storage::semantic_row::transition::tests::delete::rdl_c_delete_history_borrowed_producer",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
+          "case": "storage::semantic_row::transition::tests::delete::rdl_c_leaf_reservation_bounds_every_leaf_step",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
+          "case": "storage::semantic_row::transition::tests::delete::rdl_c_delete_forward_of_another_row_is_refused",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
+          "case": "storage::semantic_row::transition::tests::delete::rdl_c_leaf_reservation_forward_and_delete_prune",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/undo_tests.rs",
+          "case": "storage::semantic_row::undo_tests::undo_independent_seventeen_pairs_and_same_frame_status",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/undo_tests.rs",
+          "case": "storage::semantic_row::undo_tests::undo_reserve_uses_external_plan_and_generation_without_wrap",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/undo_tests.rs",
+          "case": "storage::semantic_row::undo_tests::undo_original_job_and_scalar_binding",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/undo_tests.rs",
+          "case": "storage::semantic_row::undo_tests::undo_actual_predecessor_uses_its_own_target_and_nearest_job",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/undo_tests.rs",
+          "case": "storage::semantic_row::undo_tests::undo_material_cut_and_incoming_are_exact",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/undo_tests.rs",
+          "case": "storage::semantic_row::undo_tests::undo_release_cursor_material_and_same_generation_free",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/undo_tests.rs",
+          "case": "storage::semantic_row::undo_tests::undo_same_frame_status_proof_is_required_and_checked",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/undo_tests.rs",
+          "case": "storage::semantic_row::undo_tests::undo_native_redo_page_identity_and_lsn_binding",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/undo_tests.rs",
+          "case": "storage::semantic_row::undo_tests::undo_rejects_operations_without_undo_native",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/plan4_recovery_base/image_records.rs",
+        "crates/engine/src/storage/plan4_recovery_base/row_overflow_tests.rs",
+        "crates/engine/src/storage/plan4_recovery_base/row_tests.rs"
+      ],
+      "reason": "Base4 codec: Overflow certificate role (Profile3, object >= 6), provenance role 7, pair() only for roles 3/4, chunk() (OVF-F06; row_tests.rs only declares the module); the Base4 closure census checks its bound with provenance_source_bytes' new role 7 term (+152 B; the measured side has no new term). That Base4 consumers refuse role 7 claims is not tested here: the decode of a base with a role 7 claim is OVF-C05 (O2).",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row_overflow_tests.rs",
+          "case": "storage::plan4_recovery_base::row::tests::overflow::ovf_f06_overflow_certificate_role",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row_overflow_tests.rs",
+          "case": "storage::plan4_recovery_base::row::tests::overflow::ovf_f06_role7_provenance_fields",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row_overflow_tests.rs",
+          "case": "storage::plan4_recovery_base::row::tests::overflow::ovf_f06_create_claims_keep_their_pair",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/plan4_recovery_base/row/graph/source_tests.rs",
+          "case": "storage::plan4_recovery_base::row::graph::source::tests::base4_closure_source_bound_covers_measured_frames",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    }
+  ],
+  "na": [
+    {
+      "paths": [
+        "crates/engine/src/storage/wal_io/plan4_retention/history/row.rs",
+        "crates/engine/src/storage/wal_io/plan4_retention/visibility/row_retirement.rs"
+      ],
+      "reason": "Only new match arms for opcodes 14/15/25: replay refuses them with RetentionCause::Unsupported (before O1 the wire decode refused them as RowSemantic(Unsupported); that cause change has no test) and Row retirement observes None. Replay reaches its arm only through a durable ChunkWrite/OverflowCancel/ChainRetire group and row_retirement only through a live group C prepared; no O1 producer or test path builds either (the product still refuses overflow rows before the first effect, and only wire_tests/transition_tests build such frames, for decode and inventory). O2 replaces the refusal with replay and tests it (OVF-C04). The previous arms are unchanged."
+    }
+  ],
+  "reviews": [
+    {
+      "id": "dev3-08-3-o1-d2",
+      "class": "D2",
+      "scopes": [
+        "policy"
+      ],
+      "author": "claude-thread-session/claude-project-thread-y6amas",
+      "reviewer": "claude-independent-review/dev3-08-3-o1",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/anchor.rs": "c8be688ef004866834f4682c504e9ab0ae925857",
+        "crates/engine/src/storage/anchor_tests.rs": "ebfaee651f446afb715324c52bb27e6ea29979f8",
+        "crates/engine/src/storage/overflow.rs": "ed8d7279a5945920283c6dab5ad15f06da732b9d",
+        "crates/engine/src/storage/overflow_tests.rs": "2b8a13a99877c87e1d52e04fad0f100789a6524b",
+        "crates/engine/src/storage/plan4_recovery_base/image_records.rs": "0ce3ef29790a76a5bacc9baf5bb8dcc6efc16f67",
+        "crates/engine/src/storage/plan4_recovery_base/row_overflow_tests.rs": "e716b83897c28dddc0d5fabed4f289c12ab19635",
+        "crates/engine/src/storage/plan4_recovery_base/row_tests.rs": "1a9d99f167df96ac90e4efc8ca28d742e6f9d2b9",
+        "crates/engine/src/storage/retention_page/row.rs": "d21f319ed4bc66df3a44c2795cb5006382ed672c",
+        "crates/engine/src/storage/retention_page/row/census.rs": "147f88ed9a27a474775807a83351b9b899e6f029",
+        "crates/engine/src/storage/retention_page/row/job.rs": "a1a5c443f46e2d50d2906a1c780c0ad3f8a2c901",
+        "crates/engine/src/storage/retention_page/row/job_tests.rs": "4ac3432fa341afc1a081bdca4b0b0228c34c128d",
+        "crates/engine/src/storage/row_record.rs": "f58dc456dce3a42da7b9ae966dc79a474e928135",
+        "crates/engine/src/storage/row_record/stream.rs": "979796c49e1d102e8e8836b82aa5f5c37ea4b395",
+        "crates/engine/src/storage/row_record/stream_tests.rs": "d4b83196c84773a0d7c4745adaad7037b90a7f77",
+        "crates/engine/src/storage/row_record_tests.rs": "4c877feaa24d4a30515b05ea2ae0481b896d3c9b",
+        "crates/engine/src/storage/semantic_row/core.rs": "a790ff08b6f811177ba36a7c22781069e6378d70",
+        "crates/engine/src/storage/semantic_row/ledger.rs": "6c000047b266394486f947440b313d778a551ddf",
+        "crates/engine/src/storage/semantic_row/operation.rs": "155462fbba2835e9fee37f60a10f3afe11330c77",
+        "crates/engine/src/storage/semantic_row/transition/prepare.rs": "3c294bd9890409ab98a62302fa617cca557f22d9",
+        "crates/engine/src/storage/semantic_row/transition/source.rs": "6eb3145b0f04341a8bbc6ebee4bbdbc9ccef5a34",
+        "crates/engine/src/storage/semantic_row/transition_tests.rs": "0a470ee62b00c519a4dffb53d9c7e50e6f551360",
+        "crates/engine/src/storage/semantic_row/undo.rs": "6f665ff909a51b7d8f80818d7a85c45fbe6c7fe9",
+        "crates/engine/src/storage/semantic_row/wire.rs": "1f2b8c9a0ac8b7a9fe9d2d2a1f19ac94ccfc0dde",
+        "crates/engine/src/storage/semantic_row/wire_tests.rs": "f7c778c1f1523b7a5c1205cd6351cfedea3c1935",
+        "crates/engine/src/storage/wal_io/plan4_retention/history/row.rs": "d389ab9264c69b15316e81720ab583010d95a7c6",
+        "crates/engine/src/storage/wal_io/plan4_retention/visibility/row_retirement.rs": "f07f9190912732b6e162c0c012e08502716a7a95",
+        "devdoc/contracts/dev3-module-consumers.md": "286d7da304fbd17bd9c33e0d7145dcf6d0788a3b"
+      },
+      "log": "2026-11-07 independent read-only D2 of the whole O1 diff (code, tests and the revised canonical contracts incl. dev3-module-consumers.md#row-shape), four rounds: module-gate/evidence/dev3-08-3-o1/review-r1.md (sha256 48e11d6e46560b9acef1c70c933a2faf09e4143746f5158dcf93d32d9fac9571; CONDITIONAL, 3 required: role 7 cell check moved to O2 and recorded, inventory action test, source models + OVF-F07), review-r2.md (sha256 4c48635b187cfcdb578e1b4d4eb7bb2e576ba273633aab979e0e1caa7598f51e; CONDITIONAL, 1 required: digest hasher term), review-r3.md (sha256 e04bf159e60fd89646d19ccecd75b52276e73722826e24fd8622d7bd6c7d9378; CONDITIONAL, 1 required: page codec SHA wording), review-r4.md (sha256 860c26b10c37960953e58951e9a4138a00dd4d2a19ac5c8da399ffe7d315ea92; ACCEPT at deef07d, required 0). The listed blobs equal deef07d's: the later commits add the review texts, merge the main design edition (PR #66) and add one ledger test (reviewed in dev3-08-3-o1-record), none touching a listed path. Reviewer runs: ovf_/overflow_/stream/row_record::/semantic_row::wire 72 PASS, census family 322 PASS (5 harness cases need vector inputs), clippy and fmt clean."
+    },
+    {
+      "id": "dev3-08-3-o1-record",
+      "class": "D2",
+      "scopes": [
+        "policy"
+      ],
+      "author": "claude-thread-session/claude-project-thread-y6amas",
+      "reviewer": "claude-independent-review/dev3-08-3-o1-record",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/semantic_row/ledger_tests.rs": "d8c16145d3dbb114fbdf3deb4b205b632c061cf0",
+        "crates/engine/src/storage/retention_page/row/source_tests.rs": "97d1e793cb710493fbfca37d5eb4d01471f110f9",
+        "crates/engine/src/storage/plan4_recovery_base/row/graph/source_tests.rs": "cffd31782fe8cd6c709add3238d8023d65cd9436",
+        "crates/engine/src/storage/semantic_row/transition_delete_tests.rs": "62255821879777437c6d87c8d0016600e516c9d2",
+        "crates/engine/src/storage/semantic_row/undo_tests.rs": "0a5117c8266d439b475d3413161ee98724c9fd27"
+      },
+      "log": "2026-11-07 independent read-only D2 of this record (case selection, reasons, N/A, review coverage) and of the ledger test it added, three rounds: module-gate/evidence/dev3-08-3-o1/record-check.md (sha256 176ffb471cf493ba7a9456ac4b602cdb9b3ae1810059fad0f47a40367a9e9751; CONDITIONAL, 1 required R1: ledger.rs cleanup_started() change had no case reaching it, fixed by ovf_f02_ledger_returned_chain_needs_the_terminal in cde4166; S1-S7 wording), module-gate/evidence/dev3-08-3-o1/record-check-r2.md (sha256 09f41d373e5ee8f43b7057f23ff8d11ce4b065563b35cd9d5eef203f1dbbe596; CONDITIONAL, 1 required R2: ledger_tests.rs in no group's paths, fixed in ac0795e with T1-T3 wording), module-gate/evidence/dev3-08-3-o1/record-check-r3.md (sha256 208f92682dabd4130e8bfd2cf5aee71e989c9748925cad91097bf98e33497ab4; ACCEPT at ac0795e, required 0; its U1 wording for rust_tests[2] and U2 trailing newline applied after). Reviewer ran the 120 selected cases from these blobs: 120 passed, 0 failed (r2 2.88 s, r3 2.51 s), and simulated this entry in a scratch clone: gate PASS, 0 errors."
+    },
+    {
+      "id": "dev3-08-3-o1-codex-additional-tests",
+      "class": "D1",
+      "scopes": [],
+      "author": "codex-pr67/root",
+      "reviewer": "codex-pr67/root/independent_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/overflow_tests.rs": "d4ec2f6473e25d971143da03a08fbb872f2f0053",
+        "crates/engine/src/storage/row_record/stream_tests.rs": "ff6f4a82468af3a0e1c694234b13855ea3185b30"
+      },
+      "log": "module-gate/evidence/dev3-08-3-o1/review-codex.md: independent D1 of three added tests, their literal oracle and exact source blobs; required findings 0. Prior review identities and test results remain unchanged."
+    }
+  ]
+}

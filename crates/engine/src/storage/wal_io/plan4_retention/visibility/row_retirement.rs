@@ -52,7 +52,12 @@ fn scope(operation: Operation) -> Option<RetirementScope> {
         | Operation::Cancel
         | Operation::UpdateClr
         | Operation::AgingStart
-        | Operation::ReleaseRole => None,
+        | Operation::ReleaseRole
+        // A chain return moves chunk pages to the anchor's retired list;
+        // no reader reaches them (dev3-row-overflow.md#no-reader-race).
+        | Operation::ChunkWrite
+        | Operation::OverflowCancel
+        | Operation::ChainRetire => None,
     }
 }
 

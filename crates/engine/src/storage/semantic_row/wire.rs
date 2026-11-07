@@ -250,29 +250,42 @@ pub(crate) fn decode_layout(
     }
     let native_bytes = u32_at(payload, if operation.handoff() { 228 } else { 136 }) as usize;
     let native_at = 160 + h + if operation.handoff() { 3072 } else { 1536 } + 256;
-    // UPDATE names two cells: C' from its leaf record header, C from the
-    // total (dev3-row-update.md#update-shape). Every other row op names C.
-    let (c, new_cell) = if operation.update() {
-        let natives = native_at
+    let natives = || {
+        native_at
             .checked_add(native_bytes)
             .and_then(|end| bytes.get(native_at..end))
-            .ok_or(Error::Corrupt)?;
-        super::operation::update_cells_from_native(operation, natives)?
-    } else {
-        (
-            super::operation::cell_from_native(operation, native_bytes)?,
-            0,
-        )
+            .ok_or(Error::Corrupt)
     };
-    let edges = u16_at(payload, if operation.handoff() { 244 } else { 126 });
     let row = operation.row();
-    if row && !matches!(edges, 3 | 4) {
-        return Err(Error::Corrupt);
-    }
-    let shape = operation
-        .shape_cells(c, new_cell, row && edges == 4)
-        .map_err(|_| Error::Corrupt)?;
-    if operation.frame_bytes_cells(c, new_cell, shape.predecessor)? != bytes.len()
+    let shape = if operation.list() {
+        // The chain-return groups size their anchor XTR1 native by its
+        // header (dev3-row-overflow.md#opcodes); `validate_native_shape`
+        // re-checks it.
+        let (before, after) = super::operation::list_from_native(natives()?)?;
+        operation
+            .shape_list(before, after)
+            .map_err(|_| Error::Corrupt)?
+    } else {
+        // UPDATE names two cells: C' from its leaf record header, C from
+        // the total (dev3-row-update.md#update-shape). Every other row op
+        // names C.
+        let (c, new_cell) = if operation.update() {
+            super::operation::update_cells_from_native(operation, natives()?)?
+        } else {
+            (
+                super::operation::cell_from_native(operation, native_bytes)?,
+                0,
+            )
+        };
+        let edges = u16_at(payload, if operation.handoff() { 244 } else { 126 });
+        if row && !matches!(edges, 3 | 4) {
+            return Err(Error::Corrupt);
+        }
+        operation
+            .shape_cells(c, new_cell, row && edges == 4)
+            .map_err(|_| Error::Corrupt)?
+    };
+    if shape.frame_bytes(operation.handoff()) != bytes.len()
         || envelope.record_count != shape.redo_count
     {
         return Err(Error::Corrupt);
@@ -381,7 +394,7 @@ fn validate_native_shape(view: LayoutView<'_>) -> Result<()> {
             return Err(Error::Corrupt);
         }
         let kind = bytes[0];
-        if !matches!(kind, 1 | 3 | 5 | 8 | 9) || !zero(&bytes[88..128]) {
+        if !matches!(kind, 1 | 3 | 5 | 6 | 8 | 9 | 10 | 12) || !zero(&bytes[88..128]) {
             return Err(Error::Corrupt);
         }
         let bit = 1 << kind;
@@ -397,13 +410,9 @@ fn validate_native_shape(view: LayoutView<'_>) -> Result<()> {
         // Per-operation sides (dev3-row-delete.md#delete-shape,
         // dev3-row-update.md#update-shape): a DELETE/UPDATE leaf and U change
         // size; every other native keeps its fixed size.
-        let (presence, before_size, after_size) = super::operation::native_sides(
-            view.operation,
-            kind,
-            view.shape.cell,
-            usize::from(view.shape.new_cell),
-        )
-        .ok_or(Error::Corrupt)?;
+        let (presence, before_size, after_size) =
+            super::operation::native_sides(view.operation, kind, &view.shape)
+                .ok_or(Error::Corrupt)?;
         if bytes[1] != presence {
             return Err(Error::Corrupt);
         }
@@ -438,9 +447,12 @@ fn validate_native_shape(view: LayoutView<'_>) -> Result<()> {
         ] {
             if present {
                 let slot_value = u16_at(bytes, slot);
+                // The anchor native is its XTR1 cell, slot 1
+                // (dev3-row-overflow.md#opcodes).
                 let valid_slot = match kind {
                     1 => slot_value > 0 && slot_value != u16::MAX,
                     9 => slot_value < 15,
+                    10 => slot_value == 1,
                     _ => slot_value == 0,
                 };
                 if !valid_slot
@@ -486,26 +498,37 @@ fn validate_redo_shape(view: LayoutView<'_>) -> Result<()> {
             return Err(Error::OrderMismatch);
         }
         previous = Some(rank);
+        use crate::storage::page::{PAGE_BYTES, PageKind};
         let expected_kind = match native.kind() {
-            1 => crate::storage::page::PageKind::RowLeaf,
-            3 => crate::storage::page::PageKind::Undo,
-            5 => crate::storage::page::PageKind::TransactionStatus,
-            8 => crate::storage::page::PageKind::RetentionRoot,
-            9 => crate::storage::page::PageKind::RetentionJobs,
+            1 => PageKind::RowLeaf,
+            3 => PageKind::Undo,
+            5 => PageKind::TransactionStatus,
+            6 => PageKind::Allocation,
+            8 => PageKind::RetentionRoot,
+            9 => PageKind::RetentionJobs,
+            10 => PageKind::TreeAnchor,
+            12 => PageKind::Overflow,
             _ => unreachable!("validated native kind"),
         };
-        if redo.kind != RedoKind::Patch
-            || redo.target.kind != expected_kind
-            || redo.target.level != 0
-        {
+        if redo.target.kind != expected_kind || redo.target.level != 0 {
             return Err(Error::Corrupt);
         }
-        let (offset, data) = if view.operation.status_patch() {
-            (16128, 224)
-        } else {
-            (72, 16280)
+        // ChunkWrite brings two redo forms into a Row group
+        // (dev3-row-overflow.md#opcodes): the allocator entry's 96-byte
+        // patch at the native's entry offset and the new chunk's INIT.
+        let (redo_kind, offset, data) = match native.kind() {
+            6 => {
+                let at = native.before_offset().ok_or(Error::Corrupt)?;
+                if native.after_offset() != Some(at) {
+                    return Err(Error::Corrupt);
+                }
+                (RedoKind::Patch, at, 96)
+            }
+            12 => (RedoKind::Init, 0, PAGE_BYTES),
+            _ if view.operation.status_patch() => (RedoKind::Patch, 16128, 224),
+            _ => (RedoKind::Patch, 72, 16280),
         };
-        if redo.offset != offset || redo.data.len() != data {
+        if redo.kind != redo_kind || redo.offset != offset || redo.data.len() != data {
             return Err(Error::Corrupt);
         }
         bytes = &bytes[length..];

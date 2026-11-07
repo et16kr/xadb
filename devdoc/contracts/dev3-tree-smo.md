@@ -1193,13 +1193,21 @@ L의 parent P에 따라 둘 중 하나다.
 - 항목은 (file, page_no) 엄격 증가 순서다. 목록이 비면 cell 1이 없다(n=0을 encode하지 않는다). 최대 cell은
   16+40×55 = 2,216B로 anchor page의 cell 여유 안에 든다.
 - 항목 검산: file은 첫 file, page_no 9..63, anchor·현재 root·다른 항목과 물리 주소가 다름(incarnation만 다른
-  alias도 거절), kind/level은 RowLeaf 0 또는 RowInternal 1..15, retire LSN은 0보다 크고 anchor pageLSN 이하.
-  retire LSN은 퇴역시킨 그룹의 complete LSN(그 Structural owner의 id)이므로 Structural high-water 이하이고,
+  alias도 거절), kind/level은 RowLeaf 0 또는 RowInternal 1..15 또는 Overflow 0(2026-11-07, 아래), retire LSN은
+  0보다 크고 anchor pageLSN 이하.
+  tree page의 retire LSN은 퇴역시킨 그룹의 complete LSN(그 Structural owner의 id)이므로 Structural high-water 이하이고,
   퇴역 page는 그 뒤 쓰이지 않으므로 그 page의 pageLSN보다 크다. 이 LSN은 구조 그룹의 순서와 퇴역 이력을
   나타내며 snapshot의 commit sequence q와 비교하지 않는다. 후속 3.14.1 eligibility는
   [회수 계약 §5.1](dev3-task-14-reclamation.md#algorithms)의 published Q·등록 q로 구한 horizon과
   rollback/object/backup 소유, 마지막 영속 edge·transient pin·flush claim·DWB 조건을 실제 반환 시점에 다시
   검산한다. XTR1의 LSN이나 read gate 통과만으로 Free/reuse 권한을 만들지 않는다.
+- 2026-11-07 개정([overflow chain](dev3-row-overflow.md#retired-overflow), O1): chain을 반환한 OverflowCancel·
+  ChainRetire 그룹이 그 chunk를 `(Overflow, level 0)` 항목으로 같은 목록에 넣는다. 그 retire LSN은 그 Row 그룹의
+  complete LSN이며 Structural owner가 아니므로 Structural high-water와 비교하지 않는다. codec은 `0 < retire LSN ≤
+  anchor pageLSN`만, page를 읽는 Base4는 `chunk pageLSN < retire LSN`을 본다(O2). 목록에 tree 항목이
+  하나라도 있을 때만 anchor revision이 2 이상이어야 한다. chain 반환은 route를 바꾸지 않아 revision을 올리지 않으므로,
+  Overflow 항목만 있는 목록은 revision 1 anchor에서도 받는다. 같은 목록의 tree·Overflow 항목은 같은 물리 순서와
+  alias 규칙을 따른다.
 - 운반: `TreeAnchor`(lifetime 없는 Copy 값, 여러 census가 `size_of`로 센다)는 바꾸지 않는다. `decode_anchor`는
   cell 1개 또는 2개를 받아 cell 1의 문법만 검산하고, 목록은 별도 borrowed 함수
   `anchor::retired(input, expected) -> RetiredList<'_>`로 Base4 closure와 candidate만 읽는다. 따라서 root만 쓰는
@@ -1419,7 +1427,8 @@ D2는 구현을 1회차 CONDITIONAL(필수 1) 뒤 2회차 ACCEPT, census 보강�
   돌아온 뒤 부르는 별도 함수 `check_list`가 하므로 root만 읽는 decoder frame에 늘어나는 지역값은
   그 Result 하나다. `retired`는 anchor 전체를 decode한 뒤 같은 입력의 envelope를 다시 검증해 cell 1을 빌린다.
   목록이 있으면 anchor revision이 2 이상이어야 한다(목록은 unlink 그룹이 revision+1과 함께만 쓴다). 목록이 나쁜
-  encode 입력은 InvalidInput이다.
+  encode 입력은 InvalidInput이다. (2026-11-07 개정: revision 2 이상은 tree 항목이 있는 목록에만 요구한다. 위
+  [retired 목록](#retired-목록-anchor의-xtr1-cell)의 overflow 개정.)
 - `semantic_row/structure.rs`·`bank.rs`: `Operation::{LeafUnlink=3, RootCollapse=4}`, opcode별 frame bytes,
   bank의 consumed WAL 35,248·19,032. bank 관측 이름 `FinishedSplit`을 `FinishedStructural`로 바꿨다(동작 같음).
   split의 `decode_core`·`init`은 opcode 1·2만 받고 3·4는 Unsupported다. split의 `decode_layout`은 split 길이
