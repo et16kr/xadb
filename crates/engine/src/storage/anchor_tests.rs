@@ -462,8 +462,9 @@ fn unl_p03_retired_list_rejects_order_alias_range_kind_and_lsn() {
     );
 }
 
-/// UNL-P04: only a Row anchor of revision 2 or later carries a list, a
-/// third cell is refused, and the one-cell anchor bytes are unchanged.
+/// UNL-P04: only a Row anchor carries a list, of revision 2 or later when it
+/// has a tree entry (OVF-F03 has the Overflow-only list), a third cell is
+/// refused, and the one-cell anchor bytes are unchanged.
 #[test]
 fn unl_p04_list_is_row_only_and_one_cell_anchor_is_unchanged() {
     let h = first_header(9, 90);
@@ -515,6 +516,119 @@ fn unl_p04_list_is_row_only_and_one_cell_anchor_is_unchanged() {
         1
     );
     assert_eq!(retired(&plain, h.identity).unwrap(), RetiredList::EMPTY);
+}
+
+/// OVF-F03 (dev3-row-overflow.md#retired-overflow): XTR1 takes (Overflow 7,
+/// level 0) entries. An Overflow-only list is valid at revision 1 and later;
+/// a tree entry beside it still needs revision 2. The LSN rule of the codec
+/// is `1..=anchor_lsn` for both kinds, and n = 55 is the bound.
+#[test]
+fn ovf_f03_retired_list_overflow_entries() {
+    let h = first_header(9, 90);
+    let chunk = (20, 2, 7, 0, 90);
+    let leaf = (11, 3, 1, 0, 80);
+    for revision in [1, 2, 7] {
+        let root = row_root(10, 1, revision);
+        for entries in [vec![chunk], vec![(12, 5, 7, 0, 1), chunk]] {
+            let list = literal(&entries);
+            let mut out = [0; PAGE_BYTES];
+            encode_listed_anchor(h, root, &list, &mut out).unwrap();
+            assert_eq!(out, listed_page(h, root, &list));
+            let decoded = retired(&out, h.identity).unwrap();
+            assert_eq!(decoded.cell(), list.as_slice());
+            assert_eq!(
+                decoded.get(entries.len() - 1).unwrap().kind,
+                PageKind::Overflow
+            );
+            assert_eq!(decode_anchor(&out, h.identity).unwrap().root(), root);
+        }
+        // A tree entry beside Overflow entries needs revision 2.
+        let mixed = literal(&[leaf, chunk]);
+        let page = listed_page(h, root, &mixed);
+        let mut out = [0xa5; PAGE_BYTES];
+        if revision == 1 {
+            assert_eq!(
+                decode_anchor(&page, h.identity).err(),
+                Some(PageError::Corrupt)
+            );
+            assert_eq!(
+                encode_listed_anchor(h, root, &mixed, &mut out),
+                Err(PageError::InvalidInput)
+            );
+            assert_eq!(out, [0xa5; PAGE_BYTES]);
+        } else {
+            encode_listed_anchor(h, root, &mixed, &mut out).unwrap();
+            assert_eq!(out, page);
+        }
+    }
+    // n = 55 Overflow entries at revision 1 (anchor and root off the extent).
+    let full_h = first_header(3, 90);
+    let full_root = row_root(4, 0, 1);
+    let full = literal(&(9..64).map(|n| (n, 1, 7, 0, 90)).collect::<Vec<_>>());
+    let mut out = [0; PAGE_BYTES];
+    encode_listed_anchor(full_h, full_root, &full, &mut out).unwrap();
+    let list = retired(&out, full_h.identity).unwrap();
+    assert_eq!(list.len(), 55);
+    let mut cell = [0; RETIRED_CELL_BYTES];
+    let one = RetiredPage {
+        page: first(5, 1),
+        kind: PageKind::Overflow,
+        level: 0,
+        retire_lsn: 90,
+    };
+    assert!(list.extend(&[one], &mut cell).is_err());
+    // Damage: kind 7 at a level, LSN 0 and past the anchor LSN, aliases.
+    let root = row_root(10, 1, 1);
+    for (i, entries) in [
+        vec![(20, 2, 7, 1, 90)],
+        vec![(20, 2, 7, 15, 90)],
+        vec![(20, 2, 7, 0, 0)],
+        vec![(20, 2, 7, 0, 91)],
+        vec![(9, 2, 7, 0, 90)],
+        vec![(10, 3, 7, 0, 90)],
+        vec![(20, 2, 7, 0, 90), (20, 3, 7, 0, 90)],
+        vec![(64, 2, 7, 0, 90)],
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let list = literal(&entries);
+        let page = listed_page(h, root, &list);
+        assert_eq!(
+            decode_anchor(&page, h.identity).err(),
+            Some(PageError::Corrupt),
+            "list {i}"
+        );
+        let mut out = [0xa5; PAGE_BYTES];
+        assert_eq!(
+            encode_listed_anchor(h, root, &list, &mut out),
+            Err(PageError::InvalidInput),
+            "encode {i}"
+        );
+        assert_eq!(out, [0xa5; PAGE_BYTES]);
+    }
+    // The first unlink over a revision 1 Overflow list merges both kinds in
+    // physical order; that list is written with revision 2.
+    let base = listed_page(h, row_root(10, 1, 1), &literal(&[(12, 5, 7, 0, 60), chunk]));
+    let mut cell = [0; RETIRED_CELL_BYTES];
+    let added = RetiredPage {
+        page: first(15, 2),
+        kind: PageKind::RowLeaf,
+        level: 0,
+        retire_lsn: 90,
+    };
+    let used = retired(&base, h.identity)
+        .unwrap()
+        .extend(&[added], &mut cell)
+        .unwrap();
+    let merged = literal(&[(12, 5, 7, 0, 60), (15, 2, 1, 0, 90), chunk]);
+    assert_eq!(&cell[..used], merged.as_slice());
+    let mut out = [0xa5; PAGE_BYTES];
+    assert_eq!(
+        encode_listed_anchor(h, row_root(10, 1, 1), &cell[..used], &mut out),
+        Err(PageError::InvalidInput)
+    );
+    encode_listed_anchor(h, row_root(10, 1, 2), &cell[..used], &mut out).unwrap();
 }
 
 /// UNL-C01 (dev3-tree-smo.md#empty-leaf-unlink): the XTR1 list's source

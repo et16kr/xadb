@@ -97,13 +97,17 @@ impl TreeAnchor {
     }
 }
 
-/// One page a Row tree retired while it stays allocated to the tree object.
+/// One page a Row tree retired while it stays allocated to the tree object:
+/// a tree page (RowLeaf, RowInternal) an unlink retired, or an overflow
+/// chunk (Overflow, level 0) a chain return retired
+/// (dev3-row-overflow.md#retired-overflow).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct RetiredPage {
     pub(crate) page: PageRef,
     pub(crate) kind: PageKind,
     pub(crate) level: u8,
-    /// Complete LSN of the retiring Structural group (its owner id).
+    /// Complete LSN of the retiring group: a tree page's Structural owner
+    /// id, an Overflow chunk's OverflowCancel or ChainRetire group.
     pub(crate) retire_lsn: u64,
 }
 
@@ -213,7 +217,11 @@ impl<'a> RetiredList<'a> {
 
 /// XTR1 grammar against its anchor: first-file dynamic pages in strict
 /// physical order, never the anchor or current root address (an incarnation
-/// alias included), Row kinds/levels, and retire LSNs in `1..=anchor_lsn`.
+/// alias included), Row tree kinds/levels or Overflow level 0, and retire
+/// LSNs in `1..=anchor_lsn`. A list with a tree entry needs revision 2 or
+/// later (an unlink wrote it); an Overflow-only list is valid at revision 1,
+/// since a chain return leaves the route alone
+/// (dev3-row-overflow.md#retired-overflow).
 fn check_retired(
     cell: &[u8],
     anchor: PageRef,
@@ -231,12 +239,12 @@ fn check_retired(
         || cell.len() != RETIRED_HEADER_BYTES + count * RETIRED_ENTRY_BYTES
         || cell[8..16].iter().any(|b| *b != 0)
         || root.tree != TreeKind::Row
-        || root.revision < 2
     {
         return Err(PageError::Corrupt);
     }
     let first = FileId::new(FIRST_FILE).expect("first file");
     let mut previous = None;
+    let mut tree_entry = false;
     for at in (RETIRED_HEADER_BYTES..cell.len()).step_by(RETIRED_ENTRY_BYTES) {
         let item = RetiredPage::decode(&cell[at..at + RETIRED_ENTRY_BYTES])?;
         let same =
@@ -248,7 +256,7 @@ fn check_retired(
             || previous.is_some_and(|page_no| page_no >= item.page.page_no)
             || !matches!(
                 (item.kind, item.level),
-                (PageKind::RowLeaf, 0) | (PageKind::RowInternal, 1..=15)
+                (PageKind::RowLeaf, 0) | (PageKind::RowInternal, 1..=15) | (PageKind::Overflow, 0)
             )
             || item.retire_lsn == 0
             || item.retire_lsn > anchor_lsn
@@ -256,6 +264,10 @@ fn check_retired(
             return Err(PageError::Corrupt);
         }
         previous = Some(item.page.page_no);
+        tree_entry |= item.kind != PageKind::Overflow;
+    }
+    if tree_entry && root.revision < 2 {
+        return Err(PageError::Corrupt);
     }
     Ok(())
 }
@@ -284,8 +296,8 @@ pub(crate) fn encode_anchor(
 }
 
 /// Encode the anchor and, when `retired` is not empty, that exact XTR1 cell
-/// as cell 1. Only a Row anchor of revision 2 or later may carry a list.
-/// An empty list is `encode_anchor`.
+/// as cell 1. Only a Row anchor may carry a list, of revision 2 or later
+/// when the list has a tree entry. An empty list is `encode_anchor`.
 pub(crate) fn encode_listed_anchor(
     header: PageHeader,
     root: AnchorRoot,
