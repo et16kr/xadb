@@ -367,8 +367,9 @@ pub(crate) mod source {
     }
 
     /// `canonical_row_digest_borrowed`: arguments, the values, total, hasher
-    /// and its closure, digest and Result, then the length check or `emit`
-    /// with the hasher update.
+    /// and its closure, digest and Result, then the length check, `emit`
+    /// with the hasher update, or `ContentHasher::digest`, each SHA call
+    /// over the caller's closure `sha`.
     pub(crate) fn digest(sha: usize) -> usize {
         size_of::<(RowSchemaInput<'_>, &[ValueRef<'_>])>()
             + size_of::<RowValuesInput<'_>>()
@@ -377,7 +378,9 @@ pub(crate) mod source {
             + size_of::<&mut ContentHasher>()
             + size_of::<[u8; 32]>()
             + size_of::<Result<(usize, [u8; 32]), RowError>>()
-            + input_len().max(emit() + sha)
+            + input_len()
+                .max(emit() + sha)
+                .max(crate::storage::overflow::source::hasher_digest(sha))
     }
 
     /// `encode_canonical_window_borrowed`: arguments, the values, total,
@@ -398,12 +401,15 @@ pub(crate) mod source {
         size_of::<CanonicalRowStream<'static>>()
     }
 
-    /// `CanonicalRowStream::push` → `consume` → `fill`/`tag`/`payload` →
+    /// `CanonicalRowStream::push` → `consume` (receiver, piece, the `Field`
+    /// copy it matches and the used count) → `fill`/`tag`/`payload` →
     /// `Utf8Carry::feed` or `end_value` with the schema lookup.
     pub(crate) fn push() -> usize {
         let push = size_of::<(&mut CanonicalRowStream<'_>, &[u8])>()
             + 2 * size_of::<Result<(), RowError>>();
-        let consume = size_of::<&[u8]>() + returned::<usize, RowError>();
+        let consume = size_of::<(&mut CanonicalRowStream<'_>, &[u8])>()
+            + size_of::<Field>()
+            + returned::<usize, RowError>();
         let fill = size_of::<(&mut CanonicalRowStream<'_>, &[u8])>()
             + size_of::<[usize; 3]>()
             + size_of::<ValueRef<'_>>()

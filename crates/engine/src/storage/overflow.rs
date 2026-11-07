@@ -599,19 +599,34 @@ pub(crate) mod source {
             + size_of::<Result<(), OverflowError>>()
     }
 
+    /// `foundation::codec::content_digest` with the caller's SHA closure
+    /// `sha`: the input, the hash state it builds and the digest it returns.
+    pub(crate) fn content_digest(sha: usize) -> usize {
+        size_of::<&[u8]>() + size_of::<ContentHasher>() + size_of::<[u8; 32]>() + sha
+    }
+
+    /// `ContentHasher::digest` with the caller's SHA closure `sha`: the
+    /// receiver, the hash state it clones and the digest it returns.
+    pub(crate) fn hasher_digest(sha: usize) -> usize {
+        size_of::<&ContentHasher>() + size_of::<ContentHasher>() + size_of::<[u8; 32]>() + sha
+    }
+
     /// `OverflowChainVerifier::push`: arguments, next and its Result, the
-    /// head's chain, the expected identity, the visited-set scan, the cloned
-    /// hasher and digest, then the caller's SHA closure `sha`.
+    /// head's chain, the expected identity, the visited-set scan and its
+    /// closure, the cloned hasher, the compared digest and the Result, then
+    /// the hasher update or `ContentHasher::digest`, each over the caller's
+    /// SHA closure `sha`.
     pub(crate) fn verifier_push(sha: usize) -> usize {
         size_of::<(&mut OverflowChainVerifier, &OverflowPageView<'_>)>()
             + returned::<PageRef, OverflowError>()
             + size_of::<OverflowChain>()
             + size_of::<PageIdentity>()
             + size_of::<std::iter::Flatten<std::slice::Iter<'_, Option<PageRef>>>>()
+            + size_of::<(&PageRef, &PageRef)>()
             + size_of::<ContentHasher>()
             + size_of::<[u8; 32]>()
             + size_of::<Result<(), OverflowError>>()
-            + sha
+            + (size_of::<(&mut ContentHasher, &[u8])>() + sha).max(hasher_digest(sha))
     }
 }
 

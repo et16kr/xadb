@@ -4369,4 +4369,26 @@ fn ovf_f07_new_codec_frames() {
         stream::stream(),
         stream::push(),
     );
+    // The values §14 records; a change to any model or term moves one here
+    // and in the record together.
+    assert_eq!(
+        [
+            page,
+            canonical,
+            inspect,
+            chunk::segment_walk(),
+            chunk::segment_push(),
+            chunk::verifier_push(sha),
+            materialized,
+            row::materialized_columns(canonical, sha),
+            row::input_len(),
+            stream::digest(sha),
+            stream::window(),
+            stream::stream(),
+            stream::push(),
+        ],
+        [
+            938, 762, 1506, 352, 249, 2057, 2080, 2336, 309, 2064, 621, 200, 312
+        ]
+    );
 }

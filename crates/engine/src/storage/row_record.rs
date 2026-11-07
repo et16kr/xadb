@@ -702,14 +702,14 @@ pub(crate) mod source {
     }
 
     /// `decode_materialized_row_with_schema`: arguments, the row digest and
-    /// the returned view, then the caller's SHA closure `sha` or the
-    /// canonical decode `canonical`. The `&[Column]` wrapper adds its own
-    /// arguments and Result (`materialized_columns`).
+    /// the returned view, then `content_digest` over the caller's SHA
+    /// closure `sha` or the canonical decode `canonical`. The `&[Column]`
+    /// wrapper adds its own arguments and Result (`materialized_columns`).
     pub(crate) fn materialized(canonical: usize, sha: usize) -> usize {
         size_of::<(OverflowHead, &[u8], RowSchemaInput<'_>)>()
             + size_of::<[u8; 32]>()
             + size_of::<Result<CanonicalRowView<'_>, RowError>>()
-            + sha.max(canonical)
+            + crate::storage::overflow::source::content_digest(sha).max(canonical)
     }
 
     /// `decode_materialized_row` over `materialized`.
