@@ -1,12 +1,14 @@
 # DEV3 큰 행 overflow chain — 쓰기·읽기·반환 설계
 
-2026-11-07 · `D3-ROW-OVERFLOW-001` · **설계(O0) 2판 / 독립 D2 1회차 CONDITIONAL(필수 5) 반영, 2회차 대기 / 제품 구현·시험 NOT_RUN**
+2026-11-07 · `D3-ROW-OVERFLOW-001` · **설계(O0) 3판 / 독립 D2 2회차 CONDITIONAL(필수 2) 반영, 3회차 대기 / 제품 구현·시험 NOT_RUN**
 
-[overflow 표현](dev3-overflow-format.md) · [행 표현](dev3-row-format.md) · [행 owner R6·§5.4](dev3-task-06-tree-rows.md#algorithms) · [첫 Row profile](dev3-module-consumers.md#profile) · [WAL shape](dev3-module-consumers.md#row-shape) · [scope3 wire](dev3-module-consumers.md#row-scope3-wire) · [unlink retired 목록](dev3-tree-smo.md#empty-leaf-unlink) · [자원 정본](dev3-resource-bounds.md) · [목표 등급 SCOPE-002](../plans/project-direction.md#scope-002) · [일정 08-3](../plans/dev3-schedule-baseline.md#items) · [D2 1회차](../../module-gate/evidence/dev3-08-3-design/review-r1.md)
+[overflow 표현](dev3-overflow-format.md) · [행 표현](dev3-row-format.md) · [행 owner R6·§5.4](dev3-task-06-tree-rows.md#algorithms) · [첫 Row profile](dev3-module-consumers.md#profile) · [WAL shape](dev3-module-consumers.md#row-shape) · [scope3 wire](dev3-module-consumers.md#row-scope3-wire) · [unlink retired 목록](dev3-tree-smo.md#empty-leaf-unlink) · [자원 정본](dev3-resource-bounds.md) · [목표 등급 SCOPE-002](../plans/project-direction.md#scope-002) · [일정 08-3](../plans/dev3-schedule-baseline.md#items) · [D2 1회차](../../module-gate/evidence/dev3-08-3-design/review-r1.md) · [D2 2회차](../../module-gate/evidence/dev3-08-3-design/review-r2.md)
 
 일정 08-3 "overflow chain 쓰기·읽기·반환"(2일, 1단위)의 설계다. 지금 Row 경로는 canonical 2,048 B를 넘는 행을 첫 효과 전에 `Unsupported`로 거절한다(A `encode_input`, C RowReserve의 `MIN_CANONICAL..=INLINE_ROW_BYTES`). [overflow 표현](dev3-overflow-format.md)의 head·chunk codec과 streaming 검산기는 있으나 실제 page 할당·WAL·소유·회수가 없다. 이 문서는 코드보다 먼저 그 형식·전이·비용·복구·시험·단계를 정한다. 제품 PASS가 아니다.
 
 2판은 D2 1회차의 필수 R1–R5를 반영했다. 1판이 "그대로"라고 적은 기존 불변식 가운데 실제 코드에서 새 전이를 거절하는 것(XTR1 revision, Job3·ledger·descriptor LSN 규칙, Base4 certificate·provenance, split·unlink 검산과 leaf 관측기)을 각각 바꾸는 규칙으로 정했고, 바꾸는 정본 문장은 [§13](#supersedes)에 모았다.
+
+3판은 D2 2회차의 필수 N1·N2와 권고를 반영했다. N1: provenance role 7 claim을 지금 CREATE pair로 읽는 Base4 소비자 네 곳(`InitProvenance::pair`, `validate_pairs`, `relations::provenance`, `relations::payloads`)과 claim 생성 함수를 §8.1·§8.3에 정했다. N2: §4.3 표에서 Reserved·Retained의 `[288,320)`은 XRP1 projection이다.
 
 <a id="scope"></a>
 ## 1. 범위
@@ -90,7 +92,7 @@ digest는 쓰임이 셋이고 섞지 않는다.
 | `@285` payload | 1 | 1 | 1 | **0**(Prune이 0으로 씀) |
 | `@280` cell_bytes | 244 | 244 | 0(지금처럼) | 0 |
 | `[200,248)` | pair(anchor, leaf), 지금처럼 | pair, 지금처럼 | **chain**: `[200,224)` anchor(pair[0] 그대로), `[224,248)` chain root. ChainRetire가 zero로 씀 | zero |
-| `[288,292)` | zero | zero | **chain total** u32(2,049..131,072). ChainRetire가 zero로 씀 | zero |
+| `[288,320)` | XRP1 projection(§4.2의 root를 비운 XRP1), 지금처럼 | projection, 지금처럼 | CLR이 projection을 지우고 `[288,292)` **chain total** u32(2,049..131,072), `[292,320)` zero. ChainRetire가 total을 zero로 씀 | zero(지금처럼) |
 | `[328,360)` | **pending**: `[328,352)` front PageRef(쓴 chunk가 없으면 zero), `[352,356)` total u32, `[356,358)` written u16(0..k), `[358,360)` zero. front zero ⇔ written 0 | sender digest(Forward가 pending을 덮음, written = k이어야 Forward 가능) | sender digest | sender digest |
 | `last_step` | written 0이면 `== lease_lsn`, written ≥ 1이면 마지막 ChunkWrite의 LSN(`> lease_lsn`) | `== adoption_lsn` | chain이 있으면 cursor 0이고 `== release_start`, 없으면(ChainRetire 뒤) `> release_start` | 지금처럼 |
 
@@ -99,7 +101,8 @@ digest는 쓰임이 셋이고 섞지 않는다.
 - chain의 anchor는 Retained pair[0]을 CLR이 그대로 남긴 것이다. ChainRetire는 이것으로 XTR1을 쓸 anchor를 찾는다(catalog 조회 없음). total은 k와 cleanup 비용을 정하므로 chunk를 읽지 않고도 알 수 있게 Job에 둔다.
 - `JobView`에 `payload()`, `pending()`(front·total·written), `chain()`(anchor·root·total), `forward_steps()`를 더한다. Job codec은 위 조합만 받고 나머지를 Corrupt로 거절한다. 옛 binary는 `@285=1`을 Corrupt로 거절한다(개발 형식 규칙).
 - 비용 recipe(§6.2)는 Job에서 나온다: Reserved overflow root의 `forward_wal() = (k−written)·W + F`, `forward_steps() = 1 + k − written`(inline은 지금처럼 1). `cleanup()`은 Reserved·Retained에서 지금 식에 C=244를 넣은 값, chain이 있는 ReleasingCompensated에서 `(5, 4R + X)`, 그 밖의 Releasing에서 지금처럼 `(4−cursor, (4−cursor)·R)`이다.
-- Job 관측기([`jobs.rs`](../../crates/engine/src/storage/semantic_row/jobs.rs))의 바꿀 수 있는 구간: ChunkWrite는 `(328,360)`(pending)과 `(376,1024)`, ChainRetire는 `(200,248)`·`(288,292)`·`(376,1024)`이다. Forward·CLR·Prune의 구간은 그대로이며 위 표의 칸이 그 안에 있다(Forward `(328,360)`, CLR·Prune `(200,248)`·`(285,320)`).
+- "정리 걸음이 시작됐다"는 판정은 `release_cursor != 0` **또는** ChainRetire를 마친 overflow root(ReleasingCompensated·`@285 = 1`·chain 칸 zero)다. `JobView::cleanup_started()`로 두고, 지금 cursor만 보는 두 곳(`semantic_row/ledger.rs`의 ReleasingCompensated terminal 규칙, `retention_page/row/census.rs`의 terminal 순서 규칙)이 이것을 쓴다. ChainRetire는 terminal 뒤에만 열리므로 두 규칙이 그대로 성립한다.
+- Job 관측기([`jobs.rs`](../../crates/engine/src/storage/semantic_row/jobs.rs))의 바꿀 수 있는 구간: ChunkWrite는 `(328,360)`(pending)과 `(376,384)`(last_step. ChunkWrite는 `cleanup()`을 바꾸지 않으므로 budget 칸은 그대로), ChainRetire는 `(200,248)`·`(288,292)`·`(376,1024)`이다. Forward·CLR·Prune의 구간은 그대로이며 위 표의 칸이 그 안에 있다(Forward `(328,360)`, CLR·Prune `(200,248)`·`(285,320)`).
 
 <a id="retired-overflow"></a>
 ### 4.4 retired 목록의 Overflow 항목
@@ -134,8 +137,9 @@ P = 16,344(whole-body Patch). b·a는 anchor XTR1 cell의 before·after 길이(�
 | ChainRetire | 없음(non-handoff) | consumed_wal += 실제 frame | 선택한 Job ordinal+1(ReleaseRole과 같음) |
 
 - **core·ref.** 세 opcode의 core는 Reserve·Cancel·ReleaseRole과 같은 ref 규칙을 따른다(current 필수, next·target 없음). ChunkWrite·OverflowCancel은 Reserved root의 statement/mutation을, ChainRetire는 Releasing root의 work cursor를 쓴다.
+- **native slot.** `validate_native_shape`는 지금 kind 1·9 밖의 native에 slot 0을 요구한다. allocator(6)·chunk(12)는 slot 0이고, anchor(10)는 XTR1 cell이므로 **slot 1**이다. 이 분기를 더한다.
 - **wire decode.** ChunkWrite의 shape는 고정이다. OverflowCancel·ChainRetire는 kind 10 native header의 before·after 길이로 b·a를 읽은 뒤 전체 크기를 검산한다(UPDATE의 C' 사전 scan과 같은 bounded 규칙: 최대 3개 record, 각 128 B 이상·구간 안, 남는 bytes 없음, b·a ∈ {0} ∪ {16+40n}). 옛 binary는 14·15·25를 Unsupported로 거절한다.
-- `Operation::role()`: OverflowCancel → Cancel, ChunkWrite·ChainRetire → 자기 자신. role은 chain·statement·descriptor 규칙에만 쓰고 page 효과와 크기는 opcode로 정한다(DELETE·UPDATE의 role과 같은 원칙). Forward·CLR·Prune·Cancel의 shape는 바뀌지 않는다(overflow root에서 C=244일 뿐이다).
+- `Operation::role()`: OverflowCancel → Cancel, ChunkWrite·ChainRetire → 자기 자신. role은 chain·statement·descriptor 규칙에만 쓰고 page 효과와 크기는 opcode로 정한다(DELETE·UPDATE의 role과 같은 원칙). OverflowCancel은 `role()`이 자기 자신이 아닌 첫 비-DELETE·UPDATE opcode다. 지금 `op_effect`(`transition/prepare.rs`)와 `opcode_effect`(`semantic_row/undo.rs`)는 `op != op.role()`을 DELETE로 추론하므로, 명시적 `Operation::delete()`(DeleteForward·DeleteClr·DeletePrune)로 바꾼다(O1). Forward·CLR·Prune·Cancel의 shape는 바뀌지 않는다(overflow root에서 C=244일 뿐이다).
 
 <a id="transitions"></a>
 ## 5. 전이
@@ -150,9 +154,10 @@ P = 16,344(whole-body Patch). b·a는 anchor XTR1 cell의 before·after 길이(�
 | ChainRetire | chain 칸 → zero, last_step := LSN, cursor 0 그대로 | — | (읽기만) | — | XTR1 + k개 항목 | — |
 | Prune(overflow) | Retained→ReleasingCommitted, `@285` := 0 | — | — | 재stamp(head 그대로) | — | 지금 INSERT Prune과 같음 |
 
-- **ChunkWrite의 검사.** Reserved overflow root이고 written < k, 새 chunk의 index·count·total·payload 길이(`min(16,092, total−i·16,092)`)가 pending과 맞고, next가 pending front와 같다. digest는 head에 들어갈 값(A 계획의 digest)이며, 앞서 쓴 chunk가 있으면 front chunk의 digest와 같아야 한다. Forward가 payload 전체로 검산한다. 할당할 page는 split의 신규 page와 같은 allocator-only 규칙으로 고른다(`structure/candidate.rs`의 선택: 첫 extent 9..63에서 가장 낮은 ordinal의 Free, `next_reservation_generation`이 MAX가 아님). 원 pool이 그 page를 지금 받을 수 없으면(next generation claim·mutable flush lease·DWB idle) Unchanged `FlushRequired`/Busy로 돌아가 같은 chunk를 다시 부르며, 다른 page를 고르지 않는다. 그래서 replay가 같은 page를 다시 고른다.
+- **ChunkWrite의 검사.** Reserved overflow root이고 written < k, 새 chunk의 index·count·total·payload 길이(`min(16,092, total−i·16,092)`)가 pending과 맞고, next가 pending front와 같다. digest는 head에 들어갈 값(A 계획의 digest)이며, 앞서 쓴 chunk가 있으면 front chunk의 digest와 같아야 한다. Forward가 payload 전체로 검산한다. 할당할 page는 split의 신규 page와 같은 allocator-only 규칙으로 고른다(`structure/candidate.rs`의 선택: 첫 extent 9..63에서 가장 낮은 ordinal의 Free, `next_reservation_generation`이 MAX가 아님). allocator에 Reserved entry가 하나라도 있으면(진행 중인 System 예약) ChunkWrite는 열리지 않는다(split audit와 같은 조건). Base4의 System batch 검산이 allocator pageLSN을 batch birth로 쓰므로 그 사이에 Row 그룹이 allocator를 patch하면 안 된다. preflight(§7.2)도 같은 조건을 첫 효과 전에 Capacity로 본다. preflight 뒤에 생기면 ChunkWrite는 Unchanged OrderMismatch이고 A는 §7.1의 4로 OverflowCancel·statement 실패로 끝낸다(재시도하지 않으므로 끝이 있다). 원 pool이 그 page를 지금 받을 수 없으면(next generation claim·mutable flush lease·DWB idle) Unchanged `FlushRequired`/Busy로 돌아가 같은 chunk를 다시 부르며, 다른 page를 고르지 않는다. 그래서 replay가 같은 page를 다시 고른다.
 - **Forward의 검사.** 지금의 INSERT Forward 검사(원 schema·version·`record.len+12 == C`·XRP1)에 더해: written = k, record의 head.root = pending front, head.total = pending total, 그리고 §6.3의 chain 검산이 성공해야 한다.
 - **OverflowCancel**은 written ≥ 1인 Reserved overflow root를 지우는 Cancel이다. written = 0이면 지금의 Cancel을 쓴다(OverflowCancel은 Unchanged InvalidInput). front에서 `OverflowSegmentWalk`(first index k−written)로 written개 chunk를 읽어 그 page를 XTR1에 넣는다. 마지막 chunk(index k−1)의 next는 zero여야 하고 그 수가 written과 같아야 한다.
+- **jobs.rs census.** 지금 census는 Reserve·Forward·Cancel·Commit·AbortEnd·Clr에만 TerminalLeased를 허용하고 나머지 연산에는 TerminalReady를 요구한다. ChunkWrite와 OverflowCancel(role Cancel)을 TerminalLeased 목록에 더하고 둘 다 `reserved == 1`을 요구한다. ChainRetire는 목록에 넣지 않는다. 그래서 기본 분기(TerminalReady)가 "ChainRetire는 terminal 뒤"를 강제한다.
 - **ChainRetire**는 chain이 있는 ReleasingCompensated root의 첫 정리 걸음이다(cursor 0, 다른 정리보다 먼저). 그 root의 거래가 terminal Ready가 된 뒤의 live 정리 drain과 복구 cleanup에서만 열린다(Releasing 정리는 maintenance이고 terminal 뒤에만 연다: [module-consumers](dev3-module-consumers.md#profile), `row_start/retire.rs`의 `row_cleanup_next`). 그래서 statement rollback의 CLR 직후가 아니라 거래가 끝난 뒤 반환된다. root에서 k개 chunk를 head 없는 verifier(`OverflowSegmentWalk`, first index 0, chain = chunk 0의 chain, total = Job의 total)로 읽어 XTR1에 넣는다. chain이 남아 있는 동안 ReleaseRole은 Unchanged InvalidInput이다.
 - 반환 두 그룹이 읽는 chunk는 그 그룹의 변경 page가 아니다. 이 chain은 그 root만 쥐고 있고 단일 MutationPort 아래서 바뀌지 않으므로, producer가 읽은 next와 index를 Job·XTR1의 after가 운반하고 replay가 같은 page image로 다시 확인한다(§8.1). 각 chunk는 page identity(DB·owner = table·generation·kind 7·level 0), allocator entry(`Allocated(g, table, Overflow)`, incarnation = g)가 맞아야 한다. 하나라도 어긋나면 손상이며 chain을 일부만 반환하지 않는다.
 - **소유가 바뀌는 그룹은 원자적이다.** chunk page의 소유자(§8.3)는 ChunkWrite(없음→pending), Forward(pending→leaf 행), OverflowCancel(pending→XTR1), CLR(leaf 행→Job chain), ChainRetire(Job chain→XTR1)에서만 바뀌고, 각 그룹 안에서 옛 소유자를 지우고 새 소유자를 쓴다.
@@ -184,10 +189,11 @@ W = 56,976(ChunkWrite), F = Forward(C=244) = `91,548+128h`, R = 55,528(ReleaseRo
 | CLR 뒤 남는 cleanup | `(4, 4R = 222,112)` | `(5, 4R + X = 281,168)` |
 | ChainRetire 뒤 / Prune 뒤 | — / `(4, 4R)` | `(4, 4R)` / `(4, 4R)` |
 
-- **ledger·descriptor 규칙.** `ledger.rs`의 `remaining()`은 row1을 `debt(job.forward_steps(), job.forward_wal())`로 계산한다. `validate_transaction`과 `validate_admission`의 Reserved root 규칙은 `descriptor.chain.apply == job.last_step()`(inline·written 0이면 lease_lsn과 같다), `inventory.change_lsn == job.lease_lsn()`(그대로), `last_mutation_sequence == job.mutation()`(그대로)이다. A의 Forward 준비(`row/insert/group.rs`)도 같은 두 식(chain.apply == last_step, row1 == `debt(forward_wal, forward_steps)`)으로 바꾼다.
+- **ledger·descriptor 규칙.** `ledger.rs`의 `remaining()`은 row1을 `debt(job.forward_steps(), job.forward_wal())`로 계산한다. `validate_transaction`의 Reserved root 규칙은 `descriptor.chain.apply == job.last_step()`(inline·written 0이면 lease_lsn과 같다), `inventory.change_lsn == job.lease_lsn()`(그대로), `last_mutation_sequence == job.mutation()`(그대로)이다. `validate_admission`은 개수·terminal row·peak만 보므로 바뀌지 않는다. A의 Forward 준비(`row/insert/group.rs`)도 같은 두 식(chain.apply == last_step, row1 == `debt(forward_wal, forward_steps)`)으로 바꾼다.
 - Reserve의 admission은 이 표의 Tx row1을 처음부터 k개 chunk로 계산한다. ChunkWrite마다 W와 한 걸음을 소비한다.
 - OverflowCancel(≤ 60,864)은 Cancel처럼 Reserved root의 남은 Forward 몫에서 낸다. 그 몫은 언제나 F ≥ 91,548을 포함하므로 모자라지 않는다. 쓴 chunk의 W는 반환하지 않는다(이미 소비한 WAL).
 - Job cleanup은 Prune 경로(`89,984+128h + 4R`)와 CLR 경로(`X + 4R`) 중 큰 것을 예약한다. 두 경로 모두 5걸음이다. Prune 경로가 크므로 inline INSERT 식에 C=244를 넣은 값과 같다. CLR은 미사용 Prune 몫 `30,928+128h`를 반환하고 `(5, 4R+X)`를 남긴다. ChainRetire는 실제 frame(b·a)만 Root consumed_wal에 더하고, Job의 다음 recipe `(4, 4R)`와의 차액이 반환된다.
+- **보호 WAL.** 큰 행 하나의 Reserve는 처음부터 row1 `9W+F` = 604,460 B와 Job cleanup 312,224 B(h=1)를 보호한다. [자원 정본](dev3-resource-bounds.md)의 "WAL·owned·protected 가운데 가장 작은 여유가 신규 admission을 닫는다"에 이 몫이 그대로 들어가므로, 큰 행을 쓰는 거래가 있는 동안 다른 admission의 여유가 그만큼 준다. ChunkWrite·Forward가 걸음마다 그 몫을 소비한다.
 - 최대 행(k=9)의 정상 commit 경로 WAL은 Reserve 57,336 + 9W 512,784 + F 91,676 + Prune 90,112 + 4R 222,112 ≈ 0.97 MB다. chunk 그룹마다 Root·Job whole-body Patch 32,688 B가 고정 부담이다(§9).
 
 <a id="forward-check"></a>
@@ -224,7 +230,7 @@ A의 새 frame(chunk 반복, 계획 값)은 [F4 caller 상한](../evidence/modul
 <a id="c-entries"></a>
 ### 7.2 C 진입
 
-- `preflight_row`: overflow 계획의 길이·index 0·leaf 공간(head 기준)을 검사하고, 첫 extent에 allocator-eligible Free page가 k개 이상인지 본다. 모자라면 첫 효과 전 **Capacity**다. INSERT의 leaf 공간은 Reserve 전에 확인되므로 Reserve와 Forward 사이에 split이 끼지 않고(`row/insert/group.rs`의 "no split separates a Reserve from its Forward"), 단일 MutationPort 아래 다른 writer가 없다. 그래서 preflight를 통과하면 ChunkWrite는 Capacity로 실패하지 않고, pool 상태(FlushRequired·Busy)만 재시도한다.
+- `preflight_row`: overflow 계획의 길이·index 0·leaf 공간(head 기준)을 검사하고, 첫 extent에 allocator-eligible Free page가 k개 이상이고 allocator에 Reserved entry가 없는지 본다. 아니면 첫 효과 전 **Capacity**다. INSERT의 leaf 공간은 Reserve 전에 확인되므로 Reserve와 Forward 사이에 split이 끼지 않고(`row/insert/group.rs`의 "no split separates a Reserve from its Forward"), 단일 MutationPort 아래 다른 writer가 없다. 그래서 preflight를 통과하면 ChunkWrite는 Capacity로 실패하지 않고, pool 상태(FlushRequired·Busy)만 재시도한다.
 - `ReservedRow::prepare_chunk`/`apply`: ChunkWrite의 효과. 신규 page 등록은 split의 신규 page 경로(원 pool의 next generation·claim·등록, mutable flush lease와 DWB idle 검사)를 Row 단계에서 쓰도록 일반화한다. 별도 I/O owner나 새 pool을 만들지 않는다. 각 ChunkWrite는 Row write라서 TerminalReadGate를 닫는다(`plan4_apply/row/write.rs`).
 - `ReservedRow::cancel`: written에 따라 Cancel 또는 OverflowCancel.
 - live 정리(`row_cleanup_next`/`retire_row`)와 복구 cleanup은 chain이 남은 ReleasingCompensated root에서 ChainRetire를 먼저 고른다. jobs.rs의 maintenance 연산 목록과 `row_cleanup_next`의 선택 순서에 ChainRetire를 더한다.
@@ -268,7 +274,7 @@ O2·O3의 D2는 비시험 코드의 `RowPayload::`·`INLINE_ROW_BYTES`·`5..=204
 지금 split·unlink candidate의 `audit`(`semantic_row/structure/candidate.rs`)는 table 소유 Allocated page 가운데 anchor가 아니고 visited에도 없는 page가 모두 retired 목록에 있어야 한다고 본다. commit된 큰 행의 chunk는 visited도 retired도 아니므로 지금 그대로면 그 table의 다음 split·unlink가 막힌다. 2판은 tree 소유와 chunk 소유를 나눈다.
 
 - **tree 소유.** `reached ⊎ retired_tree == owned_tree`. owned_tree는 kind RowLeaf·RowInternal인 소유 page다. `retired_pages`와 `reached`는 tree 항목만 decode한다.
-- **chunk 소유(개수 closure, chunk LOAD 없음).** table 소유 kind 7 page 수 = (visited leaf의 모든 Overflow 행 head.count 합) + (그 table의 Reserved overflow root의 written 합) + (그 table의 chain이 있는 ReleasingCompensated root의 ceil(total/16,092) 합) + (XTR1 Overflow 항목 수). XTR1 Overflow 항목은 allocator로만 검사한다(owner·kind 7·incarnation·visited 아님). leaf 행은 audit가 weight를 세며 이미 decode하므로 추가 LOAD가 없다.
+- **chunk 소유(개수 closure, chunk LOAD 없음).** table 소유 kind 7 page 수 = (visited leaf의 모든 Overflow 행 head.count 합) + (그 table의 chain이 있는 ReleasingCompensated root의 ceil(total/16,092) 합) + (XTR1 Overflow 항목 수). pending chain 항은 없다: `audit`는 어느 actor든 RootReserved Job이 있으면 OrderMismatch로 거절하므로(`candidate.rs`), Reserved overflow root가 있는 동안 SMO는 열리지 않는다. XTR1 Overflow 항목은 allocator로만 검사한다(owner·kind 7·incarnation·visited 아님). leaf 행은 audit가 weight를 세며 이미 decode하므로 추가 LOAD가 없다.
 - 이 closure는 개수만 본다. 각 chain의 page identity는 Forward·OverflowCancel·ChainRetire의 걸음과 Base4(§8.3)가 본다. SMO는 kind 7 page를 고르지도 바꾸지도 않으므로(신규 page는 Free에서만 고른다) 이 나눔이 tree closure를 약하게 하지 않는다.
 - unlink는 XTR1에 tree 항목을 더할 때 기존 Overflow 항목을 보존한다(`extend`의 물리 순서 병합). 쓴 목록은 §4.4의 kind별 규칙으로 다시 검산한다.
 - 비용: audit에 행당 비교 몇 번과 u64 계수 몇 개가 는다. C lifecycle census(44,304 중 여유 605)와 preflight C(여유 182)에 들어가므로 O2 census로 확인한다(§11).
@@ -281,7 +287,7 @@ O2·O3의 D2는 비시험 코드의 `RowPayload::`·`INLINE_ROW_BYTES`·`5..=204
 
 `history::validate_live`와 복구 replay는 세 opcode를 지금 Row 그룹처럼 다시 계산한다.
 
-- **ChunkWrite**는 allocator entry(가장 낮은 allocator-eligible Free였는지 포함)·chunk INIT image·Job pending을 대조하고, 그 page의 **INIT claim**(352 B, role 7, §8.3)을 replay claims에 쓴다. claim을 만드는 것은 Row history(`history/row.rs`)이고 형식은 Catalog CREATE의 `init_record`와 같다(source `Transaction(actor)`, `@176` = root lease_lsn).
+- **ChunkWrite**는 allocator entry(가장 낮은 allocator-eligible Free였는지 포함)·chunk INIT image·Job pending을 대조하고, 그 page의 **INIT claim**(352 B, role 7, §8.3)을 replay claims에 쓴다. claim을 만드는 것은 Row history(`history/row.rs`)의 새 함수 `overflow_init_record`다. Catalog CREATE의 `init_record`와는 header(`[0,128)`: role·source kind·page·INIT LSN·writer epoch·frame digest·initial digest)와 source `[128,176)`(`Transaction(actor)`), `@176`(= root lease_lsn)만 공유하고 `[184,256)`은 role 7 형식이다. `init_record`는 role 선택과 pair 조건 때문에 role 7을 만들 수 없다. Catalog CREATE처럼 INIT 전에 그 page의 arena slot과 claim이 zero여야 한다(`history/catalog.rs`의 claim 기록 조건).
 - **Forward(overflow)**는 arena의 chunk image로 §6.3의 검산을 다시 한다.
 - **OverflowCancel·ChainRetire**는 arena의 chunk image로 next·index를 다시 따라가 XTR1 after와 같은지 본다. Row 그룹이 anchor page를 처음 쓰므로 Row history의 anchor image 대조(지금은 proof page로 읽기만)가 anchor after를 받는다.
 - 반환한 chunk의 arena image와 INIT claim은 지우지 않는다. page가 Allocated로 남으므로 Base4는 그 provenance를 계속 요구한다(retired tree page가 Structural claim을 유지하는 것과 같다).
@@ -300,6 +306,12 @@ Base4는 형식을 바꾼다. 1판의 "record·certificate 형식은 바꾸지 �
 
 - **certificate.** `decode_certificate`의 dynamic role(ordinal ≥ 9)에 `Overflow`(level 0, object ≥ 6)를 더한다. `encode_certificate`도 같은 role을 쓴다.
 - **provenance role 7.** `validate_provenance`에 role 7(source kind 2, `TxnRef`)을 더한다: `[128,176)` actor, `@176` root lease_lsn(< INIT LSN), `[184,208)` table object·generation 1·schema epoch 1, `[208,232)` table anchor(dynamic, chunk와 다른 주소), `[232,234)` chunk index, `[234,236)` count, `[236,240)` total, `[240,256)` zero. index·count·total은 chunk page의 cell과 같아야 하고 kind는 Overflow다.
+- **role 7을 CREATE pair로 읽는 지금의 소비자.** 지금 Base4는 source kind 2(Transaction)인 claim을 모두 CREATE pair(role 3|4)로 읽는다. role 7을 더하면 다음 네 곳을 함께 바꾼다(O1 codec, O2 검산).
+  1. **accessor.** `InitProvenance::pair()`는 role 3|4에서만 `Some`이다(지금은 source kind 2이면 `[232,256)`을 `expect`로 decode하므로 role 7에서 panic한다). role 7은 `chunk()`(anchor·index·count·total) accessor를 따로 둔다. `object()`는 그대로다(`[184,208)`이 같다).
+  2. **`validate_pairs`**(`plan4_recovery_base/row.rs`). role 7을 짝 검사에서 건너뛴다. 대신 role 7의 anchor가 그 table의 CREATE role 3 claim의 page이고, source·object가 그 table과 맞는지 본다.
+  3. **`relations::provenance`**(`catalog/graph/relations.rs`). 지금은 claim에서 canonical 초기 image(anchor 또는 빈 RowLeaf)를 다시 encode해 `initial_digest`와 비교한다. chunk의 INIT image에는 payload가 있어 claim만으로 다시 만들 수 없다. role 7은 다시 encode하지 않고 **certificate pageLSN == `init_lsn`**과 **`content_digest(현재 image) == initial_digest`**를 요구한다. 08-3에서 chunk page는 INIT 뒤 어느 그룹도 쓰지 않으므로(§5) 현재 image가 INIT image다. 14-2가 page를 재사용하면 이 규칙이 바뀐다(§13).
+  4. **`relations::payloads`.** ordinal 9..63 certificate의 kind 분기에 Overflow를 더한다(지금은 `_ => Unsupported`). owner = table object·generation 1, level 0만 보고, 소유 검산은 아래 `chunks` closure가 맡는다.
+- **allocator incarnation 상계.** `relations::validate`는 각 entry의 `incarnation − 1 ≤ System HW + creates + Structural HW`를 요구한다. ChunkWrite 할당은 이 합에 없으므로 **table 소유 kind 7 Allocated page 수**를 합에 더한다. 08-3에서 chunk page는 Free로 돌아가지 않으므로(반환은 XTR1, 실제 Free는 14-2) 지금까지의 ChunkWrite 할당 수가 그 page 수와 같다. 그 page가 전에 다른 용도로 할당·해제된 적이 있어도(예: 반환된 Undo page) 그 할당은 원래 항에 이미 들어 있다. 14-2가 Overflow page를 Free로 돌리면 이 항을 다시 정한다(§13).
 - **현재 tree 검산**([current-tree-closure](dev3-tree-smo.md#current-tree-closure))을 kind별로 나눈다. table 소유 kind 7 page는 tree 도달 집합 밖의 별도 집합 `chunks`이고, 각 page의 claim은 role 7·anchor = 그 table의 anchor여야 한다. retired 순회는 kind 7 항목이면 `inspect_overflow_page`로 읽고 `retire_lsn ≤ anchor_lsn`·`pageLSN < retire_lsn`을 보며 Structural high-water와 비교하지 않는다. closure는 `reached ⊎ retired_tree == owned_tree`와 `chain_owned ⊎ retired_overflow == chunks`다.
 - **chain_owned**는 다음 셋의 서로소 합이다. 각 page는 정확히 한 번이어야 한다.
   1. reached leaf에 있는 **모든** Overflow 행(미확정·Prune 대기 포함): head.root에서 k개 chunk, `OverflowChainVerifier` 전체 검산(digest 포함).
@@ -332,12 +344,13 @@ Base4는 형식을 바꾼다. 1판의 "record·certificate 형식은 바꾸지 �
 | OVF-F03 | O1 | XTR1 Overflow 항목: 정상, kind 7 level ≠ 0, retire LSN 규칙(kind별), **revision 1 anchor의 Overflow 전용 목록 정상·tree 항목이 섞이면 revision 1 거절**, n = 55 경계 |
 | OVF-F04 | O1 | 세 opcode의 shape·frame bytes(ChunkWrite 56,976, b·a 경계의 OverflowCancel 56,472+b+a·ChainRetire 54,664+b+a), native kind 6·10·12의 header 칸, 두 새 redo 형식, wire decode의 anchor native 사전 scan 손상, role·inventory action, 옛 opcode 거절 |
 | OVF-F05 | O1 | A의 `canonical_row_digest_borrowed`·`encode_canonical_window_borrowed`가 전체 encoder bytes·SHA와 같음(2,049/16,092/16,093/32,184/32,185/131,072, 여러 열·경계에 걸친 값, 오류 순서), `CanonicalRowStream`이 chunk 경계를 가리지 않고 decoder와 같은 판정(모든 byte 손상·잘림·schema 변형) |
+| OVF-F06 | O1 | Base4 codec: certificate의 Overflow role(level 0, object ≥ 6) 정상·손상, provenance role 7의 각 칸(actor·`@176 <` INIT LSN·object·anchor·index < count·count = ceil(total/16,092)·total 범위·`[240,256)` zero) 정상·손상, `pair()`가 role 7에서 None이고 `chunk()`가 값을 돌려줌(role 3·4의 `pair()`는 그대로), 그 밖의 role·source kind 조합 거절 |
 | OVF-C01 | O2 | ChunkWrite 전이: allocator(가장 낮은 eligible)·INIT·pending·descriptor(chain.apply·row1)·Root, index·next·payload 길이·front·digest 위반 거절 |
 | OVF-C02 | O2 | Forward(overflow): written < k, root·total 불일치, chain 손상(digest·schema·순서·중복 주소·allocator entry) 거절, 정상 전이(descriptor chain.apply == last_step) |
 | OVF-C03 | O2 | OverflowCancel·ChainRetire: XTR1 after(revision 1·2 anchor 모두), 손상 chain 거절(일부 반환 없음), ReleaseRole이 chain 뒤에만, Root canceled·consumed_wal·job cursor |
-| OVF-C04 | O2 | replay가 위 그룹을 같은 결과로 다시 계산(INIT claim 포함)하고, 바뀐 frame을 거절 |
-| OVF-C05 | O2 | Base4: certificate·provenance role 7 정상·손상, claim 없는 kind 7, 네 소유자 각각, 소유자 없는 page, 두 소유자, 다른 incarnation, retired Overflow 항목의 pageLSN ≥ retire LSN |
-| OVF-C06 | O2 | split·unlink 검산(§7.6): 큰 행·pending·보상 chain·XTR1 Overflow가 있는 table의 정상 split·unlink, 개수가 하나 많거나 적으면 거절, Overflow 항목이 있는 XTR1 위의 unlink 목록 병합 |
+| OVF-C04 | O2 | replay가 위 그룹을 같은 결과로 다시 계산(`overflow_init_record`의 INIT claim 포함, INIT 전 arena slot·claim이 zero가 아니면 거절)하고, 바뀐 frame을 거절 |
+| OVF-C05 | O2 | Base4: role 7 claim이 있는 base의 decode 전 과정(`validate_pairs`·`provenance`·`payloads`·incarnation 상계·current tree) 정상과 각 단계의 손상(claim 없는 kind 7, role 7 anchor가 CREATE claim과 다름, pageLSN ≠ init_lsn, 현재 image digest 불일치), 네 소유자 각각, 소유자 없는 page, 두 소유자, 다른 incarnation, retired Overflow 항목의 pageLSN ≥ retire LSN |
+| OVF-C06 | O2 | split·unlink 검산(§7.6): 큰 행·보상 chain·XTR1 Overflow가 있는 table의 정상 split·unlink, Reserved overflow root가 있으면 audit 거절, 개수가 하나 많거나 적으면 거절, Overflow 항목이 있는 XTR1 위의 unlink 목록 병합 |
 | OVF-J01 | O3 | 자동커밋 INSERT 2,049·16,092·16,093·131,072 B 행. 같은 거래와 새 statement의 point·cursor 읽기 값이 쓴 값과 같음(조용한 Missing이 없음), allocator·chunk 수 |
 | OVF-J02 | O3 | 명시 거래: 큰 행·작은 행 섞어 넣고 statement rollback(큰 행 CLR, **거래가 끝난 뒤 drain의 ChainRetire**), full rollback, commit 뒤 Prune(chain 유지)과 drain. split한 적 없는(revision 1) table과 split한 table 둘 다 |
 | OVF-J03 | O3 | preflight의 Free page 부족(Capacity, 효과 없음), 쓰는 도중의 FlushRequired·Busy 재시도, written ≥ 1에서 취소 → OverflowCancel, written 0이면 Cancel |
@@ -388,4 +401,7 @@ Base4는 형식을 바꾼다. 1판의 "record·certificate 형식은 바꾸지 �
 | [module-consumers row-shape·scope3 wire](dev3-module-consumers.md#row-shape) | 20 opcode, Row native kind 1·3·5·8·9, redo는 whole-body Patch뿐, 행은 inline 5..2048 | opcode 14·15·25, native kind 6·10·12, allocator entry patch·INIT redo, overflow 행(O1·O2) |
 | [자원 정본](dev3-resource-bounds.md) | Row WAL recipe | ChunkWrite·OverflowCancel·ChainRetire와 row1 걸음(O2) |
 | [행 owner §5.4](dev3-task-06-tree-rows.md#algorithms) transient pin | overflow 읽기 pin | 08-3은 반환 chain을 reader가 읽지 않으므로 pin 없음, 규칙은 08-4(O3) |
-| Base4 certificate·provenance | kind 7 dynamic page 없음 | Overflow role, provenance role 7(O1 codec, O2 검산) |
+| Base4 certificate·provenance | kind 7 dynamic page 없음, source kind 2 claim은 모두 CREATE pair | Overflow role, provenance role 7, `pair()`는 role 3·4만, `validate_pairs`·`provenance`·`payloads`의 role 7 분기(O1 codec, O2 검산). role 7의 "현재 image == INIT image" 규칙은 page를 재사용하지 않는 동안만이고 14-2가 다시 정한다 |
+| Base4 allocator incarnation 상계 | `System HW + creates + Structural HW` | kind 7 Allocated page 수를 더함(O2). 14-2가 Overflow page를 Free로 돌리면 다시 정한다 |
+| `jobs.rs` census의 TerminalLeased 연산 목록 | Reserve·Forward·Cancel·Commit·AbortEnd·Clr | ChunkWrite·OverflowCancel 추가, ChainRetire는 TerminalReady(O2) |
+| 효과 추론 `op_effect`·`opcode_effect` | `op != op.role()`이면 DELETE | 명시적 `Operation::delete()`(O1) |
