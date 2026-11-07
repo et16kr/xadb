@@ -1706,7 +1706,7 @@ fn ovf_f04_chain_shapes_and_frame_equations() {
         Operation::ChainRetire.frame_bytes_list(2176, 2216).unwrap(),
         59_056
     );
-    assert!(60_864 <= FRAME_BYTES);
+    const { assert!(60_864 <= FRAME_BYTES) };
     for op in [Operation::OverflowCancel, Operation::ChainRetire] {
         for (b, a) in [
             (0, 0),

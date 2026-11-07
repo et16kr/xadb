@@ -15,6 +15,20 @@ pub(in crate::storage) enum StructuralOperation {
     ChildSplit,
 }
 
+/// A role 7 claim's chain position (dev3-row-overflow.md#base4): the
+/// table anchor, the chunk index, the chain's count and its total.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(in crate::storage) struct ChunkInit {
+    pub(in crate::storage) anchor: PageRef,
+    pub(in crate::storage) index: u16,
+    pub(in crate::storage) count: u16,
+    pub(in crate::storage) total: u32,
+}
+
+/// The overflow row bounds of a role 7 claim and its chunk payload.
+const CHUNK_TOTAL: std::ops::RangeInclusive<u32> = 2_049..=131_072;
+const CHUNK_PAYLOAD: u32 = 16_092;
+
 #[derive(Clone, Copy)]
 pub(in crate::storage) struct StructuralInit<'a> {
     bytes: &'a [u8; INIT_BYTES],
@@ -91,12 +105,23 @@ impl<'a> InitProvenance<'a> {
             schema_epoch: SchemaEpoch::new(get(self.bytes, 200)).expect("validated schema"),
         })
     }
+    /// A CREATE claim's (anchor, root) pair: roles 3 and 4 only. A role 7
+    /// claim is also a Transaction source but names a chain position
+    /// (`chunk`) in these bytes (dev3-row-overflow.md#base4).
     pub(in crate::storage) fn pair(self) -> Option<[PageRef; 2]> {
-        (self.bytes[4] == 2).then(|| {
+        matches!(self.role(), 3 | 4).then(|| {
             [
                 PageRef::decode(&self.bytes[208..232]).expect("validated Anchor"),
                 PageRef::decode(&self.bytes[232..256]).expect("validated RowRoot"),
             ]
+        })
+    }
+    pub(in crate::storage) fn chunk(self) -> Option<ChunkInit> {
+        (self.role() == 7).then(|| ChunkInit {
+            anchor: PageRef::decode(&self.bytes[208..232]).expect("validated anchor"),
+            index: u16::from_le_bytes([self.bytes[232], self.bytes[233]]),
+            count: u16::from_le_bytes([self.bytes[234], self.bytes[235]]),
+            total: get32(self.bytes, 236),
         })
     }
     pub(in crate::storage) fn structural(self) -> Option<StructuralInit<'a>> {
@@ -131,6 +156,7 @@ pub(super) fn decode_certificate(
     let object = get(raw, 32);
     if (kind == PageKind::RowInternal && (e.profile.format() != 3 || !(1..=15).contains(&raw[2])))
         || (kind != PageKind::RowInternal && raw[2] != 0)
+        || (kind == PageKind::Overflow && e.profile.format() != 3)
     {
         return Err(Error::Unsupported);
     }
@@ -143,7 +169,11 @@ pub(super) fn decode_certificate(
         _ => match kind {
             PageKind::TransactionStatus => object == 2,
             PageKind::Undo => object == 3,
-            PageKind::TreeAnchor | PageKind::RowLeaf | PageKind::RowInternal => object >= 6,
+            // A table's overflow chunk (dev3-row-overflow.md#base4).
+            PageKind::TreeAnchor
+            | PageKind::RowLeaf
+            | PageKind::RowInternal
+            | PageKind::Overflow => object >= 6,
             _ => false,
         },
     };
@@ -256,6 +286,35 @@ pub(super) fn validate_provenance(
                 || pair[usize::from(raw[1] - 3)] != page
                 || (raw[1] == 3 && cert.header.kind != PageKind::TreeAnchor)
                 || (raw[1] == 4 && cert.header.kind != PageKind::RowLeaf)
+            {
+                return Err(Error::ProvenanceMismatch);
+            }
+        }
+        // A ChunkWrite's chunk (dev3-row-overflow.md#base4): the inserting
+        // transaction, the table, its anchor and the chain position. That
+        // index, count and total equal the chunk's cell is the layout's check.
+        (7, 2) => {
+            let source = TxnRef::decode(&raw[128..176])?;
+            let anchor = PageRef::decode(&raw[208..232])?;
+            let index = u16::from_le_bytes([raw[232], raw[233]]);
+            let count = u16::from_le_bytes([raw[234], raw[235]]);
+            let total = get32(raw, 236);
+            if e.profile.format() != 3
+                || source.id().database != e.profile.spec().namespace.database
+                || source.id().timeline != e.profile.spec().namespace.timeline
+                || source.id().writer_epoch != get32(raw, 56)
+                || source.generation().get() < 2
+                || get(raw, 184) != cert.header.identity.owner.get()
+                || get(raw, 184) < 6
+                || get(raw, 192) != 1
+                || get(raw, 200) != 1
+                || !dynamic(anchor)
+                || anchor.page_no == page.page_no
+                || !CHUNK_TOTAL.contains(&total)
+                || u32::from(count) != total.div_ceil(CHUNK_PAYLOAD)
+                || index >= count
+                || !zero(&raw[240..256])
+                || cert.header.kind != PageKind::Overflow
             {
                 return Err(Error::ProvenanceMismatch);
             }

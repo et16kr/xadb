@@ -350,7 +350,7 @@ pub(in super::super) fn apply(
             // The overflow chain groups replay from O2
             // (dev3-row-overflow.md#replay); until then they are refused.
             Operation::ChunkWrite | Operation::OverflowCancel | Operation::ChainRetire => {
-                return Err(RetentionCause::Unsupported.into());
+                return Err(RetentionCause::Unsupported);
             }
             Operation::AgingStart => None,
             Operation::Begin | Operation::Reserve => Some(first_free(arena, jobs, profile)?),

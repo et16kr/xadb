@@ -1204,3 +1204,61 @@ fn ovf_f02_overflow_root_rejections() {
     put(&mut bad, 880, 222_112);
     rejected(&bad, RetentionError::BudgetMismatch);
 }
+
+/// OVF-F02: `cleanup_started` is a release step or a returned chain; the
+/// census orders a returned chain after the root's terminal as it orders a
+/// release step.
+#[test]
+fn ovf_f02_returned_chain_starts_cleanup() {
+    for i in 23..31 {
+        let started = cell(i)[121] != 0;
+        assert_eq!(
+            decode_job(&cell(i), ns()).unwrap().cleanup_started(),
+            started
+        );
+    }
+    for i in [0, 1, 19, 21] {
+        assert!(!decode_job(&cell(i), ns()).unwrap().cleanup_started());
+    }
+    assert!(
+        !decode_job(&chain_root(16_093), ns())
+            .unwrap()
+            .cleanup_started()
+    );
+    let mut retired = cell(27);
+    retired[285] = 1;
+    put(&mut retired, 376, 41);
+    assert!(decode_job(&retired, ns()).unwrap().cleanup_started());
+    // Group 0: the root (ordinal 3, release_start 40) beside a TerminalLeased
+    // terminal. A held chain is cursor 0 cleanup not yet started; a returned
+    // one has started, which needs the terminal.
+    let (jobs, mut root) = group(0);
+    let mut held = jobs;
+    held[3][285] = 1;
+    held[3][200..224].copy_from_slice(&page(10));
+    held[3][224..248].copy_from_slice(&page(41));
+    held[3][288..292].copy_from_slice(&16_093u32.to_le_bytes());
+    put(&mut held[3], 776, 5);
+    put(&mut held[3], 784, 281_168);
+    put(&mut held[3], 880, 281_168);
+    decode_job(&held[3], ns()).unwrap();
+    seal(&mut root, &held);
+    verify(&root, &held).unwrap();
+    let mut returned = jobs;
+    returned[3][285] = 1;
+    put(&mut returned[3], 376, 41);
+    decode_job(&returned[3], ns()).unwrap();
+    census_rejected(returned, group(0).1, RetentionError::OrderMismatch);
+    // Group 2: TerminalReady at LSN 50. ChainRetire must follow it.
+    for (last, ok) in [(45, false), (55, true)] {
+        let (mut jobs, mut root) = group(2);
+        jobs[1][285] = 1;
+        put(&mut jobs[1], 376, last);
+        decode_job(&jobs[1], ns()).unwrap();
+        seal(&mut root, &jobs);
+        assert_eq!(verify(&root, &jobs).is_ok(), ok, "{last}");
+        if !ok {
+            assert_eq!(verify(&root, &jobs), Err(RetentionError::OrderMismatch));
+        }
+    }
+}

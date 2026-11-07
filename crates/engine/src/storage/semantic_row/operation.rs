@@ -241,7 +241,7 @@ impl Operation {
     /// OverflowCancel removes the U inventory item as Cancel does.
     pub(crate) fn shape_list(self, before: usize, after: usize) -> Result<Shape> {
         let list = |bytes: usize| {
-            bytes >= 56 && (bytes - 16) % 40 == 0 && (bytes - 16) / 40 <= MAX_RETIRED
+            bytes >= 56 && (bytes - 16).is_multiple_of(40) && (bytes - 16) / 40 <= MAX_RETIRED
         };
         if !self.list() || !(before == 0 || list(before)) || !list(after) || after <= before {
             return Err(Error::InvalidInput);

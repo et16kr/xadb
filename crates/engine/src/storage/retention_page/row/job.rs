@@ -242,6 +242,17 @@ impl<'a> JobView<'a> {
             total: u32::from_le_bytes(self.bytes[288..292].try_into().expect("checked field")),
         })
     }
+    /// Whether a Releasing root's cleanup started: a release step ran
+    /// (cursor > 0), or ChainRetire returned an overflow root's chain
+    /// (dev3-row-overflow.md#job-overflow). Both happen only after the
+    /// root's terminal.
+    pub(crate) fn cleanup_started(self) -> bool {
+        self.state.is_releasing()
+            && (self.release_cursor() != 0
+                || (self.state == JobState::RootReleasingCompensated
+                    && self.overflow()
+                    && self.chain().is_none()))
+    }
     /// The Reserved root's remaining Forward and a live root's remaining CLR
     /// (ledger rows 1 and 0); `None` outside a Row Reserved/Retained root.
     /// A Reserved overflow root's Forward also carries its unwritten chunks

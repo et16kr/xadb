@@ -187,7 +187,7 @@ fn verify_terminal(root: JobView<'_>, namespace: Namespace, cells: JobCells<'_>)
             JobState::RootReleasingCompensated => {
                 (terminal.outcome() == 2
                     || root.scope() == Some(JobScope::Row) && terminal.outcome() == 1)
-                    || root.release_cursor() == 0 && terminal.state() == JobState::TerminalLeased
+                    || !root.cleanup_started() && terminal.state() == JobState::TerminalLeased
             }
             _ => false,
         };
@@ -201,7 +201,7 @@ fn verify_terminal(root: JobView<'_>, namespace: Namespace, cells: JobCells<'_>)
                 JobState::RootReleasingCommitted => terminal_lsn < root.release_start(),
                 JobState::RootReleasingCompensated => {
                     root.release_start() < terminal_lsn
-                        && (root.release_cursor() == 0 || terminal_lsn < root.last_step())
+                        && (!root.cleanup_started() || terminal_lsn < root.last_step())
                 }
                 _ => false,
             };
