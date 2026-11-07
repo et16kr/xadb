@@ -55,6 +55,11 @@ pub(crate) const fn core_source_bytes() -> usize {
 }
 
 pub(crate) const FOREGROUND_OWNERS: usize = 32;
+/// Row locator shares of one core (dev3-cursor-locator.md#locator): one per
+/// foreground owner, so the session's live locators split the one 1 MiB
+/// locator allocation of metadata/cache.
+pub(crate) const LOCATOR_SHARES: usize = FOREGROUND_OWNERS;
+const _: () = assert!(LOCATOR_SHARES < u8::MAX as usize);
 pub(crate) const OWNER_SLOTS: usize = FOREGROUND_OWNERS + 2;
 const MAINTENANCE_SLOT: usize = FOREGROUND_OWNERS;
 const FLUSHER_SLOT: usize = FOREGROUND_OWNERS + 1;
@@ -210,6 +215,10 @@ pub(crate) struct PageConcurrency<'f> {
     state: Mutex<State>,
     version: Mutex<()>,
     continuation: Condvar,
+    /// Live Row locators of this session, at most LOCATOR_SHARES. A plain
+    /// byte ledger: it admits no work and orders nothing with `state`. It
+    /// sits in the core's padding, so the core's size is unchanged.
+    locator_shares: std::sync::atomic::AtomicU8,
     #[cfg(test)]
     hooks: Mutex<test_support::Hooks>,
 }
@@ -224,6 +233,33 @@ impl<'f> PageConcurrency<'f> {
     /// another session's authority. This neither admits work nor resets a fence.
     pub(crate) fn uses_fence(&self, fence: &SessionFence) -> bool {
         std::ptr::eq(self.fence, fence)
+    }
+
+    /// Take one of the LOCATOR_SHARES Row locator shares. False: all are
+    /// held and nothing changed. No fence, lock or I/O: a locator is caller
+    /// RAM, and every read that uses it still runs every session check.
+    pub(crate) fn take_locator_share(&self) -> bool {
+        use std::sync::atomic::Ordering::{AcqRel, Acquire};
+        self.locator_shares
+            .fetch_update(AcqRel, Acquire, |held| {
+                (usize::from(held) < LOCATOR_SHARES).then_some(held + 1)
+            })
+            .is_ok()
+    }
+    /// Return a share `take_locator_share` gave. A return with none held
+    /// changes nothing.
+    pub(crate) fn return_locator_share(&self) {
+        use std::sync::atomic::Ordering::{AcqRel, Acquire};
+        let _ = self
+            .locator_shares
+            .fetch_update(AcqRel, Acquire, |held| held.checked_sub(1));
+    }
+    #[cfg(test)]
+    pub(crate) fn test_locator_shares(&self) -> usize {
+        usize::from(
+            self.locator_shares
+                .load(std::sync::atomic::Ordering::Acquire),
+        )
     }
 
     /// Constructor owns no heap, page, file or WAL space. Concrete control-size
@@ -248,6 +284,7 @@ impl<'f> PageConcurrency<'f> {
             state: Mutex::new(State::new()),
             version: Mutex::new(()),
             continuation: Condvar::new(),
+            locator_shares: std::sync::atomic::AtomicU8::new(0),
             #[cfg(test)]
             hooks: Mutex::new(test_support::Hooks::default()),
         })

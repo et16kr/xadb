@@ -158,6 +158,28 @@ pub(crate) fn route_row_step(
     Ok(child)
 }
 
+/// Whether the RowLeaf `bytes` holds `key` (dev3-cursor-locator.md#locator):
+/// the same decode and bounds check as `route_row_step` on a leaf, then an
+/// exact search. A located read's hinted leaf that does not hold its RowId
+/// is routed again from the root.
+pub(crate) fn row_leaf_holds(
+    bytes: &[u8],
+    expected: TreeExpectation,
+    key: &[u8; 8],
+    bounds: RowRouteBounds,
+) -> Result<bool, TreeError> {
+    if expected.kind != PageKind::RowLeaf || expected.level != 0 || expected.arity != 0 {
+        return Err(TreeError::InvalidInput);
+    }
+    let view = decode_tree_page(bytes, expected)?;
+    let mut lower = bounds.lower.as_ref().map(|key| key.as_slice());
+    let mut upper = bounds.upper.as_ref().map(|key| key.as_slice());
+    if select_child(&view, key, &mut lower, &mut upper)?.is_some() {
+        return Err(TreeError::Corrupt);
+    }
+    Ok(view.len() != 0 && view.lower_bound(key)?.equal)
+}
+
 /// One RowInternal separator's entry cost: its cell (`encode_internal_cell`:
 /// the 4-byte head, the 8-byte RowId key and the child reference) and its
 /// 4-byte slot.
@@ -202,6 +224,17 @@ pub(crate) fn route_step_source_bytes(page_codec: usize) -> usize {
         + 2 * size_of::<Result<Option<[u8; 8]>, TreeError>>()
         + selection_source_bytes()
         + super::codec_source_bytes(page_codec)
+}
+
+/// `row_leaf_holds` with the tree codec it nests: `route_row_step`'s frame
+/// (the same arguments, view, bounds and selection) and the exact search.
+pub(crate) fn leaf_holds_source_bytes(page_codec: usize) -> usize {
+    use std::mem::size_of;
+    route_step_source_bytes(page_codec)
+        + size_of::<RowRouteBounds>()
+        + size_of::<SearchPosition>()
+        + size_of::<Result<SearchPosition, TreeError>>()
+        + size_of::<Result<bool, TreeError>>()
 }
 
 #[cfg(test)]

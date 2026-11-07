@@ -11,6 +11,7 @@ use super::*;
 use crate::storage::{
     disk::{LocatorCounts, RowLocator},
     row::read::driver::{RowReadError, live::read_point_located_live},
+    tree_page::search::RowRouteBounds,
 };
 
 /// B's point read of `$row` on `$view`/`$table`, with `$locator` when
@@ -101,14 +102,14 @@ fn holder(leaves: &[(PageRef, Vec<u64>)], row: u64) -> PageRef {
         .0
 }
 
-fn counts(lookups: u64, hits: u64, stale: u64, misses: u64) -> LocatorCounts {
+fn counts(lookups: u64, hits: u64, stale: u64, misses: u64, rechecks: u64) -> LocatorCounts {
     LocatorCounts {
         lookups,
         hits,
         stale,
         misses,
         evictions: 0,
-        resets: 0,
+        rechecks,
     }
 }
 
@@ -119,7 +120,7 @@ fn found(rows: &[(u64, i64)]) -> Vec<(u64, Option<i64>)> {
         .collect()
 }
 
-/// LOC-J01 (with LOC-J04): L01's four leaves [3, 3, 3, 6] (q 2). A
+/// LOC-J01: L01's four leaves [3, 3, 3, 6] (q 2). A
 /// statement reads each of the 15 rows twice with the locator: every first
 /// read misses and records the leaf the pool shows for the row, every
 /// second read hits; each read equals the read without the locator. Another
@@ -164,7 +165,7 @@ fn loc_j01_hits_misses_and_stale_hints_across_a_child_split() {
                 drains!(&mut writer, owner, flush, flusher, private);
                 let before = writer.catalog_test_with_pool(reachable);
                 assert_eq!(shape(&before).0, [3, 3, 3, 6]);
-                let mut locator = RowLocator::new().unwrap();
+                let mut locator = RowLocator::new(core).unwrap();
                 let rows = found(&kept_values(&keys, &[]));
 
                 let (anchor, revision) = statement_at!(
@@ -187,7 +188,7 @@ fn loc_j01_hits_misses_and_stale_hints_across_a_child_split() {
                             flusher,
                             &mut locator
                         );
-                        assert_eq!(locator.counts(), counts(15, 0, 0, 15));
+                        assert_eq!(locator.counts(), counts(15, 0, 0, 15, 0));
                         assert_eq!(locator.working_set(), 15);
                         let anchor = table.test_identity().2;
                         let (revision, _) = locator
@@ -210,7 +211,7 @@ fn loc_j01_hits_misses_and_stale_hints_across_a_child_split() {
                             flusher,
                             &mut locator
                         );
-                        assert_eq!(locator.counts(), counts(30, 15, 0, 15));
+                        assert_eq!(locator.counts(), counts(30, 15, 0, 15, 0));
                         (anchor, revision)
                     }
                 );
@@ -262,7 +263,7 @@ fn loc_j01_hits_misses_and_stale_hints_across_a_child_split() {
                             flusher,
                             &mut locator
                         );
-                        assert_eq!(locator.counts(), counts(49, 15, 15, 19));
+                        assert_eq!(locator.counts(), counts(49, 15, 15, 19, 0));
                         for row in &keys {
                             assert_eq!(
                                 locator.test_entry(anchor, RowId::new(*row).unwrap()),
@@ -280,7 +281,7 @@ fn loc_j01_hits_misses_and_stale_hints_across_a_child_split() {
                             flusher,
                             &mut locator
                         );
-                        assert_eq!(locator.counts(), counts(68, 34, 15, 19));
+                        assert_eq!(locator.counts(), counts(68, 34, 15, 19, 0));
                     }
                 );
 
@@ -345,7 +346,7 @@ fn loc_j01_hits_misses_and_stale_hints_across_a_child_split() {
                     flusher,
                     &mut locator
                 );
-                assert_eq!(locator.counts(), counts(69, 35, 15, 19));
+                assert_eq!(locator.counts(), counts(69, 35, 15, 19, 0));
                 assert!(writer.finish_statement(o, old_view).is_ok());
                 assert!(writer.finish_read_only(o, old_read).is_ok());
                 let drained = drains!(&mut writer, owner, flush, flusher, private);
@@ -373,7 +374,7 @@ fn loc_j01_hits_misses_and_stale_hints_across_a_child_split() {
                         );
                     }
                 );
-                assert_eq!(locator.counts(), counts(70, 36, 15, 19));
+                assert_eq!(locator.counts(), counts(70, 36, 15, 19, 0));
                 assert_row_jobs_free(writer.catalog_test_jobs());
                 assert!(!fence.is_fenced());
                 println!(
@@ -388,17 +389,23 @@ fn loc_j01_hits_misses_and_stale_hints_across_a_child_split() {
 }
 
 /// LOC-J02: L01's four leaves (q 2) and a statement that records all 15
-/// rows. One explicit transaction DELETEs the second leaf's three rows (q
-/// 3); the drain prunes them and unlinks the emptied leaf. A new statement's
-/// reads are all stale and routed again: the deleted rows are Missing (as
-/// without the locator) and now hint the leaf that routes them, the kept
-/// rows are found. The second reads all hit, the deleted rows still Missing.
-/// Then the first row's hint is damaged to name the last leaf (same
-/// revision and bounds): the located read is not a miss or a row but C's
-/// fatal Tree error from the leaf issue, with no output and the session
-/// fenced.
+/// rows. One explicit transaction DELETEs the last leaf's first row (q 3);
+/// the drain prunes it and the leaf keeps five rows, so T's revision stays
+/// and the other rows move down one slot in that leaf. A new statement's
+/// reads of the leaf's rows all hit: the kept rows are found at their new
+/// slots, and the pruned row's hit finds no RowId in its leaf, routes again
+/// to the same leaf (a recheck) and is Missing. Another explicit transaction
+/// DELETEs the second leaf's three rows (q 4); the drain prunes them and
+/// unlinks the emptied leaf. A new statement's reads are all stale and
+/// routed again: the deleted rows are Missing (as without the locator) and
+/// now hint the leaf that routes them, the kept rows are found. The second
+/// reads all hit, the four deleted rows Missing through a recheck. Then the
+/// first row's hint is damaged to name the last leaf (same revision and
+/// bounds): the located read is not a miss or a row but C's fatal Tree
+/// error from the hinted leaf's bounds check, with no output and the
+/// session fenced.
 #[test]
-fn loc_j02_unlinked_leaf_and_a_damaged_hint() {
+fn loc_j02_pruned_and_unlinked_rows_and_a_damaged_hint() {
     case_within("LOC-J02", std::time::Duration::from_secs(1500), || {
         let oracle = Oracle::new();
         with_fresh!(
@@ -432,9 +439,10 @@ fn loc_j02_unlinked_leaf_and_a_damaged_hint() {
                 let before = writer.catalog_test_with_pool(reachable);
                 assert_eq!(shape(&before).0, [3, 3, 3, 6]);
                 let (emptied, doomed) = (before[1].0, before[1].1.clone());
-                let mut locator = RowLocator::new().unwrap();
+                let (last, pruned) = (before[3].0, before[3].1[0]);
+                let mut locator = RowLocator::new(core).unwrap();
                 let rows = found(&kept_values(&keys, &[]));
-                let anchor = statement_at!(
+                let (anchor, revision) = statement_at!(
                     writer,
                     reader,
                     core,
@@ -454,10 +462,89 @@ fn loc_j02_unlinked_leaf_and_a_damaged_hint() {
                             flusher,
                             &mut locator
                         );
-                        table.test_identity().2
+                        let anchor = table.test_identity().2;
+                        let (revision, _) = locator
+                            .test_entry(anchor, RowId::new(keys[0]).unwrap())
+                            .unwrap();
+                        (anchor, revision)
                     }
                 );
-                assert_eq!(locator.counts(), counts(15, 0, 0, 15));
+                assert_eq!(locator.counts(), counts(15, 0, 0, 15, 0));
+
+                // A Prune in a leaf that stays: no SMO, the revision stays.
+                let mut holder_txn = None;
+                begun(begin!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    &row_status,
+                    private,
+                    &mut holder_txn
+                ));
+                let (out, _) = delete_in!(
+                    &mut writer,
+                    owner,
+                    flush,
+                    flusher,
+                    reader,
+                    reader_private,
+                    &mut holder_txn,
+                    private,
+                    pruned
+                );
+                assert_eq!(done(out), 1);
+                assert_eq!(
+                    explicit_committed(commit!(
+                        &mut writer,
+                        owner,
+                        flush,
+                        flusher,
+                        &mut holder_txn,
+                        private,
+                        1
+                    )),
+                    (3, 1)
+                );
+                let drained = drains!(&mut writer, owner, flush, flusher, private);
+                let done_drain = drained.last().unwrap();
+                assert!(done_drain.complete && done_drain.held == 0, "{drained:?}");
+                assert_eq!(drained.iter().map(|d| d.unlinked).sum::<u8>(), 0);
+                let pruned_tree = writer.catalog_test_with_pool(reachable);
+                // The last leaf's other rows each moved down one slot.
+                assert_eq!(pruned_tree[3], (last, before[3].1[1..].to_vec()));
+                let leaf_rows: Vec<(u64, Option<i64>)> = rows
+                    .iter()
+                    .filter(|(row, _)| before[3].1.contains(row))
+                    .map(|(row, value)| (*row, if *row == pruned { None } else { *value }))
+                    .collect();
+                statement_at!(
+                    writer,
+                    reader,
+                    core,
+                    reader_private,
+                    flush,
+                    flusher,
+                    3,
+                    |r, view, table| {
+                        both!(
+                            reader,
+                            r,
+                            reader_private,
+                            view,
+                            table,
+                            leaf_rows.clone(),
+                            flush,
+                            flusher,
+                            &mut locator
+                        );
+                    }
+                );
+                assert_eq!(locator.counts(), counts(21, 6, 0, 15, 1));
+                assert_eq!(
+                    locator.test_entry(anchor, RowId::new(pruned).unwrap()),
+                    Some((revision, last))
+                );
 
                 let mut holder_txn = None;
                 begun(begin!(
@@ -493,18 +580,18 @@ fn loc_j02_unlinked_leaf_and_a_damaged_hint() {
                         private,
                         3
                     )),
-                    (3, 3)
+                    (4, 3)
                 );
                 let drained = drains!(&mut writer, owner, flush, flusher, private);
-                let last = drained.last().unwrap();
-                assert!(last.complete && last.held == 0, "{drained:?}");
+                let last_drain = drained.last().unwrap();
+                assert!(last_drain.complete && last_drain.held == 0, "{drained:?}");
                 assert_eq!(drained.iter().map(|d| d.unlinked).sum::<u8>(), 1);
                 assert_eq!(writer.catalog_test_with_pool(anchor_of).2, [emptied]);
                 let after = writer.catalog_test_with_pool(reachable);
                 assert_eq!(after.len(), 3);
                 let mut rows = found(&kept_values(&keys, &[]));
                 for (row, value) in rows.iter_mut() {
-                    if doomed.contains(row) {
+                    if doomed.contains(row) || *row == pruned {
                         *value = None;
                     }
                 }
@@ -516,7 +603,7 @@ fn loc_j02_unlinked_leaf_and_a_damaged_hint() {
                     reader_private,
                     flush,
                     flusher,
-                    3,
+                    4,
                     |r, view, table| {
                         both!(
                             reader,
@@ -529,11 +616,12 @@ fn loc_j02_unlinked_leaf_and_a_damaged_hint() {
                             flusher,
                             &mut locator
                         );
-                        assert_eq!(locator.counts(), counts(30, 0, 15, 15));
+                        assert_eq!(locator.counts(), counts(36, 6, 15, 15, 1));
                         for row in &doomed {
-                            let (_, leaf) = locator
+                            let (at, leaf) = locator
                                 .test_entry(anchor, RowId::new(*row).unwrap())
                                 .unwrap();
+                            assert_eq!(at, revision + 1);
                             assert_ne!(leaf, emptied);
                             assert!(after.iter().any(|(page, _)| *page == leaf));
                         }
@@ -548,7 +636,7 @@ fn loc_j02_unlinked_leaf_and_a_damaged_hint() {
                             flusher,
                             &mut locator
                         );
-                        assert_eq!(locator.counts(), counts(45, 15, 15, 15));
+                        assert_eq!(locator.counts(), counts(51, 21, 15, 15, 5));
                     }
                 );
                 assert_row_jobs_free(writer.catalog_test_jobs());
@@ -556,7 +644,12 @@ fn loc_j02_unlinked_leaf_and_a_damaged_hint() {
 
                 // The damaged hint: the first row's entry names the last leaf.
                 let last_leaf = after.last().unwrap().0;
-                assert!(locator.test_redirect(anchor, RowId::new(keys[0]).unwrap(), last_leaf));
+                assert!(locator.test_redirect(
+                    anchor,
+                    RowId::new(keys[0]).unwrap(),
+                    last_leaf,
+                    None
+                ));
                 let mut b_owner = core.try_owner(OwnerRole::Foreground).unwrap();
                 let b = &mut b_owner;
                 let read = read_only!(writer, b, IsolationLevel::ReadCommitted, reader_private);
@@ -581,8 +674,8 @@ fn loc_j02_unlinked_leaf_and_a_damaged_hint() {
                 assert_eq!(error.phase, RetentionPhase::Source, "{error:?}");
                 assert!(matches!(error.cause, RetentionCause::Tree(_)), "{error:?}");
                 assert!(fence.is_fenced());
-                assert_eq!(locator.counts(), counts(46, 16, 15, 15));
-                println!("LOC_J02 emptied={emptied:?} damaged={error:?}");
+                assert_eq!(locator.counts(), counts(52, 22, 15, 15, 5));
+                println!("LOC_J02 emptied={emptied:?} pruned={pruned} damaged={error:?}");
                 drop(view);
                 drop(read);
             }
@@ -597,9 +690,13 @@ fn loc_j02_unlinked_leaf_and_a_damaged_hint() {
 /// make no lookup (there is no RowInternal page to skip), the deleted rows
 /// are Missing and the kept rows found. Eight new rows (q 4) split the root
 /// leaf again (level 1, the revision moved twice since the hints): the old
-/// hints are stale and refreshed, the new rows miss.
+/// hints are stale and refreshed, the new rows miss. Then a kept row's hint
+/// is damaged to name another leaf with unbounded bounds: that leaf passes
+/// the bounds check but does not hold the RowId, and the recheck routes to
+/// the row's own leaf, so the located read is C's fatal Invariant, never a
+/// Missing row, and the session is fenced.
 #[test]
-fn loc_j03_root_collapse_and_a_new_split() {
+fn loc_j03_root_collapse_new_split_and_a_recheck() {
     case_within("LOC-J03", std::time::Duration::from_secs(1500), || {
         let oracle = Oracle::new();
         with_fresh!(
@@ -633,7 +730,7 @@ fn loc_j03_root_collapse_and_a_new_split() {
                 let before = writer.catalog_test_with_pool(reachable);
                 assert_eq!(before.len(), 2, "{:?}", shape(&before).0);
                 let (doomed, survivor) = (before[0].1.clone(), before[1].0);
-                let mut locator = RowLocator::new().unwrap();
+                let mut locator = RowLocator::new(core).unwrap();
                 let rows = found(&kept_values(&keys, &[]));
                 let (anchor, revision) = statement_at!(
                     writer,
@@ -673,7 +770,7 @@ fn loc_j03_root_collapse_and_a_new_split() {
                         (anchor, revision)
                     }
                 );
-                assert_eq!(locator.counts(), counts(16, 8, 0, 8));
+                assert_eq!(locator.counts(), counts(16, 8, 0, 8, 0));
 
                 let mut holder_txn = None;
                 begun(begin!(
@@ -744,7 +841,7 @@ fn loc_j03_root_collapse_and_a_new_split() {
                         );
                     }
                 );
-                assert_eq!(locator.counts(), counts(16, 8, 0, 8));
+                assert_eq!(locator.counts(), counts(16, 8, 0, 8, 0));
 
                 let (out, slots) = autocommit!(
                     &mut writer,
@@ -793,7 +890,7 @@ fn loc_j03_root_collapse_and_a_new_split() {
                 let lookups = 16 + keys.len() as u64;
                 assert_eq!(
                     locator.counts(),
-                    counts(lookups, 8, 8, 8 + (keys.len() - 8) as u64)
+                    counts(lookups, 8, 8, 8 + (keys.len() - 8) as u64, 0)
                 );
                 // The collapse and at least one split moved the revision.
                 let (now, _) = locator
@@ -808,7 +905,59 @@ fn loc_j03_root_collapse_and_a_new_split() {
                 }
                 assert_row_jobs_free(writer.catalog_test_jobs());
                 assert!(!fence.is_fenced());
-                println!("LOC_J03 counts={:?}", locator.counts());
+
+                // The damaged hint: a kept row's entry names another leaf,
+                // which does not hold it, with unbounded bounds. The leaf's
+                // bounds check passes; the recheck routes elsewhere.
+                let victim = rows[0].0;
+                let home = holder(&split, victim);
+                let elsewhere = split.iter().find(|(page, _)| *page != home).unwrap().0;
+                assert!(locator.test_redirect(
+                    anchor,
+                    RowId::new(victim).unwrap(),
+                    elsewhere,
+                    Some(RowRouteBounds::default())
+                ));
+                let counted = locator.counts();
+                let mut b_owner = core.try_owner(OwnerRole::Foreground).unwrap();
+                let b = &mut b_owner;
+                let read = read_only!(writer, b, IsolationLevel::ReadCommitted, reader_private);
+                let view = writer.begin_statement(b, &read).unwrap();
+                let table = issue_table!(reader, b, view, reader_private, flush, flusher);
+                let error = point_read!(
+                    reader,
+                    b,
+                    reader_private,
+                    view,
+                    table,
+                    victim,
+                    flush,
+                    flusher,
+                    &mut locator
+                )
+                .expect_err("a recheck that routes elsewhere is never a Missing row");
+                let RowReadError::Source(error) = &error else {
+                    panic!("{error:?}");
+                };
+                assert_eq!(error.effect, Effect::CallerMustResolve, "{error:?}");
+                assert_eq!(error.phase, RetentionPhase::Census, "{error:?}");
+                assert!(
+                    matches!(error.cause, RetentionCause::Invariant),
+                    "{error:?}"
+                );
+                assert!(fence.is_fenced());
+                assert_eq!(
+                    locator.counts(),
+                    LocatorCounts {
+                        lookups: counted.lookups + 1,
+                        hits: counted.hits + 1,
+                        rechecks: counted.rechecks + 1,
+                        ..counted
+                    }
+                );
+                println!("LOC_J03 counts={:?} damaged={error:?}", locator.counts());
+                drop(view);
+                drop(read);
             }
         );
     });

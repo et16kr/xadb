@@ -76,6 +76,18 @@ struct RowRoute {
     level: u8,
 }
 
+/// How `load_leaf_located` reached its leaf (dev3-cursor-locator.md#locator).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Located {
+    /// The locator's leaf, which holds the RowId.
+    Hinted,
+    /// Walked from the root: the issued route is recorded.
+    Walked,
+    /// Walked again after a hint whose leaf did not hold the RowId; the
+    /// route is the hint itself, so nothing new is recorded.
+    Rechecked,
+}
+
 /// The validated anchor/leaf/allocation set. Its guards reborrow the Owner for
 /// `'g` only; the other fields are disjoint borrows of the operation.
 pub(crate) struct RowSearchPage<'g, 'b, 'a, 's, 'c, 'p, 'd> {
@@ -351,16 +363,23 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         key: RowId,
         locator: &mut RowLocator<'c, 's>,
     ) -> Result<ReadStep<RowSearchPage<'g, 'b, 'a, 's, 'c, 'p, 'd>>> {
+        // A locator serves the tables of its own core (storage session).
+        if !locator.serves(table) {
+            return Err(unchanged(
+                RetentionPhase::Census,
+                RetentionCause::BindingMismatch,
+            ));
+        }
         if let ReadStep::FlushRequired { target } = self.load_catalog(table, residency)? {
             return Ok(ReadStep::FlushRequired { target });
         }
         self.capture_schema(table)?;
-        let (route, walked) = match self.load_leaf_located(table, residency, key, locator)? {
+        let (route, located) = match self.load_leaf_located(table, residency, key, locator)? {
             ReadStep::Ready(located) => located,
             ReadStep::FlushRequired { target } => return Ok(ReadStep::FlushRequired { target }),
         };
         let page = self.issue_page(table, route, key)?;
-        if walked {
+        if located == Located::Walked {
             locator.record(table.anchor, key, route.revision, route.page, route.bounds);
         }
         Ok(page)
@@ -720,9 +739,9 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         }
     }
     /// `load_leaf` for `page_located`: after the anchor's root, a tree of
-    /// level one or more asks the locator. A hit LOADs only the hinted leaf;
-    /// otherwise each path page is walked as in `load_leaf`. True: the route
-    /// was walked through RowInternal pages and may be recorded.
+    /// level one or more asks the locator. A hit LOADs only the hinted leaf
+    /// and uses it when it holds the RowId; otherwise the route is walked
+    /// from the root as in `load_leaf`, and after a hit it must be the hint.
     #[inline(never)]
     fn load_leaf_located(
         &mut self,
@@ -730,7 +749,7 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
         residency: &mut Plan4ResidencyCursor,
         key: RowId,
         locator: &mut RowLocator<'c, 's>,
-    ) -> Result<ReadStep<(RowRoute, bool)>> {
+    ) -> Result<ReadStep<(RowRoute, Located)>> {
         let anchor_request = TargetRequest {
             identity: table.anchor,
             kind: PageKind::TreeAnchor,
@@ -744,9 +763,8 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             return Ok(ReadStep::FlushRequired { target });
         }
         let mut route = self.route_root(table, anchor_request)?;
-        let mut walked = false;
+        let mut located = Located::Walked;
         if route.level > 0 {
-            locator.bind(table);
             match locator.lookup(table.anchor, key, route.revision) {
                 Ok(Some(hint)) => {
                     route = RowRoute {
@@ -755,15 +773,10 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                         bounds: hint.bounds,
                         level: 0,
                     };
+                    located = Located::Hinted;
                 }
-                Ok(None) => walked = true,
-                Err(_) => {
-                    return Err(fatal(
-                        self.backend.storage,
-                        RetentionPhase::Census,
-                        RetentionCause::Invariant,
-                    ));
-                }
+                Ok(None) => {}
+                Err(_) => return Err(self.damaged_hint()),
             }
         }
         loop {
@@ -792,10 +805,113 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
                 RetentionResidencyStep::Resident { .. } => {}
             }
             if route.level == 0 {
-                return Ok(ReadStep::Ready((route, walked)));
+                match located {
+                    Located::Walked => return Ok(ReadStep::Ready((route, located))),
+                    Located::Hinted => {
+                        let leaf = TargetRequest {
+                            identity: PageIdentity {
+                                page: route.page,
+                                ..table.anchor
+                            },
+                            kind: PageKind::RowLeaf,
+                            level: 0,
+                        };
+                        // Another reader may evict the leaf after our LOAD;
+                        // cache contention is retryable, as in advance_route.
+                        match self.leaf_holds(leaf, &key.get().to_be_bytes(), route.bounds)? {
+                            Some(true) => return Ok(ReadStep::Ready((route, located))),
+                            Some(false) => {
+                                // An empty or other leaf is never a Missing
+                                // row: route again and compare.
+                                route = self.route_root(table, anchor_request)?;
+                                located = Located::Rechecked;
+                                continue;
+                            }
+                            None => {
+                                return Err(unchanged(RetentionPhase::Load, RetentionCause::Busy));
+                            }
+                        }
+                    }
+                    Located::Rechecked => {
+                        locator
+                            .confirm(table.anchor, key, route.revision, route.page, route.bounds)
+                            .map_err(|_| self.damaged_hint())?;
+                        return Ok(ReadStep::Ready((route, located)));
+                    }
+                }
             }
             route = self.advance_route(table, key, route)?;
         }
+    }
+    /// A damaged locator (dev3-cursor-locator.md#locator): fatal, never a miss.
+    #[inline(never)]
+    fn damaged_hint(&self) -> RetentionError {
+        fatal(
+            self.backend.storage,
+            RetentionPhase::Census,
+            RetentionCause::Invariant,
+        )
+    }
+    /// Whether the resident RowLeaf `leaf` holds `key`, under a brief read
+    /// with its membership, after the same decode and bounds check as a
+    /// route step. None: the page is not resident (the pool's unchanged
+    /// MissingTarget), nothing was read.
+    #[inline(never)]
+    fn leaf_holds(
+        &mut self,
+        leaf: TargetRequest,
+        key: &[u8; 8],
+        bounds: tree_page::search::RowRouteBounds,
+    ) -> Result<Option<bool>> {
+        let storage = self.backend.storage;
+        let allocator = self
+            .backend
+            .pool
+            .target_request(0)
+            .map_err(|e| frame(RetentionPhase::Source, e))?;
+        let guard = match self
+            .backend
+            .pool
+            .reserve_target_set(self.owner, &[allocator, leaf])
+            .and_then(|set| set.try_read())
+        {
+            Ok(guard) => guard,
+            Err(crate::storage::dirty_frame::DirtyError {
+                cause: crate::storage::dirty_frame::Cause::MissingTarget,
+                effect: foundation::error::Effect::Unchanged,
+            }) => return Ok(None),
+            Err(e) => return Err(frame(RetentionPhase::Source, e)),
+        };
+        let holds = (|| {
+            super::super::read::membership(
+                storage,
+                allocator,
+                guard
+                    .bytes(0)
+                    .map_err(|e| frame(RetentionPhase::Source, e))?,
+                leaf,
+            )?;
+            tree_page::search::row_leaf_holds(
+                guard
+                    .bytes(1)
+                    .map_err(|e| frame(RetentionPhase::Source, e))?,
+                TreeExpectation {
+                    identity: leaf.identity,
+                    kind: PageKind::RowLeaf,
+                    level: 0,
+                    arity: 0,
+                },
+                key,
+                bounds,
+            )
+            .map_err(|e| fatal(storage, RetentionPhase::Source, RetentionCause::Tree(e)))
+        })();
+        merge(
+            holds.map(Some),
+            guard
+                .release_checked()
+                .map_err(|e| frame(RetentionPhase::Source, e)),
+        )
     }
     #[inline(never)]
     fn issue_page<'g>(
@@ -1523,7 +1639,7 @@ impl<'s, 'c, W: WriterNamespace> ReadPort<'_, '_, 's, 'c, '_, '_, '_, '_, W> {
 impl<W: WriterNamespace> ReadPort<'_, '_, '_, '_, '_, '_, '_, '_, W> {
     /// Raw size observations, not an acceptance assertion or a replacement for
     /// the phase census. Loader and operation necessarily coexist at LOAD.
-    pub(in crate::storage) fn row_test_load_inventory() -> [usize; 16] {
+    pub(in crate::storage) fn row_test_load_inventory() -> [usize; 17] {
         use std::mem::size_of as n;
         let r = n::<&()>();
         // page: the key and the route's Result
@@ -1629,14 +1745,14 @@ impl<W: WriterNamespace> ReadPort<'_, '_, '_, '_, '_, '_, '_, '_, W> {
             + n::<Result<()>>()
             + n::<Result<ReadStep<()>>>()
             + n::<RowId>()
-            + n::<Result<ReadStep<(RowRoute, bool)>>>()
-            + n::<(RowRoute, bool)>()
+            + n::<Result<ReadStep<(RowRoute, Located)>>>()
+            + n::<(RowRoute, Located)>()
             + n::<Result<ReadStep<RowSearchPage<'_, '_, '_, '_, '_, '_, '_>>>>();
-        // load_leaf_located: `leaf` with the locator, the walked flag and
+        // load_leaf_located: `leaf` with the locator, the Located mark and
         // the lookup's result beside the copied route.
         let leaf_located = leaf
             + r
-            + n::<bool>()
+            + n::<Located>()
             + n::<std::result::Result<Option<super::locator::Hint>, super::locator::DamagedHint>>();
         // The locator's lookup (under load_leaf_located, never under LOAD)
         // or record (after the issue): its arguments, the copied entry and
@@ -1650,6 +1766,21 @@ impl<W: WriterNamespace> ReadPort<'_, '_, '_, '_, '_, '_, '_, '_, W> {
             + 2 * n::<usize>()
             + super::locator::entry_bytes()
             + n::<std::result::Result<Option<super::locator::Hint>, super::locator::DamagedHint>>();
+        // leaf_holds (under load_leaf_located after the hinted leaf's LOAD,
+        // never under LOAD): the brief read of `internal` with the leaf's
+        // exact search in place of the route step.
+        let holds = read(
+            4 * r
+                + n::<TargetRequest>()
+                + n::<tree_page::search::RowRouteBounds>()
+                + n::<TreeExpectation>()
+                + 2 * n::<std::result::Result<bool, tree_page::TreeError>>()
+                + 2 * n::<Result<Option<bool>>>(),
+        ) + tree_page::search::leaf_holds_source_bytes(
+            crate::storage::semantic_catalog::page_read_codec_bytes(),
+        ) - tree_page::search::route_step_source_bytes(
+            crate::storage::semantic_catalog::page_read_codec_bytes(),
+        );
         [
             page,
             catalog,
@@ -1700,6 +1831,7 @@ impl<W: WriterNamespace> ReadPort<'_, '_, '_, '_, '_, '_, '_, '_, W> {
             page_located,
             leaf_located,
             locator,
+            holds,
         ]
     }
     pub(in crate::storage) fn row_test_with_retiring_undo(

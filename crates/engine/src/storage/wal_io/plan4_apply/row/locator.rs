@@ -3,27 +3,36 @@
 //! leaf's route bounds, recorded with the anchor root revision of that route.
 //! A hint only lets a point read skip the RowInternal pages of a tree whose
 //! revision is unchanged; the leaf issue, row seek and every visibility
-//! judgement run as without it. The table is fixed at construction and never
-//! grows; a full slot is overwritten (an eviction is not a logical delete).
+//! judgement run as without it. Each locator holds one of its core's
+//! `LOCATOR_SHARES` shares for its whole life, so the live locators of one
+//! storage session together stay within the 1 MiB locator allocation. The
+//! table is fixed at creation and never grows; a full slot is overwritten
+//! (an eviction is not a logical delete).
 use super::*;
 use crate::storage::{page::PageRef, tree_page::search::RowRouteBounds};
+use crate::transaction::concurrency::LOCATOR_SHARES;
 
-/// Entries of the one direct-mapped table (a power of two).
-const ROW_LOCATOR_ENTRIES: usize = 8192;
-/// The locator's share of metadata/cache (dev3-resource-bounds.md): the
-/// header and the whole table stay within it.
-const ROW_LOCATOR_BYTES: usize = 1_048_576;
+/// Entries of one locator's direct-mapped table (a power of two).
+const ROW_LOCATOR_ENTRIES: usize = 256;
+/// The locator allocation of metadata/cache (dev3-resource-bounds.md).
+const ROW_LOCATOR_ALLOCATION: usize = 1_048_576;
+/// One share of it: every live locator of a core holds one.
+const ROW_LOCATOR_SHARE: usize = ROW_LOCATOR_ALLOCATION / LOCATOR_SHARES;
+/// The allocator's own header and rounding of the one table allocation.
+const ALLOCATION_SLACK: usize = 64;
 
 const _: () = assert!(ROW_LOCATOR_ENTRIES.is_power_of_two());
+const _: () = assert!(LOCATOR_SHARES * ROW_LOCATOR_SHARE <= ROW_LOCATOR_ALLOCATION);
 const _: () = assert!(
     std::mem::size_of::<RowLocator<'static, 'static>>()
         + ROW_LOCATOR_ENTRIES * std::mem::size_of::<Option<Entry>>()
-        <= ROW_LOCATOR_BYTES
+        + ALLOCATION_SLACK
+        <= ROW_LOCATOR_SHARE
 );
 
-/// One hint: the key (anchor identity with its incarnation, RowId), the
-/// anchor root revision of the route and the leaf it reached with the
-/// leaf's bounds. No slot, row version or value.
+/// One hint: the key (the anchor's whole identity, RowId), the anchor root
+/// revision of the route and the leaf it reached with the leaf's bounds. No
+/// slot, row version or value.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 struct Entry {
     anchor: PageIdentity,
@@ -39,14 +48,14 @@ pub(crate) struct LocatorCounts {
     /// Lookups of a tree whose root level is at least one.
     pub(crate) lookups: u64,
     pub(crate) hits: u64,
-    /// The key's entry was recorded at another revision.
+    /// The key's entry was recorded at an earlier revision.
     pub(crate) stale: u64,
     /// No entry for the key.
     pub(crate) misses: u64,
     /// A record replaced another key's entry.
     pub(crate) evictions: u64,
-    /// The table was emptied for a table of another session origin.
-    pub(crate) resets: u64,
+    /// Hits whose leaf did not hold the RowId, routed again from the root.
+    pub(crate) rechecks: u64,
 }
 
 /// A hint the lookup found for the current revision.
@@ -56,29 +65,45 @@ pub(super) struct Hint {
     pub(super) bounds: RowRouteBounds,
 }
 
-/// An entry of the key whose bounds do not hold its RowId: only `record`
-/// writes entries, so this is a damaged locator, never a miss.
+/// A damaged locator, never a miss: the key's entry has bounds that do not
+/// hold its RowId or a revision above the anchor's (only `record` writes
+/// entries, and a healthy session's revision never decreases), or a recheck
+/// routed elsewhere.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) struct DamagedHint;
 
-/// The caller-owned locator. It remembers the original core, binding and
-/// session fence of the first table it serves and cannot outlive them; a
-/// table of another origin empties it first, so no hint crosses an open.
+/// The caller-owned locator of one core (one storage session). It holds
+/// one of the core's locator shares from `new` to its drop and cannot
+/// outlive the core; a table of another core is refused, so no hint crosses
+/// an open.
 pub(crate) struct RowLocator<'c, 's> {
-    origin: Option<(&'c PageConcurrency<'s>, &'s AtomicU8, &'s SessionFence)>,
+    core: &'c PageConcurrency<'s>,
     entries: Box<[Option<Entry>]>,
     counts: LocatorCounts,
 }
 
+impl Drop for RowLocator<'_, '_> {
+    fn drop(&mut self) {
+        self.core.return_locator_share();
+    }
+}
+
 impl<'c, 's> RowLocator<'c, 's> {
-    /// Reserve the whole table once. None: the allocation was refused and
-    /// nothing was reserved.
-    pub(crate) fn new() -> Option<Self> {
+    /// Take one of `core`'s locator shares and reserve the whole table once.
+    /// None: every share is held, or the allocation was refused (its share
+    /// is returned); nothing was reserved.
+    pub(crate) fn new(core: &'c PageConcurrency<'s>) -> Option<Self> {
+        if !core.take_locator_share() {
+            return None;
+        }
         let mut entries = Vec::new();
-        entries.try_reserve_exact(ROW_LOCATOR_ENTRIES).ok()?;
+        if entries.try_reserve_exact(ROW_LOCATOR_ENTRIES).is_err() {
+            core.return_locator_share();
+            return None;
+        }
         entries.resize(ROW_LOCATOR_ENTRIES, None);
         Some(Self {
-            origin: None,
+            core,
             entries: entries.into_boxed_slice(),
             counts: LocatorCounts::default(),
         })
@@ -90,45 +115,39 @@ impl<'c, 's> RowLocator<'c, 's> {
     pub(crate) fn working_set(&self) -> usize {
         self.entries.iter().filter(|e| e.is_some()).count()
     }
-    /// Bytes reserved by the locator: its header and the whole table.
+    /// Bytes the locator takes of its share: its header, the whole table and
+    /// the allocator's slack.
     pub(crate) fn bytes(&self) -> usize {
-        std::mem::size_of::<Self>() + self.entries.len() * std::mem::size_of::<Option<Entry>>()
+        std::mem::size_of::<Self>()
+            + self.entries.len() * std::mem::size_of::<Option<Entry>>()
+            + ALLOCATION_SLACK
     }
-    /// Bind to `table`'s session origin, emptying the table for a new one.
-    pub(super) fn bind(&mut self, table: &CheckedTable<'c, 's>) {
-        self.bind_origin(table.core, table.binding, table.fence);
+    /// Whether `table` is of this locator's core (its storage session).
+    pub(super) fn serves(&self, table: &CheckedTable<'c, 's>) -> bool {
+        self.serves_core(table.core)
     }
-    fn bind_origin(
-        &mut self,
-        core: &'c PageConcurrency<'s>,
-        binding: &'s AtomicU8,
-        fence: &'s SessionFence,
-    ) {
-        let same = self.origin.is_some_and(|(c, b, f)| {
-            std::ptr::eq(c, core) && std::ptr::eq(b, binding) && std::ptr::eq(f, fence)
-        });
-        if !same {
-            if self.origin.is_some() {
-                self.clear();
-                self.counts.resets += 1;
-            }
-            self.origin = Some((core, binding, fence));
-        }
-    }
-    fn clear(&mut self) {
-        self.entries.iter_mut().for_each(|e| *e = None);
+    fn serves_core(&self, core: &PageConcurrency<'_>) -> bool {
+        std::ptr::eq(
+            (self.core as *const PageConcurrency<'s>).cast::<()>(),
+            (core as *const PageConcurrency<'_>).cast::<()>(),
+        )
     }
     fn slot(anchor: PageIdentity, row: RowId) -> usize {
-        // SplitMix64's finalizer over the table's anchor page, owner and the
-        // RowId; only the slot choice, never an identity.
-        let mut x = row.get()
-            ^ anchor.page.page_no.rotate_left(32)
+        // SplitMix64's finalizer over the anchor's identity gives the
+        // table's offset; consecutive RowIds then take consecutive slots.
+        // Only the slot choice, never an identity.
+        let database = anchor.database.bytes();
+        let (high, low) = database.split_at(8);
+        let mut x = anchor.page.page_no
+            ^ anchor.page.incarnation.get().rotate_left(47)
             ^ anchor.owner.get().rotate_left(17)
-            ^ anchor.page.incarnation.get().rotate_left(47);
+            ^ anchor.owner_generation.get().rotate_left(29)
+            ^ u64::from_le_bytes(high.try_into().expect("8 bytes"))
+            ^ u64::from_le_bytes(low.try_into().expect("8 bytes")).rotate_left(7);
         x = (x ^ (x >> 30)).wrapping_mul(0xbf58_476d_1ce4_e5b9);
         x = (x ^ (x >> 27)).wrapping_mul(0x94d0_49bb_1331_11eb);
         x ^= x >> 31;
-        (x as usize) & (ROW_LOCATOR_ENTRIES - 1)
+        (x.wrapping_add(row.get()) as usize) & (ROW_LOCATOR_ENTRIES - 1)
     }
     /// The hint of (`anchor`, `row`) recorded at `revision`. Counted as one
     /// lookup; the caller asks only for a tree of root level one or more.
@@ -141,7 +160,7 @@ impl<'c, 's> RowLocator<'c, 's> {
         self.counts.lookups += 1;
         match self.entries[Self::slot(anchor, row)] {
             Some(e) if e.anchor == anchor && e.row == row => {
-                if !contains(e.bounds, row) {
+                if !contains(e.bounds, row) || e.revision > revision {
                     return Err(DamagedHint);
                 }
                 if e.revision == revision {
@@ -159,6 +178,32 @@ impl<'c, 's> RowLocator<'c, 's> {
                 self.counts.misses += 1;
                 Ok(None)
             }
+        }
+    }
+    /// A hit's recheck: the route walked from the root for `row` at
+    /// `revision`, after the hinted leaf did not hold the RowId, must be the
+    /// hint itself. The call holds the locator exclusively, so the hit's
+    /// entry is still there.
+    pub(super) fn confirm(
+        &mut self,
+        anchor: PageIdentity,
+        row: RowId,
+        revision: u64,
+        leaf: PageRef,
+        bounds: RowRouteBounds,
+    ) -> std::result::Result<(), DamagedHint> {
+        self.counts.rechecks += 1;
+        match self.entries[Self::slot(anchor, row)] {
+            Some(e)
+                if e.anchor == anchor
+                    && e.row == row
+                    && e.revision == revision
+                    && e.leaf == leaf
+                    && e.bounds == bounds =>
+            {
+                Ok(())
+            }
+            _ => Err(DamagedHint),
         }
     }
     /// Record the route C just issued for `row`. A route whose bounds do not
@@ -206,17 +251,22 @@ impl RowLocator<'_, '_> {
     pub(in crate::storage) fn test_slot(anchor: PageIdentity, row: RowId) -> usize {
         Self::slot(anchor, row)
     }
-    /// Replace the leaf of (`anchor`, `row`)'s entry, keeping its key,
-    /// revision and bounds: a damaged hint. False: no such entry.
+    /// Replace the leaf of (`anchor`, `row`)'s entry, and its bounds when
+    /// given, keeping its key and revision: a damaged hint. False: no such
+    /// entry.
     pub(in crate::storage) fn test_redirect(
         &mut self,
         anchor: PageIdentity,
         row: RowId,
         leaf: PageRef,
+        bounds: Option<RowRouteBounds>,
     ) -> bool {
         match &mut self.entries[Self::slot(anchor, row)] {
             Some(e) if e.anchor == anchor && e.row == row => {
                 e.leaf = leaf;
+                if let Some(bounds) = bounds {
+                    e.bounds = bounds;
+                }
                 true
             }
             _ => false,
