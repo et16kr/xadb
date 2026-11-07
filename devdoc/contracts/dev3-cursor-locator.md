@@ -1,6 +1,6 @@
 # DEV3 SMO를 건너는 stable cursor와 locator
 
-2026-11-07 · `D3-CURSOR-LOCATOR-001` · **08-2a cursor 인수 시험 PASS(CUR-B01·B02, CUR-J01..J05)와 locator 설계(PR #62) / 08-2b locator 구현 PASS(LOC-B01·B02, LOC-J01..J03, LOC-C01, PR_082B) / 독립 D2 08-2a 2회차 ACCEPT / 08-2 완료(PR_082B 병합 시)**
+2026-11-07 · `D3-CURSOR-LOCATOR-001` · **08-2a cursor 인수 시험 PASS(CUR-B01·B02, CUR-J01..J05)와 locator 설계(PR #62) / 08-2b locator 구현 PASS(LOC-B01·B02, LOC-J01..J03, LOC-C01, PR #65) / 독립 D2 08-2a 2회차 ACCEPT / 08-2 완료(PR #65 병합 시)**
 
 [행 owner §5.5](dev3-task-06-tree-rows.md#algorithms) · [인수 T06-12·T06-13·T06-16](dev3-task-06-tree-rows.md#acceptance) · [statement/cursor F02](dev3-task-06-tree-rows.md#module-statement-cursor) · [current-leaf 소비자](dev3-tree-smo.md#current-leaf-consumers) · [빈 leaf unlink·root 축소](dev3-tree-smo.md#empty-leaf-unlink) · [자원 정본](dev3-resource-bounds.md) · [일정 08-2](../plans/dev3-schedule-baseline.md#items)
 
@@ -12,7 +12,7 @@
 | 단위 | 내용 | 제품 코드 |
 | --- | --- | --- |
 | 08-2a(PR #62) | cursor 불변식의 기록(§2), B literal 시험 CUR-B01·B02, 실제 C 위 시험 CUR-J01..J05(§3), T06-12 대응(§4), locator 설계(§5)와 시험 목록(§6) | 동작 변경 없음. B `LiveCursor`에 시험 전용 accessor 하나(CUR-J02) |
-| 08-2b(PR_082B, [구현 기록](#implementation-2b)) | §5의 core locator 몫, C `RowLocator`, `page_located`, B `read_point_located_live`, census 항, LOC 시험 | core(`dev3_concurrency_admission` 모듈의 `transaction/concurrency.rs`와 그 계약 [동시성 admission](dev3-concurrency-admission.md)에 몫 계수와 규칙 추가)·C·B |
+| 08-2b(PR #65, [구현 기록](#implementation-2b)) | §5의 core locator 몫, C `RowLocator`, `page_located`, B `read_point_located_live`, census 항, LOC 시험 | core(`dev3_concurrency_admission` 모듈의 `transaction/concurrency.rs`와 그 계약 [동시성 admission](dev3-concurrency-admission.md)에 몫 계수와 규칙 추가)·C·B |
 
 08-2a에 제품 변경이 없는 이유: cursor는 호출 사이에 page·slot·latch를 쥐지 않고, 호출마다 마지막 검사 key로 현재 tree를 route하며, `CheckedTable`은 revision이나 root를 갖지 않는다(§2). 그래서 split·unlink·root 축소가 호출 사이에 끼어도 다음 호출은 지금의 tree에서 같은 다음 key를 찾는다. 08-2a는 이것을 실제 SMO 위에서 확인한다. 일정 적립은 08-2 전체(cursor와 locator)가 끝나는 08-2b의 병합 때 한 번 한다(§8).
 
@@ -209,4 +209,4 @@ located.row_load의 여유는 37 B다. recheck의 다시 route는 `located.row_r
 
 검토와 실행이 적은 commit `fc1fc94`·`86c6c2a`·`668f6ec`는 PR #62 병합 전, 08-2a 위에서 만든 작업 commit이다. main(`9669c96`, PR #62 병합) 위로 옮긴 commit은 각각 `15e2f9d`·`0f9ed43`·`1f2c92d`이고, 이 PR이 바꾸는 Rust 파일 13개의 blob은 옮기기 전과 같다(module-gate 기록의 blob 목록). 옮긴 뒤 crate에서 달라진 것은 main에 먼저 병합된 08-2a 후속 시험 두 파일(`smo_tests.rs`, `cursor_smo.rs`)뿐이며, 옮긴 head에서 clippy(`-D warnings`)와 rustfmt를 다시 통과했다.
 
-일정: 08-2a의 cursor 인수와 08-2b의 locator가 모두 끝났으므로 PR_082B의 병합으로 08-2의 1일을 적립한다(35 → 36/86 = 41.86%, [진도표](../plans/dev3-schedule-baseline.md#items)).
+일정: 08-2a의 cursor 인수와 08-2b의 locator가 모두 끝났으므로 PR #65의 병합으로 08-2의 1일을 적립한다(35 → 36/86 = 41.86%, [진도표](../plans/dev3-schedule-baseline.md#items)).
