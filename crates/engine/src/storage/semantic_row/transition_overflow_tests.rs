@@ -918,8 +918,9 @@ fn ovf_c01_chunk_write_allocates_and_inits_back_to_front() {
 /// or total other than the pending one, a damaged chunk (payload digest), a
 /// canonical row the schema refuses (with its own digest), the chain pages
 /// in another order or count, a chain that walks back to an address it
-/// read, a chunk stamped at the lease or after the frame's previous LSN, an
-/// allocator entry that is not the chunk's,
+/// read (the verifier's address set, or the chunk index when the image is
+/// the earlier chunk's), a chunk stamped at the lease or after the frame's
+/// previous LSN, an allocator entry that is not the chunk's,
 /// the plain Forward of an overflow root and an overflow Forward of an
 /// inline root. Then the Forward: Retained, the sender digest over the
 /// pending chain, ledger row 1 cleared; and from there Commit with Prune
@@ -978,13 +979,24 @@ fn ovf_c02_forward_checks_the_chain_then_commit_or_rollback() {
     };
     let stale = allocator_page(&stale, 5);
     // Chunk 1 (page 16) naming the root page 17 as its next: the chain
-    // walks back to an address it already read.
+    // walks back to an address it already read. With chunk 2's own image
+    // there rehomed to page 17 (its header page number, the page digest
+    // resealed), the page, the allocator entry and the chunk index all
+    // match, so only the verifier's read-address set refuses it
+    // (dev3-row-overflow.md#overflow-chain). With chunk 0's image there
+    // the chunk index (0, not 2) refuses it first.
     let mut cycle = Box::new(*refs[1]);
     let start = usize::from(u16::from_le_bytes([cycle[128], cycle[129]]));
     front.encode(&mut cycle[start + 48..start + 72]).unwrap();
     let digest = content_digest(&cycle[..DIGEST_OFFSET]);
     cycle[DIGEST_OFFSET..].copy_from_slice(&digest);
-    let duplicate = [refs[0], &*cycle, refs[0]];
+    let mut rehomed = Box::new(*refs[2]);
+    assert_eq!(u64_at(&rehomed[..], 32), 15);
+    rehomed[32..40].copy_from_slice(&17u64.to_le_bytes());
+    let digest = content_digest(&rehomed[..DIGEST_OFFSET]);
+    rehomed[DIGEST_OFFSET..].copy_from_slice(&digest);
+    let duplicate = [refs[0], &*cycle, &*rehomed];
+    let reread = [refs[0], &*cycle, refs[0]];
     // Chunk 1 stamped at the lease (not after it) or after the frame's
     // previous LSN.
     let leased = restamped(refs[1], job(&world).lease_lsn());
@@ -1021,6 +1033,13 @@ fn ovf_c02_forward_checks_the_chain_then_commit_or_rollback() {
         (
             "duplicate address",
             &duplicate[..],
+            &*allocator,
+            &row_after,
+            Error::OrderMismatch,
+        ),
+        (
+            "chunk 0 read again as chunk 2",
+            &reread[..],
             &*allocator,
             &row_after,
             Error::OrderMismatch,
