@@ -4294,3 +4294,79 @@ fn rdl_c_delete_effect_binds_the_att_forward_debt() {
         "A's Forward over a DELETE root"
     );
 }
+
+/// OVF-F04 (dev3-row-overflow.md#opcodes): the inventory action follows the
+/// role. OverflowCancel (role Cancel) releases U's item as Cancel does:
+/// action 3, one item before at `[16,112)`. ChunkWrite and ChainRetire
+/// change no inventory and leave the backing untouched.
+#[test]
+fn ovf_f04_inventory_action_follows_the_role() {
+    use super::graph::{AUX_BYTES, Aux, inventory};
+    let item: [u8; 96] = std::array::from_fn(|i| i as u8 + 1);
+    for (operation, expected) in [
+        (Operation::Reserve, Some((1, 2, 112))),
+        (Operation::Forward, Some((2, 1, 16))),
+        (Operation::Cancel, Some((3, 1, 16))),
+        (Operation::OverflowCancel, Some((3, 1, 16))),
+        (Operation::ChunkWrite, None),
+        (Operation::ChainRetire, None),
+    ] {
+        let mut bytes = [0xa5; AUX_BYTES];
+        let mut aux = Aux::new(&mut bytes);
+        let result = inventory(operation, &item, &mut aux);
+        let len = aux.len;
+        match expected {
+            Some((action, count, at)) => {
+                result.unwrap();
+                assert_eq!(len, 208, "{operation:?}");
+                assert_eq!((bytes[0], bytes[1]), (action, count), "{operation:?}");
+                assert_eq!(bytes[at..at + 96], item, "{operation:?}");
+                let rest = (2..208).filter(|i| !(at..at + 96).contains(i));
+                assert!(rest.into_iter().all(|i| bytes[i] == 0), "{operation:?}");
+                assert!(bytes[208..].iter().all(|b| *b == 0xa5), "{operation:?}");
+            }
+            None => {
+                assert_eq!(result, Err(Error::InvalidInput), "{operation:?}");
+                assert_eq!(len, 0);
+                assert!(bytes.iter().all(|b| *b == 0xa5), "{operation:?}");
+            }
+        }
+    }
+}
+
+/// OVF-F07 (dev3-row-overflow.md#o1-record): the source models of the codec
+/// functions O1 adds, each over the census terms its callers already use
+/// (the page codec, the canonical check and the SHA closure). O2 and O3 add
+/// them to the censuses of their first callers; this records their sizes.
+#[test]
+fn ovf_f07_new_codec_frames() {
+    use crate::storage::{overflow::source as chunk, row_record::source as row};
+    use row_record::stream::source as stream;
+    let page = super::source::page_codec();
+    let canonical = super::source::canonical_codec();
+    let sha = super::source::SHA;
+    let inspect = chunk::inspect(page);
+    // The page codec is the deeper callee, so the chunk read adds its own
+    // carriers to it, the same over any larger page term.
+    assert!(inspect > page);
+    assert_eq!(chunk::inspect(page + 1000), inspect + 1000);
+    let materialized = row::materialized(canonical, sha);
+    assert!(row::materialized_columns(canonical, sha) > materialized);
+    assert!(materialized > canonical.max(sha));
+    assert!(stream::digest(sha) > row::input_len());
+    assert!(stream::window() > row::input_len());
+    println!(
+        "OVF_F07 page={page} canonical={canonical} sha={sha} inspect={inspect} \
+         segment_walk={} segment_push={} verifier_push={} materialized={materialized} \
+         materialized_columns={} input_len={} digest={} window={} stream={} stream_push={}",
+        chunk::segment_walk(),
+        chunk::segment_push(),
+        chunk::verifier_push(sha),
+        row::materialized_columns(canonical, sha),
+        row::input_len(),
+        stream::digest(sha),
+        stream::window(),
+        stream::stream(),
+        stream::push(),
+    );
+}

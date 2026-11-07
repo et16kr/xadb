@@ -536,6 +536,85 @@ fn put_u32(bytes: &mut [u8], at: usize, value: u32) {
     bytes[at..at + 4].copy_from_slice(&value.to_le_bytes());
 }
 
+/// Source models of the O1 chunk readers (dev3-row-overflow.md#o1-record),
+/// explicit sums of each frame's typed carriers, not ABI stack samples. A
+/// caller adds the term to its own census; `page` is that census's page codec.
+pub(crate) mod source {
+    use super::*;
+    use crate::storage::page::PageView;
+    use std::mem::size_of;
+
+    fn returned<T, E>() -> usize {
+        size_of::<T>() + size_of::<Result<T, E>>()
+    }
+
+    /// `validate_position`: arguments, the expected length and its Result.
+    fn position() -> usize {
+        size_of::<(OverflowChain, usize, PageRef, Option<PageRef>, usize)>()
+            + returned::<usize, OverflowError>()
+            + size_of::<Result<(), OverflowError>>()
+    }
+
+    /// `parse_cell`: arguments, digest, chain, index, next and payload with
+    /// their Results, the returned view, then the next decode or
+    /// `validate_position`.
+    fn parse() -> usize {
+        size_of::<(&[u8], PageHeader, OverflowChain, usize)>()
+            + size_of::<[u8; 32]>()
+            + returned::<OverflowChain, OverflowError>()
+            + size_of::<usize>()
+            + size_of::<Option<PageRef>>()
+            + size_of::<&[u8]>()
+            + size_of::<Result<OverflowPageView<'_>, OverflowError>>()
+            + returned::<PageRef, PageError>().max(position())
+    }
+
+    /// `inspect_overflow_page`: arguments, the page view and its Result, the
+    /// cell, digest, chain and index, the returned view, then the page decode
+    /// or `parse_cell`.
+    pub(crate) fn inspect(page: usize) -> usize {
+        size_of::<(&[u8], PageIdentity)>()
+            + returned::<PageView<'_>, PageError>()
+            + size_of::<&[u8]>()
+            + size_of::<[u8; 32]>()
+            + returned::<OverflowChain, OverflowError>()
+            + size_of::<usize>()
+            + size_of::<Result<OverflowPageView<'_>, OverflowError>>()
+            + page.max(parse())
+    }
+
+    /// The walk a caller holds across its chunk loads.
+    pub(crate) fn segment_walk() -> usize {
+        size_of::<OverflowSegmentWalk>()
+    }
+
+    /// `OverflowSegmentWalk::push`: arguments, the expected identity and its
+    /// Result, the visited-set scan and the push Result.
+    pub(crate) fn segment_push() -> usize {
+        size_of::<(&mut OverflowSegmentWalk, &OverflowPageView<'_>)>()
+            + size_of::<Option<PageIdentity>>()
+            + returned::<PageIdentity, OverflowError>()
+            + size_of::<std::iter::Flatten<std::slice::Iter<'_, Option<PageRef>>>>()
+            + size_of::<(&PageRef, &PageRef)>()
+            + size_of::<Result<(), OverflowError>>()
+    }
+
+    /// `OverflowChainVerifier::push`: arguments, next and its Result, the
+    /// head's chain, the expected identity, the visited-set scan, the cloned
+    /// hasher and digest, then the caller's SHA closure `sha`.
+    pub(crate) fn verifier_push(sha: usize) -> usize {
+        size_of::<(&mut OverflowChainVerifier, &OverflowPageView<'_>)>()
+            + returned::<PageRef, OverflowError>()
+            + size_of::<OverflowChain>()
+            + size_of::<PageIdentity>()
+            + size_of::<std::iter::Flatten<std::slice::Iter<'_, Option<PageRef>>>>()
+            + size_of::<ContentHasher>()
+            + size_of::<[u8; 32]>()
+            + size_of::<Result<(), OverflowError>>()
+            + sha
+    }
+}
+
 #[cfg(test)]
 #[path = "overflow_tests.rs"]
 mod tests;

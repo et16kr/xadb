@@ -237,7 +237,7 @@ fn canonical(values: &[Value]) -> Vec<u8> {
 
 // Catalog encoding supplies only schema input here. Row expectations remain the
 // independently frozen LITERALS; no Catalog or row storage authority is issued.
-fn catalog_schema_bytes(columns: &[Column]) -> Vec<u8> {
+pub(super) fn catalog_schema_bytes(columns: &[Column]) -> Vec<u8> {
     let spec = TableSpec {
         name: "borrowed_row".into(),
         columns: columns.to_vec(),
@@ -271,7 +271,7 @@ fn catalog_schema_bytes(columns: &[Column]) -> Vec<u8> {
     output
 }
 
-fn catalog_schema(bytes: &[u8]) -> RowSchemaInput<'_> {
+pub(super) fn catalog_schema(bytes: &[u8]) -> RowSchemaInput<'_> {
     let catalog = decode_catalog_record(
         bytes,
         CatalogExpectation {

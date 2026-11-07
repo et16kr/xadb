@@ -401,3 +401,46 @@ fn ovf_f05_stream_rejects_misuse() {
     assert_eq!(stream.push(&[]), Err(RowError::Corrupt));
     assert_eq!(stream.finish(), Err(RowError::Corrupt));
 }
+
+/// OVF-F05 (dev3-row-overflow.md#forward-check): over the Catalog's borrowed
+/// schema, the schema C's Forward check reads, the stream judges every split
+/// as the joined decoder does: valid rows, damaged bytes and a column whose
+/// Catalog type differs.
+#[test]
+fn ovf_f05_stream_with_catalog_schema() {
+    use super::super::tests::{catalog_schema, catalog_schema_bytes};
+    let (columns, original) = small();
+    let catalog = catalog_schema_bytes(&columns);
+    let schema = catalog_schema(&catalog);
+    let mut judged = [0_usize; 2];
+    for at in 0..original.len() {
+        for flip in [0x01, 0x80, 0xff] {
+            let mut bytes = original.clone();
+            bytes[at] ^= flip;
+            let expected = joined(schema, &bytes);
+            for sizes in SPLITS {
+                assert_eq!(stream(schema, &bytes, sizes), expected, "{at} {flip}");
+            }
+            judged[usize::from(expected.is_ok())] += 1;
+        }
+    }
+    assert!(judged[0] > 0 && judged[1] > 0);
+    let mut wrong = columns.clone();
+    wrong[2].data_type = DataType::Bool;
+    let wrong = catalog_schema_bytes(&wrong);
+    for sizes in SPLITS {
+        assert_eq!(stream(schema, &original, sizes), Ok(()));
+        assert_eq!(
+            stream(catalog_schema(&wrong), &original, sizes),
+            Err(RowError::SchemaMismatch)
+        );
+    }
+    for total in [2_049, 131_072] {
+        let row = Row::new(total);
+        let catalog = catalog_schema_bytes(&row.columns);
+        let whole = row.bytes();
+        for sizes in [&[MAX_OVERFLOW_PAYLOAD][..], &[7]] {
+            assert_eq!(stream(catalog_schema(&catalog), &whole, sizes), Ok(()));
+        }
+    }
+}

@@ -668,6 +668,58 @@ pub(crate) fn decode_index_record(
     })
 }
 
+/// Source models of the O1 row helpers (dev3-row-overflow.md#o1-record):
+/// explicit sums of each frame's typed carriers, not ABI stack samples.
+pub(crate) mod source {
+    use super::*;
+    use crate::storage::catalog_record::{CatalogColumn, CatalogError};
+    use std::mem::size_of;
+
+    pub(super) fn returned<T, E>() -> usize {
+        size_of::<T>() + size_of::<Result<T, E>>()
+    }
+
+    /// `RowSchemaInput::column` at its widest (a Catalog column decode) with
+    /// `validate` and `matches`.
+    pub(crate) fn schema_lookup() -> usize {
+        size_of::<(&RowSchemaInput<'_>, usize)>()
+            + returned::<CatalogColumn<'_>, CatalogError>()
+            + returned::<(DataType, bool), RowError>()
+            + size_of::<Result<(), RowError>>()
+            + size_of::<((DataType, bool), ValueRef<'_>)>()
+    }
+
+    /// `canonical_row_input_len`, which the digest and window helpers call
+    /// first as `encode_canonical_row_borrowed` does: arguments, the running
+    /// total, index, payload and value lengths, the value and the Result,
+    /// then the schema lookup.
+    pub(crate) fn input_len() -> usize {
+        size_of::<(RowSchemaInput<'_>, RowValuesInput<'_>)>()
+            + size_of::<[usize; 4]>()
+            + size_of::<ValueRef<'_>>()
+            + size_of::<Result<usize, RowError>>()
+            + schema_lookup()
+    }
+
+    /// `decode_materialized_row_with_schema`: arguments, the row digest and
+    /// the returned view, then the caller's SHA closure `sha` or the
+    /// canonical decode `canonical`. The `&[Column]` wrapper adds its own
+    /// arguments and Result (`materialized_columns`).
+    pub(crate) fn materialized(canonical: usize, sha: usize) -> usize {
+        size_of::<(OverflowHead, &[u8], RowSchemaInput<'_>)>()
+            + size_of::<[u8; 32]>()
+            + size_of::<Result<CanonicalRowView<'_>, RowError>>()
+            + sha.max(canonical)
+    }
+
+    /// `decode_materialized_row` over `materialized`.
+    pub(crate) fn materialized_columns(canonical: usize, sha: usize) -> usize {
+        size_of::<(OverflowHead, &[u8], &[Column])>()
+            + size_of::<Result<CanonicalRowView<'_>, RowError>>()
+            + materialized(canonical, sha)
+    }
+}
+
 #[cfg(test)]
 #[path = "row_record_tests.rs"]
 mod tests;

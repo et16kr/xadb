@@ -1677,6 +1677,16 @@ fn ovf_f04_chain_shapes_and_frame_equations() {
         40
     );
     assert_eq!(Operation::ChunkWrite.frame_bytes(0, false).unwrap(), 56_976);
+    // The Job's forward and cleanup recipes (dev3-row-overflow.md#ledger)
+    // use the same two frame sizes.
+    assert_eq!(
+        crate::storage::retention_page::row::CHUNK_WRITE_WAL,
+        Operation::ChunkWrite.frame_bytes(0, false).unwrap() as u64
+    );
+    assert_eq!(
+        crate::storage::retention_page::row::CHAIN_RETIRE_WAL,
+        Operation::ChainRetire.frame_bytes_list(2176, 2216).unwrap() as u64
+    );
     let shape = Operation::ChunkWrite.shape(0, false).unwrap();
     assert_eq!(
         (
@@ -1697,6 +1707,8 @@ fn ovf_f04_chain_shapes_and_frame_equations() {
         assert_eq!(retire, 54_664 + b + a);
         let shape = Operation::OverflowCancel.shape_list(b, a).unwrap();
         assert_eq!((shape.items, shape.list_sides()), (1, (b, a)));
+        // The Job recipes take ChainRetire's largest frame.
+        assert!(retire <= crate::storage::retention_page::row::CHAIN_RETIRE_WAL as usize);
         assert_eq!(Operation::ChainRetire.shape_list(b, a).unwrap().items, 0);
     }
     assert_eq!(
@@ -1863,6 +1875,7 @@ fn ovf_f04_chain_frame_damage() {
         n[2] = chain_native(2, 10, 0, None, Some(56), (0, 16240));
         refused(&list(n));
         for (before, after) in [
+            (Some(56), None),
             (None, Some(57)),
             (None, Some(16)),
             (Some(56), Some(56)),

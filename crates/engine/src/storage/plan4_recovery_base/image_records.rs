@@ -292,7 +292,9 @@ pub(super) fn validate_provenance(
         }
         // A ChunkWrite's chunk (dev3-row-overflow.md#base4): the inserting
         // transaction, the table, its anchor and the chain position. That
-        // index, count and total equal the chunk's cell is the layout's check.
+        // index, count and total equal the chunk's cell needs the page image:
+        // O2's role 7 layout check, beside its current-image rule. Until
+        // then every Base4 consumer refuses a role 7 claim.
         (7, 2) => {
             let source = TxnRef::decode(&raw[128..176])?;
             let anchor = PageRef::decode(&raw[208..232])?;

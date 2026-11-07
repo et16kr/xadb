@@ -24,6 +24,9 @@ mod pages;
     reason = "pure Job3 supply awaits the closed current-profile owner"
 )]
 pub(crate) use census::{JobCells, summarize_jobs, verify_census, verify_selected_census};
+/// The overflow recipes' frame sizes, tied to the opcode shapes by OVF-F04.
+#[cfg(test)]
+pub(crate) use job::{CHAIN_RETIRE_WAL, CHUNK_WRITE_WAL};
 #[allow(
     unused_imports,
     reason = "pure Job3 supply awaits the closed current-profile owner"

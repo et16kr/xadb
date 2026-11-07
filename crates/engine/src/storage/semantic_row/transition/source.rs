@@ -166,7 +166,7 @@ fn identity_codec() -> usize {
 
 /// The canonical row check: an inline value parse and a Catalog-schema
 /// column lookup.
-fn canonical_codec() -> usize {
+pub(super) fn canonical_codec() -> usize {
     size_of::<(&[u8], RowSchemaInput<'_>)>()
         + returned::<CanonicalRowView<'_>, RowError>()
         + size_of::<[u32; MAX_ROW_COLUMNS + 1]>()

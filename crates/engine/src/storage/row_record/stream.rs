@@ -348,6 +348,84 @@ fn empty(tag: u8) -> ValueRef<'static> {
     }
 }
 
+/// Source models of the A helpers and the stream (dev3-row-overflow.md
+/// #o1-record): explicit sums of each frame's typed carriers, not ABI stack
+/// samples. `sha` is the caller census's SHA closure.
+pub(crate) mod source {
+    use super::super::source::{input_len, returned, schema_lookup};
+    use super::*;
+    use std::mem::size_of;
+
+    /// `emit`: arguments, the index, one value and its fixed bytes, and the
+    /// piece handed to the sink.
+    fn emit() -> usize {
+        size_of::<(RowValuesInput<'_>, &mut ())>()
+            + size_of::<usize>()
+            + size_of::<ValueRef<'_>>()
+            + size_of::<([u8; 8], [u8; 4])>()
+            + size_of::<&[u8]>()
+    }
+
+    /// `canonical_row_digest_borrowed`: arguments, the values, total, hasher
+    /// and its closure, digest and Result, then the length check or `emit`
+    /// with the hasher update.
+    pub(crate) fn digest(sha: usize) -> usize {
+        size_of::<(RowSchemaInput<'_>, &[ValueRef<'_>])>()
+            + size_of::<RowValuesInput<'_>>()
+            + returned::<usize, RowError>()
+            + size_of::<ContentHasher>()
+            + size_of::<&mut ContentHasher>()
+            + size_of::<[u8; 32]>()
+            + size_of::<Result<(usize, [u8; 32]), RowError>>()
+            + input_len().max(emit() + sha)
+    }
+
+    /// `encode_canonical_window_borrowed`: arguments, the values, total,
+    /// end, the closure's captures and its seven offsets, the Result, then
+    /// the length check or `emit` with the copy.
+    pub(crate) fn window() -> usize {
+        size_of::<(RowSchemaInput<'_>, &[ValueRef<'_>], usize, &mut [u8])>()
+            + size_of::<RowValuesInput<'_>>()
+            + returned::<usize, RowError>()
+            + size_of::<(&mut usize, &usize, &usize, &mut [u8])>()
+            + size_of::<[usize; 7]>()
+            + size_of::<Result<usize, RowError>>()
+            + input_len().max(emit())
+    }
+
+    /// The stream a caller holds across its chunk loads.
+    pub(crate) fn stream() -> usize {
+        size_of::<CanonicalRowStream<'static>>()
+    }
+
+    /// `CanonicalRowStream::push` → `consume` → `fill`/`tag`/`payload` →
+    /// `Utf8Carry::feed` or `end_value` with the schema lookup.
+    pub(crate) fn push() -> usize {
+        let push = size_of::<(&mut CanonicalRowStream<'_>, &[u8])>()
+            + 2 * size_of::<Result<(), RowError>>();
+        let consume = size_of::<&[u8]>() + returned::<usize, RowError>();
+        let fill = size_of::<(&mut CanonicalRowStream<'_>, &[u8])>()
+            + size_of::<[usize; 3]>()
+            + size_of::<ValueRef<'_>>()
+            + size_of::<Result<usize, RowError>>();
+        let tag = size_of::<(&mut CanonicalRowStream<'_>, u8)>()
+            + size_of::<usize>()
+            + size_of::<Result<usize, RowError>>();
+        let payload = size_of::<(&mut CanonicalRowStream<'_>, u8, usize, &[u8])>()
+            + size_of::<usize>()
+            + size_of::<Result<usize, RowError>>();
+        let feed = size_of::<(&mut Utf8Carry, &[u8])>()
+            + size_of::<[usize; 3]>()
+            + 2 * size_of::<Result<&str, std::str::Utf8Error>>()
+            + size_of::<&[u8]>()
+            + size_of::<Result<(), RowError>>();
+        let end_value = size_of::<(&mut CanonicalRowStream<'_>, ValueRef<'_>)>()
+            + size_of::<Result<(), RowError>>()
+            + schema_lookup();
+        push + consume + fill.max(tag).max(payload) + feed.max(end_value)
+    }
+}
+
 #[cfg(test)]
 #[path = "stream_tests.rs"]
 mod tests;
