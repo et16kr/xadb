@@ -7,7 +7,7 @@
         "crates/engine/src/storage/anchor.rs",
         "crates/engine/src/storage/anchor_tests.rs"
       ],
-      "reason": "XTR1 (Overflow, 0) entries and the revision >= 2 tree-entry rule (dev3-row-overflow.md#retired-list, OVF-F03) beside the existing XTR1/anchor literals UNL-P01..P04, whose decoder the new kind changes; UNL-C01 re-measures walk_source_bytes (+1 B tree-entry flag).",
+      "reason": "XTR1 (Overflow, 0) entries and the revision >= 2 tree-entry rule (dev3-row-overflow.md#retired-list, OVF-F03) beside the existing XTR1/anchor literals UNL-P01..P04, whose decoder the new kind changes; UNL-C01 checks its check > walk bound with walk_source_bytes' new +1 B tree-entry flag term (no independent measurement).",
       "cases": [
         {
           "file": "crates/engine/src/storage/anchor_tests.rs",
@@ -167,7 +167,7 @@
         "crates/engine/src/storage/retention_page/row/job_tests.rs",
         "crates/engine/src/storage/retention_page/row/census.rs"
       ],
-      "reason": "Job3 overflow root (PendingChain/ReturnChain, @285 decode, validate_root Reserved-pending/Releasing-chain rules, cleanup() chain branch; OVF-F02) and the two census rules now reading cleanup_started(): the job3_census_* cases exercise census.rs, the job3/rdl/rup literal cases show existing roots unchanged; row_codec_source_bounds_cover_measured_frames calls retention_page/row.rs source_bytes with the new validate_root term.",
+      "reason": "Job3 overflow root (PendingChain/ReturnChain, @285 decode, validate_root Reserved-pending/Releasing-chain rules, cleanup() chain branch; OVF-F02) and the two census rules now reading cleanup_started(): the job3_census_* cases exercise census.rs, the job3/rdl/rup literal cases show existing roots unchanged; row_codec_source_bounds_cover_measured_frames calls retention_page/row.rs source_bytes with the new validate_root term, which max(hashing) hides, so its output is unchanged.",
       "cases": [
         {
           "file": "crates/engine/src/storage/retention_page/row/job_tests.rs",
@@ -694,7 +694,8 @@
     },
     {
       "paths": [
-        "crates/engine/src/storage/semantic_row/ledger.rs"
+        "crates/engine/src/storage/semantic_row/ledger.rs",
+        "crates/engine/src/storage/semantic_row/ledger_tests.rs"
       ],
       "reason": "ReleasingCompensated row rule now reads cleanup_started() instead of release_cursor() != 0. They differ only for an overflow root whose chain ChainRetire returned at cursor 0: ovf_f02_ledger_returned_chain_needs_the_terminal edits the fixture's cursor-0 compensated roots into that root (refused beside the Active actor, accepted beside Committed/Aborted ones) and into one still holding its chain (accepted); the old expression fails it. The existing ledger literal/state cases show non-overflow roots unchanged.",
       "cases": [
@@ -789,7 +790,7 @@
         "crates/engine/src/storage/semantic_row/undo.rs",
         "crates/engine/src/storage/semantic_row/transition/prepare.rs"
       ],
-      "reason": "op != op.role() became op.delete() (OverflowCancel's role is Cancel but it is not a DELETE operation). The two differ only for OverflowCancel, whose value no caller reads in O1 (each caller uses it only for the Forward/Clr/Prune roles). The DELETE transition cases reach the DELETE branch through prepare::op_effect and the cross-checked undo/jobs/leaf observers; the undo cases show the INSERT branch unchanged.",
+      "reason": "op != op.role() became op.delete() (OverflowCancel's role is Cancel but it is not a DELETE operation). The two differ only for OverflowCancel, whose value no caller reads in O1 (each caller uses it only for the Forward/Clr/Prune roles). The DELETE transition cases reach the DELETE branch through prepare::op_effect and the cross-checked undo/jobs/leaf observers; the undo cases that reach opcode_effect show the INSERT branch unchanged; undo_release_cursor_material_and_same_generation_free (ends at the role check) and undo_rejects_operations_without_undo_native (ends at Unsupported first) are module regression cases that do not reach the changed line.",
       "cases": [
         {
           "file": "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
