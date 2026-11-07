@@ -79,9 +79,12 @@ struct RowRoute {
 /// How `load_leaf_located` reached its leaf (dev3-cursor-locator.md#locator).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Located {
+    /// The root is the leaf (level 0): no internal page to skip, so the
+    /// locator is neither asked nor recorded.
+    Root,
     /// The locator's leaf, which holds the RowId.
     Hinted,
-    /// Walked from the root: the issued route is recorded.
+    /// Walked from a root of level one or more: the issued route is recorded.
     Walked,
     /// Walked again after a hint whose leaf did not hold the RowId; the
     /// route is the hint itself, so nothing new is recorded.
@@ -763,8 +766,9 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             return Ok(ReadStep::FlushRequired { target });
         }
         let mut route = self.route_root(table, anchor_request)?;
-        let mut located = Located::Walked;
+        let mut located = Located::Root;
         if route.level > 0 {
+            located = Located::Walked;
             match locator.lookup(table.anchor, key, route.revision) {
                 Ok(Some(hint)) => {
                     route = RowRoute {
@@ -806,7 +810,9 @@ impl<'u, 'r, 't, 'v, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             }
             if route.level == 0 {
                 match located {
-                    Located::Walked => return Ok(ReadStep::Ready((route, located))),
+                    Located::Root | Located::Walked => {
+                        return Ok(ReadStep::Ready((route, located)));
+                    }
                     Located::Hinted => {
                         let leaf = TargetRequest {
                             identity: PageIdentity {

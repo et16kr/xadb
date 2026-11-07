@@ -223,6 +223,32 @@ pub(crate) struct PageConcurrency<'f> {
     hooks: Mutex<test_support::Hooks>,
 }
 
+/// One Row locator share of a core (dev3-concurrency-admission.md
+/// #locator-shares). Only `take_locator_share` makes one and it is not Clone,
+/// so the core's count is exactly the live shares; Drop returns this one.
+pub(crate) struct LocatorShare<'c, 'f> {
+    core: &'c PageConcurrency<'f>,
+}
+
+impl<'c, 'f> LocatorShare<'c, 'f> {
+    /// The core this share is of.
+    pub(crate) fn core(&self) -> &'c PageConcurrency<'f> {
+        self.core
+    }
+}
+
+impl Drop for LocatorShare<'_, '_> {
+    fn drop(&mut self) {
+        use std::sync::atomic::Ordering::{AcqRel, Acquire};
+        // This share is one of those counted, so the count is at least one.
+        let returned = self
+            .core
+            .locator_shares
+            .fetch_update(AcqRel, Acquire, |held| held.checked_sub(1));
+        debug_assert!(returned.is_ok(), "a locator share returned twice");
+    }
+}
+
 impl<'f> PageConcurrency<'f> {
     #[cfg(test)]
     pub(crate) fn diagnostic_version_busy(&self) -> bool {
@@ -235,24 +261,18 @@ impl<'f> PageConcurrency<'f> {
         std::ptr::eq(self.fence, fence)
     }
 
-    /// Take one of the LOCATOR_SHARES Row locator shares. False: all are
-    /// held and nothing changed. No fence, lock or I/O: a locator is caller
-    /// RAM, and every read that uses it still runs every session check.
-    pub(crate) fn take_locator_share(&self) -> bool {
+    /// Take one of the LOCATOR_SHARES Row locator shares; its Drop returns
+    /// it. None: all are held and nothing changed. No fence, lock or I/O: a
+    /// locator is caller RAM, and every read that uses it still runs every
+    /// session check.
+    pub(crate) fn take_locator_share(&self) -> Option<LocatorShare<'_, 'f>> {
         use std::sync::atomic::Ordering::{AcqRel, Acquire};
         self.locator_shares
             .fetch_update(AcqRel, Acquire, |held| {
                 (usize::from(held) < LOCATOR_SHARES).then_some(held + 1)
             })
-            .is_ok()
-    }
-    /// Return a share `take_locator_share` gave. A return with none held
-    /// changes nothing.
-    pub(crate) fn return_locator_share(&self) {
-        use std::sync::atomic::Ordering::{AcqRel, Acquire};
-        let _ = self
-            .locator_shares
-            .fetch_update(AcqRel, Acquire, |held| held.checked_sub(1));
+            .ok()
+            .map(|_| LocatorShare { core: self })
     }
     #[cfg(test)]
     pub(crate) fn test_locator_shares(&self) -> usize {

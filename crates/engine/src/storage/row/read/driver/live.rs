@@ -475,7 +475,9 @@ pub(in crate::storage) fn test_nonload_caller<W: WriterNamespace>() -> usize {
     *test_load_callers::<W>().iter().max().unwrap()
         // Opening closure's return is distinct from read_point/next's open
         // result (whose operation payload is already counted by the C join).
+        // The located point read's closure returns the larger LocatedSource.
         + n::<Result<LiveSource<'_,'_,'_,'_,'_,'_,'_,'_,'_,'_,'_,'_,'_,'_,W>,RetentionError>>()
+            .max(n::<Result<LocatedSource<'_,'_,'_,'_,'_,'_,'_,'_,'_,'_,'_,'_,'_,'_,W>,RetentionError>>())
         + n::<TreePageView<'_>>()
         + 2 * n::<Result<TreePageView<'_>, RetentionError>>()
         + 2 * n::<Result<RowCandidate, RetentionError>>()

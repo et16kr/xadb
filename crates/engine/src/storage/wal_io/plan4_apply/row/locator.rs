@@ -10,7 +10,7 @@
 //! (an eviction is not a logical delete).
 use super::*;
 use crate::storage::{page::PageRef, tree_page::search::RowRouteBounds};
-use crate::transaction::concurrency::LOCATOR_SHARES;
+use crate::transaction::concurrency::{LOCATOR_SHARES, LocatorShare};
 
 /// Entries of one locator's direct-mapped table (a power of two).
 const ROW_LOCATOR_ENTRIES: usize = 256;
@@ -77,15 +77,9 @@ pub(super) struct DamagedHint;
 /// outlive the core; a table of another core is refused, so no hint crosses
 /// an open.
 pub(crate) struct RowLocator<'c, 's> {
-    core: &'c PageConcurrency<'s>,
+    share: LocatorShare<'c, 's>,
     entries: Box<[Option<Entry>]>,
     counts: LocatorCounts,
-}
-
-impl Drop for RowLocator<'_, '_> {
-    fn drop(&mut self) {
-        self.core.return_locator_share();
-    }
 }
 
 impl<'c, 's> RowLocator<'c, 's> {
@@ -93,17 +87,13 @@ impl<'c, 's> RowLocator<'c, 's> {
     /// None: every share is held, or the allocation was refused (its share
     /// is returned); nothing was reserved.
     pub(crate) fn new(core: &'c PageConcurrency<'s>) -> Option<Self> {
-        if !core.take_locator_share() {
-            return None;
-        }
+        let share = core.take_locator_share()?;
         let mut entries = Vec::new();
-        if entries.try_reserve_exact(ROW_LOCATOR_ENTRIES).is_err() {
-            core.return_locator_share();
-            return None;
-        }
+        // A refused allocation drops the share, which returns it.
+        entries.try_reserve_exact(ROW_LOCATOR_ENTRIES).ok()?;
         entries.resize(ROW_LOCATOR_ENTRIES, None);
         Some(Self {
-            core,
+            share,
             entries: entries.into_boxed_slice(),
             counts: LocatorCounts::default(),
         })
@@ -128,14 +118,15 @@ impl<'c, 's> RowLocator<'c, 's> {
     }
     fn serves_core(&self, core: &PageConcurrency<'_>) -> bool {
         std::ptr::eq(
-            (self.core as *const PageConcurrency<'s>).cast::<()>(),
+            (self.share.core() as *const PageConcurrency<'s>).cast::<()>(),
             (core as *const PageConcurrency<'_>).cast::<()>(),
         )
     }
     fn slot(anchor: PageIdentity, row: RowId) -> usize {
-        // SplitMix64's finalizer over the anchor's identity gives the
-        // table's offset; consecutive RowIds then take consecutive slots.
-        // Only the slot choice, never an identity.
+        // SplitMix64's finalizer over the anchor's identity but its file
+        // (FileId exposes no value) gives the table's offset; consecutive
+        // RowIds then take consecutive slots. Only the slot choice, never an
+        // identity: the entry compares the whole PageIdentity.
         let database = anchor.database.bytes();
         let (high, low) = database.split_at(8);
         let mut x = anchor.page.page_no

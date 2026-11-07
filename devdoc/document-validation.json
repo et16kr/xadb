@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-11-07T10:29:34.111681+09:00",
+  "date": "2026-11-07T11:04:10.623045+09:00",
   "status": "PASS",
   "errors": [],
   "markdown_documents": [
@@ -81,7 +81,7 @@
       "file": "devdoc/contracts/dev3-concurrency-admission.md",
       "links": 14,
       "duplicate_ids": 0,
-      "sha256": "bb4766363789158847533db8b59b6e22b83c0b5dd3e683223655d35e650d5f48"
+      "sha256": "bcd9e07a4d1ee1915da645819f3c866c36028fdb6f3b1559ef99b610bf7e8db9"
     },
     {
       "file": "devdoc/contracts/dev3-control-format.md",
@@ -115,9 +115,9 @@
     },
     {
       "file": "devdoc/contracts/dev3-cursor-locator.md",
-      "links": 27,
+      "links": 28,
       "duplicate_ids": 0,
-      "sha256": "0505b9e0d4a4683b241291eb1a00650e4a2d28e044c228777aa05d54c3821121"
+      "sha256": "58082f11dffa03a69e0254df477db8a288f0eef37ce47dcc27be6496a9b2878e"
     },
     {
       "file": "devdoc/contracts/dev3-dirty-stage.md",

@@ -196,8 +196,8 @@ GA07의 새 독립 oracle 부정 입력은20개다. 상태7·action trace5·sele
 | --- | --- |
 | 상수 | `LOCATOR_SHARES` = `FOREGROUND_OWNERS` = 32. `u8::MAX`보다 작음을 상수 검사한다 |
 | field | `locator_shares: AtomicU8`, 생성 때 0. 이 세션에서 살아 있는 `RowLocator` 수다 |
-| 받기 | `take_locator_share(&self) -> bool`. `fetch_update(AcqRel, Acquire)`로 32보다 작을 때만 1을 더한다. false면 아무것도 바뀌지 않는다 |
-| 반환 | `return_locator_share(&self)`. `RowLocator`의 Drop과, 몫을 받은 뒤 표 할당이 거절된 생성만 부른다. `checked_sub`로 0 아래로 내려가지 않는다 |
+| 받기 | `take_locator_share(&self) -> Option<LocatorShare<'_, 'f>>`. `fetch_update(AcqRel, Acquire)`로 32보다 작을 때만 1을 더하고 몫 token을 돌려준다. None이면 아무것도 바뀌지 않는다 |
+| 반환 | token `LocatorShare`의 Drop만 1을 뺀다. token은 core 참조 하나(8 B)이고 Clone이 아니며 `take_locator_share`만 만든다. 그래서 계수는 살아 있는 token 수와 같고, 받지 않은 몫이나 두 번의 반환이 type으로 막힌다. `RowLocator`는 token을 field로 쥐므로 locator의 drop과, 몫을 받은 뒤 표 할당이 거절된 생성이 반환한다. 방어로 `checked_sub`를 쓰고 0에서의 반환은 `debug_assert`로 드러낸다 |
 | lock·fence | state·version mutex를 잡지 않고, fence·poison을 읽거나 바꾸지 않는다. owner slot·active_apply·active_content·installation과 어떤 순서도 맺지 않는다. 대기·재시도·Condvar가 없다. 그래서 fence된 세션에서도 몫을 받고 돌려줄 수 있으며, 그 locator를 쓰는 읽기는 operation을 열 때 지금처럼 fence로 거절된다 |
 | 의미 | 몫은 admission이 아니다. Owner나 guard를 발급하지 않고, 몫을 쥐었다고 어떤 읽기·쓰기도 허락되지 않는다. metadata/cache 8 MiB 안의 기존 locator 배정 1 MiB를 32개(각 32,768 B)로 나눈 caller RAM의 회계 단위다 |
 | 크기·heap | 1 byte는 core의 기존 padding에 들어가서 core 크기는 제품 640 B, 시험 cfg 824 B로 바꾸기 전과 같고 §7의 2048 B ceiling 안이다(GA07 resource가 다시 확인). 생성자는 여전히 heap·page·file·WAL 0이고, 더한 생성 값은 `AtomicU8` 하나뿐이다. §12 constructor 산식은 그대로다 |
