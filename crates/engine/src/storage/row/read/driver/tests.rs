@@ -1785,6 +1785,9 @@ mod delete;
 #[path = "update_tests.rs"]
 mod update;
 
+#[path = "smo_tests.rs"]
+mod smo;
+
 /// SPL-B02: an invalid source must not turn a non-progressing leaf bound
 /// into a loop, publish bytes or advance the cursor. Cleanup still runs.
 #[test]
