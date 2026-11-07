@@ -191,15 +191,15 @@ census(S5R-C01 memory, S5R-C02 instrumented native, 같은 값, Full 34,588 B):
 
 located.row_load의 여유는 37 B다. recheck의 다시 route는 `located.row_route`와 같은 frame을 쓰고, hint leaf의 brief read는 LOAD가 끝난 뒤 별도 never-inline 호출이라 `located.holds`로 센다.
 
-실행(2026-11-07, debug, 정확한 이름 filter와 `--test-threads=1`). source는 commit `fc1fc94`의 tree이고, Rust 파일 13개의 blob은 08-2b module-gate 기록(`module-gate/records/20261107-dev3-08-2-locator.json`)의 목록과 같다. clippy(`-p xadb-engine --all-targets -D warnings`)와 rustfmt도 그 tree에서 통과했다.
+실행(2026-11-07, debug, 정확한 이름 filter와 `--test-threads=1`). source는 commit `86c6c2a`(D2 1회차 반영)의 tree이고, Rust 파일 13개의 blob은 08-2b module-gate 기록(`module-gate/records/20261107-dev3-08-2-locator.json`)의 목록과 같다. clippy(`-p xadb-engine --all-targets -D warnings`)와 rustfmt도 그 tree에서 통과했다.
 
 | 시험 | 결과 | 확인한 값 |
 | --- | --- | --- |
 | LOC-B01 | PASS | 분류·계수, 다른 incarnation·owner_generation·database의 miss, 연속 RowId 256개의 slot, 역행과 bounds 밖의 손상(기록 revision과 그보다 뒤 revision 모두, hit·stale로 세지 않음), recheck의 confirm, 다른 core |
 | LOC-B02 | PASS | 위 크기, 32개와 33번째 거절, drop 뒤 다시 생성, 다른 core의 따로 센 몫 |
-| LOC-J01 | PASS(204.2 s) | lookups 70, hits 36, stale 15, misses 19, rechecks 0, working set 19. split이 옮긴 행 3개 |
-| LOC-J02 | PASS(174.5 s) | Prune 뒤 hit 6(그중 recheck 1), unlink 뒤 stale 15와 hit 15(recheck 4), 손상은 `Source/Tree(Corrupt)/CallerMustResolve`와 fence |
-| LOC-J03 | PASS(120.0 s) | 축소 뒤 조회 0, 다시 split 뒤 stale 8, 손상은 recheck의 `Census/Invariant/CallerMustResolve`와 fence |
+| LOC-J01 | PASS(206.2 s) | lookups 71(손상 조회 1 포함), hits 36, stale 15, misses 19, rechecks 0, working set 19. split이 옮긴 행 3개, 기록 revision은 anchor image와 같고 split 뒤 +1. 다른 세션 core의 locator는 `Census/BindingMismatch/Unchanged`이고 계수 0. bounds 손상은 `Census/Invariant/CallerMustResolve`와 fence |
+| LOC-J02 | PASS(173.6 s) | Prune 뒤 hit 6(그중 recheck 1), unlink 뒤 stale 15와 hit 15(recheck 4), 손상은 `Source/Tree(Corrupt)/CallerMustResolve`와 fence |
+| LOC-J03 | PASS(119.2 s) | 축소 뒤 조회·기록 0(8개 hint가 q2의 revision·leaf 그대로), 다시 split 뒤 stale 8, 손상은 recheck의 `Census/Invariant/CallerMustResolve`와 fence |
 | LOC-C01 | PASS | S5R-C01·C02 위 표, S5R-C03(원 Full admission 경계) PASS |
 | GA07 | PASS | `locator_shares`를 더한 core가 §7의 2048 B ceiling 안([동시성 admission §14](dev3-concurrency-admission.md#locator-shares)) |
 
