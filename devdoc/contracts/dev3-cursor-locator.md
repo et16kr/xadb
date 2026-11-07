@@ -1,6 +1,6 @@
 # DEV3 SMO를 건너는 stable cursor와 locator
 
-2026-11-07 · `D3-CURSOR-LOCATOR-001` · **08-2a cursor 인수 시험 PASS(CUR-B01·B02, CUR-J01..J05) / 08-2b locator 설계 / 독립 D2 2회차 ACCEPT**
+2026-11-07 · `D3-CURSOR-LOCATOR-001` · **08-2a cursor 인수 시험 PASS(CUR-B01·B02, CUR-J01..J05)와 locator 설계(PR #62) / 08-2b locator 구현 PASS(LOC-B01·B02, LOC-J01..J03, LOC-C01, PR_082B) / 독립 D2 08-2a 2회차 ACCEPT / 08-2 완료(PR_082B 병합 시)**
 
 [행 owner §5.5](dev3-task-06-tree-rows.md#algorithms) · [인수 T06-12·T06-13·T06-16](dev3-task-06-tree-rows.md#acceptance) · [statement/cursor F02](dev3-task-06-tree-rows.md#module-statement-cursor) · [current-leaf 소비자](dev3-tree-smo.md#current-leaf-consumers) · [빈 leaf unlink·root 축소](dev3-tree-smo.md#empty-leaf-unlink) · [자원 정본](dev3-resource-bounds.md) · [일정 08-2](../plans/dev3-schedule-baseline.md#items)
 
@@ -11,8 +11,8 @@
 
 | 단위 | 내용 | 제품 코드 |
 | --- | --- | --- |
-| 08-2a(이 PR) | cursor 불변식의 기록(§2), B literal 시험 CUR-B01·B02, 실제 C 위 시험 CUR-J01..J05(§3), T06-12 대응(§4), locator 설계(§5)와 시험 목록(§6) | 동작 변경 없음. B `LiveCursor`에 시험 전용 accessor 하나(CUR-J02) |
-| 08-2b(다음 PR) | §5의 core locator 몫, C `RowLocator`, `page_located`, B `read_point_located_live`, census 항, LOC 시험 | core(`dev3_concurrency_admission` 모듈의 `transaction/concurrency.rs`와 그 계약 [동시성 admission](dev3-concurrency-admission.md)에 몫 계수와 규칙 추가)·C·B |
+| 08-2a(PR #62) | cursor 불변식의 기록(§2), B literal 시험 CUR-B01·B02, 실제 C 위 시험 CUR-J01..J05(§3), T06-12 대응(§4), locator 설계(§5)와 시험 목록(§6) | 동작 변경 없음. B `LiveCursor`에 시험 전용 accessor 하나(CUR-J02) |
+| 08-2b(PR_082B, [구현 기록](#implementation-2b)) | §5의 core locator 몫, C `RowLocator`, `page_located`, B `read_point_located_live`, census 항, LOC 시험 | core(`dev3_concurrency_admission` 모듈의 `transaction/concurrency.rs`와 그 계약 [동시성 admission](dev3-concurrency-admission.md)에 몫 계수와 규칙 추가)·C·B |
 
 08-2a에 제품 변경이 없는 이유: cursor는 호출 사이에 page·slot·latch를 쥐지 않고, 호출마다 마지막 검사 key로 현재 tree를 route하며, `CheckedTable`은 revision이나 root를 갖지 않는다(§2). 그래서 split·unlink·root 축소가 호출 사이에 끼어도 다음 호출은 지금의 tree에서 같은 다음 key를 찾는다. 08-2a는 이것을 실제 SMO 위에서 확인한다. 일정 적립은 08-2 전체(cursor와 locator)가 끝나는 08-2b의 병합 때 한 번 한다(§8).
 
@@ -147,4 +147,51 @@ T06-13 대응: hit·이동·stale은 LOC-J01·J02·J03, eviction은 LOC-B01, cac
 <a id="review"></a>
 ## 9. 검토
 
-독립 D2 기록은 `module-gate/evidence/dev3-08-2-cursor/`에 있다. 1회차(`review-r1.md`, commit `ca62fda`)는 CONDITIONAL이었다(필수 2: locator 인스턴스 수와 1 MiB 회계, key 정의). 이 판은 필수 둘을 L1–L5와 LOC-B01·B02로, 권고 열 가지와 NIT 일곱 가지를 C1·C7, §3, §4, L6–L12, §5의 대응표, §6, §7로 반영했다. 2회차(`review.md`, commit `d4d3f2a`)는 ACCEPT였다(필수 0, 권고 4, NIT 4). 문서만 고치는 권고 2·3과 NIT 1–4는 이 판에 반영했고, 권고 1(동시성 admission 계약의 갱신)은 08-2b가, 권고 4(module-gate 기록)는 이 PR의 record가 한다.
+독립 D2 기록은 `module-gate/evidence/dev3-08-2-cursor/`에 있다. 1회차(`review-r1.md`, commit `ca62fda`)는 CONDITIONAL이었다(필수 2: locator 인스턴스 수와 1 MiB 회계, key 정의). 이 판은 필수 둘을 L1–L5와 LOC-B01·B02로, 권고 열 가지와 NIT 일곱 가지를 C1·C7, §3, §4, L6–L12, §5의 대응표, §6, §7로 반영했다. 2회차(`review.md`, commit `d4d3f2a`)는 ACCEPT였다(필수 0, 권고 4, NIT 4). 문서만 고치는 권고 2·3과 NIT 1–4는 이 판에 반영했고, 권고 1(동시성 admission 계약의 갱신)은 08-2b가, 권고 4(module-gate 기록)는 PR #62의 record가 했다.
+
+<a id="implementation-2b"></a>
+## 10. 08-2b 구현 기록
+
+§5의 L1–L12를 그대로 구현했다. 바꾼 곳은 다음과 같다.
+
+| 위치 | 공급 |
+| --- | --- |
+| `transaction/concurrency.rs` | `LOCATOR_SHARES`(= `FOREGROUND_OWNERS` = 32), core의 `locator_shares` 1 byte, `take_locator_share`·`return_locator_share`. 계수는 `fetch_update`로 32를 넘지 않고, 0 아래로 내려가지 않는다. core 크기는 제품 640 B, 시험 cfg 824 B로 그대로다(크기 probe로 바꾸기 전과 뒤를 쟀다) |
+| `wal_io/plan4_apply/row/locator.rs` | `RowLocator::new(core)`·`Drop`(몫 반환), 256 entry 표, `serves`(core identity), `lookup`(역행·bounds 밖은 `DamagedHint`), `confirm`(recheck), `record`, 계수 6개, `working_set`·`bytes`. slot은 anchor identity 전체의 hash에 RowId를 더한 값의 하위 8 bit |
+| `tree_page/search.rs` | `row_leaf_holds`: `route_row_step`과 같은 decode·bounds 검사 뒤 정확한 검색. `leaf_holds_source_bytes`(census) |
+| `wal_io/plan4_apply/row/read.rs` | `page_located`(다른 core면 읽기 전 `BindingMismatch`), `load_leaf_located`(`Located::{Hinted, Walked, Rechecked}`), `leaf_holds`(hint leaf의 brief read와 membership), `damaged_hint`(fatal Invariant). 기록은 `Walked`일 때만 |
+| `row/read/driver/live.rs` | `LocatedSource`, `read_point_located_live`(B 진입). cursor 경로는 그대로 |
+| `plan4_apply.rs`, `wal_io/disk_api.rs`, `storage/disk.rs` | `RowLocator`, `LocatorCounts` 재수출 |
+
+크기(LOC-B02): locator 하나의 `bytes()`는 30,856 B다(header 72 B, entry 120 B × 256 = 30,720 B, allocator 여유 64 B). 한 core의 32개 합은 987,392 B로 1,048,576 B 이하다. 33번째 생성은 None이고 계수는 32로 남는다.
+
+census(S5R-C01 memory, S5R-C02 instrumented native, 같은 값, Full 34,588 B):
+
+| phase | bytes |
+| --- | ---: |
+| point.row_load(그대로) | 34,382 |
+| cursor.row_load(그대로) | 34,574 |
+| located.catalog_load | 34,470 |
+| located.row_load | 34,551 |
+| located.row_route | 8,284 |
+| located.value_before_load | 34,334 |
+| located.lookup | 3,779 |
+| located.record | 3,330 |
+| located.holds | 7,726 |
+
+located.row_load의 여유는 37 B다. recheck의 다시 route는 `located.row_route`와 같은 frame을 쓰고, hint leaf의 brief read는 LOAD가 끝난 뒤 별도 never-inline 호출이라 `located.holds`로 센다.
+
+실행(2026-11-07, debug, 정확한 이름 filter와 `--test-threads=1`):
+
+| 시험 | 결과 | 확인한 값 |
+| --- | --- | --- |
+| LOC-B01 | PASS | 분류·계수, 다른 incarnation·owner_generation·database의 miss, 연속 RowId 256개의 slot, 역행과 bounds 밖의 손상, recheck의 confirm, 다른 core |
+| LOC-B02 | PASS | 위 크기, 32개와 33번째 거절, drop 뒤 다시 생성, 다른 core의 따로 센 몫 |
+| LOC-J01 | PASS(206.2 s) | lookups 70, hits 36, stale 15, misses 19, rechecks 0, working set 19. split이 옮긴 행 3개 |
+| LOC-J02 | PASS(176.3 s) | Prune 뒤 hit 6(그중 recheck 1), unlink 뒤 stale 15와 hit 15(recheck 4), 손상은 `Source/Tree(Corrupt)/CallerMustResolve`와 fence |
+| LOC-J03 | PASS(122.9 s) | 축소 뒤 조회 0, 다시 split 뒤 stale 8, 손상은 recheck의 `Census/Invariant/CallerMustResolve`와 fence |
+| LOC-C01 | PASS | S5R-C01·C02 위 표, S5R-C03(원 Full admission 경계) PASS |
+
+실행 뒤 `concurrency.rs`와 `locator_smo.rs`에 rustfmt만 적용했다(동작 무관). 08-2b의 독립 D2 기록은 `module-gate/evidence/dev3-08-2-locator/`에 둔다.
+
+일정: 08-2a의 cursor 인수와 08-2b의 locator가 모두 끝났으므로 PR_082B의 병합으로 08-2의 1일을 적립한다(35 → 36/86 = 41.86%, [진도표](../plans/dev3-schedule-baseline.md#items)).
