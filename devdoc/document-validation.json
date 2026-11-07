@@ -1,15 +1,15 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-11-05T22:21:21.954392+09:00",
+  "date": "2026-11-07T01:51:05.379110+09:00",
   "status": "PASS",
   "errors": [],
   "markdown_documents": [
     {
       "file": "devdoc/README.md",
-      "links": 315,
+      "links": 321,
       "duplicate_ids": 0,
-      "sha256": "3f0f84c457d5c83a3268e69edc17c161384e8e545014e6efde14c613f1a9e017"
+      "sha256": "56b667c9ced41c3ea277b67c099393278e24bc480cb4d31f14e03c3c80dacbf3"
     },
     {
       "file": "devdoc/contracts/README.md",
@@ -157,9 +157,9 @@
     },
     {
       "file": "devdoc/contracts/dev3-module-boundaries.md",
-      "links": 365,
+      "links": 367,
       "duplicate_ids": 0,
-      "sha256": "f3b1f5e1539b982de4153aac7b805a40a8b595059adf94a13f0a01232dec04f7"
+      "sha256": "068811364757e8ee199d490673f60d261e9bd8cd6ca7f95ff6baa6b0ac3d87ca"
     },
     {
       "file": "devdoc/contracts/dev3-module-consumers.md",
@@ -427,9 +427,9 @@
     },
     {
       "file": "devdoc/contracts/dev3-task-14-reclamation.md",
-      "links": 33,
+      "links": 35,
       "duplicate_ids": 0,
-      "sha256": "9e5c448088a9d8c3a42a8eeaff3afc886363624ef9e26298d7b4690c6e15a81d"
+      "sha256": "0e3e05e1072eff8551aef9ecd0b0a0a5c4718ed40aab46aa53fc1a017937617c"
     },
     {
       "file": "devdoc/contracts/dev3-task-15-backup-integrity.md",
@@ -463,9 +463,9 @@
     },
     {
       "file": "devdoc/contracts/dev3-tree-smo.md",
-      "links": 22,
+      "links": 73,
       "duplicate_ids": 0,
-      "sha256": "ec3461b52b12390be6448a37fe3b52182784cc46a16cc09ea05ed3fcba2f81f8"
+      "sha256": "cc30a586841102cfc1c51b2e84e51e8d48a322abb3ee70b78b72612ec319f4be"
     },
     {
       "file": "devdoc/contracts/dev3-undo-format.md",
@@ -1495,9 +1495,9 @@
     },
     {
       "file": "devdoc/plans/dev3-schedule-baseline.md",
-      "links": 120,
+      "links": 134,
       "duplicate_ids": 0,
-      "sha256": "d61277c6788db799aaa98dea8086e62795d775332e429d498e5082245b365291"
+      "sha256": "8aae698f6bffc12115affd09ee5f9f6ef5fdc177461fdc69f2ece718f2adb4dc"
     },
     {
       "file": "devdoc/plans/dev3-test-plan.md",

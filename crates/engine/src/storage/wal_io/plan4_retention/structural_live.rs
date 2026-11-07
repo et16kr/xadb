@@ -195,8 +195,9 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     }
 
     /// One LOAD step of `request` protecting `protected`: None once it is
-    /// resident, else the dirty victim to flush.
-    fn split_load(
+    /// resident, else the dirty victim to flush. The live unlink's residency
+    /// (`structural_unlink.rs`) uses it too.
+    pub(super) fn split_load(
         &self,
         owner: &mut Owner<'c, 's>,
         cursor: &mut Plan4ResidencyCursor,
@@ -421,9 +422,7 @@ pub(in crate::storage) fn source_bytes<W: WriterNamespace>() -> LiveSource {
         + 2 * size_of::<RetentionError>()
         + size_of::<[usize; 8]>()
         + 16 * reference;
-    let load = size_of::<Result<RetentionResidencyStep>>()
-        + 6 * reference
-        + super::super::super::super::super::lookup_load::source_bytes::<W>();
+    let load = load_step_bytes::<W>();
     // A brief typed read: the request, the read and its page, the closure's
     // values and Results, beside the tree decode of a leaf or internal page
     // (with a leaf's entry walk and key search), the leaf's reservation
@@ -448,14 +447,7 @@ pub(in crate::storage) fn source_bytes<W: WriterNamespace>() -> LiveSource {
                 .max(row_group::leaf_reservation_source_bytes())
                 .max(job3::source_bytes()),
         );
-    // `check_split_debt`, under `split_resident`'s frame: one Job decode at
-    // a time.
-    let debt = size_of::<job3::JobView<'_>>()
-        + 2 * size_of::<
-            std::result::Result<job3::JobView<'_>, crate::storage::retention_page::RetentionError>,
-        >()
-        + 8 * reference
-        + job3::source_bytes();
+    let debt = split_debt_bytes();
     let callee = load
         .max(table_root_source_bytes())
         .max(route_step_source_bytes())
@@ -473,4 +465,25 @@ pub(in crate::storage) fn source_bytes<W: WriterNamespace>() -> LiveSource {
         effect,
         peak: residency.max(effect),
     }
+}
+
+/// One LOAD step under `split_load`: its Result and borrows beside the one
+/// retention LOAD body. The live unlink's residency census uses it too.
+pub(super) fn load_step_bytes<W: WriterNamespace>() -> usize {
+    use std::mem::size_of;
+    size_of::<Result<RetentionResidencyStep>>()
+        + 6 * size_of::<&()>()
+        + super::super::super::super::super::lookup_load::source_bytes::<W>()
+}
+
+/// `check_split_debt` under a residency frame: one Job decode at a time.
+/// The live unlink's residency census uses it too.
+pub(super) fn split_debt_bytes() -> usize {
+    use std::mem::size_of;
+    size_of::<job3::JobView<'_>>()
+        + 2 * size_of::<
+            std::result::Result<job3::JobView<'_>, crate::storage::retention_page::RetentionError>,
+        >()
+        + 8 * size_of::<&()>()
+        + job3::source_bytes()
 }

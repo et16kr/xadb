@@ -120,7 +120,20 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         #[cfg(test)]
         test_stage_refusal()?;
         self.catalog_application()
-            .apply_existing(owner, ExistingGroup::RowWrite(&group))
+            .apply_existing(owner, ExistingGroup::RowWrite(&group))?;
+        // A live INSERT CLR removes its row from the routed RowLeaf: an
+        // emptied leaf leaves an unlink note (dev3-tree-smo.md#empty-leaf-unlink).
+        // The recovered facade's CLR (the recovery table slot) leaves none.
+        if entry.effect == job3::RowEffect::Insert
+            && table.slot != super::super::super::super::super::visibility::RECOVERY_TABLE_SLOT
+        {
+            self.note_emptied_leaf(
+                (table.handle, table.anchor.page, issued.row),
+                group.targets(),
+                |at| group.after(at),
+            );
+        }
+        Ok(())
     }
 }
 

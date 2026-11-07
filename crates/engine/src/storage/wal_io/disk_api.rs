@@ -45,6 +45,9 @@ pub(in crate::storage) use super::bootstrap::doublewrite_install::mutable_storag
 // The live split step `MutationPort::split_row_live` returns
 // (dev3-tree-smo.md#automatic-split), for A's row loop.
 pub(in crate::storage) use super::bootstrap::doublewrite_install::mutable_storage::plan4_pages::apply::RowSplitStep;
+// The live unlink step `RetentionWriter::unlink_leaf_live` returns
+// (dev3-tree-smo.md#empty-leaf-unlink), for A's cleanup drain.
+pub(in crate::storage) use super::bootstrap::doublewrite_install::mutable_storage::plan4_pages::apply::RowUnlinkStep;
 pub(in crate::storage) use crate::transaction::concurrency::Owner;
 pub(in crate::storage::wal_io) use super::bootstrap::doublewrite_install::mutable_storage::plan4_pages::apply::legacy::from_legacy as legacy_install;
 

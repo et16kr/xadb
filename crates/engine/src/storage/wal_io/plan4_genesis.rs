@@ -181,6 +181,10 @@ pub(in crate::storage) fn plan4_catalog_genesis_source_bytes() -> usize {
         + 4 * size_of::<ContentHasher>()
         + 1536 // pinned SHA nested block/output/compression storage
         + 48 // anchor cell
+        // What the XTR1 list adds to the anchor decode inside the nested
+        // codec allowance; the encode is the unchanged root-only
+        // `encode_anchor` (UNL-C01).
+        + anchor::decode_increment_bytes(crate::storage::semantic_catalog::page_read_codec_bytes())
         + tree_page::TREE_METADATA_BYTES
         + 2 * 24 // PageRef codec scratch
         + 32 * size_of::<usize>()
@@ -788,6 +792,10 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> Census {
         + 4 * size_of::<tree_page::TreePageView<'_>>()
         + 4 * size_of::<std::result::Result<anchor::TreeAnchor, PageError>>()
         + 4 * size_of::<std::result::Result<tree_page::TreePageView<'_>, TreeError>>()
+        // What the XTR1 list adds to the anchor decode inside the nested
+        // codec allowance; the encode is the unchanged root-only
+        // `encode_anchor` (UNL-C01).
+        + anchor::decode_increment_bytes(crate::storage::semantic_catalog::page_read_codec_bytes())
         + 80
         + 1024;
     // The 64-entry allocator array lives only in parent prepare_for_kind;

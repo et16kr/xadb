@@ -3302,7 +3302,7 @@ native Writer에서 같고, 시험 `f4_a_autocommit_budgets_{memory,native}`가 
 | Commit frame | 2,889 | 3,024 (그대로) | 135 |
 | statement end | 5,948 | 6,144 (그대로) | 196 |
 | insert 지점(preflight 5,500, 최대 producer lane 9,332) | — | 기존 preflight·Write 상한 그대로 | 644 이상 |
-| 정리 drain 네 지점(최대 `try_flush` 3,979, caller 816) | — | `LIVE_ROW_CLEANUP` 4,096 (그대로) | 117 이상 |
+| 정리 drain 네 지점(최대 `try_flush` 3,979, caller 816). 08-1 U3가 unlink 네 지점을 더한 뒤 최대 `unlink_try_flush` 4,082([U3 census](dev3-tree-smo.md#unlink-u3-census)) | — | `LIVE_ROW_CLEANUP` 4,096 (그대로) | 117 이상, U3 뒤 14 |
 | rollback base caller | 1,377 | **1,536** (512에서) | 159 |
 | `rollback.next` | 6,361 | **6,528** (6,144에서) | 167 |
 | `rollback.clr_lane` | 12,185 | **12,416** (11,520에서) | 231 |
@@ -3415,7 +3415,7 @@ rollback으로 r행을 되돌린 거래는 5c+4r+1그룹, 전체 rollback은 적
 | `rollback.finish`(거래 경로) | 5,952 | 6,144 | 192 |
 | 나머지 rollback 지점(두 경로) | — | 그대로 | 320 이상 |
 | insert 지점(preflight 5,267, 최대 producer lane 9,099) | — | 그대로 | 877 이상 |
-| 정리 drain 네 지점(최대 `try_flush` 3,979) | — | 4,096 | 117 |
+| 정리 drain 네 지점(최대 `try_flush` 3,979). 08-1 U3 뒤 여덟 지점, 최대 `unlink_try_flush` 4,082 | — | 4,096 | 117, U3 뒤 14 |
 | Begin | 2,577 | 2,816 (새) | 239 |
 | statement 시작 | 3,176 | 3,584 (새) | 408 |
 
@@ -3448,6 +3448,10 @@ charge 44,304 B, short cap 65,536 B, 원 slack과 다른 항은 그대로다.
 | `BEGIN` | 2,816 | 2,625 / 2,577 | Row lifecycle 본문 40,881 + 2,816 ≤ CatalogProgressCharge 44,304 | 607 |
 | 같은 값 | | | retained 18,640 + split port 192 + Row writer 본문 23,027 + 2,816 ≤ 세션 peak 64,016 | 19,341 |
 | `STATEMENT_START` | 3,584 | 3,409 / 3,176 | retained 18,640 + split port 192 + Row writer 본문 23,027 + 3,584 ≤ 세션 peak 64,016 | 18,573 |
+
+2026-11-06 DEV3 08-1 U1의 anchor 목록(XTR1)이 root만 읽는 anchor decoder frame에 Result 하나(2 B)를 더해 Row
+lifecycle 본문은 40,883 B, `BEGIN`의 C 여유는 605 B다([UNL-C01 census](dev3-tree-smo.md#unlink-u1-census)).
+상한은 그대로다. 위 표와 아래의 40,881 B·607 B는 이 절을 정할 때의 값이다.
 
 상한 값은 두 실행기 중 큰 몫에 128 B 이상을 더하고 128 B 단위로 올린 값이다(측정 뒤 정한
 값). native는 retained 18,648 B, peak 64,024 B로 여유가 같다. C 시험

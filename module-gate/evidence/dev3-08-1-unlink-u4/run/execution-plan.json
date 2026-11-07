@@ -1,0 +1,172 @@
+{
+  "selector": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::unlink_rows::native::unlink_native_worker",
+  "cases": {
+    "UNL-N01-L": [
+      "produce",
+      "recover",
+      "reenter"
+    ],
+    "UNL-N01-R": [
+      "produce",
+      "recover",
+      "reenter"
+    ],
+    "UNL-N02-L": [
+      "produce",
+      "recover",
+      "reenter"
+    ],
+    "UNL-N02-R": [
+      "produce",
+      "recover",
+      "reenter"
+    ],
+    "UNL-N03-L": [
+      "produce",
+      "recover",
+      "reenter"
+    ],
+    "UNL-N03-R": [
+      "produce",
+      "recover",
+      "reenter"
+    ],
+    "UNL-N04-L": [
+      "produce",
+      "recover",
+      "reenter"
+    ],
+    "UNL-N04-R": [
+      "produce",
+      "recover",
+      "reenter"
+    ],
+    "UNL-N05-L": [
+      "produce",
+      "recover",
+      "reenter"
+    ],
+    "UNL-N05-R": [
+      "produce",
+      "recover",
+      "reenter"
+    ],
+    "UNL-N06-L": [
+      "produce",
+      "crash",
+      "recover",
+      "reenter"
+    ],
+    "UNL-N06-R": [
+      "produce",
+      "crash",
+      "recover",
+      "reenter"
+    ]
+  },
+  "source": "236119bdeca4fc9c6e65f4526f6a2f9c6ff0ec2ade1c8750f6edd29457f59d54",
+  "elf": "246c4f375694ae6cdd4e9111c45b4e7c72793c2fd5c434212c82a0f31b644496",
+  "input": "dfba91c272b562bfcc32b1509fad0613f9b350dcdcc883f58a48b71e7ae0d6dd",
+  "controller": "f58893b3e526aed5db81c8de908e3b7521b99a3583820420d4dd32244be2ad56",
+  "per_process_seconds": 180,
+  "log_bytes_cap": 16777216,
+  "rust_stack": 33554432,
+  "expected": {
+    "UNL-N01-L": {
+      "after": false,
+      "route": "0,3,5",
+      "level": 1,
+      "listed": 0,
+      "added": 0,
+      "rows": 8
+    },
+    "UNL-N01-R": {
+      "after": false,
+      "route": "0,5",
+      "level": 1,
+      "listed": 0,
+      "added": 0,
+      "rows": 5
+    },
+    "UNL-N02-L": {
+      "after": false,
+      "route": "0,3,5",
+      "level": 1,
+      "listed": 0,
+      "added": 0,
+      "rows": 8
+    },
+    "UNL-N02-R": {
+      "after": false,
+      "route": "0,5",
+      "level": 1,
+      "listed": 0,
+      "added": 0,
+      "rows": 5
+    },
+    "UNL-N03-L": {
+      "after": false,
+      "route": "0,3,5",
+      "level": 1,
+      "listed": 0,
+      "added": 1,
+      "rows": 8
+    },
+    "UNL-N03-R": {
+      "after": false,
+      "route": "0,5",
+      "level": 1,
+      "listed": 0,
+      "added": 1,
+      "rows": 5
+    },
+    "UNL-N04-L": {
+      "after": true,
+      "route": "3,5",
+      "level": 1,
+      "listed": 1,
+      "added": 35248,
+      "rows": 8
+    },
+    "UNL-N04-R": {
+      "after": true,
+      "route": "5",
+      "level": 0,
+      "listed": 2,
+      "added": 19032,
+      "rows": 5
+    },
+    "UNL-N05-L": {
+      "after": true,
+      "route": "3,5",
+      "level": 1,
+      "listed": 1,
+      "added": 35248,
+      "rows": 8
+    },
+    "UNL-N05-R": {
+      "after": true,
+      "route": "5",
+      "level": 0,
+      "listed": 2,
+      "added": 19032,
+      "rows": 5
+    },
+    "UNL-N06-L": {
+      "after": true,
+      "route": "3,5",
+      "level": 1,
+      "listed": 1,
+      "added": 35248,
+      "rows": 8
+    },
+    "UNL-N06-R": {
+      "after": true,
+      "route": "5",
+      "level": 0,
+      "listed": 2,
+      "added": 19032,
+      "rows": 5
+    }
+  }
+}

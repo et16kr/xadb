@@ -1,0 +1,39 @@
+   Compiling version_check v0.9.5
+   Compiling typenum v1.20.1
+   Compiling autocfg v1.5.1
+   Compiling cfg-if v1.0.5
+   Compiling libc v0.2.191
+   Compiling generic-array v0.14.7
+   Compiling memoffset v0.9.1
+   Compiling cfg_aliases v0.2.2
+   Compiling nix v0.30.1
+   Compiling cpufeatures v0.2.17
+   Compiling bitflags v2.13.2
+   Compiling block-buffer v0.10.4
+   Compiling crypto-common v0.1.7
+   Compiling digest v0.10.7
+   Compiling sha2 v0.10.9
+   Compiling xadb-foundation v0.1.0 (/workspace/xadb/crates/foundation)
+   Compiling xadb-platform v0.1.0 (/workspace/xadb/crates/platform)
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 48s
+     Running unittests src/lib.rs (/workspace/scratch/pr57-target/debug/deps/engine-e4e141083d864921)
+
+running 4 tests
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::structural_replay_tests::unlink_replay::pr57_unlink_rejects_wrong_stream_cut_and_duplicate_frame ... ok
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::structural_replay_tests::unlink_replay::pr57_unlink_length_boundaries_reject_without_consuming_the_cut ... ok
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::structural_replay_tests::unlink_replay::pr57_unlink_adopts_successor_epoch_only_from_a_seeded_base' (2116) panicked at crates/engine/src/storage/wal_io/plan4_retention/recovery/structural_replay_tests.rs:55:69:
+called `Result::unwrap()` on an `Err` value: Base(IdentityMismatch)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::structural_replay_tests::unlink_replay::pr57_unlink_adopts_successor_epoch_only_from_a_seeded_base ... FAILED
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::structural_replay_tests::unlink_replay::pr57_unlink_all_native_digests_and_last_redo_are_compared_before_publication ... ok
+
+failures:
+
+failures:
+    storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::structural_replay_tests::unlink_replay::pr57_unlink_adopts_successor_epoch_only_from_a_seeded_base
+
+test result: FAILED. 3 passed; 1 failed; 0 ignored; 0 measured; 2391 filtered out; finished in 0.17s
+
+error: test failed, to rerun pass `-p xadb-engine --lib`

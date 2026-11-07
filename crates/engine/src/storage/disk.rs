@@ -51,6 +51,11 @@ pub(in crate::storage) use super::wal_io::disk_api::RowRetireStep;
     reason = "named only by A's row loop; the C+B export has no A"
 )]
 pub(in crate::storage) use super::wal_io::disk_api::RowSplitStep;
+#[allow(
+    unused_imports,
+    reason = "named only by A's cleanup drain; the C+B export has no A"
+)]
+pub(in crate::storage) use super::wal_io::disk_api::RowUnlinkStep;
 
 pub(crate) use super::wal_io::disk_api::{
     DurableCommit, InstalledCommit, StagedCommit, UnstagedCommit,

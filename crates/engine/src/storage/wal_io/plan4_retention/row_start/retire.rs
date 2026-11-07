@@ -321,7 +321,10 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
     /// the one `Result` slot below and the install borrows it there, so the
     /// frame holds no `?` branch value and no moved copy of the group
     /// (`carrier_source_bytes`); the Observation is copied straight into
-    /// the return slot.
+    /// the return slot. A DeletePrune reads its table, anchor and row from
+    /// its RootRetained Job first (the group releases the Job's pair) and,
+    /// once installed, leaves an unlink note when its RowLeaf is now empty
+    /// (dev3-tree-smo.md#empty-leaf-unlink, `note_emptied_leaf`).
     #[inline(never)]
     fn retire_resident(
         &mut self,
@@ -330,6 +333,11 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
         operation: row_semantic::Operation,
         private: &mut [u8; PRIVATE_BYTES],
     ) -> Result<row_group::Observation> {
+        let note = if operation == row_semantic::Operation::DeletePrune {
+            self.delete_prune_note(ordinal)?
+        } else {
+            None
+        };
         let result = self
             .catalog_preparation()
             .prepare_row_recovery(owner, ordinal, operation, private);
@@ -342,6 +350,9 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
                 .apply_existing(owner, ExistingGroup::RowRelease(prepared))?;
         } else {
             self.apply_row_retirement(owner, prepared)?;
+        }
+        if let Some(note) = note {
+            self.note_emptied_leaf(note, prepared.targets(), |at| prepared.after(at));
         }
         Ok(prepared.payload.observation)
     }
@@ -440,6 +451,26 @@ impl<'b, 'a, 's, 'c, 'p, 'd, 'o, 'm, 'w, W: WriterNamespace>
             }
         }
         Ok(None)
+    }
+
+    /// A DeletePrune's table, anchor and row from its RootRetained Job cell
+    /// alone (`note_emptied_leaf`'s note). The producer checks the Job again.
+    /// It runs before anything is prepared, so an ordinal past the Jobs (the
+    /// caller's own Job scan never yields one) is an Unchanged `Invariant`
+    /// refusal like the producer's own.
+    #[inline(never)]
+    fn delete_prune_note(&self, ordinal: usize) -> Result<Option<(ObjectHandle, PageRef, RowId)>> {
+        let invalid = || unchanged(RetentionPhase::Prepare, RetentionCause::Invariant);
+        let job = job3::decode_job(
+            self.control.jobs().get(ordinal).ok_or_else(invalid)?,
+            self.storage.profile().spec().namespace,
+        )
+        .map_err(queue_error)?;
+        Ok(job
+            .object()
+            .zip(job.pair())
+            .zip(job.row_id())
+            .map(|((table, pair), row)| (table, pair[0], row)))
     }
 
     /// A Prune's RowLeaf position in its residency set, its table's tree and
@@ -687,14 +718,17 @@ pub(in super::super::super) fn caller_source_bytes() -> usize {
 /// the install: the one Result slot the preparation writes the prepared
 /// group into (the install borrows it there: no `?` branch value and no
 /// moved copy of the group exist), the borrow, the error moved out of a
-/// refused preparation, the install's group argument and the frame's
+/// refused preparation, the install's group argument, a DeletePrune's unlink
+/// note and its Result (dev3-tree-smo.md#empty-leaf-unlink) and the frame's
 /// arguments. Its own `Result<Observation>` slot is the caller's, in
 /// `caller_source_bytes`, and the Observation is copied straight into it.
 /// The preparation's own arrays and return carriers are in the Row group
-/// terms.
+/// terms; the note's calls are `note_source_bytes`.
 pub(in super::super::super) fn carrier_source_bytes() -> usize {
     use std::mem::size_of;
-    size_of::<Result<PreparedRowGroup<'_, '_, '_, ROW_WRITE_TARGETS>>>()
+    size_of::<Option<(ObjectHandle, PageRef, RowId)>>()
+        + size_of::<Result<Option<(ObjectHandle, PageRef, RowId)>>>()
+        + size_of::<Result<PreparedRowGroup<'_, '_, '_, ROW_WRITE_TARGETS>>>()
         + size_of::<&PreparedRowGroup<'_, '_, '_, ROW_WRITE_TARGETS>>()
         + size_of::<RetentionError>()
         + size_of::<ExistingGroup<'_, '_, '_, '_>>()

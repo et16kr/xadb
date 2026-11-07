@@ -35,10 +35,10 @@ impl Observation {
         }
     }
 }
-fn put(bytes: &mut [u8], at: usize, value: u64, width: usize) {
+pub(super) fn put(bytes: &mut [u8], at: usize, value: u64, width: usize) {
     bytes[at..at + width].copy_from_slice(&value.to_le_bytes()[..width]);
 }
-fn target(header: PageHeader) -> RedoTarget {
+pub(super) fn target(header: PageHeader) -> RedoTarget {
     RedoTarget {
         page: header.identity.page,
         owner: header.identity.owner,
@@ -72,16 +72,16 @@ fn order(candidate: &Candidate<'_>) -> Result<[usize; 5]> {
     Ok(ranked.map(|(_, _, role)| role))
 }
 
-enum Sink<'a> {
+pub(super) enum Sink<'a> {
     Write(&'a mut [u8]),
     Compare(&'a [u8]),
 }
-struct Cursor<'a> {
-    sink: Sink<'a>,
-    at: usize,
+pub(super) struct Cursor<'a> {
+    pub(super) sink: Sink<'a>,
+    pub(super) at: usize,
 }
 impl Cursor<'_> {
-    fn part(&mut self, value: &[u8]) -> Result<()> {
+    pub(super) fn part(&mut self, value: &[u8]) -> Result<()> {
         let end = self.at.checked_add(value.len()).ok_or(Error::Exhausted)?;
         match &mut self.sink {
             Sink::Write(out) => out
@@ -158,12 +158,64 @@ impl Cursor<'_> {
     }
 }
 
+impl Cursor<'_> {
+    /// One full-body Patch(72, 16280) record of an existing page.
+    pub(super) fn patch(
+        &mut self,
+        header: WalFrameHeader,
+        expected: RedoTarget,
+        prior: u64,
+        after: &[u8; PAGE_BYTES],
+    ) -> Result<()> {
+        let data = &after[72..DIGEST_OFFSET];
+        let end = self
+            .at
+            .checked_add(64 + data.len())
+            .ok_or(Error::Exhausted)?;
+        match &mut self.sink {
+            Sink::Write(out) => {
+                let out = out.get_mut(self.at..end).ok_or(Error::Exhausted)?;
+                wal_frame::encode_patch_record(expected, prior, 72, data, out)?;
+            }
+            Sink::Compare(input) => {
+                let bytes = input.get(self.at..end).ok_or(Error::Corrupt)?;
+                let record = wal_frame::decode_redo_record(header, bytes)?;
+                if record.target != expected
+                    || record.kind != RedoKind::Patch
+                    || record.prior_lsn != prior
+                    || record.offset != 72
+                    || record.data != data
+                {
+                    return Err(Error::Corrupt);
+                }
+            }
+        }
+        self.at = end;
+        Ok(())
+    }
+}
+
 fn descriptor(input: &Inputs<'_>, candidate: &Candidate<'_>, out: &mut [u8; 1536]) -> Result<()> {
+    finished_descriptor(
+        input.profile,
+        candidate.header,
+        candidate.operation.frame_bytes(),
+        out,
+    )
+}
+
+/// The new Finished/zero-residue Structural owner of one scope4 group.
+pub(super) fn finished_descriptor(
+    profile: crate::storage::control::Profile,
+    header: WalFrameHeader,
+    frame_bytes: usize,
+    out: &mut [u8; 1536],
+) -> Result<()> {
     let reference = SystemWorkRef::new(
-        input.profile.spec().namespace,
+        profile.spec().namespace,
         SystemWorkKind::StructuralChange,
-        candidate.header.lsn,
-        Generation::new(u64::from(candidate.header.stream.writer_epoch))
+        header.lsn,
+        Generation::new(u64::from(header.stream.writer_epoch))
             .map_err(|_| Error::IdentityMismatch)?,
     )
     .map_err(|_| Error::IdentityMismatch)?;
@@ -176,19 +228,19 @@ fn descriptor(input: &Inputs<'_>, candidate: &Candidate<'_>, out: &mut [u8; 1536
             limit: 1,
         }),
         chain: OwnerChain {
-            apply: candidate.header.lsn,
+            apply: header.lsn,
             previous: 0,
-            birth: candidate.header.lsn,
+            birth: header.lsn,
             groups: 1,
         },
-        profile: profile_reference(input.profile),
+        profile: profile_reference(profile),
         inventory: InventoryClaim {
-            change_lsn: candidate.header.lsn,
+            change_lsn: header.lsn,
             items: 0,
             digest: content_digest(&[]),
             growth_extents: 0,
         },
-        consumed_wal: candidate.operation.frame_bytes() as u64,
+        consumed_wal: frame_bytes as u64,
         consumed_control: 0,
         remaining: [RemainingBudget::default(); 5],
         minimum_wal_lsn: 0,
@@ -200,7 +252,7 @@ fn descriptor(input: &Inputs<'_>, candidate: &Candidate<'_>, out: &mut [u8; 1536
     obligation::decode_descriptor(
         out,
         ReservationOwner::System(reference),
-        profile_reference(input.profile),
+        profile_reference(profile),
     )?;
     Ok(())
 }
@@ -342,6 +394,26 @@ fn layout_source_bytes() -> usize {
         .max(1536 + std::mem::size_of::<foundation::codec::ContentHasher>())
 }
 
+/// `finished_descriptor`, shared with the unlink frame body.
+pub(super) fn descriptor_chain() -> usize {
+    use std::mem::size_of;
+    2 * size_of::<DescriptorSpec>()
+        + 2 * size_of::<std::result::Result<DescriptorSpec, obligation::ObligationError>>()
+        + 2 * size_of::<SystemProgress>()
+        + 2 * size_of::<SystemWorkRef>()
+        + 512
+        + obligation::descriptor_source_bytes()
+}
+/// One `Cursor::patch` redo record, shared with the unlink frame body.
+pub(super) fn redo_chain() -> usize {
+    use std::mem::size_of;
+    2 * size_of::<wal_frame::RedoRecordView<'_>>()
+        + 3 * size_of::<RedoTarget>()
+        + 2 * size_of::<WalFrameHeader>()
+        + 1024
+        + crate::storage::semantic_catalog::page_read_codec_bytes()
+        + 1536
+}
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct SourceCensus {
     pub(crate) outer: usize,
@@ -372,18 +444,7 @@ pub(crate) fn source_census() -> SourceCensus {
         + size_of::<Result<Observation>>()
         + 256;
     let outer = calls.max(returning);
-    let descriptor = 2 * size_of::<DescriptorSpec>()
-        + 2 * size_of::<std::result::Result<DescriptorSpec, obligation::ObligationError>>()
-        + 2 * size_of::<SystemProgress>()
-        + 2 * size_of::<SystemWorkRef>()
-        + 512
-        + obligation::descriptor_source_bytes();
-    let redo = 2 * size_of::<wal_frame::RedoRecordView<'_>>()
-        + 3 * size_of::<RedoTarget>()
-        + 2 * size_of::<WalFrameHeader>()
-        + 1024
-        + crate::storage::semantic_catalog::page_read_codec_bytes()
-        + 1536;
+    let (descriptor, redo) = (descriptor_chain(), redo_chain());
     let body = size_of::<[u8; 1536]>()
         + size_of::<[u8; 192]>()
         + size_of::<[u8; 128]>()

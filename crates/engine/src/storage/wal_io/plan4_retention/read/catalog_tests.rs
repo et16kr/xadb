@@ -294,3 +294,20 @@ fn catalog_read_source_reservation_fits_existing_peak() {
     #[cfg(target_os = "linux")]
     check::<super::super::super::super::native::Writer>("native");
 }
+
+/// UNL-C01 (dev3-tree-smo.md#unlink-u1-census): the Undo decode term that
+/// C preflight (`anchor_decode`, `table_root`) and the B read helper pass as
+/// the anchor decode's page term holds `check_list`, so the XTR1 list adds
+/// only the check's Result there.
+#[test]
+fn unl_c01_undo_decode_term_covers_the_list_check() {
+    use crate::storage::{anchor, page::PageError};
+    let undo = super::super::undo_decode_source_bytes();
+    let result = 2 * std::mem::size_of::<std::result::Result<(), PageError>>();
+    assert_eq!(anchor::decode_source_bytes(undo), undo + result);
+    assert_eq!(anchor::decode_increment_bytes(undo), result);
+    println!(
+        "UNL_C01 page_term=undo_decode page={undo} decode={}",
+        anchor::decode_source_bytes(undo)
+    );
+}

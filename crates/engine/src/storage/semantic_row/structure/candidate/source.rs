@@ -21,13 +21,13 @@ use crate::storage::{
 };
 use std::mem::size_of;
 
-fn slack() -> usize {
+pub(in crate::storage::semantic_row::structure) fn slack() -> usize {
     16 * size_of::<usize>() + 8 * size_of::<&[u8]>() + 8 * size_of::<Result<()>>()
 }
-fn digest() -> usize {
+pub(in crate::storage::semantic_row::structure) fn digest() -> usize {
     size_of::<ContentHasher>() + 32 + 1536
 }
-fn allocation_codec() -> usize {
+pub(in crate::storage::semantic_row::structure) fn allocation_codec() -> usize {
     4 * size_of::<AllocationEntry>()
         + 3 * size_of::<AllocationPage<'_>>()
         + 3 * size_of::<std::result::Result<AllocationEntry, allocation_page::AllocationError>>()
@@ -89,7 +89,7 @@ pub(super) fn weights_chain() -> usize {
             + 1536)
             .max(allocation_codec())
 }
-fn table_chain() -> usize {
+pub(in crate::storage::semantic_row::structure) fn table_chain() -> usize {
     size_of::<(&Inputs<'_>, Namespace)>()
         + 2 * size_of::<TreePageView<'_>>()
         + 2 * size_of::<TreeEntry<'_>>()
@@ -104,10 +104,38 @@ fn table_chain() -> usize {
         + 2 * size_of::<Table<'_>>()
         + 2 * size_of::<Result<Table<'_>>>()
         + 4 * slack()
-        + transition::tree_source_bytes().max(semantic_catalog::catalog_read_codec_bytes())
+        + transition::tree_source_bytes()
+            .max(semantic_catalog::catalog_read_codec_bytes())
+            // The anchor decode: one page codec, or the XTR1 walk after it
+            // (UNL-C01).
+            .max(anchor::decode_source_bytes(
+                semantic_catalog::page_read_codec_bytes(),
+            ))
         + 1536
 }
-fn audit_chain() -> usize {
+/// `retired_pages` plus the anchor list decode that precedes it: one item's
+/// allocation entry and its page decode, children never followed. The list
+/// decode is one whole `retired` call (UNL-C01).
+fn retired_chain() -> usize {
+    let frame = size_of::<(
+        &Table<'_>,
+        &AllocationPage<'_>,
+        anchor::RetiredList<'_>,
+        &[u8],
+        &mut (),
+    )>() + 2 * size_of::<anchor::RetiredPage>()
+        + 2 * size_of::<AllocationEntry>()
+        + size_of::<TreeExpectation>()
+        + 2 * size_of::<TreePageView<'_>>()
+        + 2 * slack();
+    frame
+        + (transition::tree_source_bytes() + 1536)
+            .max(allocation_codec())
+            .max(anchor::retired_source_bytes(
+                semantic_catalog::page_read_codec_bytes() + 1536,
+            ))
+}
+pub(in crate::storage::semantic_row::structure) fn audit_chain() -> usize {
     let frame = size_of::<(
         &Inputs<'_>,
         &Table<'_>,
@@ -115,6 +143,7 @@ fn audit_chain() -> usize {
         u64,
         &mut [u8; 64],
     )>() + size_of::<[usize; MAX_LEAF_ROWS]>()
+        + size_of::<anchor::RetiredList<'_>>()
         + size_of::<ContentHasher>()
         + 4 * size_of::<TreeExpectation>()
         + 2 * size_of::<(TreePageView<'_>, TreeEntry<'_>, SearchPosition)>()
@@ -131,9 +160,13 @@ fn audit_chain() -> usize {
     let traversal = tree_page::audit::frame_source_bytes()
         .max(tree_page::search::frame_source_bytes())
         + callback.max(transition::tree_source_bytes() + 1536);
-    frame + traversal.max(weights_chain()).max(digest())
+    frame
+        + traversal
+            .max(weights_chain())
+            .max(digest())
+            .max(retired_chain())
 }
-fn parent_chain() -> usize {
+pub(in crate::storage::semantic_row::structure) fn parent_chain() -> usize {
     size_of::<[&[u8]; SPLIT_REFS]>()
         + size_of::<[u8; 36]>()
         + size_of::<[u8; 32]>()
@@ -157,6 +190,17 @@ fn allocator_chain() -> usize {
         + size_of::<PageView<'_>>()
         + 2 * slack()
         + allocation_codec()
+}
+/// `candidate::previous`: the prior Structural descriptor decode and bank
+/// validation, then its digest.
+pub(in crate::storage::semantic_row::structure) fn previous_chain() -> usize {
+    size_of::<obligation::DescriptorSpec>()
+        + size_of::<std::result::Result<obligation::DescriptorSpec, obligation::ObligationError>>()
+        + 3 * size_of::<SystemWorkRef>()
+        + 3 * slack()
+        + obligation::descriptor_source_bytes()
+            .max(bank::validation_source_bytes())
+            .max(digest())
 }
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct SourceCensus {
@@ -210,6 +254,7 @@ pub(crate) fn source_census() -> SourceCensus {
         + size_of::<[Option<PageRef>; 2]>()
         + size_of::<([u8; 32], [u8; 40], [u8; 32], [u8; 32], [u64; 2], [u64; 2])>()
         + 2 * size_of::<Result<(usize, [u8; 32])>>()
+        + 2 * size_of::<anchor::RetiredList<'_>>()
         + 2 * slack();
     let after_outer = size_of::<(
         &Inputs<'_>,
@@ -223,6 +268,7 @@ pub(crate) fn source_census() -> SourceCensus {
         + size_of::<Result<(usize, [u8; 32])>>()
         + size_of::<(&[PageHeader; 5], &[[u8; PAGE_BYTES]; 5], &mut ())>()
         + size_of::<(PageRef, Option<usize>)>()
+        + 2 * size_of::<anchor::RetiredList<'_>>()
         + slack();
     // Constructing either result is separate from every nested helper.
     let returning = build_outer
@@ -232,13 +278,7 @@ pub(crate) fn source_census() -> SourceCensus {
         + outer;
     let side =
         size_of::<[&[u8]; SPLIT_REFS]>() + size_of::<[u8; 32]>() + 2 * slack() + tree_structure();
-    let previous = size_of::<obligation::DescriptorSpec>()
-        + size_of::<std::result::Result<obligation::DescriptorSpec, obligation::ObligationError>>()
-        + 3 * size_of::<SystemWorkRef>()
-        + 3 * slack()
-        + obligation::descriptor_source_bytes()
-            .max(bank::validation_source_bytes())
-            .max(digest());
+    let previous = previous_chain();
     let (table, audit, weights, parent) = (
         table_chain(),
         audit_chain(),
@@ -246,15 +286,25 @@ pub(crate) fn source_census() -> SourceCensus {
         parent_chain(),
     );
     let allocator = allocator_chain();
+    // build reads the anchor's list and encodes the anchor after with it:
+    // one whole `retired` or `encode_listed_anchor` call over the page codec
+    // with its SHA scratch, as `retired_chain` (UNL-C01).
+    let page = semantic_catalog::page_read_codec_bytes() + 1536;
+    let anchor_codec =
+        anchor::retired_source_bytes(page).max(anchor::listed_encode_source_bytes(page));
     let nested_build = build_outer
         + weights
             .max(parent)
             .max(allocator)
             .max(side)
             .max(allocation_codec())
-            .max(tree_structure());
+            .max(tree_structure())
+            .max(anchor_codec);
     let building =
         (args + 128 + before_outer + table.max(audit).max(previous)).max(args + 128 + nested_build);
+    // `verify_after` reads the before and after lists (`retired`) and decodes
+    // the anchor after: `audit` holds `retired_chain`, a whole `retired` call
+    // at least as large, and `table` the anchor decode (UNL-C01).
     let verifying = outer + after_outer + audit.max(table).max(allocation_codec());
     let peak = building.max(verifying).max(returning);
     SourceCensus {

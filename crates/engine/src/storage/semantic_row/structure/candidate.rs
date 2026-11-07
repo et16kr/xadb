@@ -46,8 +46,13 @@ const _: () = assert!(64 <= SPLIT_REFS);
 #[path = "candidate/source.rs"]
 mod source;
 pub(crate) use source::source_bytes;
+// The unlink candidate (dev3-tree-smo.md#empty-leaf-unlink) shares these
+// helper chains of the split census.
 #[cfg(test)]
 use source::source_census;
+pub(in crate::storage::semantic_row::structure) use source::{
+    allocation_codec, audit_chain, digest, parent_chain, previous_chain, slack, table_chain,
+};
 
 #[cfg(test)]
 #[path = "candidate/source_tests.rs"]
@@ -86,24 +91,26 @@ impl Candidate<'_> {
     }
 }
 
-fn same(value: bool) -> Result<()> {
+pub(super) fn same(value: bool) -> Result<()> {
     if value {
         Ok(())
     } else {
         Err(Error::IdentityMismatch)
     }
 }
-fn allocation<T>(value: std::result::Result<T, allocation_page::AllocationError>) -> Result<T> {
+pub(super) fn allocation<T>(
+    value: std::result::Result<T, allocation_page::AllocationError>,
+) -> Result<T> {
     value.map_err(|_| Error::IdentityMismatch)
 }
-fn structure<T>(value: std::result::Result<T, StructureError>) -> Result<T> {
+pub(super) fn structure<T>(value: std::result::Result<T, StructureError>) -> Result<T> {
     value.map_err(|e| match e {
         StructureError::Tree(e) => Error::Tree(e),
         StructureError::ScratchTooSmall => Error::Exhausted,
         _ => Error::IdentityMismatch,
     })
 }
-fn fixed(namespace: Namespace, number: u64, owner: u64) -> PageIdentity {
+pub(super) fn fixed(namespace: Namespace, number: u64, owner: u64) -> PageIdentity {
     PageIdentity {
         database: namespace.database,
         page: PageRef {
@@ -115,10 +122,10 @@ fn fixed(namespace: Namespace, number: u64, owner: u64) -> PageIdentity {
         owner_generation: Generation::new(1).expect("one"),
     }
 }
-fn bounded(header: PageHeader, cut: u64) -> Result<()> {
+pub(super) fn bounded(header: PageHeader, cut: u64) -> Result<()> {
     same(header.lsn.0 != 0 && header.lsn.0 <= cut)
 }
-fn expectation(identity: PageIdentity, level: u8) -> TreeExpectation {
+pub(super) fn expectation(identity: PageIdentity, level: u8) -> TreeExpectation {
     TreeExpectation {
         identity,
         kind: if level == 0 {
@@ -130,11 +137,11 @@ fn expectation(identity: PageIdentity, level: u8) -> TreeExpectation {
         arity: 0,
     }
 }
-fn put(bytes: &mut [u8], at: usize, value: u64) {
+pub(super) fn put(bytes: &mut [u8], at: usize, value: u64) {
     bytes[at..at + 8].copy_from_slice(&value.to_le_bytes());
 }
 
-fn previous(input: &Inputs<'_>) -> Result<[u8; 32]> {
+pub(super) fn previous(input: &Inputs<'_>) -> Result<[u8; 32]> {
     let Some((owner, bytes)) = input.previous else {
         same(input.previous_high_water == 0)?;
         return Ok([0; 32]);
@@ -162,15 +169,15 @@ fn previous(input: &Inputs<'_>) -> Result<[u8; 32]> {
     Ok(content_digest(bytes))
 }
 
-struct Table<'a> {
-    handle: ObjectHandle,
-    anchor: PageRef,
-    anchor_image: &'a [u8; PAGE_BYTES],
-    anchor_header: PageHeader,
-    root: AnchorRoot,
-    schema: RowSchemaInput<'a>,
+pub(super) struct Table<'a> {
+    pub(super) handle: ObjectHandle,
+    pub(super) anchor: PageRef,
+    pub(super) anchor_image: &'a [u8; PAGE_BYTES],
+    pub(super) anchor_header: PageHeader,
+    pub(super) root: AnchorRoot,
+    pub(super) schema: RowSchemaInput<'a>,
 }
-fn table<'a>(
+pub(super) fn table<'a>(
     input: &Inputs<'_>,
     image: &mut impl FnMut(PageRef) -> Result<&'a [u8; PAGE_BYTES]>,
 ) -> Result<Table<'a>> {
@@ -228,7 +235,7 @@ fn table<'a>(
 
 /// Recover the full expectation from the same immutable cut only after its
 /// successful first-extent audit. A preorder ordinal alone is not an identity.
-fn reached<'a>(
+pub(super) fn reached<'a>(
     table: &Table<'_>,
     alloc: &AllocationPage<'_>,
     ordinal: u8,
@@ -268,7 +275,9 @@ fn reached<'a>(
 /// Audit both directions of this object's allocator ownership, then all its
 /// current inline rows and actual Undo weights. Unchanged global actor/queue
 /// relationships still come from the original canonical owner's proof.
-fn audit<'a>(
+/// Ownership is `reached ⊎ retired == owned` over the anchor's XTR1 list
+/// (dev3-tree-smo.md#empty-leaf-unlink); a retired page is never followed.
+pub(super) fn audit<'a>(
     input: &Inputs<'_>,
     table: &Table<'_>,
     alloc: &AllocationPage<'_>,
@@ -277,6 +286,7 @@ fn audit<'a>(
     image: &mut impl FnMut(PageRef) -> Result<&'a [u8; PAGE_BYTES]>,
 ) -> Result<(usize, [u8; 32])> {
     allocation(alloc.lookup_allocated(table.anchor_header.identity, PageKind::TreeAnchor))?;
+    let retired = anchor::retired(table.anchor_image, table.anchor_header.identity)?;
     let root = expectation(
         PageIdentity {
             page: table.root.page,
@@ -316,11 +326,12 @@ fn audit<'a>(
             };
             if page == table.anchor {
                 same(kind == PageKind::TreeAnchor)?;
-            } else {
-                same(visited[..count].contains(&(ordinal as u8)))?;
+            } else if !visited[..count].contains(&(ordinal as u8)) {
+                same(retired.find(page).is_some())?;
             }
         }
     }
+    retired_pages(table, alloc, retired, &visited[..count], image)?;
     let mut hash = ContentHasher::new();
     let mut scratch = [0usize; MAX_LEAF_ROWS];
     for ordinal in visited[..count].iter().copied() {
@@ -384,6 +395,55 @@ fn audit<'a>(
         same(leaf.lower_bound(&key)?.equal)?;
     }
     Ok((count, hash.digest()))
+}
+
+/// Each XTR1 item is owned by this object at its exact incarnation and kind,
+/// is not reached, and decodes as its kind/level written before it retired:
+/// an empty leaf or a valid internal page whose children are not followed.
+#[inline(never)]
+fn retired_pages<'a>(
+    table: &Table<'_>,
+    alloc: &AllocationPage<'_>,
+    retired: anchor::RetiredList<'_>,
+    visited: &[u8],
+    image: &mut impl FnMut(PageRef) -> Result<&'a [u8; PAGE_BYTES]>,
+) -> Result<()> {
+    for index in 0..retired.len() {
+        let item = retired.get(index).ok_or(Error::Corrupt)?;
+        let ordinal = item.page.page_no as usize;
+        let AllocationEntry::Allocated {
+            generation,
+            object,
+            object_generation,
+            kind,
+        } = allocation(alloc.entry(ordinal))?
+        else {
+            return Err(Error::IdentityMismatch);
+        };
+        same(
+            generation == item.page.incarnation
+                && object == table.handle.object
+                && object_generation == table.handle.generation
+                && kind == item.kind
+                && !visited.contains(&(ordinal as u8)),
+        )?;
+        let expected = TreeExpectation {
+            identity: PageIdentity {
+                page: item.page,
+                ..table.anchor_header.identity
+            },
+            kind: item.kind,
+            level: item.level,
+            arity: 0,
+        };
+        let view = tree_page::decode_tree_page(image(item.page)?, expected)?;
+        same(
+            view.header().lsn.0 != 0
+                && view.header().lsn.0 < item.retire_lsn
+                && (item.kind != PageKind::RowLeaf || view.len() == 0),
+        )?;
+    }
+    Ok(())
 }
 
 /// Recompute all five images. `image` must lend immutable original images
@@ -613,7 +673,9 @@ fn build<'a>(
         },
         tree: TreeKind::Row,
     };
-    anchor::encode_anchor(pages[1], next_root, &mut after[1])?;
+    // A split never changes the retired list: keep its exact bytes.
+    let retired = anchor::retired(table.anchor_image, table.anchor_header.identity)?;
+    anchor::encode_listed_anchor(pages[1], next_root, retired.cell(), &mut after[1])?;
     let mut actual = [0u64; 2];
     for (i, role) in [2usize, 3].into_iter().enumerate() {
         let view = tree_page::decode_tree_page(
@@ -710,6 +772,8 @@ fn verify_after<'a>(
         input.profile.spec().namespace,
     ))?;
     let mut table = table(input, image)?;
+    let before_list = anchor::retired(table.anchor_image, table.anchor_header.identity)?;
+    same(anchor::retired(&after[1], pages[1].identity)?.cell() == before_list.cell())?;
     table.root = anchor::decode_anchor(&after[1], pages[1].identity)?.root();
     table.anchor_image = &after[1];
     table.anchor_header = pages[1];

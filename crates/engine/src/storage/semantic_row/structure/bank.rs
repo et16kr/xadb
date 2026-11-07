@@ -1,5 +1,5 @@
-//! Exact Finished split descriptor observations. These are neither live work
-//! authorities nor proof that the historical split actually occurred.
+//! Exact Finished scope4 descriptor observations (split or unlink). These are
+//! neither live work authorities nor proof that the historical group occurred.
 use super::{Error, Operation, Result};
 use crate::storage::{
     allocation_page::{ReservationOwner, SystemWorkKind, SystemWorkRef},
@@ -12,7 +12,7 @@ use crate::storage::{
 use foundation::codec::content_digest;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) struct FinishedSplit {
+pub(crate) struct FinishedStructural {
     pub(crate) owner: SystemWorkRef,
     pub(crate) operation: Operation,
 }
@@ -25,7 +25,7 @@ pub(crate) fn validate(
     epoch: u32,
     high_water: u64,
     spec: &DescriptorSpec,
-) -> Result<FinishedSplit> {
+) -> Result<FinishedStructural> {
     if profile.format() != 3 {
         return Err(Error::Unsupported);
     }
@@ -58,9 +58,13 @@ pub(crate) fn validate(
     {
         return Err(Error::OrderMismatch);
     }
+    // The four exact frame lengths are distinct, so the consumed WAL names
+    // the opcode (dev3-tree-smo.md#empty-leaf-unlink).
     let operation = match spec.consumed_wal {
         84_744 => Operation::RootSplit,
         84_640 => Operation::ChildSplit,
+        35_248 => Operation::LeafUnlink,
+        19_032 => Operation::RootCollapse,
         _ => return Err(Error::BudgetMismatch),
     };
     if spec.inventory
@@ -77,7 +81,7 @@ pub(crate) fn validate(
     {
         return Err(Error::BudgetMismatch);
     }
-    Ok(FinishedSplit { owner, operation })
+    Ok(FinishedStructural { owner, operation })
 }
 
 pub(crate) fn observe(
@@ -86,7 +90,7 @@ pub(crate) fn observe(
     epoch: u32,
     high_water: u64,
     raw: Option<&[u8; 1536]>,
-) -> Result<Option<FinishedSplit>> {
+) -> Result<Option<FinishedStructural>> {
     if profile.format() != 3 || epoch == 0 {
         return Err(Error::Unsupported);
     }
@@ -117,8 +121,8 @@ pub(crate) fn validation_source_bytes() -> usize {
         + 2 * size_of::<SystemWorkRef>()
         + 2 * size_of::<InventoryClaim>()
         + 2 * size_of::<OwnerChain>()
-        + 2 * size_of::<FinishedSplit>()
-        + 2 * size_of::<Result<FinishedSplit>>()
+        + 2 * size_of::<FinishedStructural>()
+        + 2 * size_of::<Result<FinishedStructural>>()
         + 4 * size_of::<[u8; 32]>()
         + size_of::<[u64; 8]>()
 }
@@ -132,7 +136,7 @@ pub(crate) fn source_bytes() -> usize {
         + 2 * size_of::<
             std::result::Result<SystemWorkRef, crate::storage::allocation_page::AllocationError>,
         >()
-        + 2 * size_of::<Result<Option<FinishedSplit>>>()
+        + 2 * size_of::<Result<Option<FinishedStructural>>>()
         + validation_source_bytes().max(obligation::descriptor_source_bytes())
 }
 

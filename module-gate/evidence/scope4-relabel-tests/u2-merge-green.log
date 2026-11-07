@@ -1,0 +1,37 @@
+   Compiling version_check v0.9.5
+   Compiling typenum v1.20.1
+   Compiling autocfg v1.5.1
+   Compiling libc v0.2.191
+   Compiling generic-array v0.14.7
+   Compiling memoffset v0.9.1
+   Compiling cfg-if v1.0.5
+   Compiling cfg_aliases v0.2.2
+   Compiling cpufeatures v0.2.17
+   Compiling nix v0.30.1
+   Compiling bitflags v2.13.2
+   Compiling block-buffer v0.10.4
+   Compiling crypto-common v0.1.7
+   Compiling digest v0.10.7
+   Compiling sha2 v0.10.9
+   Compiling xadb-foundation v0.1.0 (/tmp/claude-0/-home-claude-xadb/79ea2029-d40a-57f8-8717-7dd844b0c2c5/scratchpad/u2wt/crates/foundation)
+   Compiling xadb-platform v0.1.0 (/tmp/claude-0/-home-claude-xadb/79ea2029-d40a-57f8-8717-7dd844b0c2c5/scratchpad/u2wt/crates/platform)
+   Compiling xadb-engine v0.1.0 (/tmp/claude-0/-home-claude-xadb/79ea2029-d40a-57f8-8717-7dd844b0c2c5/scratchpad/u2wt/crates/engine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 59s
+     Running unittests src/lib.rs (/tmp/claude-0/-home-claude-xadb/79ea2029-d40a-57f8-8717-7dd844b0c2c5/scratchpad/u2target/debug/deps/engine-e4e141083d864921)
+
+running 2 tests
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::format_tests::mbc40_v01_profile2_binding_rejected_at_owner_grammar_sites ... MBC40-V01 PASS formats=0,2,4,65535 queue_versions=2,4 scopes=3,0,4,65535 rejected sites=7 authority=NONE
+ok
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1b_scope_routes_only_to_its_own_arm ... S1B_REFUSED	scope2	Some(CatalogSemantic(Wal(Corrupt)))
+S1B_REFUSED	scope1	Some(Invariant)
+S1B_REFUSED	scope0	Some(Unsupported)
+S1B_REFUSED	scope4	Some(RowSemantic(Corrupt))
+S1B_REFUSED	scope65535	Some(Unsupported)
+S1B_REFUSED	version1	Some(Unsupported)
+S1B_REFUSED	version3	Some(Unsupported)
+S1B_REFUSED	damaged	Some(RowSemantic(Wal(Corrupt)))
+ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 2382 filtered out; finished in 0.05s
+
+exit=0

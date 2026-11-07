@@ -131,6 +131,11 @@ pub(in crate::storage) fn source_census<W: WriterNamespace>() -> Plan4SourceCens
         + 2 * size_of::<SearchPosition>()
         + 4 * size_of::<Result<()>>()
         + 4 * size_of::<ContentHasher>()
+        // What the XTR1 list adds to the anchor decode inside the nested
+        // codec allowance (UNL-C01).
+        + crate::storage::anchor::decode_increment_bytes(
+            crate::storage::semantic_catalog::page_read_codec_bytes(),
+        )
         + 1536
         + 512;
     let catalog_outer = size_of::<[TargetRequest; 3]>()

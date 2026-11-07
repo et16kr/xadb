@@ -344,6 +344,9 @@ pub(in super::super) fn catalog_source_bytes<W: WriterNamespace>() -> usize {
         + 4 * size_of::<TargetRequest>()
         + 2 * size_of::<DirtyObservation>()
         + 4 * size_of::<Result<()>>()
+        // What the XTR1 list adds to the anchor decode inside the nested
+        // decoding allowance (UNL-C01).
+        + anchor::decode_increment_bytes(crate::storage::semantic_catalog::page_read_codec_bytes())
         + 2048
 }
 

@@ -76,7 +76,10 @@ pub(super) fn nonload<W: WriterNamespace>() -> [usize; 7] {
             // `route_row_step` with the tree codec it nests.
             .max(
                 crate::storage::tree_page::search::route_step_source_bytes(crate::storage::semantic_catalog::page_read_codec_bytes()),
-            );
+            )
+            // The Row anchor decode: one page codec, or the XTR1 walk after
+            // it (UNL-C01).
+            .max(anchor::decode_source_bytes(semantic_catalog::page_read_codec_bytes()));
     // The schema and actual record views survive the pin registration. Count
     // both the capture_row tuple and its caller extraction conservatively.
     let capture = n::<RowSearchPage<'_, '_, '_, '_, '_, '_, '_>>()

@@ -130,6 +130,8 @@ fn drain(groups: usize, complete: bool) -> Retired {
         groups,
         held: 0,
         complete,
+        unlinked: 0,
+        unlink_held: 0,
     }
 }
 

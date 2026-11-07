@@ -1,0 +1,171 @@
+{
+ "schema": "XADB_MODULE_GATE_RECORD_V1",
+ "change": "DEV3 08-1 U4 (dev3-tree-smo.md#unlink-u4): native fault cuts UNL-N01..N06 of one live unlink of an emptied RowLeaf, LeafUnlink and RootCollapse each (12 histories, 38 processes PASS at the run commit; memory twins and the inventory rule test in CI, an ignored native worker and its stdlib controller with a frozen inventory), and a test-only per-trace log bound in the native test adapter. No product code changes. The DEV3 schedule baseline credits 08-1 on merge (35/86 = 40.70%). PR #59 follow-up: reject short/empty I/O and unsuccessful or wrong-selector barriers in the native controller; add eight independent negative-vector tests.",
+ "rust_tests": [
+  {
+   "paths": [
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_native.rs",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs",
+    "tests/fixtures/dev3-08-unlink/native-inventory.tsv"
+   ],
+   "reason": "UNL-N01..N06 (dev3-tree-smo.md#unlink-u4): the U3 review history (CREATE, A's autocommit INSERT of 11 or 8 of the largest rows at q 2, autocommit DELETEs of the leftmost leaf's three rows at q 3..5 retired by C's Row-only cleanup, then A's cleanup drain asking C's live unlink). The memory twins run it over the memory directory for LeafUnlink and RootCollapse and restart (recover with an empty Commit at q 6, then reenter) from the files when the drain starts (N01's state, no unlink byte) and after the durable unlink (N04's state), walking the recovered tree from T's anchor (literal keys, level, XTR1 list, routed or listed T pages with no orphan, allocator entries, structural claims, bank high-water) and reading the kept rows through B. unl_n_inventory_states_the_module_rule checks the frozen inventory (include_str) against the worker's rule. The ignored unlink_native_worker is the same history, one same-ELF process per phase; scripts/check_dev3_unlink_native.py ran 38 processes PASS (module-gate/evidence/dev3-08-1-unlink-u4/run). unlink_rows.rs only declares the module.",
+   "cases": [
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_native.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::unlink_rows::native::unl_n_inventory_states_the_module_rule",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_native.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::unlink_rows::native::unl_n_leaf_memory_twin",
+     "sources": [
+      "head"
+     ]
+    },
+    {
+     "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_native.rs",
+     "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::unlink_rows::native::unl_n_root_memory_twin",
+     "sources": [
+      "head"
+     ]
+    }
+   ]
+  }
+ ],
+ "na": [
+  {
+   "paths": [
+    "crates/engine/src/storage/wal_io/plan4_pages/native_tests.rs"
+   ],
+   "reason": "cfg(test) native I/O adapter used only by ignored native workers: the trace's 4 MiB log bound becomes a per-trace field with the same default for every worker (both struct initialisations), and raise_log_bound lets the UNL-N worker raise it before its first event (asserted) to 16 MiB. The file defines no non-ignored test; the change is exercised by the UNL-N native run (38 processes) recorded in module-gate/evidence/dev3-08-1-unlink-u4/run."
+  }
+ ],
+ "reviews": [
+  {
+   "id": "dev3-08-1-unlink-u4-d2",
+   "class": "D2",
+   "scopes": [
+    "joint"
+   ],
+   "author": "claude-thread-session/claude-project-thread-e9itre",
+   "reviewer": "claude-independent-review/dev3-08-1-unlink-u4",
+   "verdict": "ACCEPT",
+   "required_open": 0,
+   "files": {
+    "crates/engine/src/storage/wal_io/plan4_pages/native_tests.rs": "1c670e7c57d14ac78f6f41146741f0f20b1fb859",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_native.rs": "f90fd044c5ccf649add0f61c084554f98ad0c6f3",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs": "ea24eb82aef9915686d26cddd0d26515e5aad656",
+    "devdoc/README.md": "22c7c6d586df3831e78c6ebe8c25a8c5418546ab",
+    "devdoc/contracts/dev3-tree-smo.md": "6a398700be5a582177cf0728eec285f91b521056",
+    "devdoc/document-validation.json": "b1e2c2e37602979528432da0756634a77a1b4cfa",
+    "devdoc/plans/dev3-schedule-baseline.md": "db030b9e961cb29f9c683f9214d916f914dd9e95",
+    "module-gate/evidence/dev3-08-1-unlink-u4/README.md": "41052fc55fc61ba003d93dfebf54d368eb8c4580",
+    "module-gate/evidence/dev3-08-1-unlink-u4/review-r1.md": "9fb8f416347c446f85955267bee87c2f6b8b5fe2",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N01-L/produce/files.json": "6bbf2782fe329768f3ce96f3a45042438333ee1e",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N01-L/produce/receipt.tsv": "5e6aba2cb3be2fb339891df52083864a5bc696f6",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N01-L/recover/files.json": "e01c46eec070b009c0bc3695fad90809858539c2",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N01-L/recover/receipt.tsv": "e11bdfeb3e93d5cc5ef921ebebd671018db05c23",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N01-L/reenter/files.json": "d58ed67a576f3c1563a2d256b3995c8950325710",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N01-L/reenter/receipt.tsv": "cc2ed38a646a12de24672bd26d8ea813d706dd38",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N01-R/produce/files.json": "a8729bc57cce79ebcb008e29c7dac09dbaebd3ac",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N01-R/produce/receipt.tsv": "da6f380dd91e016a2dd1ff78b88b800404acfbcf",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N01-R/recover/files.json": "286ccc526cfe9333e56be903998fa3cff20ea6d8",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N01-R/recover/receipt.tsv": "01eb4f50bfa93d2b92ddf464ae000d7636450ef4",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N01-R/reenter/files.json": "06830413e4130340b02923fe2a36a192b776dbe0",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N01-R/reenter/receipt.tsv": "0a64724467768eef038bb0db66d43c160e2e1bf1",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N02-L/produce/files.json": "6bbf2782fe329768f3ce96f3a45042438333ee1e",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N02-L/produce/receipt.tsv": "d3df1334d79b3672abe75aebff8595b8a6fbe8bf",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N02-L/recover/files.json": "e01c46eec070b009c0bc3695fad90809858539c2",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N02-L/recover/receipt.tsv": "1be54a579e78d52c4b8401c97be1a9c638fae95d",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N02-L/reenter/files.json": "d58ed67a576f3c1563a2d256b3995c8950325710",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N02-L/reenter/receipt.tsv": "d882e0772c024e059b156eb1152ad27414ff9858",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N02-R/produce/files.json": "a8729bc57cce79ebcb008e29c7dac09dbaebd3ac",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N02-R/produce/receipt.tsv": "42759bca4cc44d6819db0491072cf91500392053",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N02-R/recover/files.json": "286ccc526cfe9333e56be903998fa3cff20ea6d8",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N02-R/recover/receipt.tsv": "ea872bb1e715f4fa525821c6d757b586b2d891d6",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N02-R/reenter/files.json": "06830413e4130340b02923fe2a36a192b776dbe0",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N02-R/reenter/receipt.tsv": "68475b38127e29b310efe881a814d94ebc2b5896",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N03-L/produce/files.json": "e6fccb6e33316e907ee026f43271de2f20935c97",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N03-L/produce/receipt.tsv": "d1325f0c689debf795f8ca74886b02299c9fde6f",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N03-L/recover/files.json": "4011449d9786cd14e4f8d88439f2fa289db01c58",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N03-L/recover/receipt.tsv": "184ace0ab71645190d23071c2d358b26c8f72222",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N03-L/reenter/files.json": "e55d96f4d89061e4581c7be4b1a3de043ec4332f",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N03-L/reenter/receipt.tsv": "d26b790abb9f0fb1616e8189db89b51f7bfc1c25",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N03-R/produce/files.json": "544a2208f9f80659a6fbde36498267b22a59741f",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N03-R/produce/receipt.tsv": "33db4f5da6279bf7a02c597ebdcdc322df2a2160",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N03-R/recover/files.json": "b872c7da392a66bd389ec5570df118149c78ae4d",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N03-R/recover/receipt.tsv": "9a44bb1c8aa381e5a0cbf33f449bc644e69546ea",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N03-R/reenter/files.json": "467c1658a801da10d252113eaa0c96fbdf5ba70f",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N03-R/reenter/receipt.tsv": "8537336a77afad6cd681cf364b84228117696722",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N04-L/produce/files.json": "38c6c9c7b6a68455bca036908adf4f42cd98872d",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N04-L/produce/receipt.tsv": "f1e0e91887405d4a45ae0b2ff8725a60f751f4fc",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N04-L/recover/files.json": "23cabdee2418139d884455f3a42bbda8f4bf4fc5",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N04-L/recover/receipt.tsv": "65edd3162501b1ce66cc7c0a6b7b5eb9b42a57e1",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N04-L/reenter/files.json": "ff32625fec524392ecff519f77db937010fb7cff",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N04-L/reenter/receipt.tsv": "ec30f6642522f4b3a5d1ca88e5419d6e43c2bd83",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N04-R/produce/files.json": "fcb26484a4737a4484bf7a31832cf0d30ceb8b5d",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N04-R/produce/receipt.tsv": "1957462adde3e97e06f5a111fa73c37b9002f330",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N04-R/recover/files.json": "d2c8331edc5d4d9d5f5367722230fdf833ba1015",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N04-R/recover/receipt.tsv": "f2d42a9690c1050b9be5aa1638b73f2efeb4fbfc",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N04-R/reenter/files.json": "1ee69070d3d243c7f0c0623bba9c80aa9e5dcd73",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N04-R/reenter/receipt.tsv": "4628f2e13540a64f9bef257b1bd9ffb1951d2fd3",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N05-L/produce/files.json": "4b5c04a76ecb842332c9b22787a76ffd875733fe",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N05-L/produce/receipt.tsv": "f3f1029024a56d490586f79a905c80f850f7c2cd",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N05-L/recover/files.json": "23cabdee2418139d884455f3a42bbda8f4bf4fc5",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N05-L/recover/receipt.tsv": "2c36e5e0885aaf5ae68dd14b24ef7b13f16a7d74",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N05-L/reenter/files.json": "ff32625fec524392ecff519f77db937010fb7cff",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N05-L/reenter/receipt.tsv": "133daae5d00087320530e710c4d1cfa7f5a61e22",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N05-R/produce/files.json": "64de5819f6d1bb6e79db6fc8be8090b72fd59866",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N05-R/produce/receipt.tsv": "4ed5c1286dda24bd8d2488f0e2d63f691f54dea0",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N05-R/recover/files.json": "d2c8331edc5d4d9d5f5367722230fdf833ba1015",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N05-R/recover/receipt.tsv": "8ed4c650342b0f8e5da2fe3d68e37c450db7a0f3",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N05-R/reenter/files.json": "1ee69070d3d243c7f0c0623bba9c80aa9e5dcd73",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N05-R/reenter/receipt.tsv": "cec01c09a36234a563bad80853476e51fbda3f5a",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N06-L/crash/files.json": "2472a7794b25fa8bc335b9c3557cc6decc574149",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N06-L/crash/receipt.tsv": "16b68785e3b71ed3b747b9522e9ab23b405e2ce3",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N06-L/produce/files.json": "38c6c9c7b6a68455bca036908adf4f42cd98872d",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N06-L/produce/receipt.tsv": "e0b924d4f8f3b5b48c37b51a9b7ec7f72786dc5e",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N06-L/recover/files.json": "e89c516915a398f5ba1ef8e7a832833423a127a4",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N06-L/recover/receipt.tsv": "59988f920723f2ca65516a7369c5b64ce62336f2",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N06-L/reenter/files.json": "da15cc190302d49aedd9496bd5b80c70f5d15ff2",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N06-L/reenter/receipt.tsv": "c77ef97bc5f0fc2dd6d8eca2b844ef59b98b5b96",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N06-R/crash/files.json": "ebc31c106d30e9898428053c282a4694d2dd9639",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N06-R/crash/receipt.tsv": "83f256d96f9f7842fbb97470e15fba0dc74629c2",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N06-R/produce/files.json": "fcb26484a4737a4484bf7a31832cf0d30ceb8b5d",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N06-R/produce/receipt.tsv": "d09700173b904938e45584e93c845998e26783e8",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N06-R/recover/files.json": "35e48e3ef820d2acd75af7a92593fde3d44ab9cb",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N06-R/recover/receipt.tsv": "2ee1ca9c5e32fd06aaf2d13edadf7b804993ae35",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N06-R/reenter/files.json": "402607c92cab5c75172b914eb0f1fc9ac17ec9fb",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/UNL-N06-R/reenter/receipt.tsv": "193f3bf798aa490d0904f0c3df832c99781c82dc",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/complete.json": "a4f2f9c21e981890f184fbadf45d9ad4d72ee482",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/execution-plan.json": "740ff7f3c95e03456576e99889040029b84a1e14",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/results.json": "cd25b07ea0bd6fb1a10debe1945130b50998c6eb",
+    "module-gate/evidence/dev3-08-1-unlink-u4/run/source-commit.txt": "9bc6155d3e73480f109b575720fd6bc735e19c62",
+    "scripts/check_dev3_unlink_native.py": "5b5d640af5c48a998afb93833923c87a689ddcd9",
+    "tests/fixtures/dev3-08-unlink/native-inventory.tsv": "efdb828bc8418a3bff581949e79bbc5905c02257"
+   },
+   "log": "module-gate/evidence/dev3-08-1-unlink-u4/review.md",
+   "log_sha256": "fa4a91a0b53718128e1b3a559b73812d4b91bbe20c674d9405bad6d28aa7d336"
+  },
+  {
+   "id": "pr59-controller-d2-codex",
+   "class": "D2",
+   "scopes": [
+    "joint"
+   ],
+   "author": "/root",
+   "reviewer": "/root/pr59_independent_review",
+   "verdict": "ACCEPT",
+   "required_open": 0,
+   "files": {
+    "scripts/check_dev3_unlink_native.py": "dcb612c7bf6b301b8d8d6003592b53495a2b4e3b",
+    "scripts/test_check_dev3_unlink_native.py": "16cc91dddd38eae79281da3cc493bbfa914d470d",
+    "devdoc/contracts/dev3-tree-smo.md": "d53a2f7020de8601d8d54481ca1e64e3dc780752"
+   },
+   "log": "module-gate/evidence/dev3-08-1-unlink-u4/review-codex.md",
+   "log_sha256": "b6dec93d399bf2fcf62aa0de7ab5777f9907910f6647fb4d3674c366e7466ec0"
+  }
+ ]
+}

@@ -2182,10 +2182,12 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
     // first the residency LOAD steps, then, in `retire_resident`'s own
     // never-inlined frame (`carrier_source_bytes`: the preparation's one
     // Result slot, a borrow of the group in it, a refused preparation's
-    // error, the install's group argument), the recovered cleanup
-    // preparation at nine targets with its replay scope, then the
-    // existing-group install at four targets (ReleaseRole) or the
-    // retirement install at nine targets.
+    // error, the install's group argument, a DeletePrune's unlink note), the
+    // recovered cleanup preparation at nine targets with its replay scope,
+    // then the existing-group install at four targets (ReleaseRole) or the
+    // retirement install at nine targets, and a DeletePrune's note writes
+    // before the preparation and after the install
+    // (dev3-tree-smo.md#empty-leaf-unlink, `note_source_bytes`).
     let wide = lifecycle::row::row_group_terms::<9>();
     let row_cleanup_prepare =
         (scalar + wide.outer + scope_carriers + history_peak.max(wide.produce))
@@ -2206,6 +2208,7 @@ pub(in super::super) fn catalog_live_source_bytes<W: WriterNamespace>() -> Catal
         row_cleanup_prepare
             .max(row_install)
             .max(row_cleanup_install)
+            .max(structural::effect::unlink::note_source_bytes())
             + lifecycle::row::retire::carrier_source_bytes(),
     ) + lifecycle::row::retire::caller_source_bytes()
         + source::commit_carrier_bytes()

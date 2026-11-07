@@ -1022,19 +1022,19 @@ fn ledger_measured() -> [(&'static str, usize); 5] {
         + layout_copies()
         + size_of::<(Option<DescriptorSpec>, BaseResult<Option<DescriptorSpec>>)>()
         + size_of::<(
-            Option<bank::FinishedSplit>,
-            Native<Option<bank::FinishedSplit>, semantic_row::Error>,
+            Option<bank::FinishedStructural>,
+            Native<Option<bank::FinishedStructural>, semantic_row::Error>,
         )>()
         + size_of::<(
             &DescriptorSpec,
-            Native<bank::FinishedSplit, semantic_row::Error>,
+            Native<bank::FinishedStructural, semantic_row::Error>,
         )>()
         + size_of::<(InitProvenance<'_>, BaseResult<Option<InitProvenance<'_>>>)>()
         + size_of::<(
             crate::storage::plan4_recovery_base::StructuralInit<'_>,
             Option<crate::storage::plan4_recovery_base::StructuralInit<'_>>,
         )>()
-        + size_of::<(bank::FinishedSplit, SystemWorkRef, ReservationOwner)>()
+        + size_of::<(bank::FinishedStructural, SystemWorkRef, ReservationOwner)>()
         + size_of::<(
             semantic_row::structure::Operation,
             crate::storage::plan4_recovery_base::StructuralOperation,
@@ -1056,7 +1056,7 @@ fn ledger_measured() -> [(&'static str, usize); 5] {
                 .max(hook)
                 .max(
                     bank::validation_source_bytes()
-                        + size_of::<Native<bank::FinishedSplit, semantic_row::Error>>(),
+                        + size_of::<Native<bank::FinishedStructural, semantic_row::Error>>(),
                 )
                 .max(budget),
         ),

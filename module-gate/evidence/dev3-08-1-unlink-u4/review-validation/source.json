@@ -1,0 +1,34 @@
+{
+  "base": "3c9d796da3c54888845ef453f1c77a382316fc29",
+  "pr_head_before_review": "8f8cbee3ef0cc8152a1c17ae0d07fdcca508c88a",
+  "code": {
+    "scripts/check_dev3_unlink_native.py": {
+      "git_blob": "dcb612c7bf6b301b8d8d6003592b53495a2b4e3b",
+      "sha256": "c9ccfe69fb1f13130f24e33637d80c7d7cf23657a368ca5355dc61fa905e0b80"
+    },
+    "scripts/test_check_dev3_unlink_native.py": {
+      "git_blob": "16cc91dddd38eae79281da3cc493bbfa914d470d",
+      "sha256": "626949daaa749bd1bd33e4b98a3eed73645bc217fd8d72be19bbd2e3e334aee2"
+    },
+    "crates/engine/src/storage/wal_io/plan4_pages/native_tests.rs": {
+      "git_blob": "1c670e7c57d14ac78f6f41146741f0f20b1fb859",
+      "sha256": "b7808d0e2ee12e52d5eeec29fc325b056349610e559ddf3a9842a58c680c37bf"
+    },
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_native.rs": {
+      "git_blob": "f90fd044c5ccf649add0f61c084554f98ad0c6f3",
+      "sha256": "25ea7daf1e5bca7c02c277a0a5af0d6bee66dd21610e28586592478715525c1d"
+    },
+    "tests/fixtures/dev3-08-unlink/native-inventory.tsv": {
+      "git_blob": "efdb828bc8418a3bff581949e79bbc5905c02257",
+      "sha256": "dfba91c272b562bfcc32b1509fad0613f9b350dcdcc883f58a48b71e7ae0d6dd"
+    }
+  },
+  "rust_code": "unchanged from PR head",
+  "native_selection": [
+    "UNL-N01-R",
+    "UNL-N04-R",
+    "UNL-N05-R",
+    "UNL-N06-R"
+  ],
+  "selection_reason": "Controller changes to hook completed-read coverage, WAL sync success, DWB completed writes and CURRENT publication. N01/N02 share the changed hook branch; both covered by negative vectors. Root shape exercises all changed checks; unchanged leaf worker not repeated."
+}

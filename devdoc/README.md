@@ -8,13 +8,18 @@
 
 DEV3 일정 보고는 [전체 예상 일정·누적 진척률 V1](plans/dev3-schedule-baseline.md)을 따른다. 최신 기준일·적립 대장·누적률·잔여 예측은 그 문서에서 확인한다. 완료 증거가 있는 일정 항목의 고정 예상 기간을 누적하며 날짜 예측과 제품 인수 판정은 구분한다.
 
-현재 작업은 사용자 요청 "codex/dev3-08-tree-generalization을 받아 08-1을 완료하기"의 두 번째 단위인
-**[A 자동 split 호출자](contracts/dev3-tree-smo.md#automatic-split)**다. 작업 branch는 `claude/project-thread-e9itre`
-(main `2102038`)다. A의 INSERT·UPDATE 행이 값 검사나 Reserve에서 leaf 공간 때문에 거절되면 C의 live split
-(`split_row_live`)을 부르고 같은 행을 다시 시도한다. SPL-A01..A10이 split 뒤 Commit·rollback·UPDATE·dirty
-victim flush·거절·예약 D>0을 검산한다. 독립 D2는 2회차 CONDITIONAL(필수 1, D>0 live 증거)이었고 SPL-A10으로
-반영했다. 첫 단위 [current-leaf 소비자 일반화](contracts/dev3-tree-smo.md#current-leaf-consumers)는 PR #53으로
-병합됐다. 빈 leaf unlink·root shrink·retirement는 08-1 잔여라 적립은 0, 누적은 그대로다.
+현재 작업은 사용자 요청 "codex/dev3-08-tree-generalization을 받아 08-1을 완료하기"의 마지막 범위인
+**[빈 leaf unlink·root 축소·retirement 등록](contracts/dev3-tree-smo.md#empty-leaf-unlink)의 마지막 구현 단계
+[U4 native fault cut](contracts/dev3-tree-smo.md#unlink-u4)**이다. 작업 branch는 `claude/project-thread-e9itre`다.
+설계(LeafUnlink·RootCollapse를 scope4 opcode 3·4로, 퇴역 page는 Free가 아니라 anchor의 XTR1 목록에)는 독립 D2 3회차
+ACCEPT를 받았다. [U1](contracts/dev3-tree-smo.md#unlink-u1)(XTR1 codec, 순수 unlink candidate, opcode 3·4 frame, Base4
+closure, PR #56), [U2](contracts/dev3-tree-smo.md#unlink-u2)(복구 replay의 opcode 3·4 dispatch와 source 회계, PR #57),
+[U3](contracts/dev3-tree-smo.md#unlink-u3)(live DeletePrune·INSERT CLR의 RAM note, C `unlink_leaf_live`, A 정리 drain,
+PR #58)는 병합됐다. U4는 제품 경로를 바꾸지 않고, live unlink 하나를 stage 전, RAM install, WAL sync 전·후, DWB/home,
+CURRENT 공개와 reopen에서 process로 끊는다. LeafUnlink와 RootCollapse에 6 이력씩, 모두 12 이력 38 process가 복구 뒤
+tree·목록·allocator·claim·bank를 맞췄다. 앞 단위 [current-leaf 소비자 일반화](contracts/dev3-tree-smo.md#current-leaf-consumers)(PR #53)와
+[A 자동 split 호출자](contracts/dev3-tree-smo.md#automatic-split)(PR #54)도 병합됐다. U4의 병합으로 08-1(2일)을 적립해
+누적은 35/86일 = 40.70%가 된다([진도표](plans/dev3-schedule-baseline.md#items)).
 
 직전 작업은 Codex의 [clean Row leaf의 실제 RootSplit/ChildSplit과 복구](evidence/dev3-tree-structure-20261104.md#structural-effect)다.
 [첫 구조 후보 공급](evidence/dev3-tree-structure-20261104.md)은 독립 검토와 신규 선택 시험을 마쳤다.

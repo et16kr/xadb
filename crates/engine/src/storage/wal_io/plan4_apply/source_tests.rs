@@ -409,6 +409,92 @@ fn live_row_retirement_fits_the_progress_charge() {
     inspect::<super::super::super::native::Writer>("NATIVE_TYPE");
 }
 
+/// UNL-A03 (dev3-tree-smo.md#empty-leaf-unlink, 호출자), C's side: the live
+/// unlink (`unlink_leaf_live`) under the one structural shell, its residency
+/// step, the same-cut preparation and the existing-group install at four
+/// targets, each with the live entry's carriers, fits the
+/// CatalogProgressCharge it reserves beside A's fixed cleanup caller bound
+/// (`LIVE_ROW_CLEANUP`), for either writer. Like the live Row retirement it
+/// is checked by name and not folded into the charge or `peak`, so neither
+/// changes; the retirement with its DeletePrune note still fits too.
+#[test]
+fn unl_a03_live_unlink_fits_the_progress_charge() {
+    fn inspect<W: WriterNamespace>(kind: &str) {
+        use crate::storage::wal_io::row_caller_budget::LIVE_ROW_CLEANUP;
+        use create_pair::catalog_live::structural::effect::{self, unlink};
+        let actual = unlink::source_bytes::<W>();
+        let phases = create_pair::catalog_live::catalog_live_source_bytes::<W>();
+        let charge = CatalogProgressCharge::new::<W>();
+        let shell = effect::shell_entry_bytes();
+        println!(
+            "UNL_A03_{kind} {actual:?} shell={shell} note={} row_retirement={} charge={} \
+             caller_ceiling={LIVE_ROW_CLEANUP} room={} peak={}",
+            unlink::note_source_bytes(),
+            phases.row_retirement,
+            charge.0,
+            charge.0 as i64 - (actual.peak + LIVE_ROW_CLEANUP) as i64,
+            phases.peak
+        );
+        assert_eq!(charge.0, 44_304);
+        assert_eq!(LIVE_ROW_CLEANUP, 4096);
+        assert!(actual.residency > shell + actual.carriers);
+        // The preparation holds the shared entry's replay bound.
+        assert!(actual.prepare >= shell + actual.carriers + phases.prepare_replay);
+        assert_eq!(
+            actual.peak,
+            actual.residency.max(actual.prepare).max(actual.install)
+        );
+        assert!(actual.peak + LIVE_ROW_CLEANUP <= charge.0);
+        assert!(phases.row_retirement + LIVE_ROW_CLEANUP <= charge.0);
+        assert!(shared_bytes::<W>() + charge.0 <= 65536);
+    }
+    inspect::<crate::storage::wal_io::plan4_test_support::Writer>("MEMORY");
+    inspect::<super::super::super::native::Writer>("NATIVE_TYPE");
+}
+
+/// UNL-C03 (dev3-tree-smo.md#empty-leaf-unlink, census), C's side: the
+/// writer's eight RAM notes are bytes of the control loan (the caller's
+/// `RETENTION_CONTROL_BYTES`, which no owner, session, recovered runtime or
+/// port holds inline), past every bank row the control layout names or can
+/// hold and ending where the Jobs begin, inside `ControlCut`'s bank digest
+/// (the region's bounds come from the control constants). So no type of the
+/// shared layout gains a field: the larger fresh/recovered layout
+/// (`shared_bytes`) keeps its U2 value for either writer, and the progress
+/// charge beside it is the same 44,304 B. A note's reads and writes are the
+/// call term `note_source_bytes`, which the live retirement and the live
+/// unlink count (UNL-A03).
+#[test]
+fn unl_c03_notes_live_in_the_control_loan() {
+    fn inspect<W: WriterNamespace>(kind: &str, expected: usize) {
+        use create_pair::catalog_live::structural::effect::unlink;
+        let (notes, [named_end, rows_end, bank_end]) = unlink::note_region();
+        let shared = shared_bytes::<W>();
+        let charge = CatalogProgressCharge::new::<W>();
+        println!(
+            "UNL_C03_{kind} shared={shared} notes={notes:?} named_end={named_end} \
+             rows_end={rows_end} bank_end={bank_end} control={} charge={}",
+            super::super::RETENTION_CONTROL_BYTES,
+            charge.0
+        );
+        assert_eq!(notes, 65_088..65_536);
+        assert_eq!(notes.len(), 8 * 56);
+        // Past every bank row the layout names, the 36 rows the canonical
+        // comparison covers and every whole row; inside the cut's bank
+        // digest, ending where the Jobs begin.
+        assert!(
+            named_end <= 36 * 1_664 && 36 * 1_664 <= rows_end,
+            "{named_end} {rows_end}"
+        );
+        assert!(rows_end <= notes.start && notes.end == bank_end);
+        assert!(bank_end < super::super::RETENTION_CONTROL_BYTES);
+        assert_eq!(shared, expected);
+        assert_eq!(charge.0, 44_304);
+        assert!(shared + charge.0 <= 65536);
+    }
+    inspect::<crate::storage::wal_io::plan4_test_support::Writer>("MEMORY", 20_208);
+    inspect::<super::super::super::native::Writer>("NATIVE_TYPE", 20_216);
+}
+
 /// F4 Begin and statement start ceilings (boundaries
 /// `#begin-statement-ceilings`), C's side. Row Begin runs its Row lifecycle
 /// body under the one CatalogProgressCharge it reserves (RowProgress), with

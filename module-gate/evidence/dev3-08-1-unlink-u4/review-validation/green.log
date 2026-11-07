@@ -1,0 +1,13 @@
+test_current_cut_rejects_failed_barrier_effects (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_current_cut_rejects_failed_barrier_effects) ... ok
+test_current_cut_requires_current_selector (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_current_cut_requires_current_selector) ... ok
+test_hook_uses_completed_read_bytes (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_hook_uses_completed_read_bytes) ... ok
+test_repair_rejects_empty_dwb_read (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_repair_rejects_empty_dwb_read) ... ok
+test_repair_rejects_gap_and_other_file_completion (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_repair_rejects_gap_and_other_file_completion) ... ok
+test_repair_requires_complete_home_write (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_repair_requires_complete_home_write) ... ok
+test_unchanged_wal_and_ready_negative_vectors (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_unchanged_wal_and_ready_negative_vectors) ... ok
+test_wal_cut_requires_successful_sync_of_the_same_wal (test_check_dev3_unlink_native.UnlinkEvidenceTests.test_wal_cut_requires_successful_sync_of_the_same_wal) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.003s
+
+OK

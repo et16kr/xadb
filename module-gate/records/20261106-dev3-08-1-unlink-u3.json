@@ -1,0 +1,2466 @@
+{
+  "schema": "XADB_MODULE_GATE_RECORD_V1",
+  "change": "DEV3 08-1 U3 (dev3-tree-smo.md#unlink-u3): live LeafUnlink/RootCollapse of an emptied RowLeaf from RAM notes left by the live DeletePrune and INSERT CLR, C's unlink_leaf_live through the existing-group install, A's cleanup drain unlink_notes, UNL-A03/C03 census within the existing ceilings, UNL-L01..L08, L10..L15 (L09 NOT_RUN with its reason), UNL-A01..A03, UNL-C03.",
+  "rust_tests": [
+    {
+      "paths": [
+        "crates/engine/src/storage/wal_io/plan4_retention/structural_unlink.rs",
+        "crates/engine/src/storage/wal_io/plan4_retention/structural_effect.rs",
+        "crates/engine/src/storage/wal_io/plan4_retention/structural_live.rs",
+        "crates/engine/src/storage/wal_io/plan4_retention/catalog_lifecycle.rs",
+        "crates/engine/src/storage/dirty_init.rs",
+        "crates/engine/src/storage/wal_io/plan4_apply.rs",
+        "crates/engine/src/storage/wal_io/plan4_apply/row.rs",
+        "crates/engine/src/storage/wal_io/plan4_apply/row/split.rs",
+        "crates/engine/src/storage/wal_io/disk_api.rs",
+        "crates/engine/src/storage/disk.rs",
+        "crates/engine/src/storage/semantic_row/structure/unlink.rs",
+        "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/auto_split.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/split_rows.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/autocommit.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/driver.rs"
+      ],
+      "reason": "C live unlink (dev3-tree-smo.md#unlink-u3): RAM notes in the control loan's last 448 B, unlink_next (Catalog debt drops), unlink_leaf_live under the structural shell (route/residency, emptiness, parent shape, split debt, same-cut canonical prepare_unlink, ExistingGroup::Structural install with the StructuralControlCommit control part), unlink_busy; UNL-A03 C census (peak 36,561 + 4,096 <= 44,304) and UNL-C03 (notes in the control loan, shared 20,208/20,216 unchanged). UNL-L01..L08, L10..L15 live tests through restart, UNL-A02, split/live structural tests, census tests, every row_join test (the drain helpers changed).",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/structural_admission_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::structural::admission_tests::structural_admission_lsn_each_existing_counter_and_root_revision_boundaries",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/structural_effect.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::structural::effect::tests::spl_a08_live_split_fits_the_progress_charge",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/structural_effect.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::structural::effect::tests::spl_row_capacity_is_exactly_the_unchanged_prepare_capacity",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/structural_effect.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::structural::effect::tests::structural_effect_source_phases_fit_original_admission_and_callers",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/structural_unlink.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::structural::effect::unlink::tests::unl_a02_notes_keep_eight_and_drop_the_ninth",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/structural_prepare.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::structural::tests::structural_prepare_second_destination_and_inactive_child_are_bounded",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/structural_prepare.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::create_pair::catalog_live::structural::tests::structural_prepare_source_inventory_covers_read_decode_and_return",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c01_row_write_phase_census_memory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c02_row_write_phase_census_native",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c03_row_lifecycle_unchanged_beside_the_row_write_layout",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c04_live_and_recovered_peaks_unchanged",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c05_private_lane_ranges_and_cut_sizes",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c06_row_write_c_margins_against_both_bounds",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::catalog_class_uses_current_types_and_recovered_retained_owner",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::catalog_commit_windows_fit_beside_admitted_readers",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::catalog_native_class_includes_core_once_and_fits",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::commit_boundaries_reject_wrong_order_and_reader_entry",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::commit_class_moves_only_at_gate_and_drain_boundaries",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::commit_growth_beside_a_held_loan_fences_and_keeps_charges",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::exact_aggregate_capacity_releases_only_its_own_charge",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::f4_c_begin_statement_budget",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::fixed_resident_class_admits_two_and_never_escalates",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::live_row_retirement_fits_the_progress_charge",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::overflow_and_invalid_header_do_not_create_capacity",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::poison_and_fence_preserve_the_outstanding_charge",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::repro_full_read_beside_pending_commit_fits_actual_charges",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::retirement_fixed_charge_fits_and_cannot_use_commit_transitions",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::row_progress_reserves_the_same_catalog_progress_charge",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::s2a_t01_row_write_class_reserves_the_progress_charge_through_progress_only",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::simultaneous_reservations_cannot_overbook_the_original_ledger",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::stale_binding_rejects_reservation_and_preserves_outstanding_charge",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::ticket_width_preserves_full_65536_charge_and_rejects_overflow",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::underflow_fences_without_returning_the_charge",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::unl_a03_live_unlink_fits_the_progress_charge",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::unl_c03_notes_live_in_the_control_loan",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::unwind_and_forgotten_loans_never_manufacture_capacity",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::mci01_v01_v06_v09_v10_serializable_old_snapshot",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::mci01_v02_own_cursor_is_invalidated_by_a_row_apply",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::mci01_v03_two_serializable_writers_of_one_absence",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::mci01_v04_read_committed_statement_snapshot",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::mci01_v05_writers_of_different_tables_both_commit",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::mci01_v08_failed_statement_reads_survive",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::mci01_v09_origin_stale_checked_table_is_refused_by_a_and_b",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::mci01_v11_recovered_cleanup_keeps_logical_epochs",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::mci03_v01_rollback_waits_for_the_captured_read",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::mci03_v02_preflight_waits_for_the_admitted_read",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::mci03_v03_old_snapshot_before_q_publication",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::mci03_v04_poststage_fault_fences_a_and_b",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_base.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::base::rdl_r01_base4_takes_each_delete_state",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_base.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::base::rdl_r02_to_r06_base4_refuses_broken_delete_states",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_base.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::base::rdl_r07_base4_takes_the_cursor_three_compensated_row_by_its_logical",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_busy.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::busy::rdl_j11_rows_another_transaction_holds_are_busy_until_its_cleanup",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_native.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::native::rdl_n01_n02_memory_delete_prune_cuts",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_native.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::native::rdl_n03_n04_memory_delete_forward_cuts",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_native.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::native::rdl_n05_n06_memory_delete_clr_cuts",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j01_autocommit_delete_commits_and_its_prune_removes_the_row",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j02_explicit_delete_rolls_back_then_commits",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j03_reads_before_cleanup_see_the_old_value_then_no_row",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j04_committed_delete_is_pruned_by_recovery",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j05_active_delete_loser_is_restored_by_recovery",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j06_rolled_back_delete_is_freed_by_recovery",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j07_reserved_delete_is_cancelled_by_recovery",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j08_delete_then_insert_in_one_transaction",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j09_own_insert_row_is_unsupported_and_the_transaction_goes_on",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::rdl_j10_two_deletes_roll_back_then_commit",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_read.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::read::rdl_b06_delete_clr_waits_for_a_captured_read",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_read.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::delete::read::rdl_b07_b09_broken_delete_states_are_fatal",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/autocommit.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::lac_j01_autocommit_of_thirteen_rows_commits_and_two_drains_clean_it",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/autocommit.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::lac_j02_refused_row_and_missing_table_abort_then_a_commit",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/autocommit.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::lxt_j01_two_statements_commit_and_restart",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/autocommit.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::lxt_j02_failed_statement_between_two_that_commit",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/autocommit.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::lxt_j03_caller_rollback_then_a_commit",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/autocommit.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::lxt_j04_holder_order_and_missing_table",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/autocommit.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::lxt_j05_refused_begin_and_fenced_statement_leave_the_holder_empty",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_base.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::base::rup_r05_base4_takes_each_update_state",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_base.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::base::rup_r06_base4_refuses_broken_reserved_and_pruned_update_rows",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_base.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::base::rup_r06_base4_refuses_broken_update_states",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_base.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::base::rup_r07_base4_takes_the_cursor_three_compensated_update_by_its_logical",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_busy.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::busy::rup_j06_rows_another_transaction_updates_are_busy_until_its_cleanup",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_busy.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::busy::rup_j07_long_new_value_is_refused_before_any_effect",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_busy.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::busy::rup_j08_the_new_value_is_checked_after_the_row_judgement",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_native.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::native::rup_n01_n02_memory_update_prune_cuts",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_native.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::native::rup_n03_n04_memory_update_forward_cuts",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_native.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::native::rup_n05_n06_memory_update_clr_cuts",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_read.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::read::rup_b06_update_clr_waits_for_a_captured_read",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_read.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::read::rup_b07_broken_update_states_are_never_a_row",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_read.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::read::rup_b07_value_before_needs_the_report_and_keeps_the_capture",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::rup_c_each_reserve_takes_only_its_own_effect",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::rup_j01_autocommit_update_commits_and_its_prune_keeps_the_new_value",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::rup_j02_growing_and_shrinking_updates_roll_back_then_commit",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::rup_j03_statement_rollback_between_two_updates",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::rup_j04_update_then_insert_delete_and_update_in_one_transaction",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::rup_j05_reads_before_cleanup_and_a_held_update_prune",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::rup_r01_r04_recovery_of_each_update_state",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/auto_split.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::spl_a01_full_leaf_insert_splits_once_and_commits",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/auto_split.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::spl_a02_one_statement_splits_root_and_child_and_commits",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/auto_split.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::spl_a03_split_survives_the_rollback_of_its_transaction",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/auto_split.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::spl_a04_growing_update_splits_and_commits",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/auto_split.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::spl_a05_dirty_victim_is_flushed_before_the_split",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/auto_split.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::spl_a06_debt_and_room_refuse_without_effect",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/auto_split.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::spl_a10_reservation_capacity_splits_beside_a_retained_delete",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/auto_split.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::spl_review_failed_statement_after_split_preserves_prior_work",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/auto_split.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::spl_review_split_only_restart_preserves_committed_rows_and_shape",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/auto_split.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::spl_review_split_only_restart_undoes_losers_but_keeps_shape",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::unlink_rows::unl_l01_deleted_middle_leaf_is_unlinked_after_the_drain",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::unlink_rows::unl_l02_leftmost_leaf_is_unlinked",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::unlink_rows::unl_l03_root_collapse_makes_the_other_leaf_the_root",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::unlink_rows::unl_l04_both_children_emptied_leave_an_empty_root_leaf",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::unlink_rows::unl_l05_l12_level_two_unlink_and_unary_parent",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::unlink_rows::unl_l06_rolled_back_insert_clr_notes_unlink",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::unlink_rows::unl_l07_catalog_debt_drops_the_note",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::unlink_rows::unl_l08_l13_rightmost_unlink_then_insert_splits_on_new_pages",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::unlink_rows::unl_l09_flush_required_round_trip_keeps_the_parent",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::unlink_rows::unl_l10_l11_stale_stamp_keeps_the_note_then_the_unlink_waits_for_a_read",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::unlink_rows::unl_l14_old_snapshot_holds_the_prune_and_the_unlink",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::unlink_rows::unl_l15_reserved_root_refuses_the_direct_unlink",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/split_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::spl_j01_active_insert_split_then_commit_and_prune",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/split_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::spl_j02_active_insert_split_then_rollback_and_insert",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/split_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::spl_j03_delete_update_beside_child_split_roll_back_then_commit",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/split_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::spl_j04_restart_prunes_the_winner_and_compensates_the_loser_across_leaves",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/split_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::spl_j05_catalog_debt_of_the_table_is_refused_without_effect",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/split_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::spl_j06_restart_prunes_committed_rows_moved_after_commit",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/split_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::spl_j07_cold_deep_route_progresses_with_one_tree_frame",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/driver.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::lrc_j01_drain_after_commit_and_abort_frees_every_row_job",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/driver.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::lrc_j02_drain_leaves_a_held_prune_for_a_later_drain",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_effect/faults/refusals.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::refusals::structural_effect_actual_stage_history_and_replay_errors_are_fatal",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_effect/faults/refusals.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::refusals::structural_effect_changed_selection_and_before_cancel_without_wal",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_effect/faults/refusals.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::refusals::structural_effect_flush_admission_and_failed_cancel_lease",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_effect/faults/refusals.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::refusals::structural_effect_original_clean_victim_stamp_change_child",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_effect/faults/refusals.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::refusals::structural_effect_original_clean_victim_stamp_change_rejects_before_claim",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_effect/faults.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_durable_write_failure_keeps_pending_and_fences",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_effect/faults.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_guardless_durable_wait_blocks_ordinary_paths_and_io_failure",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_effect/faults.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_replay_checked_return_failure_keeps_pending",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_effect/faults.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_stage_capacity_cancels_and_reenters_root_child",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_effect/faults.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::faults::structural_effect_unwind_at_install_publication_and_finish_boundaries",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_effect.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_effect::structural_effect_original_root_then_child_and_target_debt_refusal",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_prepare.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_prepare::structural_admission_original_active_rows_preserves_debt_and_exact_wal_fit",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_prepare.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_prepare::structural_prepare_child_reads_four_raw_fixture_images_and_parent_stamp",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_prepare.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::driver::structural_prepare::structural_prepare_original_live_two_rows_preserves_state_and_binds_stamps",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::lrr01_live_cleanup_reuses_jobs_status_and_undo_beyond_32_transactions",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::lrr02_older_snapshot_keeps_prune_busy_until_it_ends",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::lrr03_running_actor_non_head_and_early_terminal_are_refused",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::lrr04_aborted_actor_is_cleaned_and_its_status_reused",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::lrr05_busy_prune_does_not_hide_another_finished_actor",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::lrr06_recovery_finishes_a_partial_live_cleanup",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/revalidation.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::revalidation::f6_m0_step_counts_match_the_contract_and_repeat",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/free_undo.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::free_undo::free_undo_recovery_source_admission",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_source_memory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::recovery_source_native",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/read/driver/delete_tests.rs",
+          "case": "storage::row::read::driver::tests::delete::rdl_b01_point_over_another_transactions_tombstone",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/read/driver/delete_tests.rs",
+          "case": "storage::row::read::driver::tests::delete::rdl_b02_own_tombstone_reads_no_row",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/read/driver/delete_tests.rs",
+          "case": "storage::row::read::driver::tests::delete::rdl_b03_cursor_skips_or_returns_the_old_value",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/read/driver/delete_tests.rs",
+          "case": "storage::row::read::driver::tests::delete::rdl_b04_value_before_flush_errors_and_mismatch",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/read/driver/delete_tests.rs",
+          "case": "storage::row::read::driver::tests::delete::rdl_b05_output_and_tombstone_version_checks",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/read/driver/tests.rs",
+          "case": "storage::row::read::driver::tests::mcb00_d01_point_found_and_absent_key",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/read/driver/tests.rs",
+          "case": "storage::row::read::driver::tests::mcb00_d02_point_status_and_missing_before_select_the_version",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/read/driver/tests.rs",
+          "case": "storage::row::read::driver::tests::mcb00_d03_flush_required_passes_through_after_cleanup",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/read/driver/tests.rs",
+          "case": "storage::row::read::driver::tests::mcb00_d04_point_output_cancel_and_cleanup_never_publish",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/read/driver/tests.rs",
+          "case": "storage::row::read::driver::tests::mcb00_d05_cursor_next_returns_rows_in_order_then_end",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/read/driver/tests.rs",
+          "case": "storage::row::read::driver::tests::mcb00_d06_cursor_reseeks_by_full_row_id_after_a_gap",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/read/driver/tests.rs",
+          "case": "storage::row::read::driver::tests::mcb00_d07_cursor_output_cancel_and_cleanup_keep_the_visible_row",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/read/driver/tests.rs",
+          "case": "storage::row::read::driver::tests::mcb00_d08_statement_and_revision_precede_end_and_cancel",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/read/driver/tests.rs",
+          "case": "storage::row::read::driver::tests::mcb00_d09_close_returns_only_its_own_credit",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/read/driver/tests.rs",
+          "case": "storage::row::read::driver::tests::mcb00_d10_ended_statement_precedes_range_credit_and_operation",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/read/driver/tests.rs",
+          "case": "storage::row::read::driver::tests::mcb00_d11_cursor_operations_open_on_its_own_view_and_table",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/read/driver/tests.rs",
+          "case": "storage::row::read::driver::tests::mcb00_d12_cleanup_failure_replaces_flush_and_scan_errors_keep_progress",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/read/driver/tests.rs",
+          "case": "storage::row::read::driver::tests::mcb00_d13_memory_call_inventory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/read/driver/tests.rs",
+          "case": "storage::row::read::driver::tests::mcb00_d13_native_call_inventory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/read/driver/tests.rs",
+          "case": "storage::row::read::driver::tests::spl_b01_cursor_crosses_split_leaves_at_the_upper_bound",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/read/driver/tests.rs",
+          "case": "storage::row::read::driver::tests::spl_b02_cursor_rejects_nonprogressing_leaf_bounds",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/read/driver/update_tests.rs",
+          "case": "storage::row::read::driver::tests::update::rup_b01_b02_own_and_visible_update_read_the_new_value",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/read/driver/update_tests.rs",
+          "case": "storage::row::read::driver::tests::update::rup_b03_b04_b05_invisible_update_reads_the_old_value",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/read/driver/update_tests.rs",
+          "case": "storage::row::read::driver::tests::update::rup_b03_cursor_mixes_insert_and_update_rows",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::visibility_busy_tests::lrc_c01_only_unchanged_visibility_busy_is_held",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::unlink_rows::unl_review_refilled_leaf_discards_stale_note_then_can_be_unlinked",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::unlink_rows::unl_review_four_pending_notes_follow_leaf_unlinks_into_root_collapse",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/wal_io/plan4_retention/catalog_live.rs",
+        "crates/engine/src/storage/wal_io/plan4_retention/row_clr.rs",
+        "crates/engine/src/storage/wal_io/plan4_retention/row_forward.rs",
+        "crates/engine/src/storage/wal_io/plan4_retention/row_start/retire.rs"
+      ],
+      "reason": "Note producers: the live DeletePrune (retire_resident reads its Job's table/anchor/row, then note_emptied_leaf after install) and the live INSERT CLR (not the recovered facade's) leave a note for an emptied RowLeaf; their census terms (row retirement 39,566 -> 39,694 B, room 514; the CLR note under the Row forward apply max, live Row lifecycle 40,883 unchanged). Row write/commit/cancel/forward/rollback/live families.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_cancel.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_cancel::s2w_h01_h05_reserve_and_cancel_replay_equal_live_and_stop_at_the_gate",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_cancel.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_cancel::s2w_r08_busy_target_cancel_is_before_then_retry_lands_the_literal",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_cancel.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_cancel::s2w_r08_cancel_returns_nothing_issued_and_keeps_the_write_bit",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_cancel.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_cancel::s2w_r10_tampered_proposal_is_before_then_cancel_lands_the_literal",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_cancel.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_cancel::s2w_r11_apply_stage_refusal_reopens_then_cancel_lands_the_literal",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_cancel.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_cancel::s2w_r12_cancel_sync_fault_after_stage_is_fatal",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_cancel.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_cancel::s2w_r12_cancel_write_fault_after_stage_is_fatal",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_cancel.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_cancel::s2w_r15_cancel_ends_the_reservation_without_the_fence",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_cancel.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_cancel::s2w_r18_live_root_reserved_actor_is_wrong_state",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_cancel.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_cancel::s2w_r21_one_stale_stamp_at_apply_is_before_then_cancel_lands_the_literal",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_cancel.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_cancel::s2w_r22_cancel_checks_out_no_replay",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_cancel.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_cancel::s2w_r23_control_byte_after_reserve_is_stale_cancel_then_drop_fences",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_commit.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r01_read_committed_insert_commit_matches_independent_frame",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_commit.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r01_serializable_insert_commit_matches_independent_frame",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_commit.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r02_cancel_statement_can_empty_abort",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_commit.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r02_empty_cancel_and_duplicate_table_roots",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_commit.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r03_active_statement_is_before_busy",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_commit.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r03_scope_foreign_capacity_reserved_and_aborting_refusals",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_commit.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r04_read_committed_same_table_commits",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_commit.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r04_serializable_other_table_commits",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_commit.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r04_serializable_same_table_requires_rollback",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_commit.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r05_commit_replays_divergent_forward_before_stage",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_commit.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r06_actual_wal_capacity_restores_unstaged_then_retries",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_commit.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r06_before_publication_is_fatal",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_commit.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r06_cleanup_failure_is_fatal",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_commit.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r06_partial_install_is_fatal",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_commit.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r06_partial_write_fences_without_ack",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_commit.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r06_stale_preparation_returns_same_capsule_then_retry",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_commit.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r06_sync_after_error_fences_without_ack",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_commit.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_commit::s3_r07_pending_full_read_drain_flusher_and_old_q",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_forward.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_forward::s2w_h01_h05_forward_replay_equals_live_and_stops_at_the_gate",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_forward.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_forward::s2w_r09_forward_lands_the_literal_and_retains_the_root",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_forward.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_forward::s2w_r10_tampered_proposal_is_before_on_the_same_reservation",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_forward.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_forward::s2w_r11_apply_stage_refusal_reopens_the_same_reservation",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_forward.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_forward::s2w_r12_apply_sync_fault_after_stage_is_fatal",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_forward.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_forward::s2w_r12_apply_write_fault_after_stage_is_fatal",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_forward.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_forward::s2w_r13_two_statements_of_three_rows_inherit_the_statement_credit",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_forward.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_forward::s2w_r21_missing_target_at_apply_is_fatal",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_forward.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_forward::s2w_r21_one_stale_stamp_at_apply_is_before_then_reopen",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_forward.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_forward::s2w_r22_forward_checks_out_no_replay",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_forward.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_forward::s2w_r23_control_byte_after_reserve_is_stale_prepare_then_cancel_then_drop_fences",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_forward.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_forward::s2w_r24_root_cursor_is_found_late_and_stops_restart",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_live.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_live::mca05_v31_live_dirty_victim_flush_retries_the_same_row",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_live.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_live::s2e_e09_applied_then_rejected_row_is_rollback_required_up_to_the_s4_start",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_live.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_live::s2w_r07_live_reserve_stale_ends_the_row_with_finish",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_live.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_live::s2w_r09_live_driver_inserts_one_row_and_finishes_the_statement",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_live.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_live::s2w_r10_live_prepare_before_is_cancelled_by_the_driver",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_live.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_live::s2w_r11_live_apply_before_is_reopened_and_cancelled",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_live.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_live::s2w_r11_live_reserve_stage_refusal_ends_the_row_with_finish",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_live.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_live::s2w_r19_live_preflight_busy_ends_the_row_without_retry",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_live.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_live::s2w_r21_live_apply_stale_is_reopened_and_cancelled",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_live.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_live::s2w_r21_live_missing_target_is_must_resolve",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_live.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_live::s2w_r21_live_refused_cancel_is_fenced_and_must_resolve",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_rollback.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_rollback::s4_r01_statement_suffix_then_commit",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_rollback.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_rollback::s4_r02_full_abort_one_row",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_rollback.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_rollback::s4_r03_premature_finish_bad_proposal_and_actual_stage_retry",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_rollback.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_rollback::s4_r04_unfinished_drop_fences_without_more_io",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_rollback.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_rollback::s4_r05_clr_sync_uncertainty_is_fatal",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_rollback.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_rollback::s4_r05_partial_clr_write_is_fatal",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_rollback.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_rollback::s4_r06_empty_statement_and_empty_full_abort",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_rollback.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_rollback::s4_r07_flush_before_error_preserves_a_retryable_rollback",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_rollback.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_rollback::s4_r08_serializable_conflict_then_full_abort",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_rollback.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_rollback::s4_r09_wrong_after_digest_is_unchanged_and_same_task_retries",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_rollback.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_rollback::s4_r10_full_abort_three_roots_from_two_statements",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_rollback.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_rollback::s4_r11_wrong_capsule_view_and_scope_are_unchanged",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_rollback/v09.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_rollback::v09::s4_v09_exact",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_rollback/v09.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_rollback::v09::s4_v09_minus_one",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_rollback/v09.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_rollback::v09::s4_v09_plus_one",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_write.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_write::s2w_r04_forged_candidate_is_before_with_no_effect",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_write.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_write::s2w_r05_reserve_recompute_change_is_before",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_write.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_write::s2w_r06_reserve_installs_the_row_reserve_group",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_write.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_write::s2w_r07_one_stale_stamp_is_before_then_retry_reserves",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_write.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_write::s2w_r11_reserve_stage_refusal_keeps_the_write_bit",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_write.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_write::s2w_r14_catalog_job_actor_is_refused_before_reserve",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_write.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_write::s2w_r15_reader_waits_and_is_installation_pending_while_reserved",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_write.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_write::s2w_r22_reserve_checks_out_no_replay",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_write.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_write::s2w_r23_preflight_arena_mismatch_is_fatal",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_write.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_write::s2w_r23_root_byte_is_stale_then_preflight_fatal",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_write.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_write::s2w_r23_status_byte_is_stale_then_arena_fatal",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/row/insert/driver.rs",
+        "crates/engine/src/storage/row/insert/driver/live.rs",
+        "crates/engine/src/storage/row/insert/driver/tests.rs",
+        "crates/engine/src/storage/row/insert/group.rs"
+      ],
+      "reason": "A cleanup drain: unlink_notes after a complete drain (CLEANUP_UNLINKS 8, flush not counted, Busy-class held, other refusals Stage::Unlink), Retired.unlinked/unlink_held in padding (24 B); cleanup_sites' four unlink sites (max with the executor caller 4,082 <= LIVE_ROW_CLEANUP 4,096); UNL-C03 A producer anchor decode 1,867 <= write-pass carriers 4,132 (producer 19,436 <= CLR_PRODUCER). UNL-A01, driver literal tests, every F4 budget test.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+          "case": "storage::row::insert::driver::budget_tests::f4_a_autocommit_budgets_memory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+          "case": "storage::row::insert::driver::budget_tests::f4_a_autocommit_budgets_native",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+          "case": "storage::row::insert::driver::budget_tests::f4_a_caller_budgets_memory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+          "case": "storage::row::insert::driver::budget_tests::f4_a_caller_budgets_native",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+          "case": "storage::row::insert::driver::budget_tests::f4_a_explicit_budgets_memory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+          "case": "storage::row::insert::driver::budget_tests::f4_a_explicit_budgets_native",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+          "case": "storage::row::insert::driver::budget_tests::rdl_a08_autocommit_delete_budgets_memory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+          "case": "storage::row::insert::driver::budget_tests::rdl_a08_autocommit_delete_budgets_native",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+          "case": "storage::row::insert::driver::budget_tests::rdl_a08_explicit_delete_budgets_memory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+          "case": "storage::row::insert::driver::budget_tests::rdl_a08_explicit_delete_budgets_native",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+          "case": "storage::row::insert::driver::budget_tests::rup_a08_autocommit_update_budgets_memory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+          "case": "storage::row::insert::driver::budget_tests::rup_a08_autocommit_update_budgets_native",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+          "case": "storage::row::insert::driver::budget_tests::rup_a08_explicit_update_budgets_memory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/budget_tests.rs",
+          "case": "storage::row::insert::driver::budget_tests::rup_a08_explicit_update_budgets_native",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::aw1_f01_flush_required_flushes_and_retries_the_same_row_from_preflight",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::aw1_f02_flush_refusals_end_the_row_holding_nothing",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/delete_tests.rs",
+          "case": "storage::row::insert::driver::tests::delete::rdl_a01_one_row_is_reserved_produced_applied_and_finished",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/delete_tests.rs",
+          "case": "storage::row::insert::driver::tests::delete::rdl_a02_no_row_finishes_the_statement_with_zero",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/delete_tests.rs",
+          "case": "storage::row::insert::driver::tests::delete::rdl_a03_a05_preflight_refusals_stay_distinct_and_hold_nothing",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/delete_tests.rs",
+          "case": "storage::row::insert::driver::tests::delete::rdl_a06_explicit_transaction_goes_on_after_a_failed_delete",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/delete_tests.rs",
+          "case": "storage::row::insert::driver::tests::delete::rdl_a07_steps_after_the_preflight_follow_the_insert_rules",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::lac_a01_committed_statement",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::lac_a02_failed_row_rolls_back_the_statement_then_the_transaction",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::lac_a03_returned_statement_is_finished_then_aborted",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::lac_a04_refused_commit_is_rolled_back_with_its_flush",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::lac_a05_fatal_or_rejected_commit_calls_nothing_more",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::lac_a06_refused_end_step_is_fenced",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::lac_a07_table_not_issued_finishes_the_statement",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::lac_a09_refused_begin_or_statement_start",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::lac_a10_finish_pending_statement_is_finished_once_more",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::lac_a11_must_resolve_statement_calls_nothing_more",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::lac_a12_finish_pending_statement_finished_then_aborted",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::lrc_a01_drain_installs_every_selected_group",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::lrc_a02_held_step_is_skipped_and_left",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::lrc_a03_residency_victim_is_flushed_then_the_group_retried",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::lrc_a04_other_refusals_end_the_drain",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::lrc_a05_drain_is_bounded",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::lxt_a01_two_statements_then_commit",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::lxt_a02_failed_statement_keeps_the_earlier_one",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::lxt_a03_caller_rollback_compensates_every_statement",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::lxt_a04_refused_commit_rolls_back_the_rows_that_stand",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::lxt_a05_fenced_statement_calls_nothing_more",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::lxt_a06_no_row_failures_and_a_refused_rollback",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::lxt_a07_slot_reading",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::mca00_d01_one_row_statement_reserves_produces_applies_and_finishes",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::mca00_d02_rows_take_one_reservation_at_a_time",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::mca00_d03_statement_and_arguments_are_checked_before_any_c_call",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::mca00_d04_value_rejections_release_the_preflight_without_reserve",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::mca00_d05_c_refusals_keep_busy_capacity_unsupported_distinct",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::mca00_d06_failures_after_reserve_cancel_the_one_reservation",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::mca00_d07_failed_row_after_applied_rows_rolls_back_to_the_mark",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::mca00_d08_unsupported_c0_wrappers_propagate_unchanged",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::mca00_d09_fatal_and_unreleased_reservations_stop_all_calls",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::mca00_d10_rollback_stops_hand_back_the_same_rollback_or_task",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::mca00_d11_commit_and_full_abort_close_the_transaction",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::mca00_d12_driver_frames_stay_within_the_driver_source_bound",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::mca00_d13_a_finished_rollback_leaves_only_the_finish_to_retry",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::mca00_d14_a_rollback_required_handle_is_released_only_by_its_finished_rollback",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::mca00_d15_memory_call_site_shares_fit_the_caller_bounds",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::mca00_d15_native_call_site_shares_fit_the_caller_bounds",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::spl_a09_row_loop_splits_and_retries_the_same_row",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::unl_a01_busy_class_holds_the_note_and_ends_the_unlinks",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::unl_a01_complete_drain_unlinks_every_note_in_order",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::unl_a01_incomplete_drain_asks_no_unlink",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::unl_a01_other_unlink_refusals_end_the_drain",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::unl_a01_unlinks_are_bounded_and_flushes_not_counted",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::unl_c03_a_producer_bounds_the_anchor_decode",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::unl_c03_drain_result_keeps_its_size",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/driver/tests.rs",
+          "case": "storage::row::insert::driver::tests::unl_review_flush_failures_preserve_prior_progress_and_pending_notes",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs"
+      ],
+      "reason": "Additional PR review: actual A cleanup drain and C live LeafUnlink/RootCollapse under a 31-byte WAL write error or a completed-sync error; fence, note preservation, must-resolve, unchanged home files, and fresh recovery topology/ACK rows. Only these four new cases were selected in the follow-up local run.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::unlink_rows::unl_review_leaf_unlink_partial_wal_write_fences_and_recovers",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::unlink_rows::unl_review_leaf_unlink_sync_error_fences_and_recovers",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::unlink_rows::unl_review_root_collapse_partial_wal_write_fences_and_recovers",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::unlink_rows::unl_review_root_collapse_sync_error_fences_and_recovers",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    }
+  ],
+  "na": [],
+  "reviews": [
+    {
+      "id": "dev3-08-1-unlink-u3-d2",
+      "class": "D2",
+      "scopes": [
+        "common",
+        "policy"
+      ],
+      "author": "claude-thread-session/claude-project-thread-e9itre",
+      "reviewer": "claude-independent-review/dev3-08-1-unlink-u3",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/dirty_init.rs": "874e5dcb0c171f8bea16e59ad1ab944c38ef29b5",
+        "crates/engine/src/storage/disk.rs": "0b2d39bd06d2656d36219818f7d7e2374fe1d475",
+        "crates/engine/src/storage/row/insert/driver.rs": "d48dacf25beb0bff1fafa4f91641f820fd257f20",
+        "crates/engine/src/storage/row/insert/driver/budget_tests.rs": "f2eb7c41c8cdea0c8f06fb211301991dd239b11d",
+        "crates/engine/src/storage/row/insert/driver/delete_tests.rs": "e356d3f8a7316e83f29473a0023b5d6dd5ded16c",
+        "crates/engine/src/storage/row/insert/driver/live.rs": "ec3e4b36f7b33e410677a7ec3dd676a742e95173",
+        "crates/engine/src/storage/row/insert/driver/tests.rs": "fd2532d300aae51ba3dedc08fa32419857afe393",
+        "crates/engine/src/storage/row/insert/group.rs": "3e8b9f35809e0b3be254e7ec6be8ad6ba7abecd3",
+        "crates/engine/src/storage/row/read/driver/delete_tests.rs": "3b20f311e49d5d4ddeec285994add9a87a9e1978",
+        "crates/engine/src/storage/row/read/driver/tests.rs": "16b5e8694018dd48a2e8ba29b73a19e68209e2dc",
+        "crates/engine/src/storage/row/read/driver/update_tests.rs": "819262ed5d4f96b83d7da925348923389269d421",
+        "crates/engine/src/storage/semantic_row/structure/unlink.rs": "5ad1d8fd056c951140345a119d892ad0d0ab4fea",
+        "crates/engine/src/storage/wal_io/disk_api.rs": "ec6394b50caae5e8642916fdcecce78cb283fe18",
+        "crates/engine/src/storage/wal_io/plan4_apply.rs": "27ad38df1e4f6fe10d87c7fd25c100e31dd1c610",
+        "crates/engine/src/storage/wal_io/plan4_apply/row.rs": "f2fe28daefedeea8d61b63bcde63d9179af587c4",
+        "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs": "82aa2cfba8b44863e23c498cb2ba4835be9ab2df",
+        "crates/engine/src/storage/wal_io/plan4_apply/row/split.rs": "c595ed3fa810150e0c049504f327409efba98014",
+        "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs": "349a3a15f61b9d26e14dee6acd283c24688fee98",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests.rs": "fdf80e53fb94f5b7c5145bb658bc144e4344c2e8",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_cancel.rs": "5cd3dc93290bad9e90848548c59441b2fb3db1ab",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_commit.rs": "4c8ac4eae79a7d355777e06007623a29dc734a1e",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_forward.rs": "3de238d9083e2e8d0b765f0a07d505e6f8043b0f",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join.rs": "957eaf8dd4bf49fe13fb23413a31e25e291fc08c",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire.rs": "8819dde2c1622ccba05eee5f842a8b06a17759ad",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/auto_split.rs": "ae7c5833c31ce6b259b86560f46e1715ec4f2a43",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/autocommit.rs": "24af9f6748ae3024eaececfb307cd2973e06706a",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete.rs": "5fd16a5bafd8e99df08ccb48e7b062233dcfd810",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_base.rs": "ed304ba95e1eb1ac424f5da90cd6650578d80e6c",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_busy.rs": "c7f2792d5ed449301c33c1282b8844212953d84c",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_native.rs": "500d680b00ced77ef723d7bdd1f00d9aafd9bc92",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/delete_read.rs": "4127f648ab47cd9a61395cdee8914b209e51b9c2",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/driver.rs": "daab09177fbeb18ed746228f788997b42291b3aa",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/revalidation.rs": "298ccdb010fb43e506f69ff8489cb6aae93f64c1",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/split_rows.rs": "0885d5b9ac235fa4736c9533f3dfcdce0a60075e",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_effect.rs": "e544dcb8c5805c924e30941de076e200a31f5e5b",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_effect/faults.rs": "28fa2094fb572fb13937d212d17163e2d3e2c35f",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_effect/faults/refusals.rs": "18629853cecfe1e0cbb1b53646ebd971e79bba25",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/structural_prepare.rs": "75373a6127ba43790aa3d86027df7e514d321ab0",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs": "af26d5622b6490dd4b0b9237cd80a5e520855928",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update.rs": "1a5bde60a371f02db187bfb6d271014901469846",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_base.rs": "e0b3ed2aa3bf5d16173f1c50ad7c6640d55461fd",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_busy.rs": "f029fb4c1a2de980ec4685b62196f2cb197e4f80",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_native.rs": "9adf39c54d037950d1044011896fa957294bb494",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/update_read.rs": "e346f065e539ecf3730584ff2998a90de9182a36",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_live.rs": "670db220b08918af3eef20cfbe2d382c919ddea6",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_rollback.rs": "4e3481998ec4b41a29c701235863352846193ca2",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_rollback/v09.rs": "8a2905c12b82a6653d2e008ace17f76ad17a2630",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_write.rs": "aca02e26956167c8a33990fcba4e2bf0249a7476",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/free_undo.rs": "6b67a5a09e47ac31b8a70d86cb8d682e3f866f09",
+        "crates/engine/src/storage/wal_io/plan4_retention/catalog_lifecycle.rs": "24c4684dc97c8f67eb3e72b994f9fd850bcc9057",
+        "crates/engine/src/storage/wal_io/plan4_retention/catalog_live.rs": "9c0e8483c392c5766e7df9a5e3673082b8497d42",
+        "crates/engine/src/storage/wal_io/plan4_retention/row_clr.rs": "04367efa5dd2925892f705148e70ad520221bc63",
+        "crates/engine/src/storage/wal_io/plan4_retention/row_forward.rs": "793430ac0f2444e8a84f21a9df8139bee991b238",
+        "crates/engine/src/storage/wal_io/plan4_retention/row_start/retire.rs": "5a1534530979f6e7a384a7c49a89b752bfe7e8ef",
+        "crates/engine/src/storage/wal_io/plan4_retention/structural_admission_tests.rs": "f6096db1b16abd244d4fdf23e6bc4eb88c965d78",
+        "crates/engine/src/storage/wal_io/plan4_retention/structural_effect.rs": "424c94460702bb385643bb7b6f84e41dd0e997e4",
+        "crates/engine/src/storage/wal_io/plan4_retention/structural_live.rs": "335638e3c34039305493dc660d18b866c0cc0770",
+        "crates/engine/src/storage/wal_io/plan4_retention/structural_prepare.rs": "a4ecaa334d66f6fae1505de7a72866260666528d",
+        "crates/engine/src/storage/wal_io/plan4_retention/structural_unlink.rs": "59c05b71cff1ec40e9a746054476be58805bc526",
+        "devdoc/contracts/dev3-module-boundaries.md": "d9658fb7df890ea4a8678ba504510853d62175ee",
+        "devdoc/contracts/dev3-task-14-reclamation.md": "4a6fdde86eda4400a16dd592196172de15f938f4",
+        "devdoc/contracts/dev3-tree-smo.md": "c693f9821b70c45c5874e74fb64e6446f93a0061"
+      },
+      "log": "module-gate/evidence/dev3-08-1-unlink-u3/review.md",
+      "log_sha256": "7a8dce88176091f8473ffbd0afeaca791d082f9019e1b5fdab27a4b0fbfd4aec"
+    },
+    {
+      "id": "pr58-additional-tests-d1",
+      "class": "D1",
+      "scopes": [],
+      "author": "/root",
+      "reviewer": "/root/independent_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/row/insert/driver/tests.rs": "8befc822a08545fecc634e2203ac007f6154ebef",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs": "a3880528c4f35353fd412c18a305c0e339432475"
+      },
+      "log": "module-gate/evidence/dev3-08-1-unlink-u3/additional-review.md",
+      "log_sha256": "0febd5240d626d61c0616f3ca9a410b139d953baa4437a5128df48f5c6ca3b5f"
+    },
+    {
+      "id": "pr58-wal-failure-tests-d1",
+      "class": "D1",
+      "scopes": [],
+      "author": "/root",
+      "reviewer": "/root/independent_review (WAL-failure follow-up session)",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs": "21e5fd0306e2936671906fd7d04de57cc48b1646"
+      },
+      "log": "module-gate/evidence/dev3-08-1-unlink-u3/wal-failure-review.md",
+      "log_sha256": "2d41452f1a1a52d857cc655af5ac2192f698cfee4e198b13599ff58ce599722b"
+    }
+  ]
+}

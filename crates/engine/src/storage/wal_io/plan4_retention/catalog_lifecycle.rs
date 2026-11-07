@@ -757,6 +757,10 @@ pub(super) enum ExistingGroup<'p, 'i, 'c, 's> {
     /// no reference target. The retiring live Row groups install only
     /// through the retirement protocol (`row::retire`).
     RowRelease(&'p row::PreparedRowGroup<'i, 'c, 's, { row::ROW_WRITE_TARGETS }>),
+    /// The live LeafUnlink or RootCollapse of an empty RowLeaf
+    /// (dev3-tree-smo.md#empty-leaf-unlink): a scope4 group with no INIT
+    /// target, so it installs only existing pages through this body.
+    Structural(&'p super::structural::effect::unlink::PreparedUnlink<'i, 'c, 's>),
 }
 impl<'p, 'i, 'c, 's> ExistingGroup<'p, 'i, 'c, 's> {
     fn ordinary(self) -> bool {
@@ -774,6 +778,7 @@ impl<'p, 'i, 'c, 's> ExistingGroup<'p, 'i, 'c, 's> {
             Self::RowWrite(prepared) => prepared.row_write(),
             Self::RowRecovery(prepared) => prepared.recovery(),
             Self::RowRelease(prepared) => prepared.release_role(),
+            Self::Structural(_) => true,
         }
     }
     fn check(
@@ -790,6 +795,7 @@ impl<'p, 'i, 'c, 's> ExistingGroup<'p, 'i, 'c, 's> {
             Self::RowRecovery(prepared) | Self::RowRelease(prepared) => {
                 prepared.check(owner, pool, control, prefix)
             }
+            Self::Structural(prepared) => prepared.check(owner, pool, control, prefix),
         }
     }
     fn targets(self) -> &'p [TargetRequest] {
@@ -798,6 +804,7 @@ impl<'p, 'i, 'c, 's> ExistingGroup<'p, 'i, 'c, 's> {
             Self::Row(prepared) => prepared.targets(),
             Self::RowWrite(prepared) => prepared.targets(),
             Self::RowRecovery(prepared) | Self::RowRelease(prepared) => prepared.targets(),
+            Self::Structural(prepared) => prepared.targets(),
         }
     }
     fn stamp(self, at: usize) -> Option<FrameStamp> {
@@ -806,6 +813,7 @@ impl<'p, 'i, 'c, 's> ExistingGroup<'p, 'i, 'c, 's> {
             Self::Row(prepared) => prepared.stamp(at),
             Self::RowWrite(prepared) => prepared.stamp(at),
             Self::RowRecovery(prepared) | Self::RowRelease(prepared) => prepared.stamp(at),
+            Self::Structural(prepared) => prepared.stamp(at),
         }
     }
     fn after(self, at: usize) -> Option<&'i [u8; PAGE_BYTES]> {
@@ -814,6 +822,7 @@ impl<'p, 'i, 'c, 's> ExistingGroup<'p, 'i, 'c, 's> {
             Self::Row(prepared) => prepared.after(at),
             Self::RowWrite(prepared) => prepared.after(at),
             Self::RowRecovery(prepared) | Self::RowRelease(prepared) => prepared.after(at),
+            Self::Structural(prepared) => prepared.after(at),
         }
     }
     fn stage_parts(
@@ -832,6 +841,7 @@ impl<'p, 'i, 'c, 's> ExistingGroup<'p, 'i, 'c, 's> {
             Self::Row(prepared) => prepared.stage_parts(),
             Self::RowWrite(prepared) => prepared.stage_parts(),
             Self::RowRecovery(prepared) | Self::RowRelease(prepared) => prepared.stage_parts(),
+            Self::Structural(prepared) => prepared.stage_parts(),
         }
     }
     fn mark_staged(
@@ -846,6 +856,7 @@ impl<'p, 'i, 'c, 's> ExistingGroup<'p, 'i, 'c, 's> {
             Self::RowRecovery(prepared) | Self::RowRelease(prepared) => {
                 prepared.mark_staged(control, requirement)
             }
+            Self::Structural(prepared) => prepared.mark_staged(control, requirement),
         }
     }
     fn apply_control(
@@ -863,6 +874,7 @@ impl<'p, 'i, 'c, 's> ExistingGroup<'p, 'i, 'c, 's> {
             Self::RowRecovery(prepared) | Self::RowRelease(prepared) => {
                 prepared.apply_control(control, profile, requirement)
             }
+            Self::Structural(prepared) => prepared.apply_control(control, profile, requirement),
         }
     }
 }

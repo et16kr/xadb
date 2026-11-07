@@ -33,7 +33,8 @@ use Call::{
     Apply, Cancel, Check, CleanupNext, Clr, ClrApply, ClrLane, ClrPrepare, ClrReopen, Commit,
     ContinueFlush, DropReserved, DropRollback, FinishAborted, FinishPreflight, FinishStatement,
     Forward, Next, PreflightDelete, PreflightUpdate, Prepare, Reopen, Reserve, ReserveDelete,
-    Retire, RollbackFinish, RollbackFlush, RollbackStart, Split, TryFlush, Validate,
+    Retire, RollbackFinish, RollbackFlush, RollbackStart, Split, TryFlush, Unlink, UnlinkNext,
+    Validate,
 };
 use foundation::{identity::SchemaEpoch, namespace::WriterNamespace};
 use std::cell::RefCell;
@@ -127,6 +128,10 @@ enum Call {
     PreflightUpdate(u64),
     /// C's live split (`split_row_live`) of an INSERT's full leaf.
     Split,
+    /// C's `unlink_next`, and `unlink_leaf_live` of a note's key
+    /// (dev3-tree-smo.md#empty-leaf-unlink).
+    UnlinkNext,
+    Unlink(u64),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -282,6 +287,22 @@ struct State {
     splits: Vec<Option<u64>>,
     /// The (row, length) of each live split call.
     split_calls: Vec<(Option<u64>, usize)>,
+    /// C's kept unlink notes (table, key), first first.
+    notes: Vec<(ObjectHandle, RowId)>,
+    /// C's live unlink answers in order (`LiteralUnlink`); with none left
+    /// an unlink answers Unlinked. A scripted refusal (`Call::Unlink`)
+    /// comes before the answer.
+    unlinks: Vec<LiteralUnlink>,
+}
+
+/// One scripted answer of the literal live unlink, with C's note rule:
+/// Unlinked and NotNeeded drop the note, Flush and Held keep it.
+#[derive(Clone, Copy, Debug)]
+enum LiteralUnlink {
+    Unlinked,
+    NotNeeded,
+    Flush(u64),
+    Held,
 }
 
 impl State {
@@ -337,6 +358,8 @@ fn state(chain: &[(u64, usize)], faults: &[(Call, Fault)]) -> RefCell<State> {
         deleted: Vec::new(),
         splits: Vec::new(),
         split_calls: Vec::new(),
+        notes: Vec::new(),
+        unlinks: Vec::new(),
     })
 }
 
@@ -691,6 +714,59 @@ impl<'s> Boundary for LiteralCall<'s> {
                 state.dirty = Some(target);
                 SplitNext::Flush(target)
             }
+        })
+    }
+    /// The first kept note.
+    fn unlink_next(&mut self) -> Result<Option<(ObjectHandle, RowId)>, RetentionError> {
+        let mut state = self.state.borrow_mut();
+        let fault = state.note(UnlinkNext);
+        let next = state.notes.first().copied();
+        drop(state);
+        factory(UnlinkNext, fault)?;
+        Ok(next)
+    }
+    /// C's note rule: an unchanged refusal drops the note, a Fatal one
+    /// keeps it; then the next scripted answer.
+    fn unlink(
+        &mut self,
+        table: ObjectHandle,
+        key: RowId,
+        _loan: &mut Loan,
+    ) -> Result<super::UnlinkNext<u64>, RetentionError> {
+        let mut state = self.state.borrow_mut();
+        let fault = state.note(Unlink(key.get()));
+        let Some(at) = state.notes.iter().position(|note| *note == (table, key)) else {
+            state.violations.push("unlink of a note C did not keep");
+            return Err(refusal(Unlink(key.get()), Cause::WrongState));
+        };
+        if state.waiting > 0 || state.dirty.is_some() {
+            state.violations.push("unlink with a flusher not Ready");
+        }
+        if let Some(Fault::Before(_)) = fault {
+            state.notes.remove(at);
+        }
+        drop(state);
+        factory(Unlink(key.get()), fault)?;
+        let mut state = self.state.borrow_mut();
+        let answer = if state.unlinks.is_empty() {
+            LiteralUnlink::Unlinked
+        } else {
+            state.unlinks.remove(0)
+        };
+        Ok(match answer {
+            LiteralUnlink::Unlinked => {
+                state.notes.remove(at);
+                super::UnlinkNext::Unlinked
+            }
+            LiteralUnlink::NotNeeded => {
+                state.notes.remove(at);
+                super::UnlinkNext::NotNeeded
+            }
+            LiteralUnlink::Flush(target) => {
+                state.dirty = Some(target);
+                super::UnlinkNext::Flush(target)
+            }
+            LiteralUnlink::Held => super::UnlinkNext::Held,
         })
     }
 }
@@ -3493,7 +3569,9 @@ fn lrc_a01_drain_installs_every_selected_group() {
         Retired {
             groups: 6,
             held: 0,
-            complete: true
+            complete: true,
+            unlinked: 0,
+            unlink_held: 0,
         }
     );
     assert_eq!(
@@ -3511,7 +3589,8 @@ fn lrc_a01_drain_installs_every_selected_group() {
             Retire(3),
             CleanupNext,
             Retire(2),
-            CleanupNext
+            CleanupNext,
+            UnlinkNext
         ]
     );
     assert!(state.borrow().cleanup.is_empty());
@@ -3525,10 +3604,12 @@ fn lrc_a01_drain_installs_every_selected_group() {
         Retired {
             groups: 0,
             held: 0,
-            complete: true
+            complete: true,
+            unlinked: 0,
+            unlink_held: 0,
         }
     );
-    assert_eq!(take_log(&state), [CleanupNext]);
+    assert_eq!(take_log(&state), [CleanupNext, UnlinkNext]);
     settled(&state);
 }
 
@@ -3548,12 +3629,21 @@ fn lrc_a02_held_step_is_skipped_and_left() {
         Retired {
             groups: 1,
             held: 1,
-            complete: true
+            complete: true,
+            unlinked: 0,
+            unlink_held: 0,
         }
     );
     assert_eq!(
         take_log(&state),
-        [CleanupNext, Retire(3), CleanupNext, Retire(6), CleanupNext]
+        [
+            CleanupNext,
+            Retire(3),
+            CleanupNext,
+            Retire(6),
+            CleanupNext,
+            UnlinkNext
+        ]
     );
     assert_eq!(state.borrow().skips, [vec![], vec![3], vec![3]]);
     assert_eq!(state.borrow().cleanup, [(3, Operation::Prune)]);
@@ -3575,7 +3665,9 @@ fn lrc_a03_residency_victim_is_flushed_then_the_group_retried() {
         Retired {
             groups: 2,
             held: 0,
-            complete: true
+            complete: true,
+            unlinked: 0,
+            unlink_held: 0,
         }
     );
     assert_eq!(
@@ -3591,7 +3683,8 @@ fn lrc_a03_residency_victim_is_flushed_then_the_group_retried() {
             Retire(3),
             CleanupNext,
             Retire(2),
-            CleanupNext
+            CleanupNext,
+            UnlinkNext
         ]
     );
     settled(&state);
@@ -3614,7 +3707,9 @@ fn lrc_a04_other_refusals_end_the_drain() {
         Retired {
             groups: 1,
             held: 0,
-            complete: false
+            complete: false,
+            unlinked: 0,
+            unlink_held: 0,
         }
     );
     assert_eq!(stop.failure.stage, Stage::Retire);
@@ -3670,7 +3765,9 @@ fn lrc_a05_drain_is_bounded() {
         Retired {
             groups: 0,
             held: CLEANUP_HELD,
-            complete: false
+            complete: false,
+            unlinked: 0,
+            unlink_held: 0,
         }
     );
     let log = take_log(&state);
@@ -3687,7 +3784,9 @@ fn lrc_a05_drain_is_bounded() {
         Retired {
             groups: CLEANUP_GROUPS,
             held: 0,
-            complete: false
+            complete: false,
+            unlinked: 0,
+            unlink_held: 0,
         }
     );
     let log = take_log(&state);
@@ -3698,6 +3797,297 @@ fn lrc_a05_drain_is_bounded() {
         [(CLEANUP_GROUPS, Operation::TerminalFinish)]
     );
     settled(&state);
+}
+
+/// A table handle and a RowId of the literal unlink notes.
+fn note(table: u64, key: u64) -> (ObjectHandle, RowId) {
+    (
+        ObjectHandle {
+            object: foundation::identity::ObjectId::new(table).unwrap(),
+            generation: foundation::identity::Generation::new(1).unwrap(),
+            schema_epoch: SchemaEpoch::new(1).unwrap(),
+        },
+        RowId::new(key).unwrap(),
+    )
+}
+
+/// The drain over `steps` with C's kept unlink `notes` and its scripted
+/// unlink answers.
+fn unlinking(
+    steps: &[(usize, Operation)],
+    notes: &[(u64, u64)],
+    answers: &[LiteralUnlink],
+    faults: &[(Call, Fault)],
+) -> RefCell<State> {
+    let state = cleaning(steps, &[], &[], faults);
+    {
+        let mut state = state.borrow_mut();
+        state.notes = notes.iter().map(|(t, k)| note(*t, *k)).collect();
+        state.unlinks = answers.to_vec();
+    }
+    state
+}
+
+fn kept(state: &RefCell<State>) -> Vec<u64> {
+    state
+        .borrow()
+        .notes
+        .iter()
+        .map(|(_, key)| key.get())
+        .collect()
+}
+
+/// UNL-A01 (dev3-tree-smo.md#empty-leaf-unlink, 호출자): once C selects no
+/// cleanup step, the drain asks C's next kept note and unlinks it until C
+/// keeps none; Unlinked counts in `unlinked`, NotNeeded counts toward the
+/// bound only, and both drop the note.
+#[test]
+fn unl_a01_complete_drain_unlinks_every_note_in_order() {
+    let state = unlinking(
+        &ONE_COMMIT[4..],
+        &[(41, 7), (41, 14), (42, 3)],
+        &[
+            LiteralUnlink::Unlinked,
+            LiteralUnlink::NotNeeded,
+            LiteralUnlink::Unlinked,
+        ],
+        &[],
+    );
+    assert_eq!(
+        drain(&state).unwrap(),
+        Retired {
+            groups: 2,
+            held: 0,
+            complete: true,
+            unlinked: 2,
+            unlink_held: 0,
+        }
+    );
+    assert_eq!(
+        take_log(&state),
+        [
+            CleanupNext,
+            Retire(3),
+            CleanupNext,
+            Retire(2),
+            CleanupNext,
+            UnlinkNext,
+            Unlink(7),
+            UnlinkNext,
+            Unlink(14),
+            UnlinkNext,
+            Unlink(3),
+            UnlinkNext
+        ]
+    );
+    assert!(kept(&state).is_empty());
+    settled(&state);
+}
+
+/// UNL-A01: a drain that is not complete asks no unlink: past
+/// `CLEANUP_HELD` held steps or at `CLEANUP_GROUPS` groups C may still
+/// select a step, and the notes wait for a complete drain.
+#[test]
+fn unl_a01_incomplete_drain_asks_no_unlink() {
+    let steps: Vec<_> = (0..=CLEANUP_HELD)
+        .map(|ordinal| (ordinal, Operation::Prune))
+        .collect();
+    let held: Vec<_> = (0..=CLEANUP_HELD).collect();
+    let state = cleaning(&steps, &held, &[], &[]);
+    state.borrow_mut().notes = vec![note(41, 7)];
+    let retired = drain(&state).unwrap();
+    assert!(!retired.complete);
+    assert_eq!((retired.unlinked, retired.unlink_held), (0, 0));
+    assert!(
+        !take_log(&state)
+            .iter()
+            .any(|call| matches!(call, UnlinkNext | Unlink(_)))
+    );
+    assert_eq!(kept(&state), [7]);
+    settled(&state);
+}
+
+/// UNL-A01: at most `CLEANUP_UNLINKS` answers per drain, with no further
+/// `unlink_next`; a FlushRequired is flushed with the call's flusher, the
+/// same note asked again, and not counted.
+#[test]
+fn unl_a01_unlinks_are_bounded_and_flushes_not_counted() {
+    let notes: Vec<_> = (1..=9).map(|key| (41, key)).collect();
+    let mut answers = vec![LiteralUnlink::Flush(77)];
+    answers.extend([LiteralUnlink::Unlinked; 4]);
+    answers.extend([LiteralUnlink::NotNeeded; 4]);
+    let state = unlinking(&[], &notes, &answers, &[(TryFlush(77), Fault::Steps(1))]);
+    assert_eq!(
+        drain(&state).unwrap(),
+        Retired {
+            groups: 0,
+            held: 0,
+            complete: true,
+            unlinked: 4,
+            unlink_held: 0,
+        }
+    );
+    let mut expected = vec![
+        CleanupNext,
+        UnlinkNext,
+        Unlink(1),
+        TryFlush(77),
+        ContinueFlush,
+    ];
+    for key in 1..=8 {
+        expected.extend([UnlinkNext, Unlink(key)]);
+    }
+    assert_eq!(take_log(&state), expected);
+    assert_eq!(usize::from(CLEANUP_UNLINKS), 8);
+    assert_eq!(kept(&state), [9]);
+    settled(&state);
+}
+
+/// UNL-A01: a Busy-class refusal (the Live boundary's `unlink_busy`, here
+/// the literal Held) keeps its note and ends the drain's unlinks with
+/// `unlink_held` 1; the drain's result stands.
+#[test]
+fn unl_a01_busy_class_holds_the_note_and_ends_the_unlinks() {
+    let state = unlinking(
+        &ONE_COMMIT[5..],
+        &[(41, 7), (41, 14)],
+        &[LiteralUnlink::Unlinked, LiteralUnlink::Held],
+        &[],
+    );
+    assert_eq!(
+        drain(&state).unwrap(),
+        Retired {
+            groups: 1,
+            held: 0,
+            complete: true,
+            unlinked: 1,
+            unlink_held: 1,
+        }
+    );
+    assert_eq!(
+        take_log(&state),
+        [
+            CleanupNext,
+            Retire(2),
+            CleanupNext,
+            UnlinkNext,
+            Unlink(7),
+            UnlinkNext,
+            Unlink(14)
+        ]
+    );
+    assert_eq!(kept(&state), [14]);
+    settled(&state);
+}
+
+/// UNL-A01: any other refusal ends the drain with `Stage::Unlink` and what
+/// it did before: an unchanged one is not must-resolve (C dropped its
+/// note), a Fatal one is (C kept it), as is a refused `unlink_next`; a
+/// refused flush ends it at the flush's own stage.
+#[test]
+fn unl_a01_other_unlink_refusals_end_the_drain() {
+    let state = unlinking(
+        &ONE_COMMIT[5..],
+        &[(41, 7), (41, 14)],
+        &[],
+        &[(Unlink(14), Fault::Before(Cause::Unsupported))],
+    );
+    let stop = drain(&state).unwrap_err();
+    assert_eq!(
+        stop.retired,
+        Retired {
+            groups: 1,
+            held: 0,
+            complete: true,
+            unlinked: 1,
+            unlink_held: 0,
+        }
+    );
+    assert_eq!(stop.failure.stage, Stage::Unlink);
+    assert_eq!(
+        disk(&stop.failure.error),
+        (
+            RetentionPhase::Prepare,
+            Cause::Unsupported,
+            Effect::Unchanged
+        )
+    );
+    assert!(!stop.failure.must_resolve);
+    assert!(kept(&state).is_empty());
+    assert_eq!(
+        take_log(&state),
+        [
+            CleanupNext,
+            Retire(2),
+            CleanupNext,
+            UnlinkNext,
+            Unlink(7),
+            UnlinkNext,
+            Unlink(14)
+        ]
+    );
+    settled(&state);
+
+    let state = unlinking(&[], &[(41, 7)], &[], &[(Unlink(7), Fault::Fatal)]);
+    let stop = drain(&state).unwrap_err();
+    assert_eq!(stop.failure.stage, Stage::Unlink);
+    assert!(stop.failure.must_resolve);
+    assert!(stop.retired.complete);
+    assert_eq!(kept(&state), [7]);
+
+    let state = unlinking(&[], &[(41, 7)], &[], &[(UnlinkNext, Fault::Fatal)]);
+    let stop = drain(&state).unwrap_err();
+    assert_eq!(stop.failure.stage, Stage::Unlink);
+    assert!(stop.failure.must_resolve);
+    assert_eq!(take_log(&state), [CleanupNext, UnlinkNext]);
+
+    let state = unlinking(
+        &[],
+        &[(41, 7)],
+        &[LiteralUnlink::Flush(77)],
+        &[(TryFlush(77), Fault::Before(Cause::Busy))],
+    );
+    let stop = drain(&state).unwrap_err();
+    assert_eq!(stop.failure.stage, Stage::Flush);
+    assert!(!stop.failure.must_resolve);
+    assert_eq!(kept(&state), [7]);
+    assert_eq!(
+        take_log(&state),
+        [CleanupNext, UnlinkNext, Unlink(7), TryFlush(77)]
+    );
+}
+
+/// UNL-C03 (dev3-tree-smo.md#empty-leaf-unlink, census), A's side: the
+/// drain result's unlink fields are two bytes in the padding after
+/// `complete`, so `Retired` keeps the size of its U2 fields (two counts and
+/// the flag), and every caller term that holds one (the cleanup sites, the
+/// executors' drain caller, `RetireStop`) counts the same bytes as before.
+#[test]
+fn unl_c03_drain_result_keeps_its_size() {
+    use std::mem::size_of;
+    assert_eq!(size_of::<Retired>(), size_of::<(usize, usize, bool)>());
+    assert_eq!(size_of::<Retired>(), 3 * size_of::<usize>());
+}
+
+/// UNL-C03, A's producer (the U1 open item, dev3-tree-smo.md#unlink-u1):
+/// the group observer's `decode_anchor`, now with the XTR1 list check, is
+/// counted whole as A's term. It runs inside `observe`, before `produce`
+/// calls the write pass, so it is never on the stack with the write pass's
+/// callees (`images`, `frame`), whose carriers the producer inventory adds
+/// in full. The inventory therefore bounds it when it is no larger than
+/// them, and the inventory stays within `CLR_PRODUCER` unchanged.
+#[test]
+fn unl_c03_a_producer_bounds_the_anchor_decode() {
+    use crate::storage::wal_io::row_caller_budget::CLR_PRODUCER;
+    let (decode, write_pass) = super::super::group::anchor_decode_terms();
+    let (_, producer) = super::super::local_source_carrier_bytes();
+    println!(
+        "UNL_C03_A decode={decode} write_pass={write_pass} producer={producer} \
+         bound={CLR_PRODUCER} room={}",
+        CLR_PRODUCER as i64 - producer as i64
+    );
+    assert!(decode <= write_pass);
+    assert!(producer <= CLR_PRODUCER);
 }
 
 // ---- The autocommit executor's steps (`autocommit`, LAC-A01..A12) ----
@@ -4500,3 +4890,55 @@ fn lxt_a07_slot_reading() {
 
 #[path = "delete_tests.rs"]
 mod delete;
+
+/// A flush failure after an installed unlink must preserve that progress,
+/// leave the pending and later notes alone, and report the flush's stage.
+/// In particular, a failure from continue_flush must not become Stage::Unlink.
+#[test]
+fn unl_review_flush_failures_preserve_prior_progress_and_pending_notes() {
+    for (at, fault, stage, must_resolve) in [
+        (TryFlush(77), Fault::Fatal, Stage::Flush, true),
+        (ContinueFlush, Fault::Fatal, Stage::ContinueFlush, true),
+        (
+            ContinueFlush,
+            Fault::Before(Cause::Busy),
+            Stage::ContinueFlush,
+            false,
+        ),
+    ] {
+        let state = unlinking(
+            &ONE_COMMIT[5..],
+            &[(41, 7), (41, 14), (42, 3)],
+            &[LiteralUnlink::Unlinked, LiteralUnlink::Flush(77)],
+            &[(at, fault), (TryFlush(77), Fault::Steps(2))],
+        );
+        let stop = drain(&state).unwrap_err();
+        assert_eq!(
+            stop.retired,
+            Retired {
+                groups: 1,
+                held: 0,
+                complete: true,
+                unlinked: 1,
+                unlink_held: 0,
+            }
+        );
+        assert_eq!(stop.failure.stage, stage);
+        assert_eq!(stop.failure.must_resolve, must_resolve);
+        assert_eq!(kept(&state), [14, 3]);
+        let mut expected = vec![
+            CleanupNext,
+            Retire(2),
+            CleanupNext,
+            UnlinkNext,
+            Unlink(7),
+            UnlinkNext,
+            Unlink(14),
+            TryFlush(77),
+        ];
+        if at == ContinueFlush {
+            expected.push(ContinueFlush);
+        }
+        assert_eq!(take_log(&state), expected);
+    }
+}

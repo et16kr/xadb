@@ -10,6 +10,7 @@
 //! values read back from the same producer.
 use super::*;
 use crate::storage::{
+    anchor,
     dirty_frame::SharedPool,
     page::{PageKind, PageRef},
     row::read::driver::{
@@ -62,6 +63,26 @@ fn leaves(pool: &SharedPool<'_, '_, '_, '_>) -> Vec<(PageRef, Vec<u64>)> {
     }
     result.sort_by_key(|(_, keys): &(PageRef, Vec<u64>)| keys.first().copied());
     result
+}
+
+/// T's anchor in the pool: its current root page and level, and the pages
+/// its XTR1 list holds, in list order.
+fn anchor_of(pool: &SharedPool<'_, '_, '_, '_>) -> (PageRef, u8, Vec<PageRef>) {
+    let mut image = vec![0; PAGE_BYTES].into_boxed_slice();
+    for at in (0..64).filter_map(|number| probe::registered_index(pool, number)) {
+        let request = pool.target_request(at).unwrap();
+        if request.kind != PageKind::TreeAnchor || request.identity.owner.get() != 6 {
+            continue;
+        }
+        probe::diagnose(pool, at, image.as_mut().try_into().unwrap());
+        let root = anchor::decode_anchor(&image, request.identity)
+            .unwrap()
+            .root();
+        let list = anchor::retired(&image, request.identity).unwrap();
+        let pages = (0..list.len()).map(|i| list.get(i).unwrap().page).collect();
+        return (root.page, root.level, pages);
+    }
+    panic!("T has no anchor in the pool");
 }
 
 /// The leaves' key counts and every key in leaf order.
@@ -631,10 +652,14 @@ fn spl_j01_active_insert_split_then_commit_and_prune() {
 /// four Retained roots (two leaves, the six RowIds in order), and the
 /// caller rolls it back: each InsertClr removes its row from the leaf the
 /// current tree routes, and the drain of 4 × 4 + 1 = 17 groups frees every
-/// Row Job. A new statement reads 7 and 8 and none of the rolled back rows;
-/// a second transaction's INSERT of 13 commits at q 3 (6 groups) into the
-/// right leaf. C's restart reaches READY at q 3 with no CLR and B's cursor
-/// reads 7, 8 and 13.
+/// Row Job. The CLRs empty the right leaf, so the complete drain unlinks it
+/// (dev3-tree-smo.md#unlink-u3, UNL-L06's case): a RootCollapse makes the
+/// left leaf, holding 7 and 8, T's level-0 root, and the anchor lists the
+/// right leaf and the old root; the right leaf stays resident with no cell.
+/// A new statement reads 7 and 8 and none of the rolled back rows; a second
+/// transaction's INSERT of 13 commits at q 3 (6 groups) into that root
+/// leaf, not the retired one. C's restart reaches READY at q 3 with no CLR
+/// and B's cursor reads 7, 8 and 13.
 #[test]
 fn spl_j02_active_insert_split_then_rollback_and_insert() {
     case_within("SPL-J02", std::time::Duration::from_secs(600), || {
@@ -697,12 +722,15 @@ fn spl_j02_active_insert_split_then_rollback_and_insert() {
                 let before = writer.catalog_test_with_pool(leaves);
                 assert_eq!(shape(&before), (vec![6], ids(&all)));
                 split!(writer, owner, flush, private, before[0].0, Split::RootSplit);
-                let (counts, keys) = shape(&writer.catalog_test_with_pool(leaves));
+                let split = writer.catalog_test_with_pool(leaves);
+                let (counts, keys) = shape(&split);
                 assert!(
                     counts.len() == 2 && counts.iter().all(|n| *n > 0),
                     "{counts:?}"
                 );
                 assert_eq!(keys, ids(&all));
+                let (old_root, level, listed) = writer.catalog_test_with_pool(anchor_of);
+                assert_eq!((level, listed), (1, vec![]));
                 let out = rollback!(&mut writer, owner, flush, flusher, &mut holder, private);
                 assert!(
                     matches!(out, Explicit::RolledBack),
@@ -711,10 +739,27 @@ fn spl_j02_active_insert_split_then_rollback_and_insert() {
                 assert!(holder.is_none());
                 assert_eq!(
                     drains!(&mut writer, owner, flush, flusher, private),
-                    [drain(17, true)]
+                    [Retired {
+                        unlinked: 1,
+                        ..drain(17, true)
+                    }]
                 );
                 assert_row_jobs_free(writer.catalog_test_jobs());
-                assert_eq!(shape(&writer.catalog_test_with_pool(leaves)).1, ids(&kept));
+                // T's root is now the left leaf at level 0, and the anchor
+                // lists the right leaf and the old root.
+                let (left, right) = (split[0].0, split[1].0);
+                let (root, level, mut listed) = writer.catalog_test_with_pool(anchor_of);
+                assert_eq!((root, level), (left, 0));
+                listed.sort_by_key(|page| page.page_no);
+                let mut want = vec![right, old_root];
+                want.sort_by_key(|page| page.page_no);
+                assert_eq!(listed, want);
+                // `leaves` reads every resident leaf of T: the retired one
+                // (no cell, first) and the root leaf.
+                assert_eq!(
+                    writer.catalog_test_with_pool(leaves),
+                    [(right, vec![]), (left, ids(&kept))]
+                );
                 let targets: Vec<RowId> = all.iter().map(|(row, _)| *row).collect();
                 assert_eq!(
                     read_rows!(
@@ -750,10 +795,11 @@ fn spl_j02_active_insert_split_then_rollback_and_insert() {
                     kept.iter().map(|(row, v)| (row.get(), *v)).collect();
                 expected.push((added[0].0.get(), 13));
                 let leaves_after = writer.catalog_test_with_pool(leaves);
-                assert_eq!(
-                    leaves_after.last().unwrap().1.last().copied(),
-                    Some(added[0].0.get())
-                );
+                // 13 joins 7 and 8 in the root leaf (without the unlink it
+                // would route past the separator into the right leaf).
+                let mut now = kept.clone();
+                now.extend(added.iter().copied());
+                assert_eq!(leaves_after, [(right, vec![]), (left, ids(&now))]);
                 assert_eq!(
                     scan_rows!(writer, reader, core, reader_private, flush, flusher),
                     expected

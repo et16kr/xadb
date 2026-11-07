@@ -153,8 +153,10 @@ pub(crate) use create_pair::catalog_live::{
 };
 pub(in crate::storage) use create_pair::{CatalogRetirementRejected, RowRetirementRejected};
 // The live split step `MutationPort::split_row_live` returns
-// (dev3-tree-smo.md#automatic-split), for A's row loop.
-pub(in crate::storage) use row::RowSplitStep;
+// (dev3-tree-smo.md#automatic-split), for A's row loop; the live unlink step
+// `unlink_leaf_live` returns (dev3-tree-smo.md#empty-leaf-unlink), for A's
+// cleanup drain.
+pub(in crate::storage) use row::{RowSplitStep, RowUnlinkStep};
 
 /// No Clone/Copy and no raw constructor. This borrows immutable private
 /// operation bytes, not replay/control/page guards or a second storage owner.
@@ -360,6 +362,25 @@ impl RetentionError {
                 RetentionCause::Visibility(error)
                     if matches!(error.cause, VisibilityCause::Busy)
             )
+    }
+    /// An unchanged refusal of a live unlink that a later drain may pass
+    /// (dev3-tree-smo.md#empty-leaf-unlink, 호출자): the read gate's
+    /// `Concurrency(Busy)`, a target `Frame` refusal Stale or Busy (a stamp
+    /// that changed between the preparation and the install), or
+    /// `Visibility(Busy)`. The note stays for a later drain.
+    pub(crate) fn unlink_busy(&self) -> bool {
+        self.effect == Effect::Unchanged
+            && match &self.cause {
+                RetentionCause::Concurrency(error) => {
+                    error.cause == crate::transaction::concurrency::Cause::Busy
+                }
+                RetentionCause::Frame(error) => matches!(
+                    error.cause,
+                    dirty_frame::Cause::Stale | dirty_frame::Cause::Busy
+                ),
+                RetentionCause::Visibility(error) => matches!(error.cause, VisibilityCause::Busy),
+                _ => false,
+            }
     }
     /// An unchanged `Prepare(Capacity)` refusal: a Row Reserve's space or WAL
     /// room check refused it (dev3-tree-smo.md#automatic-split). The caller

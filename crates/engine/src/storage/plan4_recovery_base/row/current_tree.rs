@@ -124,6 +124,7 @@ pub(super) fn observe(layout: LayoutView<'_>, index: usize) -> Result<Table<'_>>
     };
     let anchor_bytes = read(layout, anchor_expected)?;
     let anchor = anchor::decode_anchor(anchor_bytes, anchor_expected.identity)?;
+    let retired = anchor::retired(anchor_bytes, anchor_expected.identity)?;
     let root = anchor.root();
     let high = layout.header().system_high_water[1];
     if root.tree != TreeKind::Row || u128::from(root.revision) > 1 + u128::from(high) {
@@ -211,7 +212,51 @@ pub(super) fn observe(layout: LayoutView<'_>, index: usize) -> Result<Table<'_>>
             return Err(Error::ProvenanceMismatch);
         }
     }
-    if reached != owned {
+    // dev3-tree-smo.md#empty-leaf-unlink: reached ⊎ retired == owned. Each
+    // retired item is owned at its exact incarnation/kind and was last
+    // written before it retired: an empty leaf or a valid (unfollowed)
+    // internal page. Actor, graph and D use only the reached leaves.
+    let mut listed = 0u64;
+    for index in 0..retired.len() {
+        let item = retired.get(index).ok_or(Error::Corrupt)?;
+        let ordinal = item.page.page_no as usize;
+        let AllocationEntry::Allocated {
+            object: owner,
+            generation,
+            kind,
+            ..
+        } = allocation.entry(ordinal)?
+        else {
+            return Err(Error::IdentityMismatch);
+        };
+        if owner != object
+            || generation != item.page.incarnation
+            || kind != item.kind
+            || reached & (1u64 << ordinal) != 0
+        {
+            return Err(Error::IdentityMismatch);
+        }
+        let expected = TreeExpectation {
+            identity: PageIdentity {
+                page: item.page,
+                ..anchor_expected.identity
+            },
+            kind: item.kind,
+            level: item.level,
+            arity: 0,
+        };
+        let page = tree_page::decode_tree_page(read(layout, expected)?, expected)?;
+        // A page written by a later non-structural operation cannot prove a
+        // retirement that is absent from the selected Structural history.
+        if item.retire_lsn > high
+            || page.header().lsn.0 >= item.retire_lsn
+            || item.kind == PageKind::RowLeaf && page.len() != 0
+        {
+            return Err(Error::IdentityMismatch);
+        }
+        listed |= 1u64 << ordinal;
+    }
+    if reached | listed != owned {
         return Err(Error::IdentityMismatch);
     }
     Ok(Table {
@@ -239,6 +284,8 @@ pub(super) fn source_bytes() -> usize {
         + 3 * size_of::<Result<TreePageView<'_>>>()
         + 3 * size_of::<(CatalogRecordView<'_>, CatalogHeader)>()
         + 3 * size_of::<anchor::TreeAnchor>()
+        + 2 * size_of::<anchor::RetiredList<'_>>()
+        + 2 * size_of::<anchor::RetiredPage>()
         + 3 * size_of::<TreeExpectation>()
         + 2 * size_of::<(InitProvenance<'_>, Result<Option<InitProvenance<'_>>>)>()
         + 2 * size_of::<allocation_page::AllocationPage<'_>>()
@@ -256,4 +303,7 @@ pub(super) fn source_bytes() -> usize {
             .max(source::header_read())
             .max(source::allocation_decode())
             .max(super::super::image_records::provenance_source_bytes())
+            // The anchor decode, then `retired` with its whole nested decode
+            // (UNL-C01).
+            .max(anchor::retired_source_bytes(source::page_codec()))
 }

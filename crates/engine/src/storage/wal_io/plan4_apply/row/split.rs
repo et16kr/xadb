@@ -7,6 +7,9 @@
 //! (`split_row_tree`) under the one structural shell.
 use super::super::create_pair::catalog_live::row_preflight::RowTableSource;
 pub(in crate::storage) use super::super::create_pair::catalog_live::structural::effect::live::RowSplitStep;
+// The live unlink step `unlink_leaf_live` returns
+// (dev3-tree-smo.md#empty-leaf-unlink), for A's cleanup drain.
+pub(in crate::storage) use super::super::create_pair::catalog_live::structural::effect::unlink::RowUnlinkStep;
 use super::*;
 
 /// Upper bound of A's driver share at the live split call of a Row write

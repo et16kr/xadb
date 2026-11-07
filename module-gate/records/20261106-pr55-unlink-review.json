@@ -1,0 +1,56 @@
+{
+  "schema": "XADB_MODULE_GATE_RECORD_V1",
+  "change": "PR55: distinguish retirement LSN from snapshot horizon, require staged source censuses, and add independent unlink/collapse primitive probes. No product implementation.",
+  "rust_tests": [
+    {
+      "paths": [
+        "crates/engine/src/storage/tree_page/structure/tests.rs"
+      ],
+      "reason": "Only two newly added PR55 cases: six child positions under a level-two root with 1080 key probes, and four root-collapse cases. Existing tests are not re-executed.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/tree_page/structure/tests.rs",
+          "case": "storage::tree_page::structure::tests::pr55_unlink_below_level_two_root_preserves_all_key_ranges",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/tree_page/structure/tests.rs",
+          "case": "storage::tree_page::structure::tests::pr55_root_collapse_does_not_follow_retired_parent_or_empty_leaf",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    }
+  ],
+  "reviews": [
+    {
+      "id": "pr55-followup-d1",
+      "class": "D1",
+      "scopes": [],
+      "author": "/root",
+      "reviewer": "/root/unlink_design_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/tree_page/structure/tests.rs": "2197b9dd0bfe33d03bfb84bc2a4f9999aa45d00d"
+      },
+      "log": "module-gate/evidence/dev3-08-1-unlink-design/review.md (sha256 f773ffc1b8ee7267b6b4a8dafd4dc93ef41baf5b9111b63ac1981a1909bf019b)"
+    },
+    {
+      "id": "pr55-followup-d2",
+      "class": "D2",
+      "scopes": [],
+      "author": "/root",
+      "reviewer": "/root/unlink_design_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "devdoc/contracts/dev3-tree-smo.md": "b56bab546b9ce910721574647a30e2a555ed94c4"
+      },
+      "log": "module-gate/evidence/dev3-08-1-unlink-design/review.md (sha256 f773ffc1b8ee7267b6b4a8dafd4dc93ef41baf5b9111b63ac1981a1909bf019b)"
+    }
+  ]
+}

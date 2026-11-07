@@ -265,6 +265,8 @@ pub(super) fn source_bytes<W: WriterNamespace>() -> HistorySourceCensus {
         + 4 * size_of::<Result<()>>();
     let current = catalog::source_bytes();
     let row_census = row::source_bytes();
+    // Scope4: `semantic` is the larger of the split and unlink arms, which
+    // the dispatch keeps in sibling frames (dev3-tree-smo.md#unlink-u2).
     let split_census = structure::source_bytes();
     let retention = frame_outer + current.semantic;
     // The Row arm is exclusive with the Catalog/System arms of one frame: it
