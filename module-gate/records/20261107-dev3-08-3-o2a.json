@@ -1,0 +1,706 @@
+{
+  "schema": "XADB_MODULE_GATE_RECORD_V1",
+  "change": "DEV3 08-3 O2a (dev3-row-overflow.md#o2a-record): the C transitions of the overflow chain other than OverflowCancel/ChainRetire. Reserve(overflow) (C = 244 head record with the anchor as the root placeholder, its root-free projection sealing total and digest, Job @285 = 1 and the pending chain), ChunkWrite opcode 14 (first-extent allocator pick, entry Patch and chunk INIT, natives 6/12), Forward(overflow) chain check (observed; A produces it), CLR and Prune of an overflow root, the guards (ReleaseRole/RootFree with a chain, Cancel of a written root), ledger row 1 = debt(forward_steps, forward_wal) and chain.apply == last_step for a Reserved root, and the jobs.rs/leaf.rs/undo.rs local observers. No product path produces overflow yet: only tests build the new Change arms (A's executor is O3), replay still refuses opcode 14 and overflow ReserveAdopted (O2c), so user-visible behavior is unchanged; census bounds, peaks and charges are unchanged (only the N1 leaf term grows). Schedule 08-3 stays 진행(적립 0) until O4 merges.",
+  "rust_tests": [
+    {
+      "paths": [
+        "crates/engine/src/storage/semantic_row/transition/overflow.rs",
+        "crates/engine/src/storage/semantic_row/transition_overflow_tests.rs",
+        "crates/engine/src/storage/row_record.rs"
+      ],
+      "reason": "The new C overflow module (dev3-row-overflow.md#o2a-record) and the head-record encoder row_record::encode_overflow_record it calls: reserve_total (2,049..131,072, else Unsupported; C = 244), planned_record (head record with the anchor as the root placeholder), sealed_projection (root-free XRP1), reserve_job (@285 = 1, pending front 0/total/written 0), chunk_write (written < k, the sealed digest, payload window, allocator LSN, front Allocated(table, Overflow), no Reserved entry, lowest eligible Free), write_chunk (allocator entry, chunk INIT, LEAF scratch zeroed), forward_chain, clr_chain, entry_offset and their source models (the actor's Reserved-root and Retained-root checks before chunk_write are prepare.rs's ChunkWrite arm, group [1]). OVF-C01 runs the Reserve and the three ChunkWrites of a 40,018 B row (k = 3) against values recomputed from the contract integers W/F/R/X and the O1 codecs (no literal): Job cells, root-free projection, descriptor chain.apply, row 1, allocator entries, chunk cells, frame 56,976 B and redo order; Reserve totals 2,048 and 131,073 refused as Unsupported before output; the 12 ChunkWrite refusals before output (inline root, payload length, digest, Reserved entry, no eligible Free, allocator LSN, the three front violations, Retained root, all written, Cancel of a written root); the chunk-cell and allocator-entry observer mutants and the jobs.rs-only Job mutants. OVF-C02 runs Forward(overflow) with its 14 refusals, Commit/Prune, the full-rollback CLR (chain() = anchor 12, chunk 0 page 17, total; budget (5, 281,168)) and ReleaseRole of the chained root refused, while the inline root 16's ReleaseRole at the same state is accepted. The twins repeat the Reserve and ChunkWrites through produce_borrowed/observe_borrowed; ovf_c_head_record checks encode_overflow_record against encode_row_record_with_schema's Overflow arm byte for byte. The two let-else refusals on the change (place_chunk's ChunkWrite, forward_chain's ForwardOverflow) are defensive and reached by no case (prepare reaches place_chunk only for op ChunkWrite, the change's own operation, and forward_chain only after the ForwardOverflow pairing). ovf_c_census asserts chunk_write_bytes and source::leaf below prepare's callee maximum (the ledger term), write_chunk_bytes below the other write-step terms and forward_chain_bytes below the leaf term.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_overflow_tests.rs",
+          "case": "storage::semantic_row::transition::tests::overflow::ovf_c01_chunk_write_allocates_and_inits_back_to_front",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_overflow_tests.rs",
+          "case": "storage::semantic_row::transition::tests::overflow::ovf_c02_forward_checks_the_chain_then_commit_or_rollback",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_overflow_tests.rs",
+          "case": "storage::semantic_row::transition::tests::overflow::ovf_c_borrowed_producer_and_observer_twins",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_overflow_tests.rs",
+          "case": "storage::semantic_row::transition::tests::overflow::ovf_c_head_record_is_the_schema_encoders_overflow_arm",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_overflow_tests.rs",
+          "case": "storage::semantic_row::transition::tests::overflow::ovf_c_census_new_frames_stay_under_the_callee_maximum",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/semantic_row/transition.rs",
+        "crates/engine/src/storage/semantic_row/transition/prepare.rs",
+        "crates/engine/src/storage/semantic_row/transition/frame.rs",
+        "crates/engine/src/storage/semantic_row/transition_tests.rs"
+      ],
+      "reason": "The shared C transition paths O2a changes. transition.rs: the ReserveOverflow/ChunkWrite/ForwardOverflow arms of Change::operation, refuse_unproduced and observe_with's inserted cell. prepare.rs: typed_leaf accepts an Overflow row, check_record compares the Job's sealed projection and returns the record's own, prepare_leaf's Forward/CLR/Prune (forward_chain, clr_chain, the payload Prune restamps), reserve_target's Overflow test, the Reserve planned/record/projection matches and reserve_job, the ChunkWrite arm, Cancel of a written root, the ForwardOverflow pairing, the CLR budget branch, the ReleaseRole/RootFree chain refusal, write_pages' ChunkWrite return and the callee/write source maxima. frame.rs: native kinds 6/10/12, the allocator-entry and chunk-header native ranges, the redo target/prior refactor and Patch versus INIT. The four overflow cases reach every overflow arm (Cancel of a written root InvalidInput in OVF-C01; ForwardOverflow pairing, the overflow CLR budget and ReleaseRole with a chain InvalidInput in OVF-C02; kinds 6/12 and the INIT in every ChunkWrite). The N1, S1-A/D/G, MCA-04, RDL-C and RUP-C cases run inline INSERT/DELETE/UPDATE groups through the same changed lines (the inline arms, the CLR (4, 4R) budget, the default native range and Patch) and the N1/RDL-C/RUP-C histories compare the produced frames with the fixed literals byte for byte, so inline output is unchanged; N1's source bound reads callee_bytes/write_source_bytes with the new chunk_write and write_chunk terms. transition_tests.rs's World changes run with them: the allocator/chunk fields every World builds, cross_check skipping status.rs/undo.rs for ChunkWrite and install of the allocator/chunk images in every produced or observed group, the ReserveOverflow plan in the overflow cases. Reached by no selected case: reserve_target's Overflow refusal (big-row DELETE/UPDATE, 08-4), check_record's payload-kind mismatch arm, Prune's Deleted arm and native kind 10 (TreeAnchor; no O2a group has an anchor native), and frame.rs's two defensive INIT length checks (written or compared length != the encoded length).",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_overflow_tests.rs",
+          "case": "storage::semantic_row::transition::tests::overflow::ovf_c01_chunk_write_allocates_and_inits_back_to_front",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_overflow_tests.rs",
+          "case": "storage::semantic_row::transition::tests::overflow::ovf_c02_forward_checks_the_chain_then_commit_or_rollback",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_overflow_tests.rs",
+          "case": "storage::semantic_row::transition::tests::overflow::ovf_c_borrowed_producer_and_observer_twins",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_overflow_tests.rs",
+          "case": "storage::semantic_row::transition::tests::overflow::ovf_c_head_record_is_the_schema_encoders_overflow_arm",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+          "case": "storage::semantic_row::transition::tests::mca04_v04_v08_issuer_max_is_exhausted_before_output",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+          "case": "storage::semantic_row::transition::tests::n1_empty_transactions_match_literals",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+          "case": "storage::semantic_row::transition::tests::n1_full_rollback_cleanup_match_literals",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+          "case": "storage::semantic_row::transition::tests::n1_observer_accepts_a_forward_clr_literals",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+          "case": "storage::semantic_row::transition::tests::n1_observer_rejects_mutated_literals",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+          "case": "storage::semantic_row::transition::tests::n1_producer_refusals_precede_output",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+          "case": "storage::semantic_row::transition::tests::n1_statement_reserve_commit_prune_match_literals",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+          "case": "storage::semantic_row::transition::tests::rdl_c_delete_effect_binds_the_att_forward_debt",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+          "case": "storage::semantic_row::transition::tests::s1a_borrowed_observer_accepts_n1_and_a_literals",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+          "case": "storage::semantic_row::transition::tests::s1a_borrowed_observer_rejects_mutated_literals",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+          "case": "storage::semantic_row::transition::tests::s1a_borrowed_tail_refused_dirty_and_restored_on_every_exit",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+          "case": "storage::semantic_row::transition::tests::s1d_borrowed_producer_matches_owned_groups",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+          "case": "storage::semantic_row::transition::tests::s1g_reserve_adopted_equals_produced",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+          "case": "storage::semantic_row::transition::tests::s1g_reserve_adopted_not_producible",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+          "case": "storage::semantic_row::transition::tests::n1_transition_source_bounds_cover_measured_frames",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
+          "case": "storage::semantic_row::transition::tests::delete::rdl_c_delete_forward_of_another_row_is_refused",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
+          "case": "storage::semantic_row::transition::tests::delete::rdl_c_delete_history_borrowed_observer",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
+          "case": "storage::semantic_row::transition::tests::delete::rdl_c_delete_history_borrowed_producer",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
+          "case": "storage::semantic_row::transition::tests::delete::rdl_c_delete_history_matches_literals",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
+          "case": "storage::semantic_row::transition::tests::delete::rdl_c_delete_history_rejects_variants",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
+          "case": "storage::semantic_row::transition::tests::delete::rdl_c_leaf_reservation_bounds_every_leaf_step",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_delete_tests.rs",
+          "case": "storage::semantic_row::transition::tests::delete::rdl_c_leaf_reservation_forward_and_delete_prune",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_update_tests.rs",
+          "case": "storage::semantic_row::transition::tests::update::rup_c_effect2_previous_proof_binds_the_h_page",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_update_tests.rs",
+          "case": "storage::semantic_row::transition::tests::update::rup_c_leaf_reservation_bounds_update_reserve",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_update_tests.rs",
+          "case": "storage::semantic_row::transition::tests::update::rup_c_leaf_reservation_forward_prune_and_clr",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_update_tests.rs",
+          "case": "storage::semantic_row::transition::tests::update::rup_c_update_forward_of_another_row_is_refused",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_update_tests.rs",
+          "case": "storage::semantic_row::transition::tests::update::rup_c_update_history_borrowed_observer",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_update_tests.rs",
+          "case": "storage::semantic_row::transition::tests::update::rup_c_update_history_borrowed_producer",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_update_tests.rs",
+          "case": "storage::semantic_row::transition::tests::update::rup_c_update_history_matches_literals",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_update_tests.rs",
+          "case": "storage::semantic_row::transition::tests::update::rup_c_update_history_rejects_variants",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/semantic_row/jobs.rs",
+        "crates/engine/src/storage/semantic_row/jobs_tests.rs"
+      ],
+      "reason": "jobs.rs: the ReservePlan.overflow pending start value, the ChunkWrite arm (pending front moves, written + 1, total kept, only [328,360) and [376,384) change), the overflow CLR/Prune rule (chain anchor = pair[0]; Prune leaves no overflow), ReleaseRole only without a chain, ChunkWrite in the statement and leased-census lists and census reserved == 1; jobs_tests.rs only adds overflow: None to its plan() helper. OVF-C01 reaches the ChunkWrite arm and census in every ChunkWrite and its jobs.rs-only Job mutants (written + 2, front kept, total changed, each resealed) are refused by this rule alone; OVF-C02 passes the overflow CLR anchor and Prune rules (accepting side). The jobs_tests cases reach the changed lines for inline roots (pending None at Reserve, the overflow check skipped, chain None at ReleaseRole, the statement/census lists) and their pairs and mutants are unchanged. Reached by no case (deleted, the 71 cases selected before MCA00-V06 still pass; MCA00-V06 runs only inline Forward/CLR and reaches none of the overflow refusals): ChunkWrite's no-pending IdentityMismatch, the Reserve pending compare's refusal, ChunkWrite in the statement/mutation list, census reserved == 1, the overflow CLR anchor and Prune refusals, and ReleaseRole's chain conjunct. Two are implied before jobs.rs's rule: the Job codec refuses @285 = 1 outside Reserved/Retained/ReleasingCompensated (Corrupt, so no Prune after keeps it; OVF-F02 checks ReleasingCommitted), and a ReleaseRole after that keeps the chain at cursor 1 does not decode while one that clears it fails unchanged. The other five are seen in this stage only by the whole-group observer (the same prepare). Of the tests that call jobs::observe (jobs_tests, transition_tests' World, transition_overflow_tests, row/insert/group_tests) only transition_overflow_tests feeds it an overflow Job (job_tests and ledger_tests build such Jobs without jobs.rs), so no wider selection reaches them.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_overflow_tests.rs",
+          "case": "storage::semantic_row::transition::tests::overflow::ovf_c01_chunk_write_allocates_and_inits_back_to_front",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_overflow_tests.rs",
+          "case": "storage::semantic_row::transition::tests::overflow::ovf_c02_forward_checks_the_chain_then_commit_or_rollback",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/jobs_tests.rs",
+          "case": "storage::semantic_row::jobs_tests::jobs_canonical_wrong_transitions_and_step_times",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/jobs_tests.rs",
+          "case": "storage::semantic_row::jobs_tests::jobs_generation_lease_free_and_exhaustion",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/jobs_tests.rs",
+          "case": "storage::semantic_row::jobs_tests::jobs_options_core_and_unsupported_boundary",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/jobs_tests.rs",
+          "case": "storage::semantic_row::jobs_tests::jobs_preserves_root_material_rowid_sender_and_budget",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/jobs_tests.rs",
+          "case": "storage::semantic_row::jobs_tests::jobs_reserve_plan_is_independent_and_exact",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/jobs_tests.rs",
+          "case": "storage::semantic_row::jobs_tests::jobs_sender_binds_original_prior_and_after",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/jobs_tests.rs",
+          "case": "storage::semantic_row::jobs_tests::jobs_terminal_census_uses_all_original_cells",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/jobs_tests.rs",
+          "case": "storage::semantic_row::jobs_tests::jobs_twenty_six_raw_pairs_and_page_boundaries",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/jobs_tests.rs",
+          "case": "storage::semantic_row::jobs_tests::rdl_j_job_observer_binds_effect_to_opcode",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/jobs_tests.rs",
+          "case": "storage::semantic_row::jobs_tests::rup_c_job_observer_binds_update_effect_and_new_cell",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/semantic_row/leaf.rs"
+      ],
+      "reason": "leaf.rs: the projection match on (payload, Job overflow) with root_free_projection for an overflow root, sealed_value ((total, digest) of the head or the inline canonical length and SHA-256), Prune's payload equality replacing the inline compare, and validate_rows' three-arm match. The leaf_tests cases reach the inline arms (Forward seal and projection, Prune restamp and its payload mutants, validate_rows over every neighbor); OVF-C02's Forward and Prune of the overflow root reach the overflow arms (root-free projection, (total, digest), the head kept at Prune). validate_rows' Deleted arm (moved into the match, body unchanged) is reached only by group [1]'s RDL-C and RUP-C histories (cross_check's leaf.rs). The payload-kind refusals ((Overflow, inline Job), (inline, overflow Job)) are reached by no case: leaf.rs binds the Job to the frame through undo.rs first, so such an input needs a consistently rebuilt frame Job native (dev3-row-overflow.md#o2a-record, moved to O2c).",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_overflow_tests.rs",
+          "case": "storage::semantic_row::transition::tests::overflow::ovf_c02_forward_checks_the_chain_then_commit_or_rollback",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/leaf_tests.rs",
+          "case": "storage::semantic_row::leaf_tests::leaf_current_version_and_prune_payload_are_exact",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/leaf_tests.rs",
+          "case": "storage::semantic_row::leaf_tests::leaf_fifteen_raw_pairs_and_current_anchor",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/leaf_tests.rs",
+          "case": "storage::semantic_row::leaf_tests::leaf_forward_original_seal_job_size_and_projection",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/leaf_tests.rs",
+          "case": "storage::semantic_row::leaf_tests::leaf_native_slots_offsets_bytes_redo_and_lsn",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/leaf_tests.rs",
+          "case": "storage::semantic_row::leaf_tests::leaf_preserves_every_neighbor_and_validates_all_rows",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/semantic_row/undo.rs"
+      ],
+      "reason": "undo.rs: U's before pageLSN must be >= lease_lsn for Forward and >= last_step for the other roles. For an inline root last_step = lease_lsn, so the undo_tests pairs and mutants that reach the rule (Forward, CLR, Prune and release steps) are unchanged; OVF-C02's Forward follows three ChunkWrites (last_step > lease_lsn, U still at the Reserve LSN) and passes undo.rs, which the old >= last_step rule refuses. The exact == lease_lsn check after it is unchanged. MCA00-V06 runs A's produced Forward and CLR frames through the C observers and so through the changed rule from the A side.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_overflow_tests.rs",
+          "case": "storage::semantic_row::transition::tests::overflow::ovf_c02_forward_checks_the_chain_then_commit_or_rollback",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/undo_tests.rs",
+          "case": "storage::semantic_row::undo_tests::undo_actual_predecessor_uses_its_own_target_and_nearest_job",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/undo_tests.rs",
+          "case": "storage::semantic_row::undo_tests::undo_independent_seventeen_pairs_and_same_frame_status",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/undo_tests.rs",
+          "case": "storage::semantic_row::undo_tests::undo_material_cut_and_incoming_are_exact",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/undo_tests.rs",
+          "case": "storage::semantic_row::undo_tests::undo_release_cursor_material_and_same_generation_free",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/undo_tests.rs",
+          "case": "storage::semantic_row::undo_tests::undo_same_frame_status_proof_is_required_and_checked",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/insert/group_tests.rs",
+          "case": "storage::row::insert::group_tests::mca00_v06_produced_groups_pass_c_observers",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/semantic_row/ledger.rs"
+      ],
+      "reason": "ledger.rs: Reserved root row 1 = debt(forward_steps, forward_wal) with undo_slots 1, and the Reserved root rule descriptor.chain.apply == last_step. For an inline root forward_steps = 1 and last_step = lease_lsn, so the ledger literal/state cases (RDL-F09 and RUP-F07 rows, descriptor identity/order mutants, budget and statement credit, observation scope) show both rules unchanged. OVF-C01 checks the ATT descriptor C writes after the Reserve and after each ChunkWrite: row 1 = (1 + left, left*W + F) for the left unwritten chunks (remaining()), and chain.apply = that group's LSN = the Job's last_step, which validate_transaction's Reserved-root rule accepts in the cross-checked observation; the old debt(1, ..) row 1 differs from the Reserve on ((4, 262,604) for k = 3 in OVF-C01's reserve()), and the old chain.apply == lease_lsn rule from the first ChunkWrite's after check on.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_overflow_tests.rs",
+          "case": "storage::semantic_row::transition::tests::overflow::ovf_c01_chunk_write_allocates_and_inits_back_to_front",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/ledger_tests.rs",
+          "case": "storage::semantic_row::ledger::tests::rdl_f09_ledger_rows_follow_each_root_effect",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/ledger_tests.rs",
+          "case": "storage::semantic_row::ledger::tests::row_ledger_descriptor_identity_and_order",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/ledger_tests.rs",
+          "case": "storage::semantic_row::ledger::tests::row_ledger_exact_budget_and_statement_credit",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/ledger_tests.rs",
+          "case": "storage::semantic_row::ledger::tests::row_ledger_literal_states_and_residuals",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/ledger_tests.rs",
+          "case": "storage::semantic_row::ledger::tests::row_ledger_observation_scope_and_borrowed_replacement",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/ledger_tests.rs",
+          "case": "storage::semantic_row::ledger::tests::rup_f07_ledger_rows_of_update_roots",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/semantic_row/transition/source.rs"
+      ],
+      "reason": "transition/source.rs: source::leaf gains check_record's table and projections and the head/Prune payload/root-zero terms and takes the max with forward_chain_bytes and clr_chain_bytes; ledger_remaining adds row 1's two Job reads. Both feed prepare::callee_bytes/write_source_bytes (with chunk_write_bytes/write_chunk_bytes) and so transition::source_bytes, produce/observe_borrowed_source_bytes and ledger_source_bytes. N1 and S1-A/S1-D check those bounds against the measured frames (the only existing census output line that changes is N1_SOURCE_TERMS leaf 9,924 -> 10,300, per §15 and D2 r1/r2; the N1 bound 30,359 is unchanged); ovf_c_census keeps the new terms below the maxima. The S2W C01-C04/C06, F4-C Begin, live Row retirement and UNL-A03 cases read the borrowed bounds through the Row phase bodies (row_reserve_body, row_forward_body, row_cancel_body, row_group_terms) and the live/recovery source censuses and assert their margins, Row lifecycle <= charge, C charge 44,304 and the live/recovered peaks unchanged. S2W-C05 reads none of these terms and is not selected.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+          "case": "storage::semantic_row::transition::tests::n1_transition_source_bounds_cover_measured_frames",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+          "case": "storage::semantic_row::transition::tests::s1a_borrowed_observer_source_bound_covers_measured_frames",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+          "case": "storage::semantic_row::transition::tests::s1d_borrowed_producer_source_bound_covers_measured_frames",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_overflow_tests.rs",
+          "case": "storage::semantic_row::transition::tests::overflow::ovf_c_census_new_frames_stay_under_the_callee_maximum",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c01_row_write_phase_census_memory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c02_row_write_phase_census_native",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c03_row_lifecycle_unchanged_beside_the_row_write_layout",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c04_live_and_recovered_peaks_unchanged",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c06_row_write_c_margins_against_both_bounds",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::f4_c_begin_statement_budget",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::live_row_retirement_fits_the_progress_charge",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::source::tests::unl_a03_live_unlink_fits_the_progress_charge",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    }
+  ],
+  "na": [
+    {
+      "paths": [
+        "crates/engine/src/storage/retention_page/row.rs"
+      ],
+      "reason": "Only `use` re-exports change: CHAIN_RETIRE_WAL leaves the #[cfg(test)] re-export (prepare.rs's overflow CLR budget names it outside tests), OVERFLOW_CELL and PendingChain are re-exported from job.rs. No item, value or code path of this file changes; whether a name is re-exported is a compile-time fact of the lib and test builds, not a test outcome (under cfg(test) CHAIN_RETIRE_WAL was already visible). The values behind the names are retention_page/row/job.rs's, unchanged here, and the cases of rust_tests[0]-[2] check them where they are used (C = 244, the pending chain, the CLR budget X)."
+    }
+  ],
+  "reviews": [
+    {
+      "id": "dev3-08-3-o2a-d2",
+      "class": "D2",
+      "scopes": [],
+      "author": "claude-thread-session/claude-project-thread-y6amas",
+      "reviewer": "claude-independent-review/dev3-08-3-o2a",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/retention_page/row.rs": "e7c31646d36db7d449810b1fab3222bcc57beeea",
+        "crates/engine/src/storage/row_record.rs": "21a67754d58e34ae2da6eca92052d0f3d2408052",
+        "crates/engine/src/storage/semantic_row/jobs.rs": "acc44da3c76a9758a578cd689191b038b3bb61d6",
+        "crates/engine/src/storage/semantic_row/jobs_tests.rs": "ff6153e443245297635759b556fd4c221eda905d",
+        "crates/engine/src/storage/semantic_row/leaf.rs": "178ec10f2afdaffd7706b85b2d3fa48e2f8d31f7",
+        "crates/engine/src/storage/semantic_row/ledger.rs": "0c68f594d90049180effcaf6f8ee2e9d5eff45dd",
+        "crates/engine/src/storage/semantic_row/transition.rs": "57d50905caba9e18d805a3c594ec08c78f9f54ce",
+        "crates/engine/src/storage/semantic_row/transition/frame.rs": "c8fda12bf8fba8c5268461eb0c0e353b102de5d7",
+        "crates/engine/src/storage/semantic_row/transition/overflow.rs": "19f5148510adea70fd3fe4d895b83aa514e34494",
+        "crates/engine/src/storage/semantic_row/transition/prepare.rs": "b2353a986dd3b77d3ece1e7ed3ae7516860e48cb",
+        "crates/engine/src/storage/semantic_row/transition/source.rs": "63bb4957d9d1f48ea3f4ff278ea05f0011c55448",
+        "crates/engine/src/storage/semantic_row/transition_overflow_tests.rs": "404553181fd82dc463c6e9a5d6f09d6f9b5f7a81",
+        "crates/engine/src/storage/semantic_row/transition_tests.rs": "e9d57c036a5f4292c390d8d68f36eed0598bad3f",
+        "crates/engine/src/storage/semantic_row/undo.rs": "d6e0d3c14f4e35fa73b2b1c9d5992dc47b3df3f7"
+      },
+      "log": "2026-11-07 independent read-only D2 of the whole O2a diff (code, tests and dev3-row-overflow.md §15, branch wip-083-o2a), three rounds: module-gate/evidence/dev3-08-3-o2a/review-r1.md (sha256 88b96a6be1e3d44a9075564c22b4567680d69c3cd8e852f37fb857e12473a6cf; CONDITIONAL at 6afdbe9, 2 required: F1 ChunkWrite's front check untested, F2 OVF-C01/C02 items not run), review-r2.md (sha256 7a4dd781882729a57c0ef34d58152016e7a5eb472331a4d33178af6f7e9f4948; CONDITIONAL at 267270d, 1 required: R2-F1 the duplicate-address input did not reach the verifier's read-address set), review-r3.md (sha256 e48ee3f8b2b38249a3cfabdefe6981d065a7f9bfdf8a26e729c7f652931a4f31; ACCEPT at 7064605, required 0, NITs N-e test comment anchor and N-f §15 wording). 01fee56 applies both NITs (one comment line of transition_overflow_tests.rs, one §15 sentence) and saves r3 (that diff reviewed in dev3-08-3-o2a-record); the listed blobs equal 01fee56's (only transition_overflow_tests.rs differs from 7064605, by that comment line), and the merge d6d9802 of main (e0723ae: PR #67 incl. 9baf899) changes none of them. Reviewer runs: r1 overflow 4, census bundle 11, storage::semantic_row/retention_page::row/row_record 217 passed, Row product path (catalog_memory::row_join, storage::row::) 264 passed, 0 failed, 6 ignored in 2,567.65 s, review_r1_check.py 23 + 93 PASS, mutations A/B; r2 overflow 5, changed modules 218 (+3 probes), census 11 (line diff against 6afdbe9 only in the leaf and new-frame terms), mutations M1-M6; r3 overflow 5, changed modules 218, census 11, mutations M4/M7; fmt, clippy -D warnings and verify_documents clean in each round. Implementer: Row product path at 267270d 264 passed, 0 failed, 6 ignored, 1,996.61 s (no product code changes after 267270d, r3). This record's 72 selected cases at d6d9802: 72 passed, 0 failed, 0 ignored, 19.05 s (--test-threads=1, record check round 2)."
+    },
+    {
+      "id": "dev3-08-3-o2a-record",
+      "class": "D2",
+      "scopes": [],
+      "author": "claude-thread-session/claude-project-thread-y6amas",
+      "reviewer": "claude-independent-review/dev3-08-3-o2a-record",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/semantic_row/transition_delete_tests.rs": "62255821879777437c6d87c8d0016600e516c9d2",
+        "crates/engine/src/storage/semantic_row/transition_update_tests.rs": "e38b688a476934c18602f8104e56ffbf161270a0",
+        "crates/engine/src/storage/semantic_row/leaf_tests.rs": "08003546e9ceb4e024bf191ac9d6c33915b87b89",
+        "crates/engine/src/storage/semantic_row/undo_tests.rs": "0a5117c8266d439b475d3413161ee98724c9fd27",
+        "crates/engine/src/storage/semantic_row/ledger_tests.rs": "d8c16145d3dbb114fbdf3deb4b205b632c061cf0",
+        "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs": "82aa2cfba8b44863e23c498cb2ba4835be9ab2df",
+        "crates/engine/src/storage/wal_io/plan4_apply/source_tests.rs": "349a3a15f61b9d26e14dee6acd283c24688fee98",
+        "crates/engine/src/storage/semantic_row/transition_overflow_tests.rs": "404553181fd82dc463c6e9a5d6f09d6f9b5f7a81",
+        "crates/engine/src/storage/row/insert/group_tests.rs": "fac592565693837077857e6fee9019c1faca92ab"
+      },
+      "log": "2026-11-07 independent read-only D2 of this record (case selection, reasons, N/A, review coverage), three rounds: module-gate/evidence/dev3-08-3-o2a/record-check.md (sha256 0a9b94007bd05eb6eecbd47bea149d9e5e3e20ce4b1ab19488ddaf8920da8f6d; CONDITIONAL, 2 required: R1 the 7064605..01fee56 NIT diff of transition_overflow_tests.rs covered by no review, R2 group [2]'s reason named one of the seven unreached jobs.rs refusals; S1-S5 wording and the MCA00-V06 case), module-gate/evidence/dev3-08-3-o2a/record-check-r2.md (sha256 245ad40dd179da43589cf137e6e0c682efae1899a222f1ed1fa7b5fe82dc4435; CONDITIONAL, 1 required R3: the reasons for the Prune and ReleaseRole refusals and the scope of the overflow-Job sentence in group [2] and §15; T1-T2 wording), module-gate/evidence/dev3-08-3-o2a/record-check-r3.md (sha256 a593a62695f72b5266f1cfe5c94cb59a8b715e33aa4874ae8305b7ec9940109d; ACCEPT, required 0). The record check read the 7064605..01fee56 NIT diff (one comment line of transition_overflow_tests.rs, #overflow-chain -> #chunk-revision, and the §15 N-f sentence) and found it correct; it is this entry's transition_overflow_tests.rs blob. Reviewer runs: round 1 the 71 then-selected cases 71 passed, 0 failed, 17.57 s, with gdb hit counts per changed line and mutations of jobs.rs/prepare.rs/ledger.rs/leaf.rs/undo.rs; round 2 the 72 selected cases 72 passed, 0 failed, 19.05 s and MCA00-V06 alone 1 passed; each round simulated this record in a scratch clone: gate PASS, 0 errors, 0 pending, verify_documents PASS."
+    }
+  ]
+}
