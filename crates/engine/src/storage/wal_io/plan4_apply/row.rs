@@ -21,6 +21,8 @@
 
 use super::*;
 
+#[path = "row/locator.rs"]
+mod locator;
 #[path = "row/read.rs"]
 mod read;
 #[path = "row/recovery.rs"]
@@ -37,6 +39,7 @@ pub(crate) use write_operation::{
     RowPreflightOperation, RowPreparedOperation, RowReservedOperation,
 };
 
+pub(crate) use locator::{LocatorCounts, RowLocator};
 pub(crate) use read::{
     MissingRowEvidence, RowCandidate, RowCopyObservation, RowReadOperation, RowSearchPage,
     RowValueBefore,

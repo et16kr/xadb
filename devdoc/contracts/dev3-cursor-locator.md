@@ -1,6 +1,6 @@
 # DEV3 SMO를 건너는 stable cursor와 locator
 
-2026-11-07 · `D3-CURSOR-LOCATOR-001` · **08-2a cursor 인수 시험 PASS(CUR-B01·B02, CUR-J01..J05) / 08-2b locator 설계 / 독립 D2 2회차 ACCEPT**
+2026-11-07 · `D3-CURSOR-LOCATOR-001` · **08-2a cursor 인수 시험 PASS(CUR-B01·B02, CUR-J01..J05)와 locator 설계(PR #62) / 08-2b locator 구현 PASS(LOC-B01·B02, LOC-J01..J03, LOC-C01, PR #65) / 독립 D2 08-2a 2회차 ACCEPT / 08-2 완료(PR #65 병합 시)**
 
 [행 owner §5.5](dev3-task-06-tree-rows.md#algorithms) · [인수 T06-12·T06-13·T06-16](dev3-task-06-tree-rows.md#acceptance) · [statement/cursor F02](dev3-task-06-tree-rows.md#module-statement-cursor) · [current-leaf 소비자](dev3-tree-smo.md#current-leaf-consumers) · [빈 leaf unlink·root 축소](dev3-tree-smo.md#empty-leaf-unlink) · [자원 정본](dev3-resource-bounds.md) · [일정 08-2](../plans/dev3-schedule-baseline.md#items)
 
@@ -11,8 +11,8 @@
 
 | 단위 | 내용 | 제품 코드 |
 | --- | --- | --- |
-| 08-2a(이 PR) | cursor 불변식의 기록(§2), B literal 시험 CUR-B01·B02, 실제 C 위 시험 CUR-J01..J05(§3), T06-12 대응(§4), locator 설계(§5)와 시험 목록(§6) | 동작 변경 없음. B `LiveCursor`에 시험 전용 accessor 하나(CUR-J02) |
-| 08-2b(다음 PR) | §5의 core locator 몫, C `RowLocator`, `page_located`, B `read_point_located_live`, census 항, LOC 시험 | core(`dev3_concurrency_admission` 모듈의 `transaction/concurrency.rs`와 그 계약 [동시성 admission](dev3-concurrency-admission.md)에 몫 계수와 규칙 추가)·C·B |
+| 08-2a(PR #62) | cursor 불변식의 기록(§2), B literal 시험 CUR-B01·B02, 실제 C 위 시험 CUR-J01..J05(§3), T06-12 대응(§4), locator 설계(§5)와 시험 목록(§6) | 동작 변경 없음. B `LiveCursor`에 시험 전용 accessor 하나(CUR-J02) |
+| 08-2b(PR #65, [구현 기록](#implementation-2b)) | §5의 core locator 몫, C `RowLocator`, `page_located`, B `read_point_located_live`, census 항, LOC 시험 | core(`dev3_concurrency_admission` 모듈의 `transaction/concurrency.rs`와 그 계약 [동시성 admission](dev3-concurrency-admission.md)에 몫 계수와 규칙 추가)·C·B |
 
 08-2a에 제품 변경이 없는 이유: cursor는 호출 사이에 page·slot·latch를 쥐지 않고, 호출마다 마지막 검사 key로 현재 tree를 route하며, `CheckedTable`은 revision이나 root를 갖지 않는다(§2). 그래서 split·unlink·root 축소가 호출 사이에 끼어도 다음 호출은 지금의 tree에서 같은 다음 key를 찾는다. 08-2a는 이것을 실제 SMO 위에서 확인한다. 일정 적립은 08-2 전체(cursor와 locator)가 끝나는 08-2b의 병합 때 한 번 한다(§8).
 
@@ -90,11 +90,11 @@ B03–B05 source blob은 `0273f8c440a73c2353285531bcab91ec1626cbdb`, J06은 `15d
 | ID | 결정 |
 | --- | --- |
 | L1 소유·수 | C의 `RowLocator<'c, 's>`(`wal_io/plan4_apply/row/locator.rs`). caller가 소유하고 B의 point read 호출에 `&mut`으로 빌려준다. `RowLocator::new(core)`는 그 core(저장 세션 하나의 `PageConcurrency`)의 locator 몫 하나를 받고, drop이 돌려준다. core의 몫은 `LOCATOR_SHARES` = `FOREGROUND_OWNERS` = 32개다. 33번째 생성은 아무것도 할당하지 않고 거절된다(None). locator는 core를 빌리므로 그 세션보다 오래 살 수 없다 |
-| L2 회계 | 몫 하나는 32,768 B(1,048,576 / 32)다. locator 하나의 header, 표, allocator 여유 64 B가 그 안에 든다(상수 검사). 그래서 한 세션에서 동시에 살아 있는 모든 locator의 합은 1,048,576 B 이하이고, 이것이 metadata/cache 8 MiB 안의 기존 locator 배정 1 MiB다([자원 정본](dev3-resource-bounds.md), [§6 자원표](dev3-task-06-tree-rows.md#resources)). 새 예산이 아니다. ledger는 core의 몫 계수 `locator_shares` 하나다. `PageConcurrency`는 [동시성 admission](dev3-concurrency-admission.md)이 소유하므로 08-2b가 그 계약에 이 field와 규칙(fence·lock 없이 바뀜, admission과 순서 없음, drop이 반환, 생성자는 여전히 heap 0)을 적는다. 이 1 byte는 core의 기존 padding에 들어가 core 크기(제품 640 B, 시험 cfg 824 B)를 바꾸지 않는다. 몫은 할당 전에 받고, 할당이 거절되면 돌려준다. 계수는 lock·fence·I/O 없이 원자적으로 바뀌며 어떤 admission과도 순서를 맺지 않는다. locator를 쓰는 읽기는 그와 별도로 모든 세션 검사를 그대로 거친다 |
-| L3 용량 | locator마다 256 entry의 direct-mapped 표를 생성 때 한 번 할당한다(`try_reserve_exact`, 실패는 생성 거절). 표는 자라지 않는다. entry는 120 B이므로 표는 30,720 B, header를 더해 약 30,800 B이고 여유 64 B를 더해도 몫 안이다. slot은 RowId에 anchor identity의 hash를 더한 값의 하위 8 bit이므로, 한 table의 연속 RowId는 서로 다른 slot에 든다. 다른 key가 차지한 slot에 기록하면 그 entry를 덮고 eviction으로 센다. 그 결과 locator 하나는 hint 256개까지만 갖는다. 혼자 읽는 caller도 예산의 1/32만 쓰고, hot row가 256개를 넘으면 대부분 miss와 eviction이 된다. 몫은 owner마다가 아니라 생성마다이므로 한 caller가 여러 몫을 쥐면 다른 caller는 locator 없이 읽는다(§7). 1 MiB가 다 차는 것은 32개가 모두 살아 있을 때뿐이다 |
+| L2 회계 | 몫 하나는 32,768 B(1,048,576 / 32)다. locator 하나의 header, 표, allocator 여유 64 B가 그 안에 든다(상수 검사). 그래서 한 세션에서 동시에 살아 있는 모든 locator의 합은 1,048,576 B 이하이고, 이것이 metadata/cache 8 MiB 안의 기존 locator 배정 1 MiB다([자원 정본](dev3-resource-bounds.md), [§6 자원표](dev3-task-06-tree-rows.md#resources)). 새 예산이 아니다. ledger는 core의 몫 계수 `locator_shares` 하나다. `PageConcurrency`는 [동시성 admission](dev3-concurrency-admission.md)이 소유하므로 08-2b가 그 계약 [§14](dev3-concurrency-admission.md#locator-shares)에 이 field와 규칙(fence·lock 없이 바뀜, admission과 순서 없음, drop이 반환, 생성자는 여전히 heap 0)을 적는다. 이 1 byte는 core의 기존 padding에 들어가 core 크기(제품 640 B, 시험 cfg 824 B)를 바꾸지 않는다. 몫은 할당 전에 받고, 할당이 거절되면 돌려준다. drop은 표를 먼저 놓고 몫을 돌려주므로 drop과 새 생성이 겹쳐도 합이 1 MiB를 넘지 않는다. 계수는 lock·fence·I/O 없이 원자적으로 바뀌며 어떤 admission과도 순서를 맺지 않는다. locator를 쓰는 읽기는 그와 별도로 모든 세션 검사를 그대로 거친다 |
+| L3 용량 | locator마다 256 entry의 direct-mapped 표를 생성 때 한 번 할당한다(`try_reserve_exact`, 실패는 생성 거절). 표는 자라지 않는다. entry는 120 B이므로 표는 30,720 B, header를 더해 약 30,800 B이고 여유 64 B를 더해도 몫 안이다. slot은 RowId에 anchor identity(file을 뺀 database, page_no, incarnation, owner, owner_generation. `FileId`는 값을 내놓지 않는다)의 hash를 더한 값의 하위 8 bit이므로, 한 table의 연속 RowId는 서로 다른 slot에 든다. 다른 key가 차지한 slot에 기록하면 그 entry를 덮고 eviction으로 센다. 그 결과 locator 하나는 hint 256개까지만 갖는다. 혼자 읽는 caller도 예산의 1/32만 쓰고, hot row가 256개를 넘으면 대부분 miss와 eviction이 된다. 몫은 owner마다가 아니라 생성마다이므로 한 caller가 여러 몫을 쥐면 다른 caller는 locator 없이 읽는다(§7). 1 MiB가 다 차는 것은 32개가 모두 살아 있을 때뿐이다 |
 | L4 세션 원 | `CheckedTable`의 core가 locator의 core와 다르면 `page_located`는 아무것도 읽기 전에 `BindingMismatch`(Unchanged)를 돌려준다. read operation의 `check_table`이 table의 core·binding·fence를 operation의 pool·저장소와 비교하고, pool은 저장 origin 하나에 묶이므로 같은 core는 같은 저장 세션이다. 복구와 다시 open은 새 core를 만들므로 hint가 open 경계를 넘지 않는다 |
 | L5 key와 entry | key는 table anchor의 전체 `PageIdentity`(database, file, page_no, incarnation, owner ObjectId, owner_generation)와 RowId다. §5.5.5의 "DB/timeline·table generation·RowId"에 대응시키면 DB는 database, table generation은 owner ObjectId·owner_generation과 anchor page의 incarnation, timeline은 L4의 세션 원이다. entry는 key, 기록 때의 anchor root revision, leaf `PageRef`, 그 leaf의 route bounds(`RowRouteBounds`)다. slot·행 version·값은 두지 않는다 |
-| L6 조회 | C의 `page_located`는 `page`와 같이 Catalog LOAD와 schema 확인 뒤 anchor를 LOAD하고 root를 brief read로 읽는다. root level이 0이면 조회하지 않는다(건너뛸 internal page가 없음). level ≥ 1이면 entry를 찾는다. 같은 key의 entry는 먼저 손상 검사를 받는다: bounds가 그 RowId를 포함하지 않거나 기록 revision이 지금보다 크면 revision 분류 없이 Invariant다(기록은 항상 RowId를 포함하는 bounds만 남기므로, 옛 revision의 손상 entry도 stale로 덮여 사라지지 않는다). 그다음 revision이 지금 root revision과 같으면 hit, 같은 key이고 기록 revision이 더 작으면 stale, 그 밖에는 miss다. 기록 revision이 지금보다 큰 것을 Invariant로 두는 근거는 건강한 세션에서 revision이 줄지 않는다는 것이다(아래) |
+| L6 조회 | C의 `page_located`는 `page`와 같이 Catalog LOAD와 schema 확인 뒤 anchor를 LOAD하고 root를 brief read로 읽는다. root level이 0이면 조회하지 않고 기록도 하지 않는다(건너뛸 internal page가 없음. code는 `Located::Root`). level ≥ 1이면 entry를 찾는다. 같은 key의 entry는 먼저 손상 검사를 받는다: bounds가 그 RowId를 포함하지 않거나 기록 revision이 지금보다 크면 revision 분류 없이 Invariant다(기록은 항상 RowId를 포함하는 bounds만 남기므로, 옛 revision의 손상 entry도 stale로 덮여 사라지지 않는다). 그다음 revision이 지금 root revision과 같으면 hit, 같은 key이고 기록 revision이 더 작으면 stale, 그 밖에는 miss다. 기록 revision이 지금보다 큰 것을 Invariant로 두는 근거는 건강한 세션에서 revision이 줄지 않는다는 것이다(아래) |
 | L7 hit | 기록한 leaf만 LOAD하고, 그 leaf를 brief read로 읽어 RowId가 있는지 본다. 이때 `route_internal`과 같이 membership을 먼저 확인하고, route와 같은 decode와 bounds 검사를 한다. 그래서 member가 아닌 hint page의 오류 종류는 RowId 확인 전에 정해진다. RowId가 있으면 그 leaf가 RowId를 route하는 leaf다(행 key는 tree에 한 번만 있다). 그다음은 `issue_page` 그대로다: anchor와 leaf의 membership, page LSN, 같은 read set에서 anchor revision 재확인, leaf의 key가 bounds 안인지, `record_table_read(table.slot)`(Serializable read set). RowId가 없거나 leaf가 비었으면 root부터 다시 route하고(recheck), 그 route의 leaf·bounds가 hint와 같아야 한다. 다르면 Invariant이고, 같으면 그 route로 발급한다(행이 정말 없거나, 그사이 들어온 행을 B의 seek가 찾는다). 그래서 hint가 다른 빈 leaf를 가리켜도 Missing으로 숨지 않는다. recheck의 비용은 hint leaf에 RowId가 없을 때만 든다. hit의 근거는 C4다: 한 세션 원 안에서 revision이 같으면 SMO가 없었으므로 root에서 key를 route한 결과가 기록한 leaf·bounds와 같다. 행 전이(INSERT·DELETE·UPDATE·Prune)는 구조를 바꾸지 않고 leaf 내용만 바꾸며, leaf는 매번 다시 읽는다 |
 | L8 stale·miss | 지금처럼 root에서 route하고, `issue_page`가 leaf를 발급하면 그 route를 기록한다(level ≥ 1일 때만). 기록 시점은 leaf 발급의 성공이다. 그 뒤 Status·Undo 단계가 FlushRequired나 오류로 끝나도 기록은 남는다. route는 구조에 대한 사실이어서 그 뒤 단계와 무관하다. 발급 전에 실패한 호출은 기록하지 않는다 |
 | L9 오류 | locator는 오류를 miss로 바꾸지 않는다. hit 경로의 LOAD·membership·decode·bounds 실패는 cache가 없을 때 같은 page에서 나는 오류와 같은 종류로 그대로 돌려준다. 같은 key의 entry인데 bounds가 그 RowId를 포함하지 않거나, 기록 revision이 지금보다 크거나, recheck의 route가 hint와 다르면 locator 손상이므로 Invariant(fatal)다 |
@@ -124,12 +124,12 @@ B03–B05 source blob은 `0273f8c440a73c2353285531bcab91ec1626cbdb`, J06은 `15d
 | --- | --- | --- |
 | LOC-B01 | 표 단위 시험: 기록·조회의 hit/stale/miss, 다른 key의 slot 충돌, 다른 anchor identity(같은 page의 다른 incarnation, 같은 `PageRef`의 다른 owner_generation, 다른 database), 연속 RowId의 slot, revision 역행, bounds 밖 entry(같은 revision과 옛 revision), 다른 core | 분류와 계수, eviction, 연속 RowId 256개가 서로 다른 slot, 역행과 bounds 밖 entry는 revision과 무관하게 손상(Invariant), 다른 core의 table은 쓰지 않음 |
 | LOC-B02 | 회계 | locator 하나의 `bytes()` ≤ 32,768, 256 entry. 한 core에서 32개가 동시에 살고 33번째 생성은 거절, drop한 몫은 다시 생성 가능, 32개의 `bytes()` 합 ≤ 1,048,576. 다른 core의 몫은 따로 셈 |
-| LOC-J01 | level 1 tree(네 leaf)의 모든 행을 located point read 두 번. 다른 거래의 INSERT가 ChildSplit을 만든 뒤 옛 행과 새 행을 다시 읽음. q3 statement가 열린 채 UPDATE가 q4 commit | 첫 번째는 miss와 기록(pool이 보이는 leaf), 두 번째는 hit. split 뒤 옛 행은 모두 stale(옮긴 행은 새 leaf로 갱신), 새 행은 miss, 그다음 모두 hit. q3 statement는 hit로 옛 값, q4 statement는 새 값(판정은 cache 밖). 모든 결과가 locator 없는 point read와 같음 |
+| LOC-J01 | level 1 tree(네 leaf)의 모든 행을 located point read 두 번. 다른 거래의 INSERT가 ChildSplit을 만든 뒤 옛 행과 새 행을 다시 읽음. q3 statement가 열린 채 UPDATE가 q4 commit. 다른 세션의 core(S5R-C03처럼 따로 만든 fence와 core)의 locator로 읽기. 끝으로 첫 행 entry의 bounds를 그 RowId를 빼는 값으로 손상 | 첫 번째는 miss와 기록(pool이 보이는 leaf, pool의 anchor image가 보이는 revision), 두 번째는 hit. split 뒤 옛 행은 모두 stale(옮긴 행은 새 leaf로 갱신, anchor revision +1), 새 행은 miss, 그다음 모두 hit. q3 statement는 hit로 옛 값, q4 statement는 새 값(판정은 cache 밖). 모든 결과가 locator 없는 point read와 같음. 다른 core의 locator는 읽기 전에 Unchanged `BindingMismatch`이고 그 locator는 아무것도 세지 않음. bounds 손상은 `lookup`의 손상이 C의 fatal Invariant가 됨(miss·행이 아님, 출력 없음, 세션 fence, 계수는 lookup 하나만) |
 | LOC-J02 | 네 leaf의 모든 행을 기록. 한 leaf의 행 하나를 DELETE하고 drain이 Prune(그 leaf는 비지 않아 unlink 없음, revision 그대로). 다음에 두 번째 leaf의 행을 모두 DELETE하고 drain의 Prune·LeafUnlink. 끝으로 hint 손상 | Prune 뒤 같은 leaf의 다른 행은 hit(leaf 안 slot은 바뀜), 지운 행은 hit 뒤 recheck로 Missing. unlink 뒤 모든 행이 stale, 지운 행은 Missing이고 그 RowId를 route하는 leaf로 갱신. 손상: hint leaf를 bounds 밖 key를 가진 다른 leaf로 바꾸면 C의 bounds 검사가 fatal Tree 오류를 돌려줌(miss·행이 아님, 출력 없음, 세션 fence) |
-| LOC-J03 | 두 leaf의 모든 행을 기록하고 hit. 왼쪽 leaf DELETE와 drain의 RootCollapse. 새 8행이 다시 split. 끝으로 hint 손상 | 축소 뒤 level 0에서는 조회하지 않음. 다시 split 뒤 옛 hint는 stale(revision이 두 번 이상 움직임), 새 행은 miss. 손상: hint의 leaf를 RowId가 없는 다른 leaf로, bounds를 무한으로 바꾸면 bounds 검사는 통과하지만 recheck가 다른 route를 보고 fatal Invariant(Missing으로 숨지 않음, 세션 fence) |
+| LOC-J03 | 두 leaf의 모든 행을 기록하고 hit. 왼쪽 leaf DELETE와 drain의 RootCollapse. 새 8행이 다시 split. 끝으로 hint 손상 | 축소(anchor revision +1) 뒤 level 0에서는 조회도 기록도 하지 않아 8개 hint가 q2에 기록한 그대로 남음. 다시 split 뒤 옛 hint는 stale(pool의 revision이 기록보다 둘 이상 큼), 새 행은 miss. 손상: hint의 leaf를 RowId가 없는 다른 leaf로, bounds를 무한으로 바꾸면 bounds 검사는 통과하지만 recheck가 다른 route를 보고 fatal Invariant(Missing으로 숨지 않음, 세션 fence) |
 | LOC-C01 | census | `located.*` phase ≤ Full, point·cursor phase 불변 |
 
-T06-13 대응: hit·이동·stale은 LOC-J01·J02·J03, eviction은 LOC-B01, cache on/off 결과 동일은 LOC-J01..J03(모든 located read를 locator 없는 읽기와 비교), 손상을 miss로 숨기는 mutant 거절은 LOC-J02·J03의 두 손상이다(오류를 miss로 바꾸거나 recheck를 생략하는 mutant는 그 시험에서 행이나 Missing을 내어 실패). slot reuse는 LOC-J02의 Prune 사례가 덮는다: 같은 revision에서 대상 행의 slot 위치가 바뀌어도 hit가 맞는 행을 읽는다. locator는 slot을 기록하지 않고, B가 leaf에서 key로 다시 seek하며 C의 capture가 slot의 RowId를 확인한다. RowId는 재사용하지 않는다(R4). stale incarnation: leaf page 재사용은 3.14 전에는 없다. 재사용이 생겨도 그 page는 먼저 unlink되어 revision을 올리므로 옛 hint는 stale이고, hint leaf의 incarnation은 L7의 membership이 확인한다. table 재생성은 DROP이 아직 없어 실제 시험은 N/A이고, key가 anchor의 incarnation·owner·owner_generation·database를 모두 포함하므로 LOC-B01이 다른 identity의 miss를 확인한다. T06-16(locator 접근 data가 buffer의 4배인 고정 fixture, 실제 working set·RSS)은 [A7](../plans/dev3-schedule-baseline.md)대로 대형 실행 18-1에 한 번 배정하고, 08-2b는 작은 검증(LOC-B02, LOC-J01의 working set)만 한다.
+T06-13 대응: hit·이동·stale은 LOC-J01·J02·J03, eviction은 LOC-B01, cache on/off 결과 동일은 LOC-J01..J03(모든 located read를 locator 없는 읽기와 비교), 손상을 miss로 숨기는 mutant 거절은 LOC-J01·J02·J03의 세 손상이다. LOC-J01은 `lookup`의 손상(bounds 밖)을 miss로 바꾸는 mutant를, LOC-J02는 hint leaf의 오류를 miss로 바꾸는 mutant를, LOC-J03은 recheck를 생략하거나 `confirm` 오류를 버리는 mutant를 떨어뜨린다(그 mutant들은 행이나 Missing을 낸다). slot reuse는 LOC-J02의 Prune 사례가 덮는다: 같은 revision에서 대상 행의 slot 위치가 바뀌어도 hit가 맞는 행을 읽는다. locator는 slot을 기록하지 않고, B가 leaf에서 key로 다시 seek하며 C의 capture가 slot의 RowId를 확인한다. RowId는 재사용하지 않는다(R4). stale incarnation: leaf page 재사용은 3.14 전에는 없다. 재사용이 생겨도 그 page는 먼저 unlink되어 revision을 올리므로 옛 hint는 stale이고, hint leaf의 incarnation은 L7의 membership이 확인한다. table 재생성은 DROP이 아직 없어 실제 시험은 N/A이고, key가 anchor의 incarnation·owner·owner_generation·database를 모두 포함하므로 LOC-B01이 다른 identity의 miss를 확인한다. T06-16(locator 접근 data가 buffer의 4배인 고정 fixture, 실제 working set·RSS)은 [A7](../plans/dev3-schedule-baseline.md)대로 대형 실행 18-1에 한 번 배정하고, 08-2b는 작은 검증(LOC-B02, LOC-J01의 working set)만 한다.
 
 <a id="limits"></a>
 ## 7. 제한
@@ -147,4 +147,73 @@ T06-13 대응: hit·이동·stale은 LOC-J01·J02·J03, eviction은 LOC-B01, cac
 <a id="review"></a>
 ## 9. 검토
 
-독립 D2 기록은 `module-gate/evidence/dev3-08-2-cursor/`에 있다. 1회차(`review-r1.md`, commit `ca62fda`)는 CONDITIONAL이었다(필수 2: locator 인스턴스 수와 1 MiB 회계, key 정의). 이 판은 필수 둘을 L1–L5와 LOC-B01·B02로, 권고 열 가지와 NIT 일곱 가지를 C1·C7, §3, §4, L6–L12, §5의 대응표, §6, §7로 반영했다. 2회차(`review.md`, commit `d4d3f2a`)는 ACCEPT였다(필수 0, 권고 4, NIT 4). 문서만 고치는 권고 2·3과 NIT 1–4는 이 판에 반영했고, 권고 1(동시성 admission 계약의 갱신)은 08-2b가, 권고 4(module-gate 기록)는 이 PR의 record가 한다.
+독립 D2 기록은 `module-gate/evidence/dev3-08-2-cursor/`에 있다. 1회차(`review-r1.md`, commit `ca62fda`)는 CONDITIONAL이었다(필수 2: locator 인스턴스 수와 1 MiB 회계, key 정의). 이 판은 필수 둘을 L1–L5와 LOC-B01·B02로, 권고 열 가지와 NIT 일곱 가지를 C1·C7, §3, §4, L6–L12, §5의 대응표, §6, §7로 반영했다. 2회차(`review.md`, commit `d4d3f2a`)는 ACCEPT였다(필수 0, 권고 4, NIT 4). 문서만 고치는 권고 2·3과 NIT 1–4는 이 판에 반영했고, 권고 1(동시성 admission 계약의 갱신)은 08-2b가, 권고 4(module-gate 기록)는 PR #62의 record가 했다.
+
+08-2b의 독립 D2 기록은 `module-gate/evidence/dev3-08-2-locator/`에 있다. 1회차(`review-r1.md`, commit `fc1fc94`)는 CONDITIONAL이었다(필수 2, 권고 4, NIT 3).
+
+- 필수 1(level 0 route도 기록해 L8과 다름): code를 L6·L8에 맞췄다. level 0 root는 `Located::Root`로 조회도 기록도 하지 않고, LOC-J03이 축소 뒤 level 0 읽기가 8개 hint를 바꾸지 않음을 단언한다.
+- 필수 2(`lookup`의 손상을 miss로 바꾸는 mutant를 시험이 거절하지 않음): LOC-J01 끝에 bounds 손상 사례를 더하고 §6의 T06-13 문단을 고쳤다.
+- 권고 1(`page_located`의 core 검사를 시험이 지나지 않음): LOC-J01이 다른 세션의 core로 만든 locator의 읽기를 Unchanged `BindingMismatch`로 확인한다.
+- 권고 3(몫 반환이 type으로 묶이지 않음): `take_locator_share`가 몫 token `LocatorShare`를 돌려주고 그 Drop만 반환한다([동시성 admission §14](dev3-concurrency-admission.md#locator-shares)).
+- 권고 4(기록 revision을 locator에서 읽음): LOC-J01..J03이 pool의 anchor image에서 읽은 revision(`anchor_revision`)과 대조한다.
+- 권고 2(module-gate 기록)는 PR 직전의 record가 한다.
+- NIT 1은 L3·§10의 문구를 code대로("file을 뺀 identity") 고쳤다. NIT 2는 `document-validation.json`을 다시 만들었다. NIT 3은 census의 non-LOAD 항이 두 열기 closure 반환 중 큰 쪽을 세게 했다. 그래서 B의 non-LOAD caller 항이 5,688 B에서 5,696 B로 8 B 커지고 그것을 공유하는 non-LOAD phase 여섯도 8 B씩 커졌으며 모두 Full 안이다. §10 표의 phase 값은 그대로다.
+
+2회차(`review-r2.md`, commit `86c6c2a`)는 ACCEPT였다(필수 0, 권고 3, NIT 1). 권고 1(§10 실행표를 `86c6c2a`의 실행으로)은 `86afd10`이 했다. 권고 3(field 순서 때문에 몫이 표보다 먼저 반환되어, drop과 생성이 둘 이상 겹치면 잠시 1 MiB를 넘을 수 있음)은 `share`를 마지막 field로 옮겨 고쳤다(L2). NIT(census 값 문구)는 위 NIT 3 항목을 고쳤다. 권고 2는 PR 직전의 record가 한다. 3회차(`review.md`, commit `668f6ec`)는 ACCEPT였다(필수 0). field 순서 변경으로 drop이 표를 먼저 놓고 몫을 돌려줌을 확인했고, 남은 권고(실행표 source, module-gate 기록)와 NIT(§14의 반환 문구)는 이 판이 반영했다.
+
+<a id="implementation-2b"></a>
+## 10. 08-2b 구현 기록
+
+§5의 L1–L12를 그대로 구현했다. 바꾼 곳은 다음과 같다.
+
+| 위치 | 공급 |
+| --- | --- |
+| `transaction/concurrency.rs` | `LOCATOR_SHARES`(= `FOREGROUND_OWNERS` = 32), core의 `locator_shares` 1 byte, `take_locator_share`가 돌려주는 몫 token `LocatorShare`(Clone 아님, Drop이 반환). 계수는 `fetch_update`로 32를 넘지 않고, token만 반환하므로 0 아래로 내려가지 않는다. core 크기는 제품 640 B, 시험 cfg 824 B로 그대로다(크기 probe로 바꾸기 전과 뒤를 쟀다). 규칙은 [동시성 admission §14](dev3-concurrency-admission.md#locator-shares) |
+| `wal_io/plan4_apply/row/locator.rs` | `RowLocator::new(core)`(몫 token을 마지막 field로 쥐어 drop 때 표를 먼저 놓고 몫을 반환, 표 할당이 거절되면 token의 drop이 반환), 256 entry 표, `serves`(core identity), `lookup`(역행·bounds 밖은 `DamagedHint`), `confirm`(recheck), `record`, 계수 6개, `working_set`·`bytes`. slot은 file을 뺀 anchor identity의 hash에 RowId를 더한 값의 하위 8 bit(entry는 전체 identity를 비교) |
+| `tree_page/search.rs` | `row_leaf_holds`: `route_row_step`과 같은 decode·bounds 검사 뒤 정확한 검색. `leaf_holds_source_bytes`(census) |
+| `wal_io/plan4_apply/row/read.rs` | `page_located`(다른 core면 읽기 전 `BindingMismatch`), `load_leaf_located`(`Located::{Root, Hinted, Walked, Rechecked}`. level 0 root는 `Root`로 조회·기록 없음), `leaf_holds`(hint leaf의 brief read와 membership), `damaged_hint`(fatal Invariant). 기록은 `Walked`일 때만 |
+| `row/read/driver/live.rs` | `LocatedSource`, `read_point_located_live`(B 진입). cursor 경로는 그대로. census의 non-LOAD caller 항은 열기 closure 반환을 `LiveSource`와 `LocatedSource` 중 큰 쪽으로 센다 |
+| `plan4_apply.rs`, `wal_io/disk_api.rs`, `storage/disk.rs` | `RowLocator`, `LocatorCounts` 재수출 |
+
+크기(LOC-B02): locator 하나의 `bytes()`는 30,856 B다(header 72 B, entry 120 B × 256 = 30,720 B, allocator 여유 64 B). 한 core의 32개 합은 987,392 B로 1,048,576 B 이하다. 33번째 생성은 None이고 계수는 32로 남는다.
+
+census(S5R-C01 memory, S5R-C02 instrumented native, 같은 값, Full 34,588 B):
+
+| phase | bytes |
+| --- | ---: |
+| point.row_load(그대로) | 34,382 |
+| cursor.row_load(그대로) | 34,574 |
+| located.catalog_load | 34,470 |
+| located.row_load | 34,551 |
+| located.row_route | 8,284 |
+| located.value_before_load | 34,334 |
+| located.lookup | 3,779 |
+| located.record | 3,330 |
+| located.holds | 7,726 |
+
+located.row_load의 여유는 37 B다. recheck의 다시 route는 `located.row_route`와 같은 frame을 쓰고, hint leaf의 brief read는 LOAD가 끝난 뒤 별도 never-inline 호출이라 `located.holds`로 센다.
+
+실행(2026-11-07, debug, 정확한 이름 filter와 `--test-threads=1`). source는 commit `668f6ec`(D2 2회차 반영)의 tree이고, Rust 파일 13개의 blob은 08-2b module-gate 기록(`module-gate/records/20261107-dev3-08-2-locator.json`)의 목록과 같다. clippy(`-p xadb-engine --all-targets -D warnings`)와 rustfmt도 그 tree에서 통과했다.
+
+| 시험 | 결과 | 확인한 값 |
+| --- | --- | --- |
+| LOC-B01 | PASS | 분류·계수, 다른 incarnation·owner_generation·database의 miss, 연속 RowId 256개의 slot, 역행과 bounds 밖의 손상(기록 revision과 그보다 뒤 revision 모두, hit·stale로 세지 않음), recheck의 confirm, 다른 core |
+| LOC-B02 | PASS | 위 크기, 32개와 33번째 거절, drop 뒤 다시 생성, 다른 core의 따로 센 몫 |
+| LOC-J01 | PASS(211.1 s) | lookups 71(손상 조회 1 포함), hits 36, stale 15, misses 19, rechecks 0, working set 19. split이 옮긴 행 3개, 기록 revision은 anchor image와 같고 split 뒤 +1. 다른 세션 core의 locator는 `Census/BindingMismatch/Unchanged`이고 계수 0. bounds 손상은 `Census/Invariant/CallerMustResolve`와 fence |
+| LOC-J02 | PASS(180.7 s) | Prune 뒤 hit 6(그중 recheck 1), unlink 뒤 stale 15와 hit 15(recheck 4), 손상은 `Source/Tree(Corrupt)/CallerMustResolve`와 fence |
+| LOC-J03 | PASS(124.2 s) | 축소 뒤 조회·기록 0(8개 hint가 q2의 revision·leaf 그대로), 다시 split 뒤 stale 8, 손상은 recheck의 `Census/Invariant/CallerMustResolve`와 fence |
+| LOC-C01 | PASS | S5R-C01·C02 위 표, S5R-C03(원 Full admission 경계) PASS |
+| GA07 | PASS | `locator_shares`를 더한 core가 §7의 2048 B ceiling 안([동시성 admission §14](dev3-concurrency-admission.md#locator-shares)) |
+
+08-2b의 독립 D2 기록은 `module-gate/evidence/dev3-08-2-locator/`에 둔다.
+
+검토와 실행이 적은 commit `fc1fc94`·`86c6c2a`·`668f6ec`는 PR #62 병합 전, 08-2a 위에서 만든 작업 commit이다. main(`9669c96`, PR #62 병합) 위로 옮긴 commit은 각각 `15e2f9d`·`0f9ed43`·`1f2c92d`이고, 이 PR이 바꾸는 Rust 파일 13개의 blob은 옮기기 전과 같다(module-gate 기록의 blob 목록). 옮긴 뒤 crate에서 달라진 것은 main에 먼저 병합된 08-2a 후속 시험 두 파일(`smo_tests.rs`, `cursor_smo.rs`)뿐이며, 옮긴 head에서 clippy(`-D warnings`)와 rustfmt를 다시 통과했다.
+
+일정: 08-2a의 cursor 인수와 08-2b의 locator가 모두 끝났으므로 PR #65의 병합으로 08-2의 1일을 적립한다(35 → 36/86 = 41.86%, [진도표](../plans/dev3-schedule-baseline.md#items)).
+
+<a id="pr65-followup"></a>
+### PR #65 추가 검증(2026-11-07)
+
+PR의 설계·방향·코드와 L1–L12를 재검토했다. route hint와 행 가시성의 분리, SMO read admission, 전체 anchor identity와 core 결속, 손상의 fatal 전달, 몫의 RAII와 drop 순서는 현재 계약에 맞는다. 필수 제품 수정 결함은 발견하지 않았다. 고정 256-entry 표와 anchor 전체 revision 무효화의 성능은 PF09에서 확인할 대상으로 유지하며, 현재 profile 검증을 XADB-SCOPE-002의 확장형 목표 인수로 보지 않는다.
+
+기존 시험을 반복하지 않고 LOC-B03(64 thread의 32몫 경쟁·반환·재사용 두 wave), LOC-B04(같은 slot의 다른 file·owner, RowId 양 끝과 반개구간), LOC-J04(출력 부족 뒤 실제 ChildSplit 이동·취소·재시도, level 2 route, 같은 revision에서 Missing hint 뒤 자기 INSERT 가시성)를 추가했다. 실행 결과·source identity·별도 검토는 [추가 검증 기록](../../module-gate/evidence/dev3-08-2-locator/review-followup.md)에 보존한다. native 복구·대형 working set·성능 시험 결과를 추가한 것은 아니다.

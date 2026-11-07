@@ -1,15 +1,15 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-11-07T10:14:09.992770+09:00",
+  "date": "2026-11-07T13:16:36.760134+09:00",
   "status": "PASS",
   "errors": [],
   "markdown_documents": [
     {
       "file": "devdoc/README.md",
-      "links": 321,
+      "links": 322,
       "duplicate_ids": 0,
-      "sha256": "56b667c9ced41c3ea277b67c099393278e24bc480cb4d31f14e03c3c80dacbf3"
+      "sha256": "3e0fe5fea64cd1f01fec9061cf682116aeed4533021803ecf6a022ac983f827c"
     },
     {
       "file": "devdoc/contracts/README.md",
@@ -79,9 +79,9 @@
     },
     {
       "file": "devdoc/contracts/dev3-concurrency-admission.md",
-      "links": 13,
+      "links": 14,
       "duplicate_ids": 0,
-      "sha256": "b0b3ae346a620846c5f5e99153edac8fa17408f254eb80b455a2053723f2ecae"
+      "sha256": "96260fcc20332b6a86d49b3f0a4226353df919024e00e9b74542061eecd44698"
     },
     {
       "file": "devdoc/contracts/dev3-control-format.md",
@@ -115,9 +115,9 @@
     },
     {
       "file": "devdoc/contracts/dev3-cursor-locator.md",
-      "links": 22,
+      "links": 29,
       "duplicate_ids": 0,
-      "sha256": "387fbde3c77d4473468ae68737289327392e2c8e5bf898d75facda5b3f1ab153"
+      "sha256": "c28871fc76180cfcd00cf530a55068f4418eefab2fc00f8cedbe315e3456d567"
     },
     {
       "file": "devdoc/contracts/dev3-dirty-stage.md",
@@ -1501,9 +1501,9 @@
     },
     {
       "file": "devdoc/plans/dev3-schedule-baseline.md",
-      "links": 135,
+      "links": 138,
       "duplicate_ids": 0,
-      "sha256": "768a24734dda94b67efce8f7a0bdeb4e1a8becd68d5ba67ee681bab8247983bd"
+      "sha256": "4bb08cdbe7bd5704dfde8b5920e75521945c9b9b041705963723d75e3c2cee40"
     },
     {
       "file": "devdoc/plans/dev3-test-plan.md",
@@ -1615,9 +1615,9 @@
     },
     {
       "file": "devdoc/plans/project-direction.md",
-      "links": 3,
+      "links": 19,
       "duplicate_ids": 0,
-      "sha256": "d695251a0a704f502c28050a601f0e9e38c63553d66fa75d64649160ef3a5261"
+      "sha256": "ef99fb5aa8bd9b45e68135ac8df088d9dcb1398451f80d581dcc899a941c99c7"
     },
     {
       "file": "devdoc/policies/README.md",

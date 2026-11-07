@@ -2535,3 +2535,7 @@ mod native;
 /// made between two of its calls (dev3-cursor-locator.md#cursor).
 #[path = "cursor_smo.rs"]
 mod cursor_smo;
+/// LOC-J: B's located point read across splits, prunes, unlinks and a root
+/// collapse (dev3-cursor-locator.md#locator-tests).
+#[path = "locator_smo.rs"]
+mod locator_smo;
