@@ -871,3 +871,172 @@ fn cur_j05_own_cursor_survives_splits_and_is_invalidated_by_its_apply() {
         );
     });
 }
+
+/// CUR-J06: retry an unpublished own row after RootSplit, then cancel
+/// across ChildSplit. An exhausted cursor is still invalidated by a later
+/// own write, even when cancellation is also requested (F02 precedence).
+#[test]
+fn cur_j06_failed_and_cancelled_steps_retry_across_real_splits() {
+    case_within("CUR-J06", std::time::Duration::from_secs(1500), || {
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 32,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let _ = (state, core);
+                let (row_status, _) =
+                    create_table(live, owner, flusher, status, undo, private, true);
+                retire_create!(live, owner, private);
+                for _ in 0..6 {
+                    system_init(live, owner, flusher, true);
+                }
+                let (mut writer, reader, mut flush) = live.split();
+                let a = writer
+                    .begin_row_transaction(
+                        owner,
+                        IsolationLevel::Serializable,
+                        &row_status,
+                        private,
+                        &mut flush,
+                    )
+                    .unwrap();
+                let view = writer.begin_statement(owner, &a).unwrap();
+                let table = issue_table!(reader, owner, view, reader_private, flush, flusher);
+                let mut expected = Vec::new();
+                for value in [7, 8, 9, 10] {
+                    expected.push((
+                        put!(writer, owner, view, table, private, flush, flusher, value).get(),
+                        value,
+                    ));
+                }
+                let mut cursor = open_cursor_live(&view, &table, None, None).unwrap();
+                assert!(matches!(
+                    step!(
+                        reader,
+                        owner,
+                        reader_private,
+                        cursor,
+                        12,
+                        int_of,
+                        flush,
+                        flusher
+                    ),
+                    Err(RowReadError::Read(ReadError::OutputTooSmall {
+                        required: 13
+                    }))
+                ));
+                assert_eq!(cursor.test_progress(), (None, None));
+                let root = writer.catalog_test_with_pool(leaves)[0].0;
+                split!(writer, owner, flush, private, root, Split::RootSplit);
+                assert_eq!(shape(&writer.catalog_test_with_pool(leaves)).0, [2, 2]);
+                let mut got = vec![
+                    step!(
+                        reader,
+                        owner,
+                        reader_private,
+                        cursor,
+                        64,
+                        int_of,
+                        flush,
+                        flusher
+                    )
+                    .unwrap()
+                    .unwrap(),
+                ];
+                assert_eq!(got, expected[..1]);
+                let children = writer.catalog_test_with_pool(leaves);
+                split!(
+                    writer,
+                    owner,
+                    flush,
+                    private,
+                    children[0].0,
+                    Split::ChildSplit
+                );
+                assert_eq!(shape(&writer.catalog_test_with_pool(leaves)).0, [1, 1, 2]);
+                let stop = Cancellation::default();
+                stop.cancel();
+                let mut residency = Plan4ResidencyCursor::new();
+                let mut output = [0x5a; 64];
+                let error = next_live(
+                    &mut cursor,
+                    ReadCall {
+                        port: &reader,
+                        owner,
+                        private: reader_private,
+                        residency: &mut residency,
+                    },
+                    &mut output,
+                    &stop,
+                )
+                .err()
+                .unwrap();
+                assert!(matches!(error, RowReadError::Read(ReadError::Cancelled)));
+                assert_eq!(output, [0x5a; 64]);
+                assert_eq!(
+                    cursor.test_progress(),
+                    (
+                        Some(RowId::new(expected[0].0).unwrap()),
+                        Some(RowId::new(expected[0].0).unwrap())
+                    )
+                );
+                for _ in 0..3 {
+                    got.push(
+                        step!(
+                            reader,
+                            owner,
+                            reader_private,
+                            cursor,
+                            64,
+                            int_of,
+                            flush,
+                            flusher
+                        )
+                        .unwrap()
+                        .unwrap(),
+                    );
+                }
+                assert_eq!(got, expected);
+                assert_eq!(
+                    step!(
+                        reader,
+                        owner,
+                        reader_private,
+                        cursor,
+                        64,
+                        int_of,
+                        flush,
+                        flusher
+                    )
+                    .unwrap(),
+                    None
+                );
+                put!(writer, owner, view, table, private, flush, flusher, 11);
+                let error = next_live(
+                    &mut cursor,
+                    ReadCall {
+                        port: &reader,
+                        owner,
+                        private: reader_private,
+                        residency: &mut residency,
+                    },
+                    &mut output,
+                    &stop,
+                )
+                .err()
+                .unwrap();
+                assert!(matches!(
+                    error,
+                    RowReadError::Read(ReadError::CursorInvalidated)
+                ));
+                assert_eq!(output, [0x5a; 64]);
+                cursor.close().unwrap();
+                assert!(writer.finish_statement(owner, view).is_ok());
+                assert_eq!(a_commit!(&mut writer, owner, flush, flusher, a, private), 2);
+                drains!(&mut writer, owner, flush, flusher, private);
+                assert_row_jobs_free(writer.catalog_test_jobs());
+                assert!(!fence.is_fenced());
+            }
+        );
+    });
+}

@@ -54,6 +54,19 @@ B literal 시험은 `row/read/driver/smo_tests.rs`에, 실제 C 위 시험은 `r
 | CUR-J01·J05 | PASS(D2 2회차가 `d4d3f2a`에서 169.0 s, 16.3 s) | `cursor_smo.rs` blob `03297e64ffab`. J01·J05 본문은 `ca62fda`와 같다 |
 | CUR-J02·J03·J04 | PASS(161.8 s, 121.7 s, 50.7 s. D2 2회차가 `d4d3f2a`에서 다시 PASS) | 작업 tree = commit `daa0c3c`: `cursor_smo.rs` blob `03297e64ffab`, `live.rs` blob `ce806ea9f2ea` |
 
+### PR #62 추가 검증(2026-11-07)
+
+PR 리뷰에서 cursor의 key 재탐색과 locator의 세션·identity·revision·회계 설계를 대조했다. 제품 동작을 고칠 결함은 발견하지 않았고, 실패 후 재시도와 범위 경계의 추가 시험 넷을 공급했다. 기존 일곱 시험은 다시 실행하지 않았으며 위 원 source의 결과를 보존한다.
+
+| 시험 | 새 검증 범위 | 결과 |
+| --- | --- | --- |
+| CUR-B03 | invisible 10 검사 뒤 Status FlushRequired(73). split으로 pending 20이 다른 leaf로 옮긴 뒤 재시도해 같은 행 반환·target·진행점·credit 반환 확인 | PASS |
+| CUR-B04 | copy 뒤 candidate release 또는 operation finish 실패. 미공개 30이 다른 leaf로 옮긴 뒤 재시도해 누락 없이 반환 | PASS(실패 경계 둘) |
+| CUR-B05 | 전체/20·30·40 split 네 모양의 4회 호출 조합 × 범위 여섯 = 1,536 schedule. 논리 행 literal을 필터한 독립 기대값으로 시작 포함·끝 제외·빈 결과·End 뒤 revision/cancel 우선순위 확인 | PASS(0.41 s) |
+| CUR-J06 | 실제 C의 RootSplit 전 OutputTooSmall, ChildSplit 뒤 취소, 재시도와 전체 결과, End 뒤 자기 변경과 취소가 겹칠 때 CursorInvalidated 우선 확인 | PASS(15.68 s) |
+
+B03–B05 source blob은 `0273f8c440a73c2353285531bcab91ec1626cbdb`, J06은 `15d3a2731b3b4513aca2fdb9bdabed43a2be03c6`이다. 실행·identity·독립 검토는 [PR 추가 검증 기록](../../module-gate/evidence/dev3-08-2-cursor/review-followup.md)에 보존한다. 이는 memory/literal 검증이며 native fault·성능·locator 구현 인수가 아니다. J06은 실제 SMO 전후 재시도를 확인하고, 실패한 행 자체의 leaf 이동은 B03·B04가 검증한다.
+
 처음 실행에서 고친 시험 쪽 사실 세 가지를 적는다. (1) Row Begin은 Free인 Status home을 요구한다(`semantic_row/transition/prepare.rs`의 Begin 전이). q3 거래의 Status는 R이 hold한 cleanup이 끝날 때까지 Free가 아니어서, 같은 Status로 Begin한 q4 자동커밋은 `NotBegun(Begin, Prepare/WrongState, Unchanged)`로 무효과 거절됐다. 그래서 CUR-J01의 q4 거래는 두 번째 Status로 Begin한다. 여러 Status의 동시 거래 일반화는 일정 11에 남아 있다. (2) T를 읽은 read-only Serializable 거래는 다른 거래의 commit이 snapshot을 넘으면 `Rejected(SerializationConflict)`로 끝난다(MCI01-V06). cursor가 이미 반환한 행은 snapshot의 값이다. CUR-J03은 ReadCommitted로 두어 두 격리 수준을 모두 덮는다. (3) 메모리 file 상한은 시험 harness의 경계이며 CUR-J01·J03은 64 MiB를 쓴다.
 
 <a id="cursor-t06-12"></a>
