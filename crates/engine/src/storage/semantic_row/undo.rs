@@ -319,7 +319,7 @@ pub(crate) fn observe(
 pub(super) fn opcode_effect(op: Operation) -> RowEffect {
     if op.update() {
         RowEffect::Update
-    } else if op != op.role() {
+    } else if op.delete() {
         RowEffect::Delete
     } else {
         RowEffect::Insert

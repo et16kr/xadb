@@ -7,9 +7,16 @@
 //! UpdateForward/UpdateClr/UpdatePrune (10, 13, 24) are the Row UPDATE first
 //! path (contract dev3-row-update.md#update-shape). They carry two cells: the
 //! old row's C (`Shape::cell`) and the new row's C' (`Shape::new_cell`).
+//!
+//! ChunkWrite/OverflowCancel/ChainRetire (14, 15, 25) write, cancel and
+//! return a big row's overflow chain (contract dev3-row-overflow.md#opcodes).
+//! ChunkWrite's shape is fixed; the two return groups carry the anchor's
+//! XTR1 cell before and after (`Shape::list_before`, `Shape::list_after`).
 use super::{Error, MAX_CELL, MIN_CELL, Result};
 use crate::storage::{
-    row_record::ROW_HEADER_BYTES, undo_record::UNDO_RECORD_BYTES, wal_frame::FrameKind,
+    allocation_page::ALLOCATION_ENTRY_BYTES, anchor::MAX_RETIRED,
+    overflow::OVERFLOW_HEADER_BYTES as OVERFLOW_CELL_HEADER_BYTES, row_record::ROW_HEADER_BYTES,
+    undo_record::UNDO_RECORD_BYTES, wal_frame::FrameKind,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -28,6 +35,8 @@ pub(crate) enum Operation {
     Reserve = 11,
     Cancel = 12,
     UpdateClr = 13,
+    ChunkWrite = 14,
+    OverflowCancel = 15,
     AgingStart = 16,
     TerminalFinish = 17,
     Prune = 20,
@@ -35,6 +44,7 @@ pub(crate) enum Operation {
     RootFree = 22,
     DeletePrune = 23,
     UpdatePrune = 24,
+    ChainRetire = 25,
 }
 impl Operation {
     pub(crate) fn decode(value: u16) -> Result<Self> {
@@ -52,6 +62,8 @@ impl Operation {
             11 => Ok(Self::Reserve),
             12 => Ok(Self::Cancel),
             13 => Ok(Self::UpdateClr),
+            14 => Ok(Self::ChunkWrite),
+            15 => Ok(Self::OverflowCancel),
             16 => Ok(Self::AgingStart),
             17 => Ok(Self::TerminalFinish),
             20 => Ok(Self::Prune),
@@ -59,6 +71,7 @@ impl Operation {
             22 => Ok(Self::RootFree),
             23 => Ok(Self::DeletePrune),
             24 => Ok(Self::UpdatePrune),
+            25 => Ok(Self::ChainRetire),
             _ => Err(Error::Unsupported),
         }
     }
@@ -75,6 +88,14 @@ impl Operation {
                 | Self::DeletePrune
         ) || self.update()
     }
+    /// The three DELETE operations. Effects name DELETE by this, never by
+    /// `op != op.role()` (OverflowCancel's role is Cancel).
+    pub(crate) fn delete(self) -> bool {
+        matches!(
+            self,
+            Self::DeleteForward | Self::DeleteClr | Self::DeletePrune
+        )
+    }
     /// The three UPDATE operations, the only ones with a new cell C'.
     pub(crate) fn update(self) -> bool {
         matches!(
@@ -82,11 +103,17 @@ impl Operation {
             Self::UpdateForward | Self::UpdateClr | Self::UpdatePrune
         )
     }
+    /// The two chain-return groups, whose anchor XTR1 cell sizes the frame.
+    pub(crate) fn list(self) -> bool {
+        matches!(self, Self::OverflowCancel | Self::ChainRetire)
+    }
     /// The INSERT operation with the same role (Forward/Clr/Prune) in the
-    /// chain, statement and descriptor rules; every other operation is itself.
-    /// Leaf/Undo effects and sizes still differ and are never taken from this.
+    /// chain, statement and descriptor rules, and Cancel for OverflowCancel;
+    /// every other operation is itself. Page effects and sizes still differ
+    /// and are never taken from this.
     pub(crate) fn role(self) -> Self {
         match self {
+            Self::OverflowCancel => Self::Cancel,
             Self::DeleteForward => Self::Forward,
             Self::DeleteClr => Self::Clr,
             Self::DeletePrune => Self::Prune,
@@ -110,6 +137,8 @@ impl Operation {
                 | Self::AbortEnd
                 | Self::Reserve
                 | Self::Cancel
+                | Self::ChunkWrite
+                | Self::OverflowCancel
         )
     }
     pub(crate) fn status_patch(self) -> bool {
@@ -124,7 +153,9 @@ impl Operation {
             | Self::RollbackStart
             | Self::StatementFinish
             | Self::Reserve
-            | Self::Cancel => FrameKind::Update,
+            | Self::Cancel
+            | Self::ChunkWrite
+            | Self::OverflowCancel => FrameKind::Update,
             Self::Clr | Self::DeleteClr | Self::UpdateClr => FrameKind::Clr,
             Self::Commit => FrameKind::Commit,
             Self::AbortEnd => FrameKind::AbortEnd,
@@ -139,6 +170,7 @@ impl Operation {
     }
     /// `shape` with UPDATE's new cell C' (dev3-row-update.md#update-shape):
     /// C' is in 185..=2228 for the three UPDATE operations and 0 otherwise.
+    /// The two chain-return groups take `shape_list` instead.
     pub(crate) fn shape_cells(
         self,
         cell: usize,
@@ -147,7 +179,8 @@ impl Operation {
     ) -> Result<Shape> {
         let row = self.row();
         let cells = |c: usize| (MIN_CELL..=MAX_CELL).contains(&c);
-        if (row && !cells(cell))
+        if self.list()
+            || (row && !cells(cell))
             || (!row && (cell != 0 || predecessor))
             || if self.update() {
                 !cells(new_cell)
@@ -180,6 +213,11 @@ impl Operation {
             Self::UpdateClr => (5, 4844 + 2 * cell + new_cell, 3 + h, 2, 0, 5, 81720),
             Self::UpdatePrune => (5, 4844 + cell + 2 * new_cell, 3 + h, 2, 0, 5, 81720),
             Self::ReleaseRole | Self::RootFree => (3, 4320, 0, 0, 0, 3, 49032),
+            // Root, Job, one allocator entry (96 each side) and the new
+            // chunk's 128-byte cell header; Root/Job Patch, entry Patch 160
+            // and chunk INIT 16448 (dev3-row-overflow.md#opcodes).
+            Self::ChunkWrite => (4, 3904, 0, 0, 0, 4, 49296),
+            Self::OverflowCancel | Self::ChainRetire => unreachable!("refused above"),
         };
         Ok(Shape {
             native_count,
@@ -192,7 +230,45 @@ impl Operation {
             cell,
             new_cell: u16::try_from(new_cell).map_err(|_| Error::InvalidInput)?,
             predecessor,
+            list_before: 0,
+            list_after: 0,
         })
+    }
+    /// The shape of OverflowCancel and ChainRetire (dev3-row-overflow.md
+    /// #opcodes): Root, Job and the anchor's XTR1 cell `128 + b + a`, with
+    /// `b` the cell before (0 when the anchor had no list) and `a` after;
+    /// both are `16 + 40n` (n ≤ 55) and the group adds entries (`a > b`).
+    /// OverflowCancel removes the U inventory item as Cancel does.
+    pub(crate) fn shape_list(self, before: usize, after: usize) -> Result<Shape> {
+        let list = |bytes: usize| {
+            bytes >= 56 && (bytes - 16) % 40 == 0 && (bytes - 16) / 40 <= MAX_RETIRED
+        };
+        if !self.list() || !(before == 0 || list(before)) || !list(after) || after <= before {
+            return Err(Error::InvalidInput);
+        }
+        let items = u16::from(self == Self::OverflowCancel);
+        Ok(Shape {
+            native_count: 3,
+            native_bytes: 3456 + before + after,
+            edges: 0,
+            counts: 0,
+            items,
+            redo_count: 3,
+            redo_bytes: 49032,
+            cell: 0,
+            new_cell: 0,
+            predecessor: false,
+            list_before: before as u16,
+            list_after: after as u16,
+        })
+    }
+    /// `frame_bytes` of `shape_list`.
+    #[allow(
+        dead_code,
+        reason = "the chain-return producers (dev3-row-overflow.md O2) size their frames with it"
+    )]
+    pub(crate) fn frame_bytes_list(self, before: usize, after: usize) -> Result<usize> {
+        Ok(if self.handoff() { 3776 } else { 2176 } + self.shape_list(before, after)?.body_bytes())
     }
     #[cfg(test)]
     pub(crate) fn frame_bytes(self, cell: usize, predecessor: bool) -> Result<usize> {
@@ -216,6 +292,8 @@ impl Operation {
                 root_job | (1 << 5)
             }
             Self::Reserve | Self::ReleaseRole | Self::RootFree => root_job | (1 << 3),
+            Self::ChunkWrite => root_job | (1 << 6) | (1 << 12),
+            Self::OverflowCancel | Self::ChainRetire => root_job | (1 << 10),
             Self::Forward
             | Self::Clr
             | Self::Prune
@@ -246,6 +324,10 @@ pub(crate) struct Shape {
     /// padding holds); 0 for every other operation.
     pub(crate) new_cell: u16,
     pub(crate) predecessor: bool,
+    /// OverflowCancel's and ChainRetire's anchor XTR1 cell before (0 for no
+    /// list) and after; 0 for every other operation.
+    pub(crate) list_before: u16,
+    pub(crate) list_after: u16,
 }
 /// Size of a tombstone tree cell (XRW1 header 168 plus the 12-byte cell head).
 pub(crate) const TOMBSTONE_CELL: usize = ROW_HEADER_BYTES + 12;
@@ -256,13 +338,16 @@ const UNDO_RECORD: usize = UNDO_RECORD_BYTES;
 /// sizes of one native kind of a Row-cell operation (dev3-row-delete.md
 /// #delete-shape, dev3-row-update.md#update-shape). Kind 1 is the RowLeaf
 /// cell, kind 3 the U record; every other kind keeps both sides at its fixed
-/// size. `new_cell` is UPDATE's C' (0 for every other operation).
+/// size. `new_cell` is UPDATE's C' (0 for every other operation). The
+/// overflow kinds (dev3-row-overflow.md#opcodes): 6 one allocator entry, 12
+/// the new chunk's cell header (after only), 10 the anchor's XTR1 cell
+/// (`list_before`, `list_after`; no before side when the anchor had none).
 pub(super) fn native_sides(
     operation: Operation,
     kind: u8,
-    cell: usize,
-    new_cell: usize,
+    shape: Shape,
 ) -> Option<(u8, usize, usize)> {
+    let (cell, new_cell) = (shape.cell, usize::from(shape.new_cell));
     // The Live delete/update U: 432 plus the old row's canonical L = C - 180.
     // Only DELETE and UPDATE operations use it; every other one may carry 0.
     let live = || Some(UNDO_RECORD + cell.checked_sub(TOMBSTONE_CELL)?);
@@ -286,6 +371,15 @@ pub(super) fn native_sides(
             | Operation::UpdatePrune,
         ) => (3, live()?, UNDO_RECORD),
         (3, _) => (3, UNDO_RECORD, UNDO_RECORD),
+        (6, Operation::ChunkWrite) => (3, ALLOCATION_ENTRY_BYTES, ALLOCATION_ENTRY_BYTES),
+        (12, Operation::ChunkWrite) => (2, 0, OVERFLOW_CELL_HEADER_BYTES),
+        (10, Operation::OverflowCancel | Operation::ChainRetire) => {
+            let (before, after) = (
+                usize::from(shape.list_before),
+                usize::from(shape.list_after),
+            );
+            (if before == 0 { 2 } else { 3 }, before, after)
+        }
         (5, _) => (3, 224, 224),
         (8, _) => (3, 512, 512),
         (9, _) => (3, 1024, 1024),
@@ -379,7 +473,46 @@ pub(super) fn update_cells_from_native(
     Ok((cell, new_cell))
 }
 
+/// (b, a) of OverflowCancel/ChainRetire (dev3-row-overflow.md#opcodes): the
+/// before and after sizes `@12`/`@16` of the one kind-10 (anchor XTR1)
+/// record of the native section. Like `update_cells_from_native`, this
+/// pre-scan runs before the frame-size check and trusts no length: it walks
+/// at most the three records of the group, each at least its 128-byte
+/// header and within the section, and the section must end after them.
+/// Every refusal, a second kind-10 record included, is Corrupt; `shape_list`
+/// and `validate_native_shape` then check (b, a) and every record.
+pub(super) fn list_from_native(natives: &[u8]) -> Result<(usize, usize)> {
+    let mut at = 0usize;
+    let mut list = None;
+    for _ in 0..3 {
+        if at == natives.len() {
+            break;
+        }
+        let header = natives.get(at..at + 128).ok_or(Error::Corrupt)?;
+        let length = super::u32_at(header, 20) as usize;
+        let sides = (
+            super::u32_at(header, 12) as usize,
+            super::u32_at(header, 16) as usize,
+        );
+        if header[0] == 10 && list.replace(sides).is_some() {
+            return Err(Error::Corrupt);
+        }
+        at = at
+            .checked_add(length)
+            .filter(|&end| length >= 128 && end <= natives.len())
+            .ok_or(Error::Corrupt)?;
+    }
+    if at != natives.len() {
+        return Err(Error::Corrupt);
+    }
+    list.ok_or(Error::Corrupt)
+}
+
 impl Shape {
+    /// The whole frame: the XHG/XSG header and section table, then the body.
+    pub(super) fn frame_bytes(self, handoff: bool) -> usize {
+        (if handoff { 3776 } else { 2176 }) + self.body_bytes()
+    }
     pub(super) fn auxiliary_bytes(self) -> usize {
         usize::from(self.edges) * 128
             + usize::from(self.counts) * 96

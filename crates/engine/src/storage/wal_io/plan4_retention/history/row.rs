@@ -347,6 +347,11 @@ pub(in super::super) fn apply(
             )
         };
         let ordinal = match op {
+            // The overflow chain groups replay from O2
+            // (dev3-row-overflow.md#replay); until then they are refused.
+            Operation::ChunkWrite | Operation::OverflowCancel | Operation::ChainRetire => {
+                return Err(RetentionCause::Unsupported.into());
+            }
             Operation::AgingStart => None,
             Operation::Begin | Operation::Reserve => Some(first_free(arena, jobs, profile)?),
             Operation::Forward
@@ -430,6 +435,9 @@ pub(in super::super) fn apply(
         let core = view.core();
         let ordinal_of = || ordinal.ok_or_else(invalid);
         let change = match op {
+            Operation::ChunkWrite | Operation::OverflowCancel | Operation::ChainRetire => {
+                unreachable!("refused above")
+            }
             Operation::AgingStart => Change::AgingStart,
             Operation::Begin => Change::Begin {
                 actor: actor.ok_or_else(invalid)?,
