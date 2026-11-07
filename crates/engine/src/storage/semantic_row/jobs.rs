@@ -36,6 +36,9 @@ pub(crate) struct ReservePlan {
     pub(crate) effect: row::RowEffect,
     /// UPDATE's C'; 0 for INSERT and DELETE.
     pub(crate) new_cell: u32,
+    /// An overflow INSERT root's row total: its Job starts the pending
+    /// chain (front zero, written 0) (dev3-row-overflow.md#job-overflow).
+    pub(crate) overflow: Option<u32>,
 }
 #[derive(Clone, Copy)]
 pub(crate) struct JobImages<'a> {
@@ -145,7 +148,13 @@ pub(crate) fn observe(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<JobOb
                     && after.new_cell() == plan.new_cell
                     && after.projection_digest() == &plan.projection
                     && after.has_previous_transaction() == Some(plan.predecessor)
-                    && after.effect() == plan.effect,
+                    && after.effect() == plan.effect
+                    && after.pending()
+                        == plan.overflow.map(|total| row::PendingChain {
+                            front: None,
+                            total,
+                            written: 0,
+                        }),
             )?;
         }
         Operation::Forward => {
@@ -158,6 +167,24 @@ pub(crate) fn observe(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<JobOb
         }
         Operation::Cancel => {
             require(before.state() == JobState::RootReserved && after.state() == JobState::Free)?
+        }
+        // One chunk of a Reserved overflow root: the pending front moves to
+        // the new chunk and written grows by one; the cleanup recipe stays
+        // (dev3-row-overflow.md#job-overflow).
+        Operation::ChunkWrite => {
+            let (Some(old), Some(new)) = (before.pending(), after.pending()) else {
+                return Err(Error::IdentityMismatch);
+            };
+            require(
+                before.state() == JobState::RootReserved
+                    && after.state() == JobState::RootReserved
+                    && old.written < old.count()
+                    && new.written == old.written + 1
+                    && new.total == old.total
+                    && new.front.is_some()
+                    && new.front != old.front,
+            )?;
+            unchanged(before, after, &[(328, 360), (376, 384)])?;
         }
         Operation::Commit | Operation::AbortEnd => {
             require(
@@ -208,10 +235,28 @@ pub(crate) fn observe(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<JobOb
                     (376, 1024),
                 ],
             )?;
+            // An overflow root's CLR keeps the chain it returns (its anchor
+            // pair[0]); its Prune keeps none (dev3-row-overflow.md
+            // #job-overflow).
+            if before.overflow() {
+                let anchor = before.pair().ok_or(Error::IdentityMismatch)?[0];
+                require(if op == Operation::Clr {
+                    after.chain().is_some_and(|chain| chain.anchor == anchor)
+                } else {
+                    !after.overflow()
+                })?;
+            }
         }
         Operation::ReleaseRole => {
+            // A compensated overflow root returns its chain first
+            // (dev3-row-overflow.md#transitions). The Job codec already
+            // implies it: a chain is held only at cursor 0, so an after
+            // that keeps `[200,248)` at cursor 1 does not decode
+            // (retention_page/row/job.rs), and one that clears it fails
+            // `unchanged` below; the rule states it here.
             require(
                 before.state().is_releasing()
+                    && before.chain().is_none()
                     && after.state() == before.state()
                     && before.release_cursor() < 3
                     && after.release_cursor() == before.release_cursor() + 1,
@@ -246,7 +291,11 @@ pub(crate) fn observe(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<JobOb
         )?;
         if matches!(
             op,
-            Operation::Reserve | Operation::Forward | Operation::Cancel | Operation::Clr
+            Operation::Reserve
+                | Operation::Forward
+                | Operation::Cancel
+                | Operation::Clr
+                | Operation::ChunkWrite
         ) {
             require(
                 layout.core().statement() == current.statement()
@@ -339,6 +388,9 @@ fn census(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<()> {
         return require(terminal.is_none() && roots == 0);
     }
     let terminal = terminal.ok_or(Error::IdentityMismatch)?;
+    // ChunkWrite and OverflowCancel (role Cancel) run beside the leased
+    // terminal; ChainRetire is not here, so it waits for TerminalReady
+    // (dev3-row-overflow.md#transitions).
     if matches!(
         op,
         Operation::Reserve
@@ -347,6 +399,7 @@ fn census(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<()> {
             | Operation::Commit
             | Operation::AbortEnd
             | Operation::Clr
+            | Operation::ChunkWrite
     ) {
         require(terminal.state() == JobState::TerminalLeased)?;
     } else {
@@ -354,6 +407,7 @@ fn census(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<()> {
     }
     match op {
         Operation::Reserve | Operation::Commit => require(reserved == 0)?,
+        Operation::ChunkWrite => require(reserved == 1)?,
         Operation::AbortEnd => require(reserved == 0 && retained == 0)?,
         Operation::TerminalFinish => require(roots == 0)?,
         Operation::Prune => require(

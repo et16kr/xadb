@@ -38,6 +38,7 @@ use foundation::identity::{ObjectHandle, RowId};
 pub(super) mod cells;
 mod frame;
 mod graph;
+mod overflow;
 mod prepare;
 mod source;
 
@@ -124,6 +125,48 @@ pub(crate) struct UpdatePlan<'a> {
     pub(crate) canonical: &'a [u8],
 }
 
+/// Plan of one overflow RowReserve (dev3-row-overflow.md#transitions): the
+/// RowReserve of `ReservePlan` for a big row, of which A gives only the
+/// canonical length L (2,049..=131,072) and SHA-256 from its streaming digest
+/// (#plan). The head record (C = 244) seals both in the Job projection with
+/// its root zero (#overflow-row); the chunks follow through ChunkWrite.
+#[derive(Clone, Copy)]
+pub(crate) struct OverflowReservePlan {
+    /// Ordinal of the actor's TerminalLeased Job; actor and Status come from it.
+    pub(crate) terminal: usize,
+    /// Free Undo container chosen by the original allocator/provisioning owner.
+    pub(crate) container: PageRef,
+    pub(crate) table: ObjectHandle,
+    /// The caller's live statement sequence (nonzero, non-decreasing).
+    pub(crate) statement: u64,
+    /// A's canonical length L.
+    pub(crate) total: usize,
+    /// SHA-256 of A's canonical row.
+    pub(crate) digest: [u8; 32],
+}
+
+/// Plan of one ChunkWrite (dev3-row-overflow.md#transitions): the next chunk
+/// (index k−1−written) of a Reserved overflow root. The allocator is the
+/// stable first-extent image the new page is allocated from; `digest` is
+/// the head digest the Job projection sealed and `payload` A's window of the
+/// canonical row for that index (#plan).
+#[derive(Clone, Copy)]
+pub(crate) struct ChunkPlan<'a> {
+    pub(crate) ordinal: usize,
+    pub(crate) allocator: &'a [u8; PAGE_BYTES],
+    pub(crate) digest: [u8; 32],
+    pub(crate) payload: &'a [u8],
+}
+
+/// The stable chunk images an overflow group reads but does not change
+/// (dev3-row-overflow.md#forward-check): the first-extent allocator and the
+/// chain's pages front to back. They are proof pages, never natives.
+#[derive(Clone, Copy)]
+pub(crate) struct ChainImages<'a> {
+    pub(crate) allocator: &'a [u8; PAGE_BYTES],
+    pub(crate) pages: &'a [&'a [u8; PAGE_BYTES]],
+}
+
 /// Stable table observation: anchor proof, current RowLeaf and schema. This is
 /// not a CheckedTable, epoch or Catalog selection token.
 #[derive(Clone, Copy)]
@@ -158,6 +201,24 @@ pub(crate) enum Change<'a> {
         )
     )]
     ReserveUpdate(&'a UpdatePlan<'a>),
+    /// The live overflow RowReserve producer (dev3-row-overflow.md#transitions).
+    #[cfg_attr(
+        not(test),
+        allow(
+            dead_code,
+            reason = "A's overflow INSERT executor (dev3-row-overflow.md O3) constructs it"
+        )
+    )]
+    ReserveOverflow(&'a OverflowReservePlan),
+    /// C produces ChunkWrite, one chunk of a Reserved overflow root.
+    #[cfg_attr(
+        not(test),
+        allow(
+            dead_code,
+            reason = "A's overflow INSERT executor (dev3-row-overflow.md O3) constructs it"
+        )
+    )]
+    ChunkWrite(&'a ChunkPlan<'a>),
     /// Replay-only RowReserve (contract row-reserve-replay): the three
     /// selectors the original owner chose, bound and checked by the Row
     /// replay arm. From the candidate's single kind-9 after, an INSERT root
@@ -176,6 +237,20 @@ pub(crate) enum Change<'a> {
     Forward {
         ordinal: usize,
         statement: StatementBoundary,
+    },
+    /// Observe only; A produces the Forward of an overflow root, which also
+    /// checks the pending chain (dev3-row-overflow.md#forward-check).
+    #[cfg_attr(
+        not(test),
+        allow(
+            dead_code,
+            reason = "A's overflow INSERT executor (dev3-row-overflow.md O3) constructs it"
+        )
+    )]
+    ForwardOverflow {
+        ordinal: usize,
+        statement: StatementBoundary,
+        chain: &'a ChainImages<'a>,
     },
     Cancel {
         ordinal: usize,
@@ -270,8 +345,10 @@ impl Change<'_> {
             Self::Reserve(_)
             | Self::ReserveDelete(_)
             | Self::ReserveUpdate(_)
+            | Self::ReserveOverflow(_)
             | Self::ReserveAdopted { .. } => Operation::Reserve,
-            Self::Forward { .. } => Operation::Forward,
+            Self::ChunkWrite(_) => Operation::ChunkWrite,
+            Self::Forward { .. } | Self::ForwardOverflow { .. } => Operation::Forward,
             Self::Cancel { .. } => Operation::Cancel,
             Self::RollbackStart { .. } => Operation::RollbackStart,
             Self::Clr { .. } => Operation::Clr,
@@ -502,6 +579,7 @@ fn refuse_unproduced(inputs: &Inputs<'_>) -> Result<()> {
     if matches!(
         inputs.change,
         Change::Forward { .. }
+            | Change::ForwardOverflow { .. }
             | Change::Clr { .. }
             | Change::DeleteForward { .. }
             | Change::DeleteClr { .. }
@@ -601,10 +679,12 @@ fn observe_with<'a>(
     // dev3-row-update.md#scratch), ReserveAdopted's Job after (C and
     // projection, checked by prepare's Reserve arm), otherwise none.
     let inserted = match inputs.change {
-        Change::Forward { .. } | Change::UpdateForward { .. } => layout
-            .native_records()
-            .find(|native| native.kind() == 1)
-            .and_then(|native| native.after()),
+        Change::Forward { .. } | Change::ForwardOverflow { .. } | Change::UpdateForward { .. } => {
+            layout
+                .native_records()
+                .find(|native| native.kind() == 1)
+                .and_then(|native| native.after())
+        }
         Change::ReserveAdopted { .. } => {
             let cell = layout
                 .native_records()

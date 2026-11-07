@@ -1,0 +1,211 @@
+diff --git a/crates/engine/src/storage/semantic_row/transition_overflow_tests.rs b/crates/engine/src/storage/semantic_row/transition_overflow_tests.rs
+index 204dc9b..841f448 100644
+--- a/crates/engine/src/storage/semantic_row/transition_overflow_tests.rs
++++ b/crates/engine/src/storage/semantic_row/transition_overflow_tests.rs
+@@ -1402,3 +1402,206 @@ fn ovf_c_census_new_frames_stay_under_the_callee_maximum() {
+     assert!(write_chunk < write_others);
+     assert!(forward_chain < src::leaf());
+ }
++
++// ---- D2 r2 probes (scratch only) ----
++fn r2_touched(after: &[[u8; PAGE_BYTES]; 5], frame: &[u8]) -> bool {
++    !after.iter().flatten().all(|b| *b == 0xa5) || !frame.iter().all(|b| *b == 0xa5)
++}
++
++#[test]
++fn r2_probe_front() {
++    let value = value();
++    let mut world = h_506();
++    let reserved = reserve(&mut world, &value);
++    let before = world.clone();
++    chunk(&mut world, &reserved, &value, 15);
++    let stale = Box::new(before.allocator.unwrap());
++    let mk = |e: AllocationEntry| {
++        let mut entries = entries(&world);
++        entries[15] = e;
++        allocator_page(&entries, 5)
++    };
++    let foreign = mk(AllocationEntry::Allocated {
++        generation: generation(2),
++        object: ObjectId::new(7).unwrap(),
++        object_generation: generation(1),
++        kind: PageKind::Overflow,
++    });
++    let kind = mk(AllocationEntry::Allocated {
++        generation: generation(2),
++        object: table().object,
++        object_generation: table().generation,
++        kind: PageKind::RowLeaf,
++    });
++    let incarnation = mk(AllocationEntry::Allocated {
++        generation: generation(3),
++        object: table().object,
++        object_generation: table().generation,
++        kind: PageKind::Overflow,
++    });
++    let objgen = mk(AllocationEntry::Allocated {
++        generation: generation(2),
++        object: table().object,
++        object_generation: generation(2),
++        kind: PageKind::Overflow,
++    });
++    let current = Box::new(world.allocator.unwrap());
++    for (label, allocator) in [
++        ("current (control)", &current),
++        ("front Free", &stale),
++        ("front of another object", &foreign),
++        ("front of another kind", &kind),
++        ("front another incarnation", &incarnation),
++        ("front another object generation", &objgen),
++    ] {
++        let plan = ChunkPlan {
++            ordinal: ORDINAL,
++            allocator,
++            digest: reserved.digest,
++            payload: window(&value, 1),
++        };
++        let inputs = world.inputs(Change::ChunkWrite(&plan), chunk_pages());
++        let mut after = loans(0xa5);
++        let mut frame = vec![0xa5; FRAME_BYTES];
++        let result = produce(&inputs, &mut after, &mut frame).map(|o| o.frame_bytes);
++        println!(
++            "R2PROBE\tfront {label}\t{result:?}\ttouched={}",
++            r2_touched(&after, &frame)
++        );
++    }
++}
++
++#[test]
++fn r2_probe_jobs() {
++    let value = value();
++    let mut world = h_506();
++    let reserved = reserve(&mut world, &value);
++    chunk(&mut world, &reserved, &value, 15);
++    let pending = job(&world).pending().unwrap();
++    let index = usize::from(pending.count() - 1 - pending.written);
++    let allocator = Box::new(world.allocator.unwrap());
++    let chunk_plan = ChunkPlan {
++        ordinal: ORDINAL,
++        allocator: &allocator,
++        digest: reserved.digest,
++        payload: window(&value, index),
++    };
++    let inputs = world.inputs(Change::ChunkWrite(&chunk_plan), chunk_pages());
++    let mut after = loans(0xa5);
++    let mut frame = vec![0; FRAME_BYTES];
++    let observation = produce(&inputs, &mut after, &mut frame).unwrap();
++    frame.truncate(observation.frame_bytes);
++    let context = undo::UndoContext {
++        profile: profile(),
++        actor: observation.actor.unwrap(),
++        location: observation.status.unwrap(),
++    };
++    let observe_job = |frame: &[u8], job_after: &Page| {
++        jobs::observe(
++            decode_layout(frame, expectation(world.lsn), profile()).unwrap(),
++            jobs::Inputs {
++                context,
++                jobs: JobCells::original(&world.bank),
++                ordinal: ORDINAL,
++                images: jobs::JobImages {
++                    before: world.jobs[ORDINAL / 15].as_ref().unwrap(),
++                    after: job_after,
++                },
++                reserve: None,
++                sender: None,
++                commit: None,
++            },
++        )
++        .map(|_| ())
++    };
++    let front = pending.front.unwrap();
++    let cases: Vec<(&str, Box<dyn Fn(&mut [u8])>)> = vec![
++        ("noop", Box::new(|_cell: &mut [u8]| {})),
++        (
++            "written +2",
++            Box::new(move |cell: &mut [u8]| {
++                cell[356..358].copy_from_slice(&(pending.written + 2).to_le_bytes())
++            }),
++        ),
++        (
++            "written +0",
++            Box::new(move |cell: &mut [u8]| {
++                cell[356..358].copy_from_slice(&(pending.written).to_le_bytes())
++            }),
++        ),
++        (
++            "front kept",
++            Box::new(move |cell: &mut [u8]| front.encode(&mut cell[328..352]).unwrap()),
++        ),
++        (
++            "front None",
++            Box::new(move |cell: &mut [u8]| cell[328..352].fill(0)),
++        ),
++        (
++            "front page 30 (not allocated)",
++            Box::new(move |cell: &mut [u8]| page_ref(30, 2).encode(&mut cell[328..352]).unwrap()),
++        ),
++        (
++            "total -1",
++            Box::new(move |cell: &mut [u8]| {
++                cell[352..356].copy_from_slice(&(pending.total - 1).to_le_bytes())
++            }),
++        ),
++    ];
++    for (label, patch) in cases {
++        let (mutant, job_after) = rebind(&frame, world.lsn, 9, &after[JOB], |cell| patch(cell));
++        let decoded = row::decode_job(cell(&job_after[..], ORDINAL % 15), namespace()).map(|_| ());
++        let result = observe_job(&mutant, &job_after);
++        println!("R2PROBE\tjobs {label}\tdecode={decoded:?}\tobserve={result:?}");
++    }
++}
++
++#[test]
++fn r2_probe_forward() {
++    let value = value();
++    let (world, plan) = written(&value);
++    let front = page_ref(17, 2);
++    let head = OverflowHead::new(front, value.len(), plan.digest).unwrap();
++    let row_after = row_cell(&world, &head_record(&world, head));
++    let (allocator, chain) = chain_pages(&world);
++    let refs: Vec<&Page> = chain.iter().map(|page| &**page).collect();
++    let mut cycle = Box::new(*refs[1]);
++    let start = usize::from(u16::from_le_bytes([cycle[128], cycle[129]]));
++    front.encode(&mut cycle[start + 48..start + 72]).unwrap();
++    let digest = content_digest(&cycle[..DIGEST_OFFSET]);
++    cycle[DIGEST_OFFSET..].copy_from_slice(&digest);
++    // Chunk 2's own image re-homed at page 17: a distinct image whose cell
++    // index (2) is the expected one, so only the visited set sees the repeat.
++    let mut rehomed = Box::new(*refs[2]);
++    assert_eq!(u64_at(&rehomed[..], 32), 15);
++    rehomed[32..40].copy_from_slice(&17u64.to_le_bytes());
++    let digest = content_digest(&rehomed[..DIGEST_OFFSET]);
++    rehomed[DIGEST_OFFSET..].copy_from_slice(&digest);
++    let leased = restamped(refs[1], job(&world).lease_lsn());
++    let leased1 = restamped(refs[1], job(&world).lease_lsn() + 1);
++    let later = restamped(refs[1], world.lsn + 1);
++    let at_prev = restamped(refs[1], world.lsn);
++    let cases: Vec<(&str, Vec<&Page>)> = vec![
++        ("control", vec![refs[0], refs[1], refs[2]]),
++        ("dup same image (r2 test)", vec![refs[0], &*cycle, refs[0]]),
++        ("dup distinct image", vec![refs[0], &*cycle, &*rehomed]),
++        ("lsn = lease", vec![refs[0], &*leased, refs[2]]),
++        ("lsn = lease+1", vec![refs[0], &*leased1, refs[2]]),
++        ("lsn = prev+1", vec![refs[0], &*later, refs[2]]),
++        ("lsn = prev", vec![refs[0], &*at_prev, refs[2]]),
++    ];
++    for (label, pages) in cases {
++        let images = ChainImages {
++            allocator: &allocator,
++            pages: &pages,
++        };
++        let change = Change::ForwardOverflow {
++            ordinal: ORDINAL,
++            statement: boundary(4, None),
++            chain: &images,
++        };
++        let result = a_group(&world.inputs(change, row_pages()), Some(&row_after)).map(|f| f.len());
++        println!("R2PROBE\tforward {label}\t{result:?}");
++    }
++    println!("R2PROBE\tforward lease={} prev={}", job(&world).lease_lsn(), world.lsn);
++}
