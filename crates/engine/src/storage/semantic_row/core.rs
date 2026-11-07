@@ -102,11 +102,18 @@ pub(crate) fn decode_core(bytes: &[u8], operation: Operation) -> Result<CoreView
     }
     let v = CoreView { bytes, operation };
     // A DELETE operation keeps its INSERT role's core rules
-    // (dev3-row-delete.md#delete-states); its opcode is checked above.
+    // (dev3-row-delete.md#delete-states), OverflowCancel Cancel's; its
+    // opcode is checked above. ChunkWrite takes a Reserved root's
+    // statement/mutation like Reserve, ChainRetire a Releasing root's work
+    // cursor like ReleaseRole (dev3-row-overflow.md#opcodes).
     let role = operation.role();
     let planned = matches!(
         role,
-        Operation::Reserve | Operation::Forward | Operation::Cancel | Operation::Clr
+        Operation::Reserve
+            | Operation::Forward
+            | Operation::Cancel
+            | Operation::Clr
+            | Operation::ChunkWrite
     );
     if planned {
         if v.statement() == 0 || v.mutation() == 0 {
@@ -123,9 +130,12 @@ pub(crate) fn decode_core(bytes: &[u8], operation: Operation) -> Result<CoreView
     }
     let refs = flags & 7;
     let valid = match role {
-        Operation::Reserve | Operation::Cancel | Operation::ReleaseRole | Operation::RootFree => {
-            refs == 1
-        }
+        Operation::Reserve
+        | Operation::Cancel
+        | Operation::ReleaseRole
+        | Operation::RootFree
+        | Operation::ChunkWrite
+        | Operation::ChainRetire => refs == 1,
         Operation::Forward | Operation::Prune => matches!(refs, 1 | 3) && v.current() != v.next(),
         Operation::Clr => {
             matches!(refs, 1 | 3 | 7) && v.current() != v.next() && v.current() != v.target()
@@ -152,7 +162,11 @@ pub(crate) fn decode_core(bytes: &[u8], operation: Operation) -> Result<CoreView
     let cursors = v.cursors();
     if matches!(
         role,
-        Operation::Prune | Operation::ReleaseRole | Operation::RootFree | Operation::TerminalFinish
+        Operation::Prune
+            | Operation::ReleaseRole
+            | Operation::RootFree
+            | Operation::TerminalFinish
+            | Operation::ChainRetire
     ) {
         if cursors.0 >= 64 || cursors.1 >= 64 {
             return Err(Error::Corrupt);

@@ -166,7 +166,7 @@ fn identity_codec() -> usize {
 
 /// The canonical row check: an inline value parse and a Catalog-schema
 /// column lookup.
-fn canonical_codec() -> usize {
+pub(super) fn canonical_codec() -> usize {
     size_of::<(&[u8], RowSchemaInput<'_>)>()
         + returned::<CanonicalRowView<'_>, RowError>()
         + size_of::<[u32; MAX_ROW_COLUMNS + 1]>()
@@ -697,14 +697,18 @@ fn wal_codec() -> usize {
         + page_codec()
 }
 
-/// `decode_layout`: arguments, view, envelope, shape/core, owner and native
-/// walks with their digests, then the envelope/redo codec.
+/// `decode_layout`: arguments, view, envelope, shape/core, the native
+/// section closure and a chain-return list's cell sizes
+/// (dev3-row-overflow.md#opcodes), owner and native walks with their
+/// digests, then the envelope/redo codec.
 pub(super) fn layout_decode() -> usize {
     size_of::<(&[u8], FrameExpectation, Profile)>()
         + returned::<LayoutView<'_>, Error>()
         + size_of::<LayoutView<'_>>()
         + returned::<FrameEnvelope<'_>, WalError>()
         + size_of::<(Operation, Shape, &[u8], [usize; 5])>()
+        + size_of::<(&usize, &usize, &&[u8])>()
+        + returned::<(usize, usize), Error>()
         + returned::<CoreView<'_>, Error>()
         + size_of::<(ReservationOwner, TxnRef, Namespace, SystemWorkRef)>()
         + size_of::<[(bool, usize, usize, usize, usize, &[u8]); 2]>()

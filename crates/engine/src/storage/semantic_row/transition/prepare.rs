@@ -131,7 +131,7 @@ fn has_root(op: Operation) -> bool {
 fn op_effect(op: Operation) -> row::RowEffect {
     if op.update() {
         row::RowEffect::Update
-    } else if op != op.role() {
+    } else if op.delete() {
         row::RowEffect::Delete
     } else {
         row::RowEffect::Insert

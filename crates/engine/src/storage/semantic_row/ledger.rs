@@ -153,7 +153,7 @@ fn observe<'a>(
                 }
             }
             JobState::RootReleasingCompensated => {
-                if job.release_cursor() != 0 && !is_terminal(status) {
+                if job.cleanup_started() && !is_terminal(status) {
                     return Err(Error::OrderMismatch);
                 }
             }

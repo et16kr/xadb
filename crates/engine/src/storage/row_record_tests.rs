@@ -237,7 +237,7 @@ fn canonical(values: &[Value]) -> Vec<u8> {
 
 // Catalog encoding supplies only schema input here. Row expectations remain the
 // independently frozen LITERALS; no Catalog or row storage authority is issued.
-fn catalog_schema_bytes(columns: &[Column]) -> Vec<u8> {
+pub(super) fn catalog_schema_bytes(columns: &[Column]) -> Vec<u8> {
     let spec = TableSpec {
         name: "borrowed_row".into(),
         columns: columns.to_vec(),
@@ -271,7 +271,7 @@ fn catalog_schema_bytes(columns: &[Column]) -> Vec<u8> {
     output
 }
 
-fn catalog_schema(bytes: &[u8]) -> RowSchemaInput<'_> {
+pub(super) fn catalog_schema(bytes: &[u8]) -> RowSchemaInput<'_> {
     let catalog = decode_catalog_record(
         bytes,
         CatalogExpectation {
@@ -1219,6 +1219,36 @@ fn materialized_overflow_requires_digest_and_schema() {
         counts[1] += 1;
     }
     assert_eq!(counts, [3, 15]);
+}
+
+/// OVF-F05 (dev3-row-overflow.md#read): B checks a copied overflow row
+/// against the Catalog's borrowed schema with the same total, digest and
+/// schema judgements as the column variant.
+#[test]
+fn ovf_f05_materialized_row_against_catalog_schema() {
+    let bytes = independent_binary_row(&[65536, 65522]);
+    let columns: Vec<_> = (0..2).map(|i| column(DataType::Binary, false, i)).collect();
+    let catalog_bytes = catalog_schema_bytes(&columns);
+    let head = OverflowHead::new(page_ref(), bytes.len(), content_digest(&bytes)).unwrap();
+    let view =
+        decode_materialized_row_with_schema(head, &bytes, catalog_schema(&catalog_bytes)).unwrap();
+    assert_eq!(view.len(), 2);
+    assert_eq!(view.as_bytes().as_ptr(), bytes.as_ptr());
+    assert_eq!(
+        decode_materialized_row_with_schema(
+            head,
+            &bytes[..bytes.len() - 1],
+            catalog_schema(&catalog_bytes)
+        ),
+        Err(RowError::OverflowMismatch)
+    );
+    let mut wrong = columns.clone();
+    wrong[1].data_type = DataType::Utf8;
+    let wrong_bytes = catalog_schema_bytes(&wrong);
+    assert_eq!(
+        decode_materialized_row_with_schema(head, &bytes, catalog_schema(&wrong_bytes)),
+        Err(RowError::SchemaMismatch)
+    );
 }
 
 #[test]

@@ -467,9 +467,10 @@ fn wire_dialect_reports_unsupported_before_semantic_use() {
     for (name, at, value, width) in [
         ("op-2", 164, 1, 2),
         ("op-2", 170, 2, 2),
-        // 8 is DeleteForward since dev3-row-delete.md and 10 UpdateForward
-        // since dev3-row-update.md; 14 is still unknown.
-        ("op-2", 166, 14, 2),
+        // 8 is DeleteForward since dev3-row-delete.md, 10 UpdateForward
+        // since dev3-row-update.md and 14 ChunkWrite since
+        // dev3-row-overflow.md; 18 is still unknown.
+        ("op-2", 166, 18, 2),
         ("op-2", 7, 2, 1),
         ("op-5", 7, 3, 1),
         ("op-2", 6, 4, 1),
@@ -783,8 +784,9 @@ fn rdl_f01_delete_opcodes_decode_role_outer_handoff() {
     ] {
         assert_eq!(op.role(), op);
     }
-    // 10, 13 and 24 are UPDATE's since dev3-row-update.md (RUP-F01).
-    for code in [0, 14, 15, 18, 19, 25, 65535] {
+    // 10, 13 and 24 are UPDATE's since dev3-row-update.md (RUP-F01); 14, 15
+    // and 25 the overflow chain groups (OVF-F04).
+    for code in [0, 18, 19, 26, 65535] {
         assert_eq!(
             Operation::decode(code).err(),
             Some(Error::Unsupported),
@@ -1358,4 +1360,551 @@ fn rup_f08_update_core_role_rules() {
         assert_eq!(run(op, true, target), Some(Error::OrderMismatch), "op {op}");
     }
     assert_eq!(run(13, true, target), None, "UpdateClr refs 7");
+}
+
+// ---- OVF-F04: the overflow chain groups ChunkWrite 14, OverflowCancel 15
+// and ChainRetire 25 (dev3-row-overflow.md#opcodes). Frames are packed here
+// from the contract's sizes; the INIT image is an input page (its envelope is
+// what the redo decoder checks), never an expected value. ----
+
+/// One native record: kind, slot, the before/after bodies and their offset.
+fn chain_native(
+    ordinal: usize,
+    kind: u8,
+    slot: u64,
+    before: Option<usize>,
+    after: Option<usize>,
+    offsets: (u64, u64),
+) -> Vec<u8> {
+    let before = before.map(|n| vec![64 + ordinal as u8; n]);
+    let after = after.map(|n| vec![96 + ordinal as u8; n]);
+    let mut b = vec![0; 128];
+    b[0] = kind;
+    b[1] = u8::from(before.is_some()) + 2 * u8::from(after.is_some());
+    put(&mut b, 2, ordinal as u64, 2);
+    for (value, s, o, length, digest, offset) in [
+        (&before, 4, 8, 12, 24, offsets.0),
+        (&after, 6, 10, 16, 56, offsets.1),
+    ] {
+        put(&mut b, s, if value.is_some() { slot } else { 65535 }, 2);
+        if let Some(value) = value {
+            put(&mut b, o, offset, 2);
+            put(&mut b, length, value.len() as u64, 4);
+            b[digest..digest + 32].copy_from_slice(&content_digest(value));
+        }
+    }
+    b.extend(before.unwrap_or_default());
+    b.extend(after.unwrap_or_default());
+    let total = b.len() as u64;
+    put(&mut b, 20, total, 4);
+    b
+}
+/// One redo record: Patch (1) at `offset` with `data` bytes, or the INIT
+/// (2) of a whole page image.
+fn chain_redo(
+    kind: u8,
+    page_kind: u8,
+    number: u64,
+    object: u64,
+    offset: u64,
+    data: &[u8],
+) -> Vec<u8> {
+    let mut r = vec![0; 64];
+    r[0] = kind;
+    r[1] = page_kind;
+    put(&mut r, 4, 64 + data.len() as u64, 4);
+    r[8..32].copy_from_slice(&wire_ref(number));
+    if number < 9 {
+        put(&mut r, 24, 1, 8);
+    }
+    put(&mut r, 32, object, 8);
+    put(&mut r, 40, 1, 8);
+    put(&mut r, 48, if kind == 1 { 100 } else { 0 }, 8);
+    put(&mut r, 56, offset, 2);
+    put(&mut r, 58, data.len() as u64, 2);
+    r.extend_from_slice(data);
+    r
+}
+/// The new chunk's INIT image: an Overflow page 20 of table 6 at LSN 101.
+fn chunk_image(lsn: u64) -> Vec<u8> {
+    use crate::storage::page::{FileId, PageHeader, PageIdentity, PageKind, PageLsn, PageRef};
+    use foundation::identity::{Generation, ObjectId};
+    let header = PageHeader {
+        identity: PageIdentity {
+            database: crate::api::DatabaseId::new(wire_db().try_into().unwrap()).unwrap(),
+            page: PageRef {
+                file: FileId::new(0x1_0000_0001).unwrap(),
+                page_no: 20,
+                incarnation: Generation::new(2).unwrap(),
+            },
+            owner: ObjectId::new(6).unwrap(),
+            owner_generation: Generation::new(1).unwrap(),
+        },
+        kind: PageKind::Overflow,
+        level: 0,
+        lsn: PageLsn(lsn),
+    };
+    let mut out = vec![0; crate::storage::page::PAGE_BYTES];
+    crate::storage::page::encode_page(header, &[&[0x5a; 300]], &mut out).unwrap();
+    out
+}
+/// ChunkWrite's natives and redo, in page order: allocator page 0 (one
+/// entry, 96 each side at the same offset), Root 1, Job 2 and the chunk 20
+/// (after only: its 128-byte cell header; INIT redo).
+fn chunk_write_bodies(entry: u64) -> (Vec<u8>, Vec<u8>, usize) {
+    let mut natives = Vec::new();
+    natives.extend(chain_native(0, 6, 0, Some(96), Some(96), (entry, entry)));
+    natives.extend(chain_native(1, 8, 0, Some(512), Some(512), (15840, 15840)));
+    natives.extend(chain_native(
+        2,
+        9,
+        1,
+        Some(1024),
+        Some(1024),
+        (14304, 14304),
+    ));
+    natives.extend(chain_native(3, 12, 0, None, Some(128), (0, 16224)));
+    let mut redo = Vec::new();
+    redo.extend(chain_redo(1, 10, 0, 1, entry, &[0xa1; 96]));
+    redo.extend(chain_redo(1, 12, 1, 4, 72, &[0xa2; 16280]));
+    redo.extend(chain_redo(1, 13, 2, 4, 72, &[0xa3; 16280]));
+    redo.extend(chain_redo(2, 7, 20, 6, 0, &chunk_image(101)));
+    (natives, redo, 4)
+}
+/// OverflowCancel's/ChainRetire's natives and redo: Root 1, Job 2 and the
+/// anchor 10 (XTR1 cell, slot 1: before `b` when the anchor had a list,
+/// after `a`).
+fn list_bodies(before: usize, after: usize) -> (Vec<u8>, Vec<u8>, usize) {
+    let mut natives = Vec::new();
+    natives.extend(chain_native(0, 8, 0, Some(512), Some(512), (15840, 15840)));
+    natives.extend(chain_native(
+        1,
+        9,
+        1,
+        Some(1024),
+        Some(1024),
+        (14304, 14304),
+    ));
+    natives.extend(chain_native(
+        2,
+        10,
+        1,
+        (before != 0).then_some(before),
+        Some(after),
+        (16352 - 2 * before as u64, 16352 - 2 * after as u64),
+    ));
+    let mut redo = Vec::new();
+    redo.extend(chain_redo(1, 12, 1, 4, 72, &[0xa2; 16280]));
+    redo.extend(chain_redo(1, 13, 2, 4, 72, &[0xa3; 16280]));
+    redo.extend(chain_redo(1, 11, 10, 6, 72, &[0xa4; 16280]));
+    (natives, redo, 3)
+}
+/// The chain groups' core: current U only; ChunkWrite/OverflowCancel name a
+/// Reserved root's statement 3 and mutation 7, ChainRetire a work cursor.
+fn chain_core(op: u16) -> Vec<u8> {
+    let mut b = vec![0; 256];
+    put(&mut b, 0, u64::from(op), 2);
+    put(&mut b, 2, 1, 2);
+    put(&mut b, 4, 256, 4);
+    if op != 25 {
+        put(&mut b, 8, 3, 8);
+        put(&mut b, 16, 7, 8);
+    } else {
+        put(&mut b, 160, 5, 8);
+    }
+    put(&mut b, 24, 8, 8);
+    b[32..72].copy_from_slice(&wire_undo(14));
+    b
+}
+/// One sealed chain-group frame (14/15 XHG Update with the Tx and Aging
+/// owners, 25 XSG System with the Aging owner) over its bodies; I = 1 for
+/// OverflowCancel only.
+fn chain_frame(op: u16, core: Vec<u8>, bodies: (Vec<u8>, Vec<u8>, usize)) -> Vec<u8> {
+    let handoff = op != 25;
+    let mut g = vec![0; if handoff { 256 } else { 192 }];
+    g[..4].copy_from_slice(if handoff { b"XHG1" } else { b"XSG1" });
+    let header = g.len() as u64;
+    for (at, value) in [(4, 2), (6, u64::from(op)), (8, header), (10, 3)] {
+        put(&mut g, at, value, 2);
+    }
+    put(&mut g, 16, 101, 8);
+    let (native, redo, count) = bodies;
+    let i = u64::from(op == 15);
+    let mut descriptors = vec![209; 1536];
+    if handoff {
+        put(&mut g, 24, 100, 8);
+        put(&mut g, 32, 100, 8);
+        g[40..96].copy_from_slice(&wire_owner(false));
+        g[96..152].copy_from_slice(&wire_owner(true));
+        g[152..184].copy_from_slice(&content_digest(b"WIRE_ONLY prior Tx"));
+        g[184..216].copy_from_slice(&content_digest(b"WIRE_ONLY prior Aging"));
+        for (at, value) in [
+            (216, 1536),
+            (220, 1536),
+            (224, 256),
+            (228, native.len() as u64),
+            (232, 208 * i),
+            (240, redo.len() as u64),
+        ] {
+            put(&mut g, at, value, 4);
+        }
+        for (at, value) in [(236, count as u64), (238, count as u64), (248, i)] {
+            put(&mut g, at, value, 2);
+        }
+        descriptors.extend(vec![210; 1536]);
+    } else {
+        put(&mut g, 24, 100, 8);
+        g[32..88].copy_from_slice(&wire_owner(true));
+        g[88..120].copy_from_slice(&content_digest(b"WIRE_ONLY prior owner"));
+        for (at, value) in [
+            (120, 1536),
+            (136, native.len() as u64),
+            (152, redo.len() as u64),
+        ] {
+            put(&mut g, at, value, 4);
+        }
+        for (at, value) in [(124, count as u64), (132, count as u64)] {
+            put(&mut g, at, value, 2);
+        }
+    }
+    g.extend(descriptors);
+    g.extend(core);
+    g.extend(native);
+    g.extend(vec![227; 208 * i as usize]);
+    g.extend(redo);
+    let length = g.len() as u64;
+    put(&mut g, 12, length, 4);
+    let mut b = vec![0; 160];
+    b[..4].copy_from_slice(b"XWF1");
+    put(&mut b, 4, 1, 2);
+    b[6] = if handoff { 2 } else { 3 };
+    b[7] = if handoff { 3 } else { 2 };
+    put(&mut b, 8, 160, 2);
+    put(&mut b, 12, length + 192, 4);
+    put(&mut b, 16, length, 4);
+    put(&mut b, 20, count as u64, 2);
+    b[24..40].copy_from_slice(&wire_db());
+    put(&mut b, 40, 1, 8);
+    put(&mut b, 56, 101, 8);
+    put(&mut b, 64, 100, 8);
+    put(&mut b, 48, 1, 4);
+    if handoff {
+        let mut actor = wire_db();
+        actor.extend(pack(&[(1, 8), (1, 4), (0, 4), (1, 8), (2, 8)]));
+        b[72..112].copy_from_slice(&actor[..40]);
+        put(&mut b, 112, 100, 8);
+    }
+    let seal = content_digest(&b[..128]);
+    b[128..160].copy_from_slice(&seal);
+    b.extend(g);
+    let seal = content_digest(&b);
+    b.extend(seal);
+    b
+}
+fn chunk_write_frame() -> Vec<u8> {
+    chain_frame(14, chain_core(14), chunk_write_bodies(2048))
+}
+fn list_frame(op: u16, before: usize, after: usize) -> Vec<u8> {
+    chain_frame(op, chain_core(op), list_bodies(before, after))
+}
+/// The contract's (b, a) cases: no list before, one entry added, the
+/// largest list (b = 2176 with 54 entries, a = 2216 with 55).
+const LISTS: [(usize, usize); 4] = [(0, 56), (0, 376), (56, 96), (2176, 2216)];
+
+/// OVF-F04: 14, 15 and 25 decode with their roles, outers and handoff, and
+/// effects name DELETE only by `delete()`.
+#[test]
+fn ovf_f04_chain_opcodes_decode_role_outer_handoff() {
+    for (op, code, role, outer, handoff, list) in [
+        (
+            Operation::ChunkWrite,
+            14,
+            Operation::ChunkWrite,
+            FrameKind::Update,
+            true,
+            false,
+        ),
+        (
+            Operation::OverflowCancel,
+            15,
+            Operation::Cancel,
+            FrameKind::Update,
+            true,
+            true,
+        ),
+        (
+            Operation::ChainRetire,
+            25,
+            Operation::ChainRetire,
+            FrameKind::System,
+            false,
+            true,
+        ),
+    ] {
+        assert_eq!(Operation::decode(code), Ok(op));
+        assert_eq!(op as u16, code);
+        assert_eq!(op.role(), role);
+        assert_eq!(op.outer(), outer);
+        assert_eq!(op.handoff(), handoff);
+        assert_eq!(op.list(), list);
+        assert!(!op.row() && !op.update() && !op.delete() && !op.status_patch());
+    }
+    let bit = |kinds: &[u8]| kinds.iter().fold(0u16, |m, k| m | 1 << k);
+    assert_eq!(Operation::ChunkWrite.native_mask(), bit(&[6, 8, 9, 12]));
+    assert_eq!(Operation::OverflowCancel.native_mask(), bit(&[8, 9, 10]));
+    assert_eq!(Operation::ChainRetire.native_mask(), bit(&[8, 9, 10]));
+    for code in 1..=25 {
+        if let Ok(op) = Operation::decode(code) {
+            assert_eq!(op.delete(), matches!(code, 8 | 9 | 23), "{code}");
+        }
+    }
+    for code in [18, 19, 26, 27, 65535] {
+        assert_eq!(Operation::decode(code).err(), Some(Error::Unsupported));
+    }
+}
+
+/// OVF-F04: the contract's frame integers. ChunkWrite is fixed at 56976
+/// (E/K/I 0/0/0); OverflowCancel is `56472 + b + a` (I = 1) and ChainRetire
+/// `54664 + b + a`, both at most the contract maxima 60864 and 59056 and
+/// inside FRAME_BYTES; (b, a) outside `{0} ∪ {16 + 40n}`, n ≤ 55, a > b is
+/// refused, and the list groups have no cell shape.
+#[test]
+fn ovf_f04_chain_shapes_and_frame_equations() {
+    // The list sides sit in the padding: every census holding a Shape keeps
+    // its size.
+    assert_eq!(
+        size_of::<crate::storage::semantic_row::operation::Shape>(),
+        40
+    );
+    assert_eq!(Operation::ChunkWrite.frame_bytes(0, false).unwrap(), 56_976);
+    // The Job's forward and cleanup recipes (dev3-row-overflow.md#ledger)
+    // use the same two frame sizes.
+    assert_eq!(
+        crate::storage::retention_page::row::CHUNK_WRITE_WAL,
+        Operation::ChunkWrite.frame_bytes(0, false).unwrap() as u64
+    );
+    assert_eq!(
+        crate::storage::retention_page::row::CHAIN_RETIRE_WAL,
+        Operation::ChainRetire.frame_bytes_list(2176, 2216).unwrap() as u64
+    );
+    let shape = Operation::ChunkWrite.shape(0, false).unwrap();
+    assert_eq!(
+        (
+            shape.native_count,
+            shape.native_bytes,
+            shape.redo_count,
+            shape.redo_bytes
+        ),
+        (4, 3904, 4, 49_296)
+    );
+    assert_eq!((shape.edges, shape.counts, shape.items), (0, 0, 0));
+    assert!(Operation::ChunkWrite.shape(185, false).is_err());
+    assert!(Operation::ChunkWrite.shape(0, true).is_err());
+    for (b, a) in LISTS {
+        let cancel = Operation::OverflowCancel.frame_bytes_list(b, a).unwrap();
+        let retire = Operation::ChainRetire.frame_bytes_list(b, a).unwrap();
+        assert_eq!(cancel, 56_472 + b + a);
+        assert_eq!(retire, 54_664 + b + a);
+        let shape = Operation::OverflowCancel.shape_list(b, a).unwrap();
+        assert_eq!((shape.items, shape.list_sides()), (1, (b, a)));
+        // The Job recipes take ChainRetire's largest frame.
+        assert!(retire <= crate::storage::retention_page::row::CHAIN_RETIRE_WAL as usize);
+        assert_eq!(Operation::ChainRetire.shape_list(b, a).unwrap().items, 0);
+    }
+    assert_eq!(
+        Operation::OverflowCancel
+            .frame_bytes_list(2176, 2216)
+            .unwrap(),
+        60_864
+    );
+    assert_eq!(
+        Operation::ChainRetire.frame_bytes_list(2176, 2216).unwrap(),
+        59_056
+    );
+    const { assert!(60_864 <= FRAME_BYTES) };
+    for op in [Operation::OverflowCancel, Operation::ChainRetire] {
+        for (b, a) in [
+            (0, 0),
+            (0, 16),
+            (0, 55),
+            (0, 57),
+            (0, 2256),
+            (16, 56),
+            (56, 56),
+            (96, 56),
+            (57, 97),
+            (2216, 2256),
+        ] {
+            assert!(op.shape_list(b, a).is_err(), "{op:?} {b} {a}");
+        }
+        assert!(op.shape(0, false).is_err());
+    }
+    for op in [
+        Operation::ChunkWrite,
+        Operation::Cancel,
+        Operation::ReleaseRole,
+    ] {
+        assert!(op.shape_list(0, 56).is_err());
+    }
+}
+
+/// OVF-F04: sealed frames of the three groups decode with the contract's
+/// sizes; the list groups read (b, a) from the anchor native.
+#[test]
+fn ovf_f04_chain_frames_decode() {
+    let b = chunk_write_frame();
+    assert_eq!(b.len(), 56_976);
+    let v = check(&b).unwrap();
+    assert_eq!(v.operation(), Operation::ChunkWrite);
+    assert_eq!(
+        v.native_records().map(|n| n.kind()).collect::<Vec<_>>(),
+        [6, 8, 9, 12]
+    );
+    for (b, a) in LISTS {
+        for (op, code, fixed) in [
+            (Operation::OverflowCancel, 15, 56_472),
+            (Operation::ChainRetire, 25, 54_664),
+        ] {
+            let frame = list_frame(code, b, a);
+            assert_eq!(frame.len(), fixed + b + a);
+            let v = check(&frame).unwrap();
+            assert_eq!(v.operation(), op);
+            let shape = v.shape();
+            assert_eq!(shape.list_sides(), (b, a));
+            assert_eq!(
+                v.native_records().map(|n| n.kind()).collect::<Vec<_>>(),
+                [8, 9, 10]
+            );
+        }
+    }
+}
+
+/// OVF-F04: damage to the new natives, redo forms, list pre-scan and cores.
+#[test]
+fn ovf_f04_chain_frame_damage() {
+    let refused = |b: &[u8]| assert!(check(b).is_err());
+    // A frame with each native/redo body variant rebuilt and resealed.
+    let chunk = |natives: Vec<Vec<u8>>, redo: Vec<Vec<u8>>| {
+        let count = natives.len();
+        chain_frame(14, chain_core(14), (natives.concat(), redo.concat(), count))
+    };
+    let natives = || {
+        vec![
+            chain_native(0, 6, 0, Some(96), Some(96), (2048, 2048)),
+            chain_native(1, 8, 0, Some(512), Some(512), (15840, 15840)),
+            chain_native(2, 9, 1, Some(1024), Some(1024), (14304, 14304)),
+            chain_native(3, 12, 0, None, Some(128), (0, 16224)),
+        ]
+    };
+    let redo = || {
+        vec![
+            chain_redo(1, 10, 0, 1, 2048, &[0xa1; 96]),
+            chain_redo(1, 12, 1, 4, 72, &[0xa2; 16280]),
+            chain_redo(1, 13, 2, 4, 72, &[0xa3; 16280]),
+            chain_redo(2, 7, 20, 6, 0, &chunk_image(101)),
+        ]
+    };
+    assert_eq!(chunk(natives(), redo()), chunk_write_frame());
+    // Allocator entry: sides at different offsets, sizes other than 96, slot.
+    let mut n = natives();
+    n[0] = chain_native(0, 6, 0, Some(96), Some(96), (2048, 2144));
+    refused(&chunk(n, redo()));
+    let mut n = natives();
+    n[0] = chain_native(0, 6, 1, Some(96), Some(96), (2048, 2048));
+    refused(&chunk(n, redo()));
+    // Allocator redo: another offset, or the whole-body patch.
+    let mut r = redo();
+    r[0] = chain_redo(1, 10, 0, 1, 2144, &[0xa1; 96]);
+    refused(&chunk(natives(), r));
+    // Chunk native: a before side, the full cell, a slot.
+    let mut n = natives();
+    n[3] = chain_native(3, 12, 0, Some(128), Some(128), (16224, 16224));
+    refused(&chunk(n, redo()));
+    let mut n = natives();
+    n[3] = chain_native(3, 12, 0, None, Some(16092), (0, 200));
+    refused(&chunk(n, redo()));
+    let mut n = natives();
+    n[3] = chain_native(3, 12, 1, None, Some(128), (0, 16224));
+    refused(&chunk(n, redo()));
+    // Chunk redo: a patch instead of INIT, an INIT of another kind or LSN.
+    let mut r = redo();
+    r[3] = chain_redo(1, 7, 20, 6, 72, &[0xa5; 16280]);
+    refused(&chunk(natives(), r));
+    let mut r = redo();
+    r[3] = chain_redo(2, 7, 20, 6, 0, &chunk_image(100));
+    refused(&chunk(natives(), r));
+    // A Row leaf native in ChunkWrite, an anchor native, a missing kind.
+    let mut n = natives();
+    n[3] = chain_native(3, 10, 1, None, Some(128), (0, 16096));
+    refused(&chunk(n, redo()));
+    let n = natives()[..3].to_vec();
+    let r = redo()[..3].to_vec();
+    refused(&chunk(n, r));
+    // Cores: ChunkWrite without its statement; ChainRetire with a mutation
+    // or a cursor past the Job table; any second reference.
+    let mut core = chain_core(14);
+    put(&mut core, 8, 0, 8);
+    refused(&chain_frame(14, core, chunk_write_bodies(2048)));
+    let mut core = chain_core(25);
+    put(&mut core, 16, 7, 8);
+    refused(&chain_frame(25, core, list_bodies(0, 56)));
+    let mut core = chain_core(25);
+    put(&mut core, 160, 64, 8);
+    refused(&chain_frame(25, core, list_bodies(0, 56)));
+    let mut core = chain_core(15);
+    put(&mut core, 2, 3, 2);
+    core[72..112].copy_from_slice(&wire_undo(13));
+    refused(&chain_frame(15, core, list_bodies(0, 56)));
+    // Anchor native: slot 0, no after side, (b, a) off the list grammar,
+    // a second anchor record, a short or overlong record, trailing bytes.
+    for op in [15, 25] {
+        let list = |natives: Vec<Vec<u8>>| {
+            let (_, redo, _) = list_bodies(0, 56);
+            let count = natives.len();
+            chain_frame(op, chain_core(op), (natives.concat(), redo, count))
+        };
+        let base = || {
+            vec![
+                chain_native(0, 8, 0, Some(512), Some(512), (15840, 15840)),
+                chain_native(1, 9, 1, Some(1024), Some(1024), (14304, 14304)),
+                chain_native(2, 10, 1, None, Some(56), (0, 16240)),
+            ]
+        };
+        assert_eq!(list(base()), list_frame(op, 0, 56));
+        let mut n = base();
+        n[2] = chain_native(2, 10, 0, None, Some(56), (0, 16240));
+        refused(&list(n));
+        for (before, after) in [
+            (Some(56), None),
+            (None, Some(57)),
+            (None, Some(16)),
+            (Some(56), Some(56)),
+            (Some(16), Some(56)),
+        ] {
+            let mut n = base();
+            n[2] = chain_native(2, 10, 1, before, after, (16000, 16000));
+            refused(&list(n));
+        }
+        let mut n = base();
+        n[1] = chain_native(1, 10, 1, None, Some(56), (0, 16240));
+        refused(&list(n));
+        let mut n = base();
+        put(&mut n[2], 20, 120, 4);
+        refused(&list(n));
+        let mut n = base();
+        n[2].extend([0; 8]);
+        refused(&list(n));
+        let mut n = base();
+        n.push(vec![0; 128]);
+        refused(&list(n));
+    }
+    // The XHG list group as System and the reverse.
+    let mut b = list_frame(25, 0, 56);
+    b[160..164].copy_from_slice(b"XHG1");
+    reseal(&mut b);
+    refused(&b);
+    let mut b = list_frame(15, 0, 56);
+    b[6] = 3;
+    reseal(&mut b);
+    refused(&b);
 }

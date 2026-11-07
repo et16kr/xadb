@@ -6,7 +6,7 @@
 - [DEV3 Row DELETE 첫 경로](dev3-row-delete.md) — 2026-11-03 설계 동결, D2 ACCEPTED(3회차). committed·Prune된 행 하나의 tombstone 삭제, 새 opcode 8·9·23, Job3 효과 byte, delete U와 Undo 검증 두 진입, leaf 복원 공간 예약; 제품·시험 NOT_RUN.
 - [DEV3 Row UPDATE 첫 경로](dev3-row-update.md) — 2026-11-04 설계 동결, D2 ACCEPTED(2회차). committed·Prune된 행 하나의 값 교체(크기 변화 포함), 새 opcode 10·13·24, Job3 효과 2와 새 cell C', delete U와 같은 형식의 update U, 넓힌 leaf 예약, 다른 거래의 UPDATE 행 판정. 2단계(C 형식·전이층, RUP-F·RUP-C, 효과2 소비자 명시 거절) 구현; 제품 경로(07-3)·native(07-4) NOT_RUN.
 - [DEV3 SMO를 건너는 stable cursor와 locator](dev3-cursor-locator.md) — 2026-11-07, 일정 08-2. cursor 불변식 C1–C7과 실제 split·unlink·root 축소 사이의 cursor 시험 CUR-B01·B02·CUR-J01..J05 PASS(제품 변경 없음), locator 설계 L1–L10(세션 원에 묶인 8,192 entry·1 MiB 이하 hint, revision이 같을 때만 internal route 생략); locator 구현·LOC 시험은 08-2b. D2 대기.
-- [DEV3 큰 행 overflow chain — 쓰기·읽기·반환](dev3-row-overflow.md) — 2026-11-07, 일정 08-3 설계(O0) 3판. 2,049..131,072 B 행의 INSERT가 chunk를 뒤에서 앞으로 한 그룹에 하나씩 쓰고(ChunkWrite), Forward가 chain을 검산해 head 64 B 행을 넣으며, B가 caller output에 materialize하고, rollback·loser가 chain을 XTR1 retired 목록으로 반환(OverflowCancel·ChainRetire). D2 1회차 CONDITIONAL의 필수 5(XTR1 revision, Job3·ledger LSN, Base4 role, SMO 검산·inline 지점, opcode 산술·role)와 2회차 CONDITIONAL의 필수 2(provenance role 7을 CREATE pair로 읽는 Base4 소비자, Job 표의 projection 칸) 반영, 3회차 ACCEPT. 제품·시험 NOT_RUN.
+- [DEV3 큰 행 overflow chain — 쓰기·읽기·반환](dev3-row-overflow.md) — 2026-11-07, 일정 08-3 설계(O0) 3판. 2,049..131,072 B 행의 INSERT가 chunk를 뒤에서 앞으로 한 그룹에 하나씩 쓰고(ChunkWrite), Forward가 chain을 검산해 head 64 B 행을 넣으며, B가 caller output에 materialize하고, rollback·loser가 chain을 XTR1 retired 목록으로 반환(OverflowCancel·ChainRetire). D2 1회차 CONDITIONAL의 필수 5(XTR1 revision, Job3·ledger LSN, Base4 role, SMO 검산·inline 지점, opcode 산술·role)와 2회차 CONDITIONAL의 필수 2(provenance role 7을 CREATE pair로 읽는 Base4 소비자, Job 표의 projection 칸) 반영, 3회차 ACCEPT. O1(형식·순수 codec, OVF-F01..F06) 구현, 제품 경로는 아직 overflow를 거절.
 
 - [DEV3 첫 Catalog CREATE](dev3-catalog-create.md) — 원 owner의 실제 CREATE·Commit·복구 결합 D2 채택; 제품 효과·인수 미완료. [Root v2](dev3-create-root-format.md) · [Job v2](dev3-create-job-format.md) · [group scope2](dev3-create-group-format.md) · [base v3](dev3-create-recovery-base.md) · [visibility·회수](dev3-visibility-retirement.md).
 
@@ -106,7 +106,7 @@
 - [DEV3 복합 key 표현](dev3-key-format.md) — F01 scalar/composite·RowId bytes와 무효과 비교; index 실행·unique 인수 제외
 - [DEV3 PageRef·UndoRef·안정 anchor 표현](dev3-reference-format.md) — 참조·root descriptor의 무효과 byte 검증; 실제 pin·SMO·undo 회수 제외
 - [DEV3 공통 tree page 표현](dev3-tree-format.md) — 정렬 cell·경로 선택·byte 기준 분할 위치; 실제 SMO·파일 I/O 제외
-- [DEV3 row overflow 표현](dev3-overflow-format.md) — 고정 chunk·streaming 순서·길이·digest 검산; 실제 할당·읽기·회수 제외
+- [DEV3 row overflow 표현](dev3-overflow-format.md) — 고정 chunk·streaming 순서·길이·digest 검산; 실제 할당·읽기·회수 제외. 2026-11-07 개정: chunk cell은 root를 싣지 않고(`[24,48)` zero) root 검사는 검산기, head 없는 `inspect_overflow_page`·`OverflowSegmentWalk`
 - [DEV3 거래 identity·상태 표현](dev3-transaction-format.md) — 논리/물리 참조·행 버전·status cell; 실제 directory·거래·복구 효과 제외
 - [DEV3 M01/M02 graph 모델의 두 번째 동결](dev3-undo-model.md) — edge 중복도·논리 undo와 snapshot/pin 확장; 세부 동결·실행 상태는 원문 참조
 - [DEV3 M03 변경 순서·행 관측·진행 모델](dev3-progress-model.md) — 관측 identity·pin/latch·FIFO의 실행 전 모델 계약

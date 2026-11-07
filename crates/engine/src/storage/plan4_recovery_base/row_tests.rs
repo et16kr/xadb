@@ -5,6 +5,9 @@ use base::{AllocationTerminal, ControlRef, PageHeader, SelectedControl, put};
 #[path = "row_structural_tests.rs"]
 mod structural;
 
+#[path = "row_overflow_tests.rs"]
+mod overflow;
+
 const INITIAL: &[u8; BASE_BYTES] = include_bytes!(concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/../../tests/fixtures/module-row-format/base4/initial.xrb"
