@@ -1,6 +1,6 @@
 # DEV3 큰 행 overflow chain — 쓰기·읽기·반환 설계
 
-2026-11-07 · `D3-ROW-OVERFLOW-001` · **설계(O0) 3판 / 독립 D2 3회차 ACCEPT(권고 S1·NIT T3·T4 반영) / 제품 구현·시험 NOT_RUN**
+2026-11-07 · `D3-ROW-OVERFLOW-001` · **설계(O0) 3판 / 독립 D2 3회차 ACCEPT(권고 S1·NIT T3·T4 반영) / O1 형식 계층 구현·OVF-F PASS([§14](#o1-record), 독립 D2 대기) / O2–O4 NOT_RUN**
 
 [overflow 표현](dev3-overflow-format.md) · [행 표현](dev3-row-format.md) · [행 owner R6·§5.4](dev3-task-06-tree-rows.md#algorithms) · [첫 Row profile](dev3-module-consumers.md#profile) · [WAL shape](dev3-module-consumers.md#row-shape) · [scope3 wire](dev3-module-consumers.md#row-scope3-wire) · [unlink retired 목록](dev3-tree-smo.md#empty-leaf-unlink) · [자원 정본](dev3-resource-bounds.md) · [목표 등급 SCOPE-002](../plans/project-direction.md#scope-002) · [일정 08-3](../plans/dev3-schedule-baseline.md#items) · [D2 1회차](../../module-gate/evidence/dev3-08-3-design/review-r1.md) · [D2 2회차](../../module-gate/evidence/dev3-08-3-design/review-r2.md) · [D2 3회차](../../module-gate/evidence/dev3-08-3-design/review.md)
 
@@ -405,3 +405,22 @@ Base4는 형식을 바꾼다. 1판의 "record·certificate 형식은 바꾸지 �
 | Base4 allocator incarnation 상계 | `System HW + creates + Structural HW` | kind 7 Allocated page 수를 더함(O2). 14-2가 Overflow page를 Free로 돌리면 다시 정한다 |
 | `jobs.rs` census의 TerminalLeased 연산 목록 | Reserve·Forward·Cancel·Commit·AbortEnd·Clr | ChunkWrite·OverflowCancel 추가, ChainRetire는 TerminalReady(O2) |
 | 효과 추론 `op_effect`·`opcode_effect` | `op != op.role()`이면 DELETE | 명시적 `Operation::delete()`(O1) |
+
+<a id="o1-record"></a>
+## 14. O1 구현 기록
+
+2026-11-07. 형식·순수 codec만 연다(§11). 제품 경로는 overflow 행을 지금처럼 첫 효과 전에 거절하고, 원 replay dispatch(`plan4_retention/history/row.rs`)는 opcode 14·15·25를 Unsupported로, Row retirement 관측은 None으로 둔다. Base4의 지금 소비자는 role 7 claim·Overflow certificate를 ProvenanceMismatch·Unsupported로 거절한다(panic 없음). 그래서 사용자에게 보이는 동작은 바뀌지 않는다.
+
+| 범위 | 구현 | 시험 |
+| --- | --- | --- |
+| §4.1 chunk 개정 | `overflow.rs`: `OverflowChain(total, digest)`, cell·page encoder/decoder가 chain을 받고 `[24,48)` zero(아니면 Corrupt), root 검사를 `OverflowChainVerifier`(expected root·방문 집합)로 옮김, `inspect_overflow_page`, `OverflowSegmentWalk`. `OverflowHead::new`·`count`는 본문을 그대로 두어 행 decode census의 frame이 같다 | OVF-F01: 고정 8개(새 literal)와 `ovf_f01_inspect_and_segment_walk`. literal은 독립 [`overflow_literal.py`](../../module-gate/evidence/dev3-08-3-o1/overflow_literal.py)가 개정 전 literal로 자신을 검산한 뒤 계산 |
+| §4.3 Job3 root | `retention_page/row/job.rs`: `PendingChain`·`ReturnChain`, `JobView::{payload, overflow, pending, chain, forward_wal, forward_steps, cleanup_started}`, `cleanup()`의 chain 분기 `(5, 4R+X)`, decode의 `@285` 조합, `validate_root`의 Reserved pending·Releasing chain 규칙. `census.rs`의 두 규칙과 `semantic_row/ledger.rs`의 ReleasingCompensated 규칙이 `cleanup_started()`를 쓴다 | OVF-F02 3개 |
+| §4.4 XTR1 | `anchor.rs`: `(Overflow, 0)` 항목, revision ≥ 2는 tree 항목이 있을 때만 | OVF-F03 |
+| §4.5 opcode | `semantic_row/operation.rs`: 14·15·25, `role()`(OverflowCancel → Cancel), `delete()`·`list()`, `shape_list`, `list_from_native`, `Shape::list_sides`(b·a를 entry 수 u8 둘로 `Shape`의 padding에 둔다, 40 B 그대로). `wire.rs`: list op의 anchor native 사전 scan, native kind 6·10(slot 1)·12, kind 6 entry Patch와 kind 12 INIT redo. `core.rs`: ChunkWrite planned·refs 1, ChainRetire refs 1·cursor < 64. `op_effect`·`opcode_effect`가 `Operation::delete()`를 쓴다 | OVF-F04 4개(`size_of::<Shape>() == 40` 포함). 옛 미지 opcode 시험은 18·26으로 옮김 |
+| §6.1 A helper | `row_record/stream.rs`: `canonical_row_digest_borrowed`, `encode_canonical_window_borrowed`, `CanonicalRowStream`. `decode_materialized_row_with_schema`(Catalog schema) | OVF-F05 7개 |
+| §8.3 Base4 codec | `image_records.rs`: certificate의 Overflow role(Profile3, object ≥ 6), provenance role 7, `pair()`는 role 3·4만, `chunk()` | OVF-F06 3개 |
+
+census(§11의 O1 열 "새 codec 함수의 frame"). 새 지역값이 생긴 함수 넷의 source 모델에 항을 더했다: XTR1 walk의 tree-entry flag(`anchor.rs` `walk_source_bytes`, +1 B), `validate_root`의 overflow root 칸(`retention_page/row.rs` `source_bytes`), `decode_layout`의 native closure와 list 크기(`transition/source.rs` `layout_decode`, +64 B), provenance role 7 분기(`image_records.rs` `provenance_source_bytes`, +152 B). census 출력의 차이는 이 항뿐이다(UNL-C01 walk 408→409·check_list 586→587, N1 frame callee 4,688→4,752, Base4 layout 20,232→20,384·catalog layout 19,592→19,744·grammar bound 2,252→2,404). peak·charge·상한(Row lifecycle 40,883, C 44,304, Base4 peak 59,675 등)은 바뀌지 않는다. census 계열 시험 327개 중 322개 PASS, 남은 5개는 vector·case 선택 입력(`XADB_XRB_INCLUDE`, `XADB_G6_VECTOR_INDEXES`, `XADB_PLAN4_G5_CAPACITY_PADDING`)이 있어야 도는 하네스 시험이다.
+
+정본 문장(§13의 O1 행): [overflow 표현](dev3-overflow-format.md)·[tree-smo XTR1](dev3-tree-smo.md#empty-leaf-unlink)·[module-consumers row-shape·scope3 wire](dev3-module-consumers.md#row-shape)·[Base4 provenance](dev3-create-recovery-base.md)를 개정했다. `op_effect`·`opcode_effect`는 코드 규칙이라 코드에서 바꿨다. O2 행(current-tree closure, 자원 정본, incarnation 상계, `jobs.rs` TerminalLeased 목록)은 O2에서 바꾼다.
+
