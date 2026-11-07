@@ -1,0 +1,94 @@
+{
+  "schema": "XADB_MODULE_GATE_RECORD_V1",
+  "change": "DEV3 08-2a (dev3-cursor-locator.md): cursor invariants C1-C7 across split/unlink/root collapse and their tests (B literal CUR-B01/B02, actual C CUR-J01..J05), plus the locator design L1-L12 that 08-2b implements (per-core 32 shares of 32 KiB within the 1 MiB locator allocation, whole-anchor PageIdentity key, hit recheck). Test-only: one cfg(test) accessor LiveCursor::test_progress; no product behaviour change, no schedule credit.",
+  "rust_tests": [
+    {
+      "paths": [
+        "crates/engine/src/storage/row/read/driver/smo_tests.rs",
+        "crates/engine/src/storage/row/read/driver/tests.rs"
+      ],
+      "reason": "B literal cursor tests across tree shape changes between calls; tests.rs only declares the smo module.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/row/read/driver/smo_tests.rs",
+          "case": "storage::row::read::driver::tests::smo::cur_b01_cursor_follows_the_current_tree_across_shape_changes",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/read/driver/smo_tests.rs",
+          "case": "storage::row::read::driver::tests::smo::cur_b02_failed_step_resumes_at_the_same_row_after_it_moved",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/cursor_smo.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs",
+        "crates/engine/src/storage/row/read/driver/live.rs"
+      ],
+      "reason": "Actual C cursor tests across foreign splits, an unlink of the cursor's last examined leaf, a root collapse under two cursors, a growing UPDATE split and C's own level-2 split; unlink_rows.rs only declares the module; live.rs adds the cfg(test) LiveCursor::test_progress that CUR-J02 asserts.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/cursor_smo.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::unlink_rows::cursor_smo::cur_j01_cursor_reads_its_snapshot_across_foreign_splits",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/cursor_smo.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::unlink_rows::cursor_smo::cur_j02_cursor_resumes_after_the_unlink_of_its_last_examined_leaf",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/cursor_smo.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::unlink_rows::cursor_smo::cur_j03_cursors_continue_across_a_root_collapse",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/cursor_smo.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::unlink_rows::cursor_smo::cur_j04_cursor_keeps_its_snapshot_across_a_growing_update_split",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/cursor_smo.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::unlink_rows::cursor_smo::cur_j05_own_cursor_survives_splits_and_is_invalidated_by_its_apply",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    }
+  ],
+  "na": [],
+  "reviews": [
+    {
+      "id": "dev3-08-2-cursor-d2",
+      "class": "D2",
+      "scopes": [],
+      "author": "claude-thread-session/claude-project-thread-gfugms",
+      "reviewer": "claude-independent-review/dev3-08-2-cursor",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/row/read/driver/live.rs": "ce806ea9f2ea7c535090e536437f4dadd70376f7",
+        "crates/engine/src/storage/row/read/driver/smo_tests.rs": "8bcb5e815fc2599ebfdc6ab5902c55138cd50751",
+        "crates/engine/src/storage/row/read/driver/tests.rs": "99c52175b8d07424747a0da2a7dc909e07a83b62",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/cursor_smo.rs": "03297e64ffab85001ce23d145eb6237794094cba",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs": "a3b729d1ccc9ce57ced25a990a95b5d64c0d606f"
+      },
+      "log": "module-gate/evidence/dev3-08-2-cursor/review.md (sha256 03d007dd7610f51c057bb9008d86632a6d716db57f41ec67f6dad2e66c8d6b4e; r2 ACCEPT at d4d3f2a, required 0). r1 CONDITIONAL at ca62fda: module-gate/evidence/dev3-08-2-cursor/review-r1.md (sha256 954a8475dee85d82ea2e87be1d70efca93c9176fec0ae26ce2615931b79e9ff5), both required items fixed in daa0c3c"
+    }
+  ]
+}
