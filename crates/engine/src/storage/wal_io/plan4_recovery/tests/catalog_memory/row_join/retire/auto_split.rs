@@ -1160,3 +1160,6 @@ fn spl_review_failed_statement_after_split_preserves_prior_work() {
 /// that A's DELETE or a rolled-back INSERT emptied, over SPL-A's table.
 #[path = "unlink_rows.rs"]
 mod unlink_rows;
+
+#[path = "stable_reads.rs"]
+mod stable_reads;

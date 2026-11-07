@@ -118,7 +118,7 @@ ID는 모두 `D3-SCH-` 접두어를 갖는다. 아래는 보고용 기본 배치
 | 07-3 | A/B 제품 경로와 Undo/CLR·읽기·reopen·복구(메모리 시험) | 1 | 완료(PR #49 병합 시) | PR #49, [3단계 구현 기록](../contracts/dev3-row-update.md#implementation-3) |
 | 07-4 | native fault cut | 0.5 | 완료(PR #49 병합 시) | PR #49, [4단계 구현 기록](../contracts/dev3-row-update.md#implementation-4) |
 | 08-1 | split/root SMO(system group)의 계약·구현·복구 | 2 | 완료(PR #59 병합 시) | [제한 split 효과](../evidence/dev3-tree-structure-20261104.md#structural-effect), [current-leaf 소비자 일반화](../contracts/dev3-tree-smo.md#current-leaf-consumers), [A 자동 split 호출자](../contracts/dev3-tree-smo.md#automatic-split), [unlink·root 축소 설계](../contracts/dev3-tree-smo.md#empty-leaf-unlink), [U1 codec·frame·closure](../contracts/dev3-tree-smo.md#unlink-u1), [U2 replay](../contracts/dev3-tree-smo.md#unlink-u2), [U3 live unlink·note·drain](../contracts/dev3-tree-smo.md#unlink-u3), [U4 native fault cut](../contracts/dev3-tree-smo.md#unlink-u4)(UNL-N01..N06 native 38 process); PR #53–#59 |
-| 08-2 | SMO를 건너는 stable cursor/locator | 1 | 대기 | — |
+| 08-2 | SMO를 건너는 stable cursor/locator | 1 | 구현·선택 검증 완료, PR 병합 대기·적립 없음 | [계약·공급](../contracts/dev3-tree-smo.md#stable-reads) |
 | 08-3 | overflow chain 쓰기·읽기·반환 | 2 | 대기 | — |
 | 08-4 | 일반 행 변경(own/repeated write·occupied-before·Undo chain·큰 행 복원) | 2 | 대기 | — |
 | 09-1 | index 항목 유지와 row↔index 원자성·Undo/CLR | 2 | 대기 | — |

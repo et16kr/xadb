@@ -100,3 +100,20 @@ fn s5r_c02_native_source_inventory() {
     use super::super::super::super::plan4_pages::native;
     row_read_census::<native::Writer>("instrumented-native");
 }
+
+#[test]
+fn stable_locator_retained_credit_bound() {
+    use crate::storage::row::read::driver::{RowReadError, live::LiveLocator};
+    use std::mem::size_of as n;
+    let handle = n::<LiveLocator<'_, '_, '_, '_, '_, '_>>();
+    // Stored handle + constructor return + credit Result + argument words.
+    // C credit/ledger helper frames retain their existing source accounting.
+    let peak = handle
+        + n::<std::result::Result<LiveLocator<'_, '_, '_, '_, '_, '_>, RowReadError>>()
+        + n::<
+            std::result::Result<crate::storage::disk::CallerCredit<'_, '_, '_, '_>, RetentionError>,
+        >()
+        + 4 * n::<&()>();
+    println!("STABLE_LOCATOR handle={handle} constructor_carriers={peak} charge=512");
+    assert!(peak <= 512);
+}

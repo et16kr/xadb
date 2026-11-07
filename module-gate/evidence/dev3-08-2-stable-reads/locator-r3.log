@@ -1,0 +1,7 @@
+
+running 2 tests
+test storage::row::read::driver::tests::stable_locator_rechecks_visibility_and_preserves_failure_effects ... ok
+test storage::row::read::driver::tests::stable_locator_stale_identity_slot_and_eviction_reseek ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 2432 filtered out; finished in 0.00s
+

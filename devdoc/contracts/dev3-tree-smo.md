@@ -2053,3 +2053,52 @@ CONDITIONAL(필수 2)을 반영했다([검토 기록](../../module-gate/evidence
     page)는 worker 코드의 Point 대응과 arm 직전의 Row Job 부재 단언(drain 안의 existing group은 unlink뿐)으로만 묶인다.
     controller는 drain이 unlink 준비까지 갔고 아무것도 쓰지 않았음만 본다.
   - native 결과는 이 cloud 환경에서 한 번 실행한 것이다.
+
+<a id="stable-reads"></a>
+## 08-2 — SMO를 건너는 cursor와 한 항목 locator
+
+2026-11-06 · D3-STABLE-READ-001 · D2 ACCEPTED / 선택 검증 완료, PR 병합 대기. 담당 `/root`.
+사용자의 8.2 완료 지시 안에서 기존 full-key cursor를 유지하고 B의 한 항목
+물리 slot hint를 공급한다. 독립 범위 검토 `/root/review_82_scope`는 이 설계를
+조건부 수용했고, 구현 검토의 필수 두 건을 반영한 최종 정적 D2는 ACCEPT·열린 필수0이다.
+
+`LiveLocator`는 원 statement view와 CheckedTable을 borrow하고 clone하지 않는다.
+DB/timeline/open/table generation의 권한은 이 원 객체에만 있다. 호출자는 다른
+view/table로 locator를 재결합할 수 없다. 매 호출은 기존 C `page`로 현재 anchor에서
+leaf를 route하고 allocator·checksum·owner·incarnation을 검산한다. 그 뒤 B가
+`(PageIdentity, RowId, slot)`를 대조한다. slot이 범위 안이고 현재 key도 같은 때만
+slot 검색을 생략한다. 이동·재사용·compaction·다른 RowId는 `seek_point`로 돌아간다.
+손상 오류를 miss로 바꾸지 않는다. hit 뒤에도 기존 capture·Status/Undo·copy·checked
+release/finish를 거치며 값이나 logical version을 cache하지 않는다.
+
+직접 page shortcut 대신 이 방식을 택한 이유는 route 권한·anchor revision cache와
+새 C 경계를 만들지 않고 기존 검증 경로를 유지하기 위해서다. 절감하는 것은 slot
+검색뿐이며 I/O나 전체 조회 성능 개선을 주장하지 않는다. `clear`와 교체는 hint만
+지운다. own mutation 뒤 locator는 현재 행을 다시 읽지만 cursor는 기존 규약대로
+CursorInvalidated다. OutputTooSmall·취소·FlushRequired·fence는 기존 읽기 의미를
+보존한다. 실패 전에 갱신한 hint도 다음 호출의 모든 검사를 생략하지 못한다.
+
+장기 locator의 entry·view/table 참조·credit·생성 반환 carrier는 기존 원 IsolationLedger의
+512B caller credit 하나로 제한한다. `reserve_cursor_credit`의 장기 B consumer 용도를
+이 locator까지 확장하며 새 shared cache나 heap allocation을 만들지 않는다. 기존
+장기 총합49152B 안에 포함하므로 locator 합은1MiB 상한보다 작다. 단기 caller
+argument와 hint 검사 carrier는 B source census에 더한다. 이 변경은 영속 형식·WAL
+및 C 읽기 권한을 변경하지 않는다.
+
+중간 인수는 실제 split/root 변경 및 unlink/root collapse를 같은 cursor의 next 사이에
+넣고 fixed-q 순서·중복/누락·재시도를 대조한다. locator는 hit/miss·이동·slot 재사용·
+stale incarnation·clear·손상·가시성·실패 cleanup을 검증한다. 4배 buffer working set과
+전체 T06 변형은 [단계별 시험 계획](../plans/dev3-test-plan.md)의 최종 S5 의무다.
+직접 page shortcut, shared cache, 크기 확대 또는 원 view/table 수명 변경 때 재검토한다.
+
+
+### 08-2 공급·검증 기록
+
+`b76eabe2`의 B `LiveLocator`/slot hint와 새 SMO 사이 읽기 시험을 공급했다.
+[실행·원 실패·source별 증거](../../module-gate/evidence/dev3-08-2-stable-reads/README.md)에
+locator2개, retained/source census3개, 실제 SMO 통합2개(세 이력)의 PASS를 보존했다.
+통합은 R2, 이후 test-only census 중복 계상 수정은 R3로 구분한다. locator handle128B,
+생성 carrier360B≤512B, point LOAD34414B와 cursor LOAD34574B≤기존34588B다.
+새 영속 형식·쓰기 경로가 없으므로 기존 native fault-cut을 반복하지 않았다.
+08-2 구현·선택 인수는 완료이며 일정1일은 사람의 PR 병합 뒤 적립한다. 대형 S5와
+08-3·08-4를 완료로 바꾸지 않는다.

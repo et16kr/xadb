@@ -1809,3 +1809,197 @@ fn spl_b02_cursor_rejects_nonprogressing_leaf_bounds() {
         cursor.close().unwrap();
     }
 }
+
+/// 08-2: a physical hint never caches visibility or values. The second read
+/// hits the same slot and still captures/copies. The transaction-stamped
+/// Row20 checks below require Status and Missing-before even on a hit.
+#[test]
+fn stable_locator_rechecks_visibility_and_preserves_failure_effects() {
+    let bytes = leaf_page("leaf_a");
+    let log = RefCell::new(Vec::new());
+    let view = LiteralView::new(10, None);
+    let cancel = Cancellation::default();
+    let mut hint = SlotHint::default();
+    let mut output = [0; 16];
+    for _ in 0..2 {
+        let copy = found(read_point_located(
+            &view,
+            |_| Ok(LiteralSource::new(&bytes, &log)),
+            row(30),
+            &mut output,
+            &cancel,
+            &mut hint,
+        ));
+        assert_eq!(copy.version.row, row(30));
+        assert_eq!(&output[..13], &V300);
+        assert_eq!(
+            log.take(),
+            [Page, Leaf, Capture(30), CopyOut(30), Release(30), Finish]
+        );
+    }
+    assert!(matches!(
+        read_point_located(
+            &view,
+            |_| Ok(LiteralSource::new(&bytes, &log)),
+            row(30),
+            &mut [],
+            &cancel,
+            &mut hint
+        ),
+        Err(RowReadError::Read(ReadError::OutputTooSmall {
+            required: 13
+        }))
+    ));
+    assert_eq!(log.take(), [Page, Leaf, Capture(30), Release(30), Finish]);
+    let failed = read_point_located(
+        &view,
+        |_| Ok(LiteralSource::new(&bytes, &log).failing_finish(Effect::CallerMustResolve)),
+        row(30),
+        &mut output,
+        &cancel,
+        &mut hint,
+    );
+    assert_eq!(source_failure(failed).effect, Effect::CallerMustResolve);
+    log.take();
+    let mut corrupt = bytes.clone();
+    corrupt[1000] ^= 1;
+    assert!(
+        read_point_located(
+            &view,
+            |_| Ok(LiteralSource::new(&corrupt, &log)),
+            row(30),
+            &mut output,
+            &cancel,
+            &mut hint
+        )
+        .is_err()
+    );
+    assert_eq!(log.take(), [Page, Leaf, ReleasePage, Finish]);
+    for state in [committed(8), committed(11)] {
+        let result = read_point_located(
+            &view,
+            |_| Ok(LiteralSource::new(&bytes, &log).with_status(20, state)),
+            row(20),
+            &mut output,
+            &cancel,
+            &mut hint,
+        );
+        match state {
+            Answer::Ready(TransactionState::Committed(q)) if q.get() == 8 => {
+                found(result);
+            }
+            _ => {
+                missing(result);
+            }
+        }
+        let calls = log.take();
+        assert!(calls.contains(&Status(20)));
+        if matches!(state, Answer::Ready(TransactionState::Committed(q)) if q.get() == 11) {
+            assert!(calls.contains(&MissingBefore(20)));
+        }
+        assert_eq!(calls.last(), Some(&Finish));
+    }
+    let flushed = read_point_located(
+        &view,
+        |_| Ok(LiteralSource::new(&bytes, &log).with_page(Answer::Flush(7))),
+        row(20),
+        &mut output,
+        &cancel,
+        &mut hint,
+    );
+    assert!(matches!(
+        flushed,
+        Ok(Step::FlushRequired {
+            target: FlushTarget(7)
+        })
+    ));
+    assert_eq!(log.take(), [Page, Finish]);
+    found(read_point_located(
+        &view,
+        |_| Ok(LiteralSource::new(&bytes, &log).with_status(20, committed(8))),
+        row(20),
+        &mut output,
+        &cancel,
+        &mut hint,
+    ));
+    log.take();
+    let mine = LiteralView::new(10, Some(own()));
+    mine.revision.set(9);
+    found(read_point_located(
+        &mine,
+        |_| {
+            Ok(LiteralSource::new(&bytes, &log)
+                .with_status(20, Answer::Ready(TransactionState::Active)))
+        },
+        row(20),
+        &mut output,
+        &cancel,
+        &mut hint,
+    ));
+    assert_eq!(&output[..13], &V200);
+    log.take();
+    mine.ended.set(true);
+    assert!(
+        read_point_located(
+            &mine,
+            |_| -> Result<LiteralSource<'_>, RetentionError> {
+                panic!("ended view must precede source")
+            },
+            row(20),
+            &mut output,
+            &cancel,
+            &mut hint
+        )
+        .is_err()
+    );
+    cancel.cancel();
+    assert!(
+        read_point_located(
+            &view,
+            |_| -> Result<LiteralSource<'_>, RetentionError> {
+                panic!("cancel must precede source")
+            },
+            row(30),
+            &mut output,
+            &cancel,
+            &mut hint
+        )
+        .is_err_and(|e: RowReadError| matches!(e, RowReadError::Read(ReadError::Cancelled)))
+    );
+}
+
+/// Wrong page/generation, reused slot and eviction all fall back to the
+/// current canonical key. The source is decoded before the hint is consulted.
+#[test]
+fn stable_locator_stale_identity_slot_and_eviction_reseek() {
+    let bytes = leaf_page("leaf_a");
+    let leaf = decode_leaf(&bytes).unwrap();
+    let expected = seek_point(&leaf, row(30)).unwrap().unwrap();
+    let mut hint = SlotHint::default();
+    assert_eq!(hint.seek(&leaf, row(30)).unwrap(), Some(expected));
+    let mut stale = identity();
+    stale.page.incarnation = Generation::new(99).unwrap();
+    for identity in [stale, identity()] {
+        hint.entry = Some((
+            identity,
+            SeekPosition {
+                index: 0,
+                row: row(30),
+            },
+        ));
+        assert_eq!(hint.seek(&leaf, row(30)).unwrap(), Some(expected));
+        assert_eq!(hint.entry, Some((leaf.header().identity, expected)));
+    }
+    hint.entry = Some((
+        identity(),
+        SeekPosition {
+            index: usize::MAX,
+            row: row(30),
+        },
+    ));
+    assert_eq!(hint.seek(&leaf, row(30)).unwrap(), Some(expected));
+    hint = SlotHint::default();
+    assert_eq!(hint.seek(&leaf, row(30)).unwrap(), Some(expected));
+    assert_eq!(hint.seek(&leaf, row(31)).unwrap(), None);
+    assert_eq!(hint.entry, None);
+}

@@ -1,0 +1,49 @@
+    Blocking waiting for file lock on artifact directory
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 51s
+     Running unittests src/lib.rs (/tmp/xadb-82-target/debug/deps/engine-e4e141083d864921)
+
+running 2 tests
+S5_ROW_CENSUS kind=instrumented-native full=34588 operation=432 load=31086 B=[1816, 1952, 1680, 1968, 2008, 2144, 1872, 2160] nonload_B=5864 C=[480, 368, 392, 64, 112, 136, 432, 31086, 34588, 576, 600, 640, 4819] leaf=[9077, 16650, 8656, 30142, 19533, 7341, 7933] slack=208
+S5_ROW_PHASE instrumented-native point.catalog_load 34390 34588
+S5_ROW_PHASE instrumented-native point.row_load 34414 34588
+S5_ROW_PHASE instrumented-native point.row_route 8147 34588
+S5_ROW_PHASE instrumented-native point.status_load 34254 34588
+S5_ROW_PHASE instrumented-native point.undo_load 34006 34588
+S5_ROW_PHASE instrumented-native point.value_before_load 34334 34588
+S5_ROW_PHASE instrumented-native point.status_location 33310 34588
+S5_ROW_PHASE instrumented-native point.undo_location 33062 34588
+S5_ROW_PHASE instrumented-native point.value_before_location 33390 34588
+S5_ROW_PHASE instrumented-native cursor.catalog_load 34582 34588
+S5_ROW_PHASE instrumented-native cursor.row_load 34606 34588
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_read_census::s5r_c02_native_source_inventory' (2825) panicked at crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_census.rs:88:9:
+instrumented-native cursor.row_load: 34606>34588
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+S5_ROW_CENSUS kind=memory full=34588 operation=432 load=31086 B=[1816, 1952, 1680, 1968, 2008, 2144, 1872, 2160] nonload_B=5864 C=[480, 368, 392, 64, 112, 136, 432, 31086, 34588, 576, 600, 640, 4819] leaf=[9077, 16650, 8656, 30142, 19533, 7341, 7933] slack=208
+S5_ROW_PHASE memory point.catalog_load 34390 34588
+S5_ROW_PHASE memory point.row_load 34414 34588
+S5_ROW_PHASE memory point.row_route 8147 34588
+S5_ROW_PHASE memory point.status_load 34254 34588
+S5_ROW_PHASE memory point.undo_load 34006 34588
+S5_ROW_PHASE memory point.value_before_load 34334 34588
+S5_ROW_PHASE memory point.status_location 33310 34588
+S5_ROW_PHASE memory point.undo_location 33062 34588
+S5_ROW_PHASE memory point.value_before_location 33390 34588
+S5_ROW_PHASE memory cursor.catalog_load 34582 34588
+S5_ROW_PHASE memory cursor.row_load 34606 34588
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_read_census::s5r_c01_memory_source_inventory' (2824) panicked at crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_census.rs:88:9:
+memory cursor.row_load: 34606>34588
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_read_census::s5r_c02_native_source_inventory ... FAILED
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_read_census::s5r_c01_memory_source_inventory ... FAILED
+
+failures:
+
+failures:
+    storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_read_census::s5r_c01_memory_source_inventory
+    storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_read_census::s5r_c02_native_source_inventory
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 2432 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p xadb-engine --lib`

@@ -205,6 +205,70 @@ pub(in crate::storage) fn read_point_live<'a, 'c, 's, W: WriterNamespace>(
     )
 }
 
+/// Bounded, non-Clone locator scoped to one live statement and table. This
+/// saves slot search only: C still routes and validates the current tree.
+/// Own writes do not invalidate a hint; every call rechecks the physical key
+/// and resolves the current version at the original statement snapshot.
+pub(in crate::storage) struct LiveLocator<'r, 't, 'v, 'a, 'c, 's> {
+    view: &'r RowStatementView<'t, 'v, 'a, 'c, 's>,
+    table: &'r CheckedTable<'c, 's>,
+    credit: CallerCredit<'r, 'a, 'c, 's>,
+    hint: super::SlotHint,
+}
+impl LiveLocator<'_, '_, '_, '_, '_, '_> {
+    /// Eviction forgets only a hint, never a row or snapshot.
+    pub(in crate::storage) fn clear(&mut self) {
+        self.hint = super::SlotHint::default();
+    }
+    pub(in crate::storage) fn close(self) -> Result<(), RetentionError> {
+        self.credit.release_checked()
+    }
+}
+pub(in crate::storage) fn open_locator_live<'r, 't, 'v, 'a, 'c, 's>(
+    view: &'r RowStatementView<'t, 'v, 'a, 'c, 's>,
+    table: &'r CheckedTable<'c, 's>,
+) -> Result<LiveLocator<'r, 't, 'v, 'a, 'c, 's>, RowReadError> {
+    view.q()?;
+    let credit = view.reserve_cursor_credit()?;
+    Ok(LiveLocator {
+        view,
+        table,
+        credit,
+        hint: super::SlotHint::default(),
+    })
+}
+/// Same failure/output contract as `read_point_live`. A hint updated before
+/// failure remains only a hint; retries perform every check again.
+pub(in crate::storage) fn read_locator_live<'a, 'c, 's, W: WriterNamespace>(
+    locator: &mut LiveLocator<'_, '_, '_, 'a, 'c, 's>,
+    call: LiveCall<'_, '_, 'a, 's, 'c, '_, '_, '_, '_, W>,
+    row: RowId,
+    output: &mut [u8],
+    cancel: &Cancellation,
+) -> Result<ReadStep<PointRead<RowCopyObservation>>, RowReadError> {
+    let LiveCall {
+        port,
+        owner,
+        private,
+        residency,
+    } = call;
+    let table = locator.table;
+    super::read_point_located(
+        locator.view,
+        move |view| {
+            Ok(LiveSource {
+                operation: port.row_operation(owner, view, private)?,
+                table,
+                residency,
+            })
+        },
+        row,
+        output,
+        cancel,
+        &mut locator.hint,
+    )
+}
+
 pub(in crate::storage) struct LiveCursor<'r, 't, 'v, 'a, 'c, 's> {
     inner: RowCursor<'r, RowStatementView<'t, 'v, 'a, 'c, 's>, CheckedTable<'c, 's>>,
 }
@@ -291,15 +355,19 @@ pub(in crate::storage) fn test_load_callers<W: WriterNamespace>() -> [usize; 8] 
     let capture = 2 * r + n::<GP>() + n::<E<Option<SeekPosition>>>();
     let selecting = 6 * r + n::<E<()>>() + n::<U>() + n::<GM>() + n::<E<()>>();
     let resolve = 3 * r + 2 * n::<Z>() + n::<GS>();
-    let page = outer + point + select + capture + r + n::<GP>();
-    let status = outer + point + select + selecting + resolve + 2 * r + n::<GS>();
-    let missing = outer + point + select + selecting + 2 * r + n::<GM>();
+    // 08-2: the located entry has one extra hint argument; select/capture
+    // each retain an Option<&mut SlotHint>. Charge the larger point path.
+    let locator_extra = 4 * r;
+    let page = outer + point + select + capture + r + n::<GP>() + locator_extra;
+    let status = outer + point + select + selecting + resolve + 2 * r + n::<GS>() + locator_extra;
+    let missing = outer + point + select + selecting + 2 * r + n::<GM>() + locator_extra;
     // A tombstone (dev3-row-delete.md#read): select_before holds its source,
     // candidate, q, output, cancel and slot arguments, the before carrier and
     // the never-inlined copy's result while the adapter forwards to C's
     // value_before. Its own result is select_point's slot (`select`).
     let before_frame = 7 * r + n::<u64>() + n::<GB>() + n::<E<()>>();
-    let before = outer + point + select + selecting + before_frame + 2 * r + n::<GB>();
+    let before =
+        outer + point + select + selecting + before_frame + 2 * r + n::<GB>() + locator_extra;
     // next_live/next hold revision/check, scan/merge, and one copied slot;
     // publish_next owns take/ok_or and finish progress checks after cleanup.
     let next = 4 * r
@@ -321,7 +389,8 @@ pub(in crate::storage) fn test_load_callers<W: WriterNamespace>() -> [usize; 8] 
     // capture_next's route key and the issued leaf's upper bound
     // (dev3-tree-smo.md#current-leaf-consumers).
     let route = n::<RowId>() + n::<Option<RowId>>();
-    let delta = cursor_outer + next + scan + route + 2 * r - outer - point - select;
+    // The cursor has no locator argument; remove the point-only addition.
+    let delta = cursor_outer + next + scan + route + 2 * r - outer - point - select - locator_extra;
     [
         page,
         status,
@@ -353,4 +422,6 @@ pub(in crate::storage) fn test_nonload_caller<W: WriterNamespace>() -> usize {
         + 8 * n::<Result<(), RowReadError>>()
         + 32 * n::<&()>()
         + 512
+        // Hint comparison/seek runs only after page LOAD returns.
+        + 2 * n::<super::SlotHint>()
 }

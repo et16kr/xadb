@@ -2061,6 +2061,12 @@ impl<'t,'v,'a,'c,'s> RowStatementView<'t,'v,'a,'c,'s> {
 
 **2026-10-29 수정([C0 Row 경계](#c0-row-boundary)).** 위 signature의 반환을 `CallerCredit<'r,'a,'c,'s>`(`&'r self`)로 좁혔다. `'v`를 그대로 돌려주면 credit이 view·거래보다 오래 남을 수 있고, 그 상태로 거래를 끝내면 slot charge 검산이 Invariant로 fence한다. Catalog Commit에서는 durable Commit·Q 공개 뒤의 거짓 Fatal이 된다. credit이 view를 빌리게 하여 credit이 남은 동안 statement·거래 종료를 컴파일 단계에서 막는다. cursor가 view borrow와 credit을 함께 보유한다는 의미와 charge·Capacity 규칙은 그대로다. `mem::forget`으로 버린 credit은 여전히 거래 종료 때 fence한다.
 
+**08-2 확장:** [stable locator](dev3-tree-smo.md#stable-reads)도 원 view/table을 borrow하는
+B 장기 consumer로서 같은 `reserve_cursor_credit`의512B를 예약한다. 한 항목 physical
+slot hint와 생성 carrier를 이 charge에 포함하며 별도 shared cache·heap을 만들지 않는다.
+close/Drop·slotgen·총합49152B·원 view 수명은 cursor와 같다. locator는 순회 진행점이
+없어 own mutation revision으로 무효화하지 않고 매 호출 현재 source/가시성을 다시 판정한다.
+
 credit은 storage authority가 아니므로512B보다 작은 반환 row value/output을 새 owner로 취급하지 않는다. point/cursor의 반환 결과는 독립 pin/snapshot/transaction 권한을 가지지 않는 값과 caller buffer다. 그 결과와 오류·operation carrier의 실제 동시 크기는 해당 함수 source census에 포함하지만 result마다 registry/credit layer를 추가하지 않는다. cursor clone은 허용하지 않으며 새 cursor를 생성하려면 새 credit을 취득한다.
 
 isolation header는 aggregate-used, slot12..16은 source-owned-bytes를 보유한다. release는 same open/slotgen과 checked subtraction을 검사하는 no-I/O leaf 동작이다. cursor는 view를, view는 transaction을 borrow하므로 transaction을 소비 종료하기 전 cursor/view가 모두 끝나야 한다. 정상 종료는 capsule의 마지막512B를 반환한 뒤 source-owned0에서만 slot을 Free로 만들고 slotgen을 갱신한다. 별도 Closing 상태나 종료 후 남은 result lease는 없다. active Drop과 poison/underflow는 원 cleanup/fence 정책을 유지하며 존재하지 않는 capacity를 만들어내지 않는다.

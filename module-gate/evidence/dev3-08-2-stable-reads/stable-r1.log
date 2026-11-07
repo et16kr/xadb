@@ -1,0 +1,28 @@
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2m 07s
+     Running unittests src/lib.rs (/tmp/xadb-82-target/debug/deps/engine-e4e141083d864921)
+
+running 5 tests
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::unlink_rows::stable_reads_cursor_crosses_live_unlink_and_root_collapse' (2507) panicked at crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs:488:59:
+missing XADB_CATALOG_SOURCE_SHA256
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::stable_reads::stable_reads_cursor_and_locator_cross_live_root_split' (2506) panicked at crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory.rs:488:59:
+missing XADB_CATALOG_SOURCE_SHA256
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::unlink_rows::stable_reads_cursor_crosses_live_unlink_and_root_collapse ... FAILED
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::stable_reads::stable_reads_cursor_and_locator_cross_live_root_split ... FAILED
+STABLE_LOCATOR handle=128 constructor_peak=360 charge=512
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_read_census::stable_locator_retained_credit_bound ... ok
+test storage::row::read::driver::tests::stable_locator_stale_identity_slot_and_eviction_reseek ... ok
+test storage::row::read::driver::tests::stable_locator_rechecks_visibility_and_preserves_failure_effects ... ok
+
+failures:
+
+failures:
+    storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::stable_reads::stable_reads_cursor_and_locator_cross_live_root_split
+    storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::unlink_rows::stable_reads_cursor_crosses_live_unlink_and_root_collapse
+
+test result: FAILED. 3 passed; 2 failed; 0 ignored; 0 measured; 2429 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p xadb-engine --lib`

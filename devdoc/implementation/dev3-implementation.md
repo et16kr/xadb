@@ -1,5 +1,11 @@
 # DEV3 구현·검증 현황
 
+2026-11-06: [일정08-2 stable cursor/locator](../contracts/dev3-tree-smo.md#stable-reads)의
+구현·선택 검증·독립 D2를 완료했다(PR 병합 대기). B의 bounded slot hint와 실제
+split/unlink/root collapse 사이 cursor 시험이다. [실행 증거](../../module-gate/evidence/dev3-08-2-stable-reads/README.md)에
+선택7개(통합 세 이력 포함), 기존512B/34588B 상한, 원 실패와 source별 결과를 보존한다.
+전체 DEV3/S5와08-3·08-4는 남는다. 아래의08-2 미완료 표기는 이 공급 전 기록이다.
+
 2026-11-04 [일정08 첫 구조 후보 공급](../evidence/dev3-tree-structure-20261104.md):
 부모 separator 삽입·child 제거, unary Collapse, leaf/internal 분할과 새 root의
 순수 이미지 후보를 구현했다. 신규 고유9개 선택 PASS·독립 D2/D1 ACCEPT다.

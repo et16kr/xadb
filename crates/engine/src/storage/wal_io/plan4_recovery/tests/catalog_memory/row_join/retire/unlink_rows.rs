@@ -2530,3 +2530,143 @@ fn unl_review_root_collapse_sync_error_fences_and_recovers() {
 #[cfg(target_os = "linux")]
 #[path = "unlink_native.rs"]
 mod native;
+
+/// 08-2: deletion commits before the snapshot; its delayed prune/unlink
+/// happens between two calls on the same cursor. Both a three-child unlink
+/// and the final two-child root collapse must preserve ordered results.
+#[test]
+fn stable_reads_cursor_crosses_live_unlink_and_root_collapse() {
+    for count in [8, 15] {
+        case_within(
+            "STABLE-UNLINK",
+            std::time::Duration::from_secs(1200),
+            || {
+                let oracle = Oracle::new();
+                with_fresh!(
+                    oracle,
+                    frames = 56,
+                    |live,
+                     owner,
+                     flusher,
+                     status,
+                     undo,
+                     private,
+                     reader_private,
+                     core,
+                     fence,
+                     state| {
+                        let _ = state;
+                        let (row_status, _) = create_table_with(
+                            live,
+                            owner,
+                            flusher,
+                            status,
+                            undo,
+                            private,
+                            true,
+                            &spec(),
+                        );
+                        retire_create!(live, owner, private);
+                        for _ in 0..18 {
+                            system_init(live, owner, flusher, true);
+                        }
+                        let (mut writer, reader, mut flush) = live.split();
+                        let (out, slots) = autocommit!(
+                            &mut writer,
+                            owner,
+                            flush,
+                            flusher,
+                            reader,
+                            reader_private,
+                            &row_status,
+                            private,
+                            6,
+                            bigs(0..count)
+                        );
+                        assert_eq!(committed(out), (2, count));
+                        let keys = rows_of(&slots);
+                        drains!(&mut writer, owner, flush, flusher, private);
+                        let before = writer.catalog_test_with_pool(reachable);
+                        let doomed = before[0].1.clone();
+                        for (at, row) in doomed.iter().enumerate() {
+                            let (out, _) = delete!(
+                                &mut writer,
+                                owner,
+                                flush,
+                                flusher,
+                                reader,
+                                reader_private,
+                                &row_status,
+                                private,
+                                *row
+                            );
+                            assert_eq!(committed(out), (3 + at as u64, 1));
+                            if at + 1 < doomed.len() {
+                                drains!(&mut writer, owner, flush, flusher, private);
+                            }
+                        }
+                        let mut b_owner = core.try_owner(OwnerRole::Foreground).unwrap();
+                        let b = &mut b_owner;
+                        let read =
+                            read_only!(writer, b, IsolationLevel::ReadCommitted, reader_private);
+                        let view = writer.begin_statement(b, &read).unwrap();
+                        let table = issue_table!(reader, b, view, reader_private, flush, flusher);
+                        let mut cursor = open_cursor_live(&view, &table, None, None).unwrap();
+                        let expected = kept_values(&keys, &doomed);
+                        let mut output = [0; 4096];
+                        let mut got = Vec::new();
+                        for at in 0..expected.len() {
+                            let step = next_live(
+                                &mut cursor,
+                                ReadCall {
+                                    port: &reader,
+                                    owner: b,
+                                    private: reader_private,
+                                    residency: &mut Plan4ResidencyCursor::new(),
+                                },
+                                &mut output,
+                                &Cancellation::default(),
+                            )
+                            .unwrap();
+                            let ReadStep::Ready(CursorStep::Row(row)) = step else {
+                                panic!("expected row");
+                            };
+                            got.push((row.version().row.get(), tag(&output, row.len())));
+                            if at == 0 {
+                                let drained = drains!(&mut writer, owner, flush, flusher, private);
+                                assert_eq!(drained.iter().map(|d| d.unlinked).sum::<u8>(), 1);
+                                assert_eq!(
+                                    writer.catalog_test_with_pool(reachable).len(),
+                                    before.len() - 1
+                                );
+                                assert_eq!(
+                                    writer.catalog_test_with_pool(anchor_of).1,
+                                    if count == 8 { 0 } else { 1 }
+                                );
+                            }
+                        }
+                        assert_eq!(got, expected);
+                        assert!(matches!(
+                            next_live(
+                                &mut cursor,
+                                ReadCall {
+                                    port: &reader,
+                                    owner: b,
+                                    private: reader_private,
+                                    residency: &mut Plan4ResidencyCursor::new()
+                                },
+                                &mut output,
+                                &Cancellation::default()
+                            ),
+                            Ok(ReadStep::Ready(CursorStep::End))
+                        ));
+                        cursor.close().unwrap();
+                        assert!(writer.finish_statement(b, view).is_ok());
+                        assert!(writer.finish_read_only(b, read).is_ok());
+                        assert!(!fence.is_fenced());
+                    }
+                );
+            },
+        );
+    }
+}

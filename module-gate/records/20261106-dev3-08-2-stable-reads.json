@@ -1,0 +1,107 @@
+{
+  "schema": "XADB_MODULE_GATE_RECORD_V1",
+  "change": "DEV3 08-2: stable cursor across live SMO and bounded per-view physical slot locator",
+  "rust_tests": [
+    {
+      "paths": [
+        "crates/engine/src/storage/row/read/driver.rs",
+        "crates/engine/src/storage/row/read/driver/live.rs",
+        "crates/engine/src/storage/row/read/driver/tests.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_census.rs"
+      ],
+      "reason": "B-only locator, driver, and source/retained carrier accounting; available in head and independent C+B export.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/row/read/driver/tests.rs",
+          "case": "storage::row::read::driver::tests::stable_locator_rechecks_visibility_and_preserves_failure_effects",
+          "sources": [
+            "head",
+            "export-b"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/row/read/driver/tests.rs",
+          "case": "storage::row::read::driver::tests::stable_locator_stale_identity_slot_and_eviction_reseek",
+          "sources": [
+            "head",
+            "export-b"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_census.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_read_census::stable_locator_retained_credit_bound",
+          "sources": [
+            "head",
+            "export-b"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_census.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_read_census::s5r_c01_memory_source_inventory",
+          "sources": [
+            "head",
+            "export-b"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_census.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_read_census::s5r_c02_native_source_inventory",
+          "sources": [
+            "head",
+            "export-b"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/auto_split.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/stable_reads.rs"
+      ],
+      "reason": "Actual A+C mutations between calls to the same B cursor; these JOIN cases require both consumers and run only in head.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/stable_reads.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::stable_reads::stable_reads_cursor_and_locator_cross_live_root_split",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::catalog_memory::row_join::retire::autocommit::update::split_rows::auto_split::unlink_rows::stable_reads_cursor_crosses_live_unlink_and_root_collapse",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    }
+  ],
+  "reviews": [
+    {
+      "id": "stable-reads-d2",
+      "class": "D2",
+      "scopes": [
+        "policy"
+      ],
+      "author": "/root",
+      "reviewer": "/root/review_82_scope",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/row/read/driver.rs": "ba2ac95e1e70816318e6f1a9bf5bb9a93ed303e1",
+        "crates/engine/src/storage/row/read/driver/live.rs": "40ca42f94b291a135ccf07b5a861fa08cbb7f832",
+        "crates/engine/src/storage/row/read/driver/tests.rs": "a65266874bb74bc818247319cf56ff2f71417d60",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/auto_split.rs": "275afd7ec87487210d51b8da81d1a317285f4605",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/stable_reads.rs": "92cda379303e8888b1b55cf5493bbb4108f07111",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs": "471f761191a456166f9936ed13ee588d7137d1ca",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_census.rs": "d02ddec97cf5352f0159e296b986e8d38b6e9900",
+        "devdoc/contracts/dev3-module-boundaries.md": "5468e95b4696bb1c5c9f07624da531b63fffd24a"
+      },
+      "log": "module-gate/evidence/dev3-08-2-stable-reads/review.md"
+    }
+  ],
+  "na": [],
+  "attested": []
+}

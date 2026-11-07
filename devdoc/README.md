@@ -1,5 +1,12 @@
 # XADB 개발 문서
 
+현재 작업은 [DEV3 08-2 stable cursor/locator](contracts/dev3-tree-smo.md#stable-reads)다.
+PR #59가 병합된 `be52fc67`에서 `codex/dev3-08-2-stable-reads`로 진행한다.
+기존 full-key cursor를 유지하고, 현재 C route 뒤에만 사용하는 B의 한 항목 slot hint,
+실제 SMO 사이의 cursor 인수, caller credit/source 회계를 공급하고 선택7개 검증과
+독립 D2를 완료했다(PR 병합 대기). 아래 U4 문단은
+직전 08-1 작업 기록이며 08-3·08-4와 전체 DEV3/S5는 남는다.
+
 2026-11-04 [개선 계획의 대용량·고성능·고가용성 검토](evidence/dev3-scalability-ha-plan-review-20261104.md)는 PR #51의 A0–A7과 DEV8 HA 계획을 대조한 후속 리뷰다. [PR #52 댓글 재검토](evidence/dev3-scalability-ha-plan-review-20261104.md#comment-followup)를 반영해 고정 profile, checkpoint·audit의 쓰기 중단 영향, 사건 발생부터 strict 쓰기 복구까지의 기준과 D2/D3 경계를 보강했다. 현재 계약·작업 순서·완료 상태는 변경하지 않는다.
 
 2026-11-04 [개선 계획 구조 검토(Claude)](evidence/dev3-improved-plan-structural-review-20261104.md)는 같은 A0–A7에 대해 A2–A4의 구조 목표, buffer manager 확장, 단일 노드의 DB 전체 쓰기 정지 경로, A2와 DEV8 HA의 연결, 제품 목표의 사용자 결정을 권고한다. 현재 계약·작업 순서·완료 상태는 변경하지 않는다.

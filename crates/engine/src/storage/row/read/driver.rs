@@ -16,6 +16,7 @@ use super::{
 };
 use crate::storage::{
     disk::RetentionError,
+    page::PageIdentity,
     row_record::RecordVersion,
     transaction_record::{TransactionState, TxnRef, VersionStamp},
     tree_page::TreePageView,
@@ -368,7 +369,15 @@ fn read_point<'r, V: ReadView, S: ReadSource>(
     }
     let mut source = open(view)?;
     let mut copied_slot = None;
-    let selected = select_point(&mut source, sample, row, output, cancel, &mut copied_slot);
+    let selected = select_point(
+        &mut source,
+        sample,
+        row,
+        output,
+        cancel,
+        &mut copied_slot,
+        None,
+    );
     let selected = merge(selected, source.finish())?;
     publish_point(selected, copied_slot)
 }
@@ -406,6 +415,7 @@ fn capture_point<S: ReadSource>(
     source: &mut S,
     row: RowId,
     candidate: &mut Option<S::Candidate>,
+    hint: Option<&mut SlotHint>,
 ) -> Result<Step<Option<SeekPosition>, S::Target>, RowReadError> {
     let page = match source.page(row)? {
         Step::Ready(page) => page,
@@ -413,7 +423,7 @@ fn capture_point<S: ReadSource>(
             return Ok(Step::FlushRequired { target });
         }
     };
-    capture_point_page(page, row, candidate).map(Step::Ready)
+    capture_point_page(page, row, candidate, hint).map(Step::Ready)
 }
 
 #[inline(never)]
@@ -421,9 +431,14 @@ fn capture_point_page<P: SearchPage>(
     page: P,
     row: RowId,
     candidate: &mut Option<P::Candidate>,
+    hint: Option<&mut SlotHint>,
 ) -> Result<Option<SeekPosition>, RowReadError> {
     let selected = match page.leaf() {
-        Ok(leaf) => seek_point(&leaf, row).map_err(RowReadError::from),
+        Ok(leaf) => match hint {
+            Some(hint) => hint.seek(&leaf, row),
+            None => seek_point(&leaf, row),
+        }
+        .map_err(RowReadError::from),
         Err(error) => Err(error.into()),
     };
     let at = match selected {
@@ -437,6 +452,7 @@ fn capture_point_page<P: SearchPage>(
 }
 
 #[inline(never)]
+#[allow(clippy::too_many_arguments)] // One optional physical hint; visibility ownership is unchanged.
 fn select_point<S: ReadSource>(
     source: &mut S,
     sample: ViewSample,
@@ -444,9 +460,10 @@ fn select_point<S: ReadSource>(
     output: &mut [u8],
     cancel: &Cancellation,
     copied_slot: &mut Option<S::Copied>,
+    hint: Option<&mut SlotHint>,
 ) -> Result<Step<bool, S::Target>, RowReadError> {
     let mut candidate = None;
-    let at = match capture_point(source, row, &mut candidate)? {
+    let at = match capture_point(source, row, &mut candidate, hint)? {
         Step::Ready(Some(at)) => at,
         Step::Ready(None) => return Ok(Step::Ready(false)),
         Step::FlushRequired { target } => {
@@ -463,6 +480,69 @@ fn select_point<S: ReadSource>(
         copied_slot,
     );
     release_selected(source, &mut candidate, selected)
+}
+
+/// One replaceable slot hint, never source or visibility authority. The live
+/// holder borrows the exact view/table and pays a 512-byte caller credit.
+/// Routing and page validation always precede this check; even a hit still
+/// captures the row and runs the ordinary Status/Undo visibility path.
+#[derive(Default)]
+struct SlotHint {
+    entry: Option<(PageIdentity, SeekPosition)>,
+}
+impl SlotHint {
+    fn seek(
+        &mut self,
+        leaf: &TreePageView<'_>,
+        row: RowId,
+    ) -> Result<Option<SeekPosition>, ReadError> {
+        super::require_row_leaf(leaf)?;
+        if let Some((identity, position)) = self.entry
+            && identity == leaf.header().identity
+            && position.row == row
+            && position.index < leaf.len()
+        {
+            // A slot can be reused or shifted without a page incarnation
+            // change. Decode errors are errors, never cache misses.
+            let current = super::at(leaf, position.index)?;
+            if current.row == row {
+                return Ok(Some(current));
+            }
+        }
+        let selected = seek_point(leaf, row)?;
+        self.entry = selected.map(|position| (leaf.header().identity, position));
+        Ok(selected)
+    }
+}
+
+/// A point read with a bounded physical hint. It deliberately shares all
+/// visibility, copy, error and checked cleanup logic with an uncached read.
+#[inline(never)]
+fn read_point_located<'r, V: ReadView, S: ReadSource>(
+    view: &'r V,
+    open: impl FnOnce(&'r V) -> Result<S, RetentionError>,
+    row: RowId,
+    output: &mut [u8],
+    cancel: &Cancellation,
+    hint: &mut SlotHint,
+) -> Result<Step<PointRead<S::Copied>, S::Target>, RowReadError> {
+    let sample = ViewSample::of(view)?;
+    if cancelled(cancel) {
+        return Err(ReadError::Cancelled.into());
+    }
+    let mut source = open(view)?;
+    let mut copied_slot = None;
+    let selected = select_point(
+        &mut source,
+        sample,
+        row,
+        output,
+        cancel,
+        &mut copied_slot,
+        Some(hint),
+    );
+    let selected = merge(selected, source.finish())?;
+    publish_point(selected, copied_slot)
 }
 
 enum Scan {

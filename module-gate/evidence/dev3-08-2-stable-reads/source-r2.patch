@@ -1,0 +1,706 @@
+diff --git a/crates/engine/src/storage/row/read/driver.rs b/crates/engine/src/storage/row/read/driver.rs
+index 2b237618..ba2ac95e 100644
+--- a/crates/engine/src/storage/row/read/driver.rs
++++ b/crates/engine/src/storage/row/read/driver.rs
+@@ -16,6 +16,7 @@ use super::{
+ };
+ use crate::storage::{
+     disk::RetentionError,
++    page::PageIdentity,
+     row_record::RecordVersion,
+     transaction_record::{TransactionState, TxnRef, VersionStamp},
+     tree_page::TreePageView,
+@@ -368,7 +369,15 @@ fn read_point<'r, V: ReadView, S: ReadSource>(
+     }
+     let mut source = open(view)?;
+     let mut copied_slot = None;
+-    let selected = select_point(&mut source, sample, row, output, cancel, &mut copied_slot);
++    let selected = select_point(
++        &mut source,
++        sample,
++        row,
++        output,
++        cancel,
++        &mut copied_slot,
++        None,
++    );
+     let selected = merge(selected, source.finish())?;
+     publish_point(selected, copied_slot)
+ }
+@@ -406,6 +415,7 @@ fn capture_point<S: ReadSource>(
+     source: &mut S,
+     row: RowId,
+     candidate: &mut Option<S::Candidate>,
++    hint: Option<&mut SlotHint>,
+ ) -> Result<Step<Option<SeekPosition>, S::Target>, RowReadError> {
+     let page = match source.page(row)? {
+         Step::Ready(page) => page,
+@@ -413,7 +423,7 @@ fn capture_point<S: ReadSource>(
+             return Ok(Step::FlushRequired { target });
+         }
+     };
+-    capture_point_page(page, row, candidate).map(Step::Ready)
++    capture_point_page(page, row, candidate, hint).map(Step::Ready)
+ }
+ 
+ #[inline(never)]
+@@ -421,9 +431,14 @@ fn capture_point_page<P: SearchPage>(
+     page: P,
+     row: RowId,
+     candidate: &mut Option<P::Candidate>,
++    hint: Option<&mut SlotHint>,
+ ) -> Result<Option<SeekPosition>, RowReadError> {
+     let selected = match page.leaf() {
+-        Ok(leaf) => seek_point(&leaf, row).map_err(RowReadError::from),
++        Ok(leaf) => match hint {
++            Some(hint) => hint.seek(&leaf, row),
++            None => seek_point(&leaf, row),
++        }
++        .map_err(RowReadError::from),
+         Err(error) => Err(error.into()),
+     };
+     let at = match selected {
+@@ -437,6 +452,7 @@ fn capture_point_page<P: SearchPage>(
+ }
+ 
+ #[inline(never)]
++#[allow(clippy::too_many_arguments)] // One optional physical hint; visibility ownership is unchanged.
+ fn select_point<S: ReadSource>(
+     source: &mut S,
+     sample: ViewSample,
+@@ -444,9 +460,10 @@ fn select_point<S: ReadSource>(
+     output: &mut [u8],
+     cancel: &Cancellation,
+     copied_slot: &mut Option<S::Copied>,
++    hint: Option<&mut SlotHint>,
+ ) -> Result<Step<bool, S::Target>, RowReadError> {
+     let mut candidate = None;
+-    let at = match capture_point(source, row, &mut candidate)? {
++    let at = match capture_point(source, row, &mut candidate, hint)? {
+         Step::Ready(Some(at)) => at,
+         Step::Ready(None) => return Ok(Step::Ready(false)),
+         Step::FlushRequired { target } => {
+@@ -465,6 +482,69 @@ fn select_point<S: ReadSource>(
+     release_selected(source, &mut candidate, selected)
+ }
+ 
++/// One replaceable slot hint, never source or visibility authority. The live
++/// holder borrows the exact view/table and pays a 512-byte caller credit.
++/// Routing and page validation always precede this check; even a hit still
++/// captures the row and runs the ordinary Status/Undo visibility path.
++#[derive(Default)]
++struct SlotHint {
++    entry: Option<(PageIdentity, SeekPosition)>,
++}
++impl SlotHint {
++    fn seek(
++        &mut self,
++        leaf: &TreePageView<'_>,
++        row: RowId,
++    ) -> Result<Option<SeekPosition>, ReadError> {
++        super::require_row_leaf(leaf)?;
++        if let Some((identity, position)) = self.entry
++            && identity == leaf.header().identity
++            && position.row == row
++            && position.index < leaf.len()
++        {
++            // A slot can be reused or shifted without a page incarnation
++            // change. Decode errors are errors, never cache misses.
++            let current = super::at(leaf, position.index)?;
++            if current.row == row {
++                return Ok(Some(current));
++            }
++        }
++        let selected = seek_point(leaf, row)?;
++        self.entry = selected.map(|position| (leaf.header().identity, position));
++        Ok(selected)
++    }
++}
++
++/// A point read with a bounded physical hint. It deliberately shares all
++/// visibility, copy, error and checked cleanup logic with an uncached read.
++#[inline(never)]
++fn read_point_located<'r, V: ReadView, S: ReadSource>(
++    view: &'r V,
++    open: impl FnOnce(&'r V) -> Result<S, RetentionError>,
++    row: RowId,
++    output: &mut [u8],
++    cancel: &Cancellation,
++    hint: &mut SlotHint,
++) -> Result<Step<PointRead<S::Copied>, S::Target>, RowReadError> {
++    let sample = ViewSample::of(view)?;
++    if cancelled(cancel) {
++        return Err(ReadError::Cancelled.into());
++    }
++    let mut source = open(view)?;
++    let mut copied_slot = None;
++    let selected = select_point(
++        &mut source,
++        sample,
++        row,
++        output,
++        cancel,
++        &mut copied_slot,
++        Some(hint),
++    );
++    let selected = merge(selected, source.finish())?;
++    publish_point(selected, copied_slot)
++}
++
+ enum Scan {
+     Returned(RowId),
+     End,
+diff --git a/crates/engine/src/storage/row/read/driver/live.rs b/crates/engine/src/storage/row/read/driver/live.rs
+index be8b3faa..d8a48042 100644
+--- a/crates/engine/src/storage/row/read/driver/live.rs
++++ b/crates/engine/src/storage/row/read/driver/live.rs
+@@ -205,6 +205,70 @@ pub(in crate::storage) fn read_point_live<'a, 'c, 's, W: WriterNamespace>(
+     )
+ }
+ 
++/// Bounded, non-Clone locator scoped to one live statement and table. This
++/// saves slot search only: C still routes and validates the current tree.
++/// Own writes do not invalidate a hint; every call rechecks the physical key
++/// and resolves the current version at the original statement snapshot.
++pub(in crate::storage) struct LiveLocator<'r, 't, 'v, 'a, 'c, 's> {
++    view: &'r RowStatementView<'t, 'v, 'a, 'c, 's>,
++    table: &'r CheckedTable<'c, 's>,
++    credit: CallerCredit<'r, 'a, 'c, 's>,
++    hint: super::SlotHint,
++}
++impl LiveLocator<'_, '_, '_, '_, '_, '_> {
++    /// Eviction forgets only a hint, never a row or snapshot.
++    pub(in crate::storage) fn clear(&mut self) {
++        self.hint = super::SlotHint::default();
++    }
++    pub(in crate::storage) fn close(self) -> Result<(), RetentionError> {
++        self.credit.release_checked()
++    }
++}
++pub(in crate::storage) fn open_locator_live<'r, 't, 'v, 'a, 'c, 's>(
++    view: &'r RowStatementView<'t, 'v, 'a, 'c, 's>,
++    table: &'r CheckedTable<'c, 's>,
++) -> Result<LiveLocator<'r, 't, 'v, 'a, 'c, 's>, RowReadError> {
++    view.q()?;
++    let credit = view.reserve_cursor_credit()?;
++    Ok(LiveLocator {
++        view,
++        table,
++        credit,
++        hint: super::SlotHint::default(),
++    })
++}
++/// Same failure/output contract as `read_point_live`. A hint updated before
++/// failure remains only a hint; retries perform every check again.
++pub(in crate::storage) fn read_locator_live<'a, 'c, 's, W: WriterNamespace>(
++    locator: &mut LiveLocator<'_, '_, '_, 'a, 'c, 's>,
++    call: LiveCall<'_, '_, 'a, 's, 'c, '_, '_, '_, '_, W>,
++    row: RowId,
++    output: &mut [u8],
++    cancel: &Cancellation,
++) -> Result<ReadStep<PointRead<RowCopyObservation>>, RowReadError> {
++    let LiveCall {
++        port,
++        owner,
++        private,
++        residency,
++    } = call;
++    let table = locator.table;
++    super::read_point_located(
++        locator.view,
++        move |view| {
++            Ok(LiveSource {
++                operation: port.row_operation(owner, view, private)?,
++                table,
++                residency,
++            })
++        },
++        row,
++        output,
++        cancel,
++        &mut locator.hint,
++    )
++}
++
+ pub(in crate::storage) struct LiveCursor<'r, 't, 'v, 'a, 'c, 's> {
+     inner: RowCursor<'r, RowStatementView<'t, 'v, 'a, 'c, 's>, CheckedTable<'c, 's>>,
+ }
+@@ -291,15 +355,19 @@ pub(in crate::storage) fn test_load_callers<W: WriterNamespace>() -> [usize; 8]
+     let capture = 2 * r + n::<GP>() + n::<E<Option<SeekPosition>>>();
+     let selecting = 6 * r + n::<E<()>>() + n::<U>() + n::<GM>() + n::<E<()>>();
+     let resolve = 3 * r + 2 * n::<Z>() + n::<GS>();
+-    let page = outer + point + select + capture + r + n::<GP>();
+-    let status = outer + point + select + selecting + resolve + 2 * r + n::<GS>();
+-    let missing = outer + point + select + selecting + 2 * r + n::<GM>();
++    // 08-2: the located entry has one extra hint argument; select/capture
++    // each retain an Option<&mut SlotHint>. Charge the larger point path.
++    let locator_extra = 4 * r;
++    let page = outer + point + select + capture + r + n::<GP>() + locator_extra;
++    let status = outer + point + select + selecting + resolve + 2 * r + n::<GS>() + locator_extra;
++    let missing = outer + point + select + selecting + 2 * r + n::<GM>() + locator_extra;
+     // A tombstone (dev3-row-delete.md#read): select_before holds its source,
+     // candidate, q, output, cancel and slot arguments, the before carrier and
+     // the never-inlined copy's result while the adapter forwards to C's
+     // value_before. Its own result is select_point's slot (`select`).
+     let before_frame = 7 * r + n::<u64>() + n::<GB>() + n::<E<()>>();
+-    let before = outer + point + select + selecting + before_frame + 2 * r + n::<GB>();
++    let before =
++        outer + point + select + selecting + before_frame + 2 * r + n::<GB>() + locator_extra;
+     // next_live/next hold revision/check, scan/merge, and one copied slot;
+     // publish_next owns take/ok_or and finish progress checks after cleanup.
+     let next = 4 * r
+@@ -353,4 +421,6 @@ pub(in crate::storage) fn test_nonload_caller<W: WriterNamespace>() -> usize {
+         + 8 * n::<Result<(), RowReadError>>()
+         + 32 * n::<&()>()
+         + 512
++        // Hint comparison/seek runs only after page LOAD returns.
++        + 2 * n::<super::SlotHint>()
+ }
+diff --git a/crates/engine/src/storage/row/read/driver/tests.rs b/crates/engine/src/storage/row/read/driver/tests.rs
+index 16b5e869..a6526687 100644
+--- a/crates/engine/src/storage/row/read/driver/tests.rs
++++ b/crates/engine/src/storage/row/read/driver/tests.rs
+@@ -1809,3 +1809,197 @@ fn spl_b02_cursor_rejects_nonprogressing_leaf_bounds() {
+         cursor.close().unwrap();
+     }
+ }
++
++/// 08-2: a physical hint never caches visibility or values. The second read
++/// hits the same slot and still captures/copies. The transaction-stamped
++/// Row20 checks below require Status and Missing-before even on a hit.
++#[test]
++fn stable_locator_rechecks_visibility_and_preserves_failure_effects() {
++    let bytes = leaf_page("leaf_a");
++    let log = RefCell::new(Vec::new());
++    let view = LiteralView::new(10, None);
++    let cancel = Cancellation::default();
++    let mut hint = SlotHint::default();
++    let mut output = [0; 16];
++    for _ in 0..2 {
++        let copy = found(read_point_located(
++            &view,
++            |_| Ok(LiteralSource::new(&bytes, &log)),
++            row(30),
++            &mut output,
++            &cancel,
++            &mut hint,
++        ));
++        assert_eq!(copy.version.row, row(30));
++        assert_eq!(&output[..13], &V300);
++        assert_eq!(
++            log.take(),
++            [Page, Leaf, Capture(30), CopyOut(30), Release(30), Finish]
++        );
++    }
++    assert!(matches!(
++        read_point_located(
++            &view,
++            |_| Ok(LiteralSource::new(&bytes, &log)),
++            row(30),
++            &mut [],
++            &cancel,
++            &mut hint
++        ),
++        Err(RowReadError::Read(ReadError::OutputTooSmall {
++            required: 13
++        }))
++    ));
++    assert_eq!(log.take(), [Page, Leaf, Capture(30), Release(30), Finish]);
++    let failed = read_point_located(
++        &view,
++        |_| Ok(LiteralSource::new(&bytes, &log).failing_finish(Effect::CallerMustResolve)),
++        row(30),
++        &mut output,
++        &cancel,
++        &mut hint,
++    );
++    assert_eq!(source_failure(failed).effect, Effect::CallerMustResolve);
++    log.take();
++    let mut corrupt = bytes.clone();
++    corrupt[1000] ^= 1;
++    assert!(
++        read_point_located(
++            &view,
++            |_| Ok(LiteralSource::new(&corrupt, &log)),
++            row(30),
++            &mut output,
++            &cancel,
++            &mut hint
++        )
++        .is_err()
++    );
++    assert_eq!(log.take(), [Page, Leaf, ReleasePage, Finish]);
++    for state in [committed(8), committed(11)] {
++        let result = read_point_located(
++            &view,
++            |_| Ok(LiteralSource::new(&bytes, &log).with_status(20, state)),
++            row(20),
++            &mut output,
++            &cancel,
++            &mut hint,
++        );
++        match state {
++            Answer::Ready(TransactionState::Committed(q)) if q.get() == 8 => {
++                found(result);
++            }
++            _ => {
++                missing(result);
++            }
++        }
++        let calls = log.take();
++        assert!(calls.contains(&Status(20)));
++        if matches!(state, Answer::Ready(TransactionState::Committed(q)) if q.get() == 11) {
++            assert!(calls.contains(&MissingBefore(20)));
++        }
++        assert_eq!(calls.last(), Some(&Finish));
++    }
++    let flushed = read_point_located(
++        &view,
++        |_| Ok(LiteralSource::new(&bytes, &log).with_page(Answer::Flush(7))),
++        row(20),
++        &mut output,
++        &cancel,
++        &mut hint,
++    );
++    assert!(matches!(
++        flushed,
++        Ok(Step::FlushRequired {
++            target: FlushTarget(7)
++        })
++    ));
++    assert_eq!(log.take(), [Page, Finish]);
++    found(read_point_located(
++        &view,
++        |_| Ok(LiteralSource::new(&bytes, &log).with_status(20, committed(8))),
++        row(20),
++        &mut output,
++        &cancel,
++        &mut hint,
++    ));
++    log.take();
++    let mine = LiteralView::new(10, Some(own()));
++    mine.revision.set(9);
++    found(read_point_located(
++        &mine,
++        |_| {
++            Ok(LiteralSource::new(&bytes, &log)
++                .with_status(20, Answer::Ready(TransactionState::Active)))
++        },
++        row(20),
++        &mut output,
++        &cancel,
++        &mut hint,
++    ));
++    assert_eq!(&output[..13], &V200);
++    log.take();
++    mine.ended.set(true);
++    assert!(
++        read_point_located(
++            &mine,
++            |_| -> Result<LiteralSource<'_>, RetentionError> {
++                panic!("ended view must precede source")
++            },
++            row(20),
++            &mut output,
++            &cancel,
++            &mut hint
++        )
++        .is_err()
++    );
++    cancel.cancel();
++    assert!(
++        read_point_located(
++            &view,
++            |_| -> Result<LiteralSource<'_>, RetentionError> {
++                panic!("cancel must precede source")
++            },
++            row(30),
++            &mut output,
++            &cancel,
++            &mut hint
++        )
++        .is_err_and(|e: RowReadError| matches!(e, RowReadError::Read(ReadError::Cancelled)))
++    );
++}
++
++/// Wrong page/generation, reused slot and eviction all fall back to the
++/// current canonical key. The source is decoded before the hint is consulted.
++#[test]
++fn stable_locator_stale_identity_slot_and_eviction_reseek() {
++    let bytes = leaf_page("leaf_a");
++    let leaf = decode_leaf(&bytes).unwrap();
++    let expected = seek_point(&leaf, row(30)).unwrap().unwrap();
++    let mut hint = SlotHint::default();
++    assert_eq!(hint.seek(&leaf, row(30)).unwrap(), Some(expected));
++    let mut stale = identity();
++    stale.page.incarnation = Generation::new(99).unwrap();
++    for identity in [stale, identity()] {
++        hint.entry = Some((
++            identity,
++            SeekPosition {
++                index: 0,
++                row: row(30),
++            },
++        ));
++        assert_eq!(hint.seek(&leaf, row(30)).unwrap(), Some(expected));
++        assert_eq!(hint.entry, Some((leaf.header().identity, expected)));
++    }
++    hint.entry = Some((
++        identity(),
++        SeekPosition {
++            index: usize::MAX,
++            row: row(30),
++        },
++    ));
++    assert_eq!(hint.seek(&leaf, row(30)).unwrap(), Some(expected));
++    hint = SlotHint::default();
++    assert_eq!(hint.seek(&leaf, row(30)).unwrap(), Some(expected));
++    assert_eq!(hint.seek(&leaf, row(31)).unwrap(), None);
++    assert_eq!(hint.entry, None);
++}
+diff --git a/crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/auto_split.rs b/crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/auto_split.rs
+index ae7c5833..275afd7e 100644
+--- a/crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/auto_split.rs
++++ b/crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/auto_split.rs
+@@ -1160,3 +1160,6 @@ fn spl_review_failed_statement_after_split_preserves_prior_work() {
+ /// that A's DELETE or a rolled-back INSERT emptied, over SPL-A's table.
+ #[path = "unlink_rows.rs"]
+ mod unlink_rows;
++
++#[path = "stable_reads.rs"]
++mod stable_reads;
+diff --git a/crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs b/crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs
+index ea24eb82..471f7611 100644
+--- a/crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs
++++ b/crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs
+@@ -2530,3 +2530,143 @@ fn unl_review_root_collapse_sync_error_fences_and_recovers() {
+ #[cfg(target_os = "linux")]
+ #[path = "unlink_native.rs"]
+ mod native;
++
++/// 08-2: deletion commits before the snapshot; its delayed prune/unlink
++/// happens between two calls on the same cursor. Both a three-child unlink
++/// and the final two-child root collapse must preserve ordered results.
++#[test]
++fn stable_reads_cursor_crosses_live_unlink_and_root_collapse() {
++    for count in [8, 15] {
++        case_within(
++            "STABLE-UNLINK",
++            std::time::Duration::from_secs(1200),
++            || {
++                let oracle = Oracle::new();
++                with_fresh!(
++                    oracle,
++                    frames = 56,
++                    |live,
++                     owner,
++                     flusher,
++                     status,
++                     undo,
++                     private,
++                     reader_private,
++                     core,
++                     fence,
++                     state| {
++                        let _ = state;
++                        let (row_status, _) = create_table_with(
++                            live,
++                            owner,
++                            flusher,
++                            status,
++                            undo,
++                            private,
++                            true,
++                            &spec(),
++                        );
++                        retire_create!(live, owner, private);
++                        for _ in 0..18 {
++                            system_init(live, owner, flusher, true);
++                        }
++                        let (mut writer, reader, mut flush) = live.split();
++                        let (out, slots) = autocommit!(
++                            &mut writer,
++                            owner,
++                            flush,
++                            flusher,
++                            reader,
++                            reader_private,
++                            &row_status,
++                            private,
++                            6,
++                            bigs(0..count)
++                        );
++                        assert_eq!(committed(out), (2, count));
++                        let keys = rows_of(&slots);
++                        drains!(&mut writer, owner, flush, flusher, private);
++                        let before = writer.catalog_test_with_pool(reachable);
++                        let doomed = before[0].1.clone();
++                        for (at, row) in doomed.iter().enumerate() {
++                            let (out, _) = delete!(
++                                &mut writer,
++                                owner,
++                                flush,
++                                flusher,
++                                reader,
++                                reader_private,
++                                &row_status,
++                                private,
++                                *row
++                            );
++                            assert_eq!(committed(out), (3 + at as u64, 1));
++                            if at + 1 < doomed.len() {
++                                drains!(&mut writer, owner, flush, flusher, private);
++                            }
++                        }
++                        let mut b_owner = core.try_owner(OwnerRole::Foreground).unwrap();
++                        let b = &mut b_owner;
++                        let read =
++                            read_only!(writer, b, IsolationLevel::ReadCommitted, reader_private);
++                        let view = writer.begin_statement(b, &read).unwrap();
++                        let table = issue_table!(reader, b, view, reader_private, flush, flusher);
++                        let mut cursor = open_cursor_live(&view, &table, None, None).unwrap();
++                        let expected = kept_values(&keys, &doomed);
++                        let mut output = [0; 4096];
++                        let mut got = Vec::new();
++                        for at in 0..expected.len() {
++                            let step = next_live(
++                                &mut cursor,
++                                ReadCall {
++                                    port: &reader,
++                                    owner: b,
++                                    private: reader_private,
++                                    residency: &mut Plan4ResidencyCursor::new(),
++                                },
++                                &mut output,
++                                &Cancellation::default(),
++                            )
++                            .unwrap();
++                            let ReadStep::Ready(CursorStep::Row(row)) = step else {
++                                panic!("expected row");
++                            };
++                            got.push((row.version().row.get(), tag(&output, row.len())));
++                            if at == 0 {
++                                let drained = drains!(&mut writer, owner, flush, flusher, private);
++                                assert_eq!(drained.iter().map(|d| d.unlinked).sum::<u8>(), 1);
++                                assert_eq!(
++                                    writer.catalog_test_with_pool(reachable).len(),
++                                    before.len() - 1
++                                );
++                                assert_eq!(
++                                    writer.catalog_test_with_pool(anchor_of).1,
++                                    if count == 8 { 0 } else { 1 }
++                                );
++                            }
++                        }
++                        assert_eq!(got, expected);
++                        assert!(matches!(
++                            next_live(
++                                &mut cursor,
++                                ReadCall {
++                                    port: &reader,
++                                    owner: b,
++                                    private: reader_private,
++                                    residency: &mut Plan4ResidencyCursor::new()
++                                },
++                                &mut output,
++                                &Cancellation::default()
++                            ),
++                            Ok(ReadStep::Ready(CursorStep::End))
++                        ));
++                        cursor.close().unwrap();
++                        assert!(writer.finish_statement(b, view).is_ok());
++                        assert!(writer.finish_read_only(b, read).is_ok());
++                        assert!(!fence.is_fenced());
++                    }
++                );
++            },
++        );
++    }
++}
+diff --git a/crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_census.rs b/crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_census.rs
+index 23eb2fb1..d02ddec9 100644
+--- a/crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_census.rs
++++ b/crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_census.rs
+@@ -100,3 +100,20 @@ fn s5r_c02_native_source_inventory() {
+     use super::super::super::super::plan4_pages::native;
+     row_read_census::<native::Writer>("instrumented-native");
+ }
++
++#[test]
++fn stable_locator_retained_credit_bound() {
++    use crate::storage::row::read::driver::{RowReadError, live::LiveLocator};
++    use std::mem::size_of as n;
++    let handle = n::<LiveLocator<'_, '_, '_, '_, '_, '_>>();
++    // Stored handle + constructor return + credit Result + argument words.
++    // C credit/ledger helper frames retain their existing source accounting.
++    let peak = handle
++        + n::<std::result::Result<LiveLocator<'_, '_, '_, '_, '_, '_>, RowReadError>>()
++        + n::<
++            std::result::Result<crate::storage::disk::CallerCredit<'_, '_, '_, '_>, RetentionError>,
++        >()
++        + 4 * n::<&()>();
++    println!("STABLE_LOCATOR handle={handle} constructor_carriers={peak} charge=512");
++    assert!(peak <= 512);
++}
+diff --git a/devdoc/contracts/dev3-module-boundaries.md b/devdoc/contracts/dev3-module-boundaries.md
+index d9658fb7..5468e95b 100644
+--- a/devdoc/contracts/dev3-module-boundaries.md
++++ b/devdoc/contracts/dev3-module-boundaries.md
+@@ -2061,6 +2061,12 @@ impl<'t,'v,'a,'c,'s> RowStatementView<'t,'v,'a,'c,'s> {
+ 
+ **2026-10-29 수정([C0 Row 경계](#c0-row-boundary)).** 위 signature의 반환을 `CallerCredit<'r,'a,'c,'s>`(`&'r self`)로 좁혔다. `'v`를 그대로 돌려주면 credit이 view·거래보다 오래 남을 수 있고, 그 상태로 거래를 끝내면 slot charge 검산이 Invariant로 fence한다. Catalog Commit에서는 durable Commit·Q 공개 뒤의 거짓 Fatal이 된다. credit이 view를 빌리게 하여 credit이 남은 동안 statement·거래 종료를 컴파일 단계에서 막는다. cursor가 view borrow와 credit을 함께 보유한다는 의미와 charge·Capacity 규칙은 그대로다. `mem::forget`으로 버린 credit은 여전히 거래 종료 때 fence한다.
+ 
++**08-2 확장:** [stable locator](dev3-tree-smo.md#stable-reads)도 원 view/table을 borrow하는
++B 장기 consumer로서 같은 `reserve_cursor_credit`의512B를 예약한다. 한 항목 physical
++slot hint와 생성 carrier를 이 charge에 포함하며 별도 shared cache·heap을 만들지 않는다.
++close/Drop·slotgen·총합49152B·원 view 수명은 cursor와 같다. locator는 순회 진행점이
++없어 own mutation revision으로 무효화하지 않고 매 호출 현재 source/가시성을 다시 판정한다.
++
+ credit은 storage authority가 아니므로512B보다 작은 반환 row value/output을 새 owner로 취급하지 않는다. point/cursor의 반환 결과는 독립 pin/snapshot/transaction 권한을 가지지 않는 값과 caller buffer다. 그 결과와 오류·operation carrier의 실제 동시 크기는 해당 함수 source census에 포함하지만 result마다 registry/credit layer를 추가하지 않는다. cursor clone은 허용하지 않으며 새 cursor를 생성하려면 새 credit을 취득한다.
+ 
+ isolation header는 aggregate-used, slot12..16은 source-owned-bytes를 보유한다. release는 same open/slotgen과 checked subtraction을 검사하는 no-I/O leaf 동작이다. cursor는 view를, view는 transaction을 borrow하므로 transaction을 소비 종료하기 전 cursor/view가 모두 끝나야 한다. 정상 종료는 capsule의 마지막512B를 반환한 뒤 source-owned0에서만 slot을 Free로 만들고 slotgen을 갱신한다. 별도 Closing 상태나 종료 후 남은 result lease는 없다. active Drop과 poison/underflow는 원 cleanup/fence 정책을 유지하며 존재하지 않는 capacity를 만들어내지 않는다.
+diff --git a/devdoc/contracts/dev3-tree-smo.md b/devdoc/contracts/dev3-tree-smo.md
+index d53a2f70..dbce80df 100644
+--- a/devdoc/contracts/dev3-tree-smo.md
++++ b/devdoc/contracts/dev3-tree-smo.md
+@@ -2053,3 +2053,40 @@ CONDITIONAL(필수 2)을 반영했다([검토 기록](../../module-gate/evidence
+     page)는 worker 코드의 Point 대응과 arm 직전의 Row Job 부재 단언(drain 안의 existing group은 unlink뿐)으로만 묶인다.
+     controller는 drain이 unlink 준비까지 갔고 아무것도 쓰지 않았음만 본다.
+   - native 결과는 이 cloud 환경에서 한 번 실행한 것이다.
++
++<a id="stable-reads"></a>
++## 08-2 — SMO를 건너는 cursor와 한 항목 locator
++
++2026-11-06 · D3-STABLE-READ-001 · D2 구현/검증 진행 중. 담당 `/root`.
++사용자의 8.2 완료 지시 안에서 기존 full-key cursor를 유지하고 B의 한 항목
++물리 slot hint를 공급한다. 독립 범위 검토 `/root/review_82_scope`는 이 설계를
++조건부 수용했으며 구현·선택 시험·자원 검산 뒤 최종 검토한다.
++
++`LiveLocator`는 원 statement view와 CheckedTable을 borrow하고 clone하지 않는다.
++DB/timeline/open/table generation의 권한은 이 원 객체에만 있다. 호출자는 다른
++view/table로 locator를 재결합할 수 없다. 매 호출은 기존 C `page`로 현재 anchor에서
++leaf를 route하고 allocator·checksum·owner·incarnation을 검산한다. 그 뒤 B가
++`(PageIdentity, RowId, slot)`를 대조한다. slot이 범위 안이고 현재 key도 같은 때만
++slot 검색을 생략한다. 이동·재사용·compaction·다른 RowId는 `seek_point`로 돌아간다.
++손상 오류를 miss로 바꾸지 않는다. hit 뒤에도 기존 capture·Status/Undo·copy·checked
++release/finish를 거치며 값이나 logical version을 cache하지 않는다.
++
++직접 page shortcut 대신 이 방식을 택한 이유는 route 권한·anchor revision cache와
++새 C 경계를 만들지 않고 기존 검증 경로를 유지하기 위해서다. 절감하는 것은 slot
++검색뿐이며 I/O나 전체 조회 성능 개선을 주장하지 않는다. `clear`와 교체는 hint만
++지운다. own mutation 뒤 locator는 현재 행을 다시 읽지만 cursor는 기존 규약대로
++CursorInvalidated다. OutputTooSmall·취소·FlushRequired·fence는 기존 읽기 의미를
++보존한다. 실패 전에 갱신한 hint도 다음 호출의 모든 검사를 생략하지 못한다.
++
++장기 locator의 entry·view/table 참조·credit·생성 반환 carrier는 기존 원 IsolationLedger의
++512B caller credit 하나로 제한한다. `reserve_cursor_credit`의 장기 B consumer 용도를
++이 locator까지 확장하며 새 shared cache나 heap allocation을 만들지 않는다. 기존
++장기 총합49152B 안에 포함하므로 locator 합은1MiB 상한보다 작다. 단기 caller
++argument와 hint 검사 carrier는 B source census에 더한다. 이 변경은 영속 형식·WAL
++및 C 읽기 권한을 변경하지 않는다.
++
++중간 인수는 실제 split/root 변경 및 unlink/root collapse를 같은 cursor의 next 사이에
++넣고 fixed-q 순서·중복/누락·재시도를 대조한다. locator는 hit/miss·이동·slot 재사용·
++stale incarnation·clear·손상·가시성·실패 cleanup을 검증한다. 4배 buffer working set과
++전체 T06 변형은 [단계별 시험 계획](../plans/dev3-test-plan.md)의 최종 S5 의무다.
++직접 page shortcut, shared cache, 크기 확대 또는 원 view/table 수명 변경 때 재검토한다.

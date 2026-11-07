@@ -1,0 +1,23 @@
+{
+  "base": "be52fc679deca576ed455dcb698a7f33472a76a8",
+  "final_product_commit": "b76eabe2865cb1855ba023b05cee280a7f564ed6",
+  "review_commit": "b87b1b120cf46e08032bd6ccc733e503d982e5c0",
+  "head_product_blobs": {
+    "crates/engine/src/storage/row/read/driver.rs": "ba2ac95e1e70816318e6f1a9bf5bb9a93ed303e1",
+    "crates/engine/src/storage/row/read/driver/live.rs": "40ca42f94b291a135ccf07b5a861fa08cbb7f832",
+    "crates/engine/src/storage/row/read/driver/tests.rs": "a65266874bb74bc818247319cf56ff2f71417d60",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/auto_split.rs": "275afd7ec87487210d51b8da81d1a317285f4605",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/stable_reads.rs": "92cda379303e8888b1b55cf5493bbb4108f07111",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/unlink_rows.rs": "471f761191a456166f9936ed13ee588d7137d1ca",
+    "crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_read_census.rs": "d02ddec97cf5352f0159e296b986e8d38b6e9900",
+    "devdoc/contracts/dev3-module-boundaries.md": "5468e95b4696bb1c5c9f07624da531b63fffd24a"
+  },
+  "r2_reconstruction": "Apply source-r2.patch to base and write stable_reads-r2.txt to crates/engine/src/storage/wal_io/plan4_recovery/tests/catalog_memory/row_join/retire/stable_reads.rs. The only following Rust change is the test-only locator_extra census correction in live.rs.",
+  "r3_source_identity": {
+    "elf": "e57bd08f8c5bbfba9676e30caa1e62e866fe5c757f826c89a42c754b71b6ab67",
+    "native_input": "f6e0dd554a91931cc8e048e775a666dacd777f0c1c3285abed6773ec15f21eeb",
+    "selector": "storage::row::read::driver::tests::stable_locator",
+    "source": "95612b47500828f262828f268fa58709d03c206ce732cdce58167b94f7905749",
+    "transition_input": "4bf20c59207890d66b5b51d06d7778a478f1226e26ce38b7cc803856fbe12181"
+  }
+}
