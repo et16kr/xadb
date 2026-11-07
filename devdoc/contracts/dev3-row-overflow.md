@@ -1,6 +1,6 @@
 # DEV3 큰 행 overflow chain — 쓰기·읽기·반환 설계
 
-2026-11-07 · `D3-ROW-OVERFLOW-001` · **설계(O0) 3판 / 독립 D2 3회차 ACCEPT(권고 S1·NIT T3·T4 반영) / O1 형식 계층 구현·OVF-F PASS([§14](#o1-record), 독립 D2 4회차 ACCEPT) / O2a C 전이(Reserve·ChunkWrite·Forward·CLR·Prune) 구현·OVF-C01·C02 PASS([§15](#o2a-record)) / O2b–O4 NOT_RUN**
+2026-11-07 · `D3-ROW-OVERFLOW-001` · **설계(O0) 4판 / PR #66 추가 D2 검토 반영 / O1 형식 계층 구현·OVF-F PASS([§14](#o1-record), 독립 D2 4회차 ACCEPT) / O2a C 전이(Reserve·ChunkWrite·Forward·CLR·Prune) 구현·OVF-C01·C02 PASS([§15](#o2a-record)) / O2b–O4 NOT_RUN**
 
 [overflow 표현](dev3-overflow-format.md) · [행 표현](dev3-row-format.md) · [행 owner R6·§5.4](dev3-task-06-tree-rows.md#algorithms) · [첫 Row profile](dev3-module-consumers.md#profile) · [WAL shape](dev3-module-consumers.md#row-shape) · [scope3 wire](dev3-module-consumers.md#row-scope3-wire) · [unlink retired 목록](dev3-tree-smo.md#empty-leaf-unlink) · [자원 정본](dev3-resource-bounds.md) · [목표 등급 SCOPE-002](../plans/project-direction.md#scope-002) · [일정 08-3](../plans/dev3-schedule-baseline.md#items) · [D2 1회차](../../module-gate/evidence/dev3-08-3-design/review-r1.md) · [D2 2회차](../../module-gate/evidence/dev3-08-3-design/review-r2.md) · [D2 3회차](../../module-gate/evidence/dev3-08-3-design/review.md)
 
@@ -9,6 +9,8 @@
 2판은 D2 1회차의 필수 R1–R5를 반영했다. 1판이 "그대로"라고 적은 기존 불변식 가운데 실제 코드에서 새 전이를 거절하는 것(XTR1 revision, Job3·ledger·descriptor LSN 규칙, Base4 certificate·provenance, split·unlink 검산과 leaf 관측기)을 각각 바꾸는 규칙으로 정했고, 바꾸는 정본 문장은 [§13](#supersedes)에 모았다.
 
 3판은 D2 2회차의 필수 N1·N2와 권고를 반영했다. N1: provenance role 7 claim을 지금 CREATE pair로 읽는 Base4 소비자 네 곳(`InitProvenance::pair`, `validate_pairs`, `relations::provenance`, `relations::payloads`)과 claim 생성 함수를 §8.1·§8.3에 정했다. N2: §4.3 표에서 Reserved·Retained의 `[288,320)`은 XRP1 projection이다.
+
+4판은 PR #66 추가 검토의 R1–R3를 반영한다. R1은 길이를 모르는 preflight와 값 검산 뒤 allocator 용량 판정을 분리하고, R2는 chunk 적용 뒤에도 살아 있는 예약·draft 갱신·flush 진입을, R3는 B 복사 단계의 `ReadStep` 반환과 cursor 재시도를 명시한다. [추가 검토·새 설계 oracle](../../module-gate/evidence/dev3-08-3-design/review-codex.md)은 제품 시험과 구분한다.
 
 <a id="scope"></a>
 ## 1. 범위
@@ -33,7 +35,7 @@ DELETE·UPDATE의 overflow를 08-4로 두는 이유: 그 경우 U의 before가 2
 | 영역 | 지금 | 08-3이 바꾸는 것 |
 | --- | --- | --- |
 | A 값 검사 | `encode_input`: L>2048이면 Unsupported, leaf 여유 `L+168+16` 검사, 16 KiB CANDIDATE에 canonical 전체를 씀 | L ≤ 131,072이면 overflow 계획(§6.1). leaf 검사는 head 64 B 기준, CANDIDATE는 chunk 한 개 창 |
-| C Reserve·preflight | RowReserve producer가 L을 `5..=2048`로 묶고, Job `C`(185..2228)와 XRP1 projection으로 값 commitment | overflow root(§4.3)는 C=244와 root를 비운 XRP1(§4.2). preflight가 Free page k개를 Capacity로 판정(§7.2) |
+| C Reserve·preflight | RowReserve producer가 L을 `5..=2048`로 묶고, Job `C`(185..2228)와 XRP1 projection으로 값 commitment | overflow root(§4.3)는 C=244와 root를 비운 XRP1(§4.2). preflight가 Free 수를 관측하고 reserve(plan)가 k개를 첫 효과 전 판정(§7.2) |
 | 쓰기 그룹 | Row 그룹은 page를 할당·INIT하지 않고, anchor는 읽기만(proof page) | ChunkWrite가 allocator Free page 하나를 Allocated(table, Overflow)로 바꾸고 chunk page를 INIT, OverflowCancel·ChainRetire가 anchor를 씀(§4.5) |
 | Job3·ledger·descriptor | Reserved는 `last_step == lease_lsn`, descriptor `chain.apply == lease_lsn`, ledger row1은 1걸음 | Reserved overflow root의 LSN·걸음 규칙, ReleasingCompensated의 chain 칸(§4.3, §6.2) |
 | leaf 행 | Inline payload와 tombstone만 쓰고 읽음(`leaf.rs` `validate_rows` 등, §7.5 목록) | Overflow payload(head 64 B) 행: record 232, cell **C=244**(12+168+64) |
@@ -154,7 +156,7 @@ P = 16,344(whole-body Patch). b·a는 anchor XTR1 cell의 before·after 길이(�
 | ChainRetire | chain 칸 → zero, last_step := LSN, cursor 0 그대로 | — | (읽기만) | — | XTR1 + k개 항목 | — |
 | Prune(overflow) | Retained→ReleasingCommitted, `@285` := 0 | — | — | 재stamp(head 그대로) | — | 지금 INSERT Prune과 같음 |
 
-- **ChunkWrite의 검사.** Reserved overflow root이고 written < k, 새 chunk의 index·count·total·payload 길이(`min(16,092, total−i·16,092)`)가 pending과 맞고, next가 pending front와 같다. digest는 head에 들어갈 값(A 계획의 digest)이다. ChunkWrite는 그 digest로 head record(root 자리는 placeholder)를 다시 만들어 그 root-free projection이 Job의 projection과 같아야 연다(아니면 IdentityMismatch). Reserve가 그 projection에 digest를 봉인했으므로 첫 chunk부터 모든 chunk가 같은 digest를 지니고, 앞 chunk를 읽지 않는다(O2a 구현, [§15](#o2a-record)). Forward가 payload 전체로 검산한다. 할당할 page는 split의 신규 page와 같은 allocator-only 규칙으로 고른다(`structure/candidate.rs`의 선택: 첫 extent 9..63에서 가장 낮은 ordinal의 Free, `next_reservation_generation`이 MAX가 아님). allocator에 Reserved entry가 하나라도 있으면(진행 중인 System 예약) ChunkWrite는 열리지 않는다(split audit와 같은 조건). Base4의 System batch 검산이 allocator pageLSN을 batch birth로 쓰므로 그 사이에 Row 그룹이 allocator를 patch하면 안 된다. preflight(§7.2)도 같은 조건을 첫 효과 전에 Capacity로 본다. preflight 뒤에 생기면 ChunkWrite는 Unchanged OrderMismatch이고 A는 §7.1의 4로 OverflowCancel·statement 실패로 끝낸다(재시도하지 않으므로 끝이 있다). 원 pool이 그 page를 지금 받을 수 없으면(next generation claim·mutable flush lease·DWB idle) Unchanged `FlushRequired`/Busy로 돌아가 같은 chunk를 다시 부르며, 다른 page를 고르지 않는다. 그래서 replay가 같은 page를 다시 고른다.
+- **ChunkWrite의 검사.** Reserved overflow root이고 written < k, 새 chunk의 index·count·total·payload 길이(`min(16,092, total−i·16,092)`)가 pending과 맞고, next가 pending front와 같다. digest는 head에 들어갈 값(A 계획의 digest)이다. ChunkWrite는 그 digest로 head record(root 자리는 placeholder)를 다시 만들어 그 root-free projection이 Job의 projection과 같아야 연다(아니면 IdentityMismatch). Reserve가 그 projection에 digest를 봉인했으므로 첫 chunk부터 모든 chunk가 같은 digest를 지니고, 앞 chunk를 읽지 않는다(O2a 구현, [§15](#o2a-record)). Forward가 payload 전체로 검산한다. 할당할 page는 split의 신규 page와 같은 allocator-only 규칙으로 고른다(`structure/candidate.rs`의 선택: 첫 extent 9..63에서 가장 낮은 ordinal의 Free, `next_reservation_generation`이 MAX가 아님). allocator에 Reserved entry가 하나라도 있으면(진행 중인 System 예약) ChunkWrite는 열리지 않는다(split audit와 같은 조건). Base4의 System batch 검산이 allocator pageLSN을 batch birth로 쓰므로 그 사이에 Row 그룹이 allocator를 patch하면 안 된다. preflight가 이 상태를 관측하고 reserve(plan)(§7.2)가 첫 효과 전에 allocator 용량 부족으로 거절한다. preflight 뒤에 생기면 ChunkWrite는 Unchanged OrderMismatch이고 A는 §7.1의 4로 OverflowCancel·statement 실패로 끝낸다(재시도하지 않으므로 끝이 있다). 원 pool이 그 page를 지금 받을 수 없으면(next generation claim·mutable flush lease·DWB idle) Unchanged `FlushRequired`/Busy로 돌아가 같은 chunk를 다시 부르며, 다른 page를 고르지 않는다. 그래서 replay가 같은 page를 다시 고른다.
 - **Forward의 검사.** 지금의 INSERT Forward 검사(원 schema·version·`record.len+12 == C`·XRP1)에 더해: written = k, record의 head.root = pending front, head.total = pending total, 그리고 §6.3의 chain 검산이 성공해야 한다.
 - **OverflowCancel**은 written ≥ 1인 Reserved overflow root를 지우는 Cancel이다. written = 0이면 지금의 Cancel을 쓴다(OverflowCancel은 Unchanged InvalidInput). front에서 `OverflowSegmentWalk`(first index k−written)로 written개 chunk를 읽어 그 page를 XTR1에 넣는다. 마지막 chunk(index k−1)의 next는 zero여야 하고 그 수가 written과 같아야 한다.
 - **jobs.rs census.** 지금 census는 Reserve·Forward·Cancel·Commit·AbortEnd·Clr에만 TerminalLeased를 허용하고 나머지 연산에는 TerminalReady를 요구한다. ChunkWrite와 OverflowCancel(role Cancel)을 TerminalLeased 목록에 더하고 둘 다 `reserved == 1`을 요구한다. ChainRetire는 목록에 넣지 않는다. 그래서 기본 분기(TerminalReady)가 "ChainRetire는 terminal 뒤"를 강제한다.
@@ -194,7 +196,7 @@ W = 56,976(ChunkWrite), F = Forward(C=244) = `91,548+128h`, R = 55,528(ReleaseRo
 - OverflowCancel(≤ 60,864)은 Cancel처럼 Reserved root의 남은 Forward 몫에서 낸다. 그 몫은 언제나 F ≥ 91,548을 포함하므로 모자라지 않는다. 쓴 chunk의 W는 반환하지 않는다(이미 소비한 WAL).
 - Job cleanup은 Prune 경로(`89,984+128h + 4R`)와 CLR 경로(`X + 4R`) 중 큰 것을 예약한다. 두 경로 모두 5걸음이다. Prune 경로가 크므로 inline INSERT 식에 C=244를 넣은 값과 같다. CLR은 미사용 Prune 몫 `30,928+128h`를 반환하고 `(5, 4R+X)`를 남긴다. ChainRetire는 실제 frame(b·a)만 Root consumed_wal에 더하고, Job의 다음 recipe `(4, 4R)`와의 차액이 반환된다.
 - **보호 WAL.** 큰 행 하나의 Reserve는 처음부터 row1 `9W+F` = 604,460 B와 Job cleanup 312,224 B(h=1)를 보호한다. [자원 정본](dev3-resource-bounds.md)의 "WAL·owned·protected 가운데 가장 작은 여유가 신규 admission을 닫는다"에 이 몫이 그대로 들어가므로, 큰 행을 쓰는 거래가 있는 동안 다른 admission의 여유가 그만큼 준다. ChunkWrite·Forward가 걸음마다 그 몫을 소비한다.
-- 최대 행(k=9)의 정상 commit 경로 WAL은 Reserve 57,336 + 9W 512,784 + F 91,676 + Prune 90,112 + 4R 222,112 ≈ 0.97 MB다. chunk 그룹마다 Root·Job whole-body Patch 32,688 B가 고정 부담이다(§9).
+- 최대 행(k=9)의 **행 root에 귀속되는 WAL 소계**는 Reserve 57,336 + 9W 512,784 + F 91,676 + Prune 90,112 + 4R 222,112 = 974,020 B다. 이 소계는 Begin·statement 제어·Commit/AbortEnd·AgingStart·TerminalFinish와 다른 owner의 잔여 의무를 제외하므로 거래 전체 WAL이나 Reserve admission 필요량이 아니다. 실제 admission은 §6.2의 Tx row0–row1뿐 아니라 기존 terminal·control·Aging 의무와 현재 frame도 합산한다. chunk 그룹마다 Root·Job whole-body Patch 32,688 B가 고정 부담이다(§9).
 
 <a id="forward-check"></a>
 ### 6.3 Forward의 chain 검산
@@ -220,8 +222,8 @@ Forward의 producer와 C 검사는 효과 전에 chain을 앞에서부터 한 �
 
 자동커밋(`autocommit_insert_live`)과 명시 거래(`RowTransaction`)의 INSERT 한 행은 다음 순서다.
 
-1. preflight(§7.2, Free page k개 포함) → A 값 검사(§6.1) → `reserve(plan)`. overflow 계획이면 Reserve가 overflow root를 만든다.
-2. i = k−1 … 0마다 `producer_lane` → A가 창 i를 생산 → `prepare_chunk` → `apply`(ChunkWrite). `FlushRequired`·Busy는 같은 chunk를 다시 부른다.
+1. preflight(§7.2, allocator 상태 관측) → A 값 검사(§6.1, L·digest 확정) → `reserve(plan)`의 Free page k개 검사 → Reserve. overflow 계획이면 Reserve가 overflow root를 만든다. 원 source·schema 검사 뒤 값 검사라는 오류 순서를 유지한다.
+2. i = k−1 … 0마다 `producer_lane` → A가 창 i를 생산 → `prepare_chunk` → prepared-chunk의 `apply`(ChunkWrite, 갱신된 ReservedRow 반환). `FlushRequired`는 예약이 소유한 flush 진입으로 해소하고, Busy와 함께 같은 chunk를 재시도한다. 성공한 chunk만 written을 올리며 stale prepared cut을 다음 chunk에 쓰지 않는다(§7.2).
 3. Forward(§6.3 포함) → statement 끝·commit은 지금과 같다.
 4. 2나 3이 첫 효과 전 Unchanged로 끝나면(검산 실패·취소) written ≥ 1이면 OverflowCancel, 아니면 Cancel로 Reserved root를 지운 뒤 지금의 statement 실패 경로를 탄다. stage 뒤 실패는 지금처럼 Fatal·fence다.
 
@@ -230,8 +232,11 @@ A의 새 frame(chunk 반복, 계획 값)은 [F4 caller 상한](../evidence/modul
 <a id="c-entries"></a>
 ### 7.2 C 진입
 
-- `preflight_row`: overflow 계획의 길이·index 0·leaf 공간(head 기준)을 검사하고, 첫 extent에 allocator-eligible Free page가 k개 이상이고 allocator에 Reserved entry가 없는지 본다. 아니면 첫 효과 전 **Capacity**다. INSERT의 leaf 공간은 Reserve 전에 확인되므로 Reserve와 Forward 사이에 split이 끼지 않고(`row/insert/group.rs`의 "no split separates a Reserve from its Forward"), 단일 MutationPort 아래 다른 writer가 없다. 그래서 preflight를 통과하면 ChunkWrite는 Capacity로 실패하지 않고, pool 상태(FlushRequired·Busy)만 재시도한다.
-- `ReservedRow::prepare_chunk`/`apply`: ChunkWrite의 효과. 신규 page 등록은 split의 신규 page 경로(원 pool의 next generation·claim·등록, mutable flush lease와 DWB idle 검사)를 Row 단계에서 쓰도록 일반화한다. 별도 I/O owner나 새 pool을 만들지 않는다. 각 ChunkWrite는 Row write라서 TerminalReadGate를 닫는다(`plan4_apply/row/write.rs`).
+- **값을 알기 전과 뒤의 용량 검사.** 지금 `preflight_row(table, statement, loan, …)`는 values·L을 받지 않고 A의 값 검사는 그 뒤 `validation_lane`에서 한다. 이 순서를 유지한다. preflight는 기존 source·schema·index0 검산과 함께 allocator-eligible Free 수와 Reserved 유무를 안정된 source cut에 관측한다. A가 L·digest를 확정한 뒤 `reserve(plan)`가 그 검산된 계획의 k와 Free 수를 비교하고 Reserved가 없는지 **첫 durable 효과 전에** 검사한다. 부족하면 typed `OverflowCapacity`(용량 부족 계열)로 거절한다. 지금 A의 `row_capacity()`는 `Unchanged(Prepare, Capacity)`를 모두 leaf split으로 보내므로, 이 새 원인은 그 분류와 구별한다. allocator 부족에는 split을 요청하지 않으며 WAL·Job·issuer를 전진시키지 않는다. leaf 공간 부족만 기존 split 경로로 보내고 길이는 64다. 잘못된 값과 allocator 부족이 함께 있으면 A 값 검사 오류가 먼저다.
+- `reserve(plan)` 통과 뒤에는 Reserve와 Forward 사이에 split이 끼지 않고, 단일 MutationPort 아래 다른 writer가 없다. k개 물리 용량 검사는 이미 끝났으며 pool 상태(FlushRequired·Busy)만 같은 chunk에서 재시도한다. §5의 사후 System 예약 충돌은 방어적인 OrderMismatch·취소 경로로 남긴다.
+- **chunk 적용의 소유 상태.** 기존 `PreparedRow::apply`는 최종 Forward용이며 성공 시 RowSlotReservation을 discharge하고 loan·gate·I/O lease를 반환한다. ChunkWrite에는 이를 그대로 쓰지 않는다. 별도 prepared-chunk 상태가 ReservedRow 전체를 소유하고 `apply -> Result<ReservedRow, RowOwnedError<Self>>`로 이어진다. 성공 뒤에도 같은 활성 예약·source admission·TerminalReadGate·RowIoLease·loan을 유지하고, checked durable ChunkWrite 결과로 draft commitment·descriptor chain.apply·last_step·pending·다음 target을 갱신한다. 기존의 "RowDraftCut은 예약 수명 동안 불변"은 **성공한 ChunkWrite 사이에서만** 바뀐다. stage 전 Unchanged/reopen은 그 시점의 같은 cut·written을 보존하고, stage 뒤 불명 실패와 활성 예약 Drop은 fence다. chunk 성공은 RowMutationObservation·statement private revision을 발행하지 않는다. 마지막 Forward 또는 Cancel/OverflowCancel만 예약을 discharge한다.
+- **예약 중 flush.** RowIoLease가 flusher를 빌리므로 A가 원 MaintenancePort를 다시 빌려 flush할 수 없다. 현재 RowIoLease의 "행 종료 전 flush capture/eviction 금지"를 이 경계에 한해 개정한다. ReservedRow에 보유한 lease와 원 disjoint flusher를 쓰는 flush 진입을 공급하고 A의 sealed Reserved adapter에 연결한다. stage 전 prepared cut을 버리고 모든 LOAD/write guard를 놓은 그룹 사이에서만 열며, durable 예약·Drop fence·read gate를 유지한 채 원 control과 전용 flush owner/credit으로 flush한다. 성공하면 I/O 상태를 Ready로 복원하고 다음 준비가 source/draft를 재검산한다. stage/install 도중에는 열리지 않는다. chunk 준비·Forward 검산·OverflowCancel의 FlushRequired 모두 이 진입을 쓰며, flush 성공은 pending·written·draft의 논리 전이를 만들지 않는다. 재검산 때 resident bytes만 새로 읽고 stage 전 cut을 다시 확인한다. 임의 새 owner나 새 I/O session을 만들지 않는다.
+- `ReservedRow::prepare_chunk`/`apply`: ChunkWrite의 효과. 신규 page 등록은 split의 신규 page 경로(원 pool의 next generation·claim·등록, mutable flush lease와 DWB idle 검사)를 Row 단계에서 쓰도록 일반화한다. 별도 I/O owner나 새 pool을 만들지 않는다. 각 ChunkWrite는 preflight에서 닫은 원 TerminalReadGate 안에서 실행하며 다시 획득하지 않는다(`plan4_apply/row/write.rs`).
 - `ReservedRow::cancel`: written에 따라 Cancel 또는 OverflowCancel.
 - live 정리(`row_cleanup_next`/`retire_row`)와 복구 cleanup은 chain이 남은 ReleasingCompensated root에서 ChainRetire를 먼저 고른다. jobs.rs의 maintenance 연산 목록과 `row_cleanup_next`의 선택 순서에 ChainRetire를 더한다.
 
@@ -242,6 +247,8 @@ B의 판정(stamp·Status·snapshot)은 inline 행과 같다. 보이는 Overflow
 
 - output이 total보다 작으면 chunk를 읽기 전에 `OutputTooSmall { required: total }`이다.
 - C의 row capture(`plan4_apply/row/read.rs`)는 지금 Inline이 아닌 행을 `(0, deleted)`로 처리한다. 이 분기를 Overflow·Deleted·Inline 셋으로 나눈다. Overflow면 head를 기록하고 leaf latch를 놓은 뒤 head.root부터 chunk를 차례로 LOAD해 `OverflowChainVerifier`로 검산하며 `output[i·16,092..]`에 복사하고, 끝나면 `decode_materialized_row_with_schema(head, output[..total], schema)`(Catalog schema 입력을 받는 변형, O1)로 total·digest·schema를 확인한다. LOAD에 flush가 필요하면 지금의 `Step` 흐름으로 돌아가고 B가 같은 행을 다시 복사한다. 검산 실패는 손상이며 Missing으로 낮추지 않는다.
+- **복사 단계의 재개 seam(O3).** 현재 C `RowReadOperation::copy_candidate`와 B `ReadSource::copy_candidate`는 각각 `Result<RowCopyObservation>`·`Result<Copied>`여서 LOAD의 FlushRequired를 전달할 수 없다. C는 기존 `ReadStep<RowCopyObservation>`을 반환하고 LOAD에 필요한 residency 입력을 받는다. B trait는 `Result<Step<Copied, Target>, RetentionError>`로 바꾸며 LiveSource·LocatedSource와 `copy_selected`·`select_row`가 같은 Step을 전달한다. `copied_slot`은 전체 chain의 digest·schema 검산까지 성공한 Ready에서만 채운다. inline 복사는 Ready로 감싸며 `copy_before`는 이번에 LOAD를 추가하지 않는다.
+- FlushRequired·오류·취소 모두 candidate 해제와 operation `finish`를 거쳐 Txn/U pin·reference lease·source admission·read gate를 반환한 뒤 호출자에게 전달한다. 정리 실패는 기존 오류 우선순위를 따른다. 호출자는 flush 후 **같은 행의 head.root부터** 다시 읽는다. [F02 출력·cursor 규칙](dev3-task-06-tree-rows.md#module-statement-cursor)대로 실패의 출력 bytes는 scratch(변경 가능), 유효 길이는 0이며 Found/Row를 발행하지 않는다. cursor의 last_returned는 그대로, last_examined는 앞서 판정 완료한 invisible prefix까지만 유지하며 복사 미완료인 visible 행은 포함하지 않는다. 출력 부족은 기존처럼 chunk LOAD 전 거절한다.
 - 08-3에서 reader가 읽는 chain은 반환되지 않는다(§7.4). 그래서 chunk를 읽는 동안 별도 transient pin을 두지 않는다. 08-4에서 commit된 chain을 반환할 때 그 pin 규칙을 정한다.
 - point 읽기의 locator([08-2](dev3-cursor-locator.md))는 leaf를 찾을 뿐이므로 바뀌지 않는다.
 
@@ -329,8 +336,8 @@ Base4는 형식을 바꾼다. 1판의 "record·certificate 형식은 바꾸지 �
 | 쓰기 방식 | 뒤에서부터 쓰므로 값 전체에 임의 접근해야 한다. INSERT 값이 caller memory에 있는 지금은 맞지만 streaming LOB 쓰기(PG의 toast 증분 쓰기)는 아니다 |
 | 거래 크기 | 거래당 상태는 Job 하나의 고정 칸이다. 행 수·chain 수에 비례하는 메모리 구조를 만들지 않는다 |
 | 비용 구조 | chunk의 payload는 INIT redo에 한 번만 실린다(native에는 header만). 그룹마다 Root·Job whole-body Patch 32,688 B가 붙는 것은 지금 Row 그룹 공통의 whole-page WAL 문제이고 A2(redo 형식)가 다룬다. A2가 Root·Job을 바뀐 bytes만 쓰게 바꾸면 chunk 그룹은 거의 payload 크기가 된다. 이 설계는 whole-page Patch에 기대지 않는다 |
-| 동시성 | 모든 ChunkWrite가 allocator page 하나를 patch한다. A4가 writer를 병렬화할 때 이 page는 공유 지점이다(PostgreSQL의 relation extension lock과 비슷한 자리). 또 각 ChunkWrite는 Row write로서 TerminalReadGate를 닫으므로, 큰 행 하나가 최대 k+2(≤ 11)개 durable 그룹 동안 읽기를 반복해 막는다. 08-3은 단일 MutationPort라 정확성 영향은 없지만, A4의 동시 읽기·쓰기 목표에서는 이 gate 범위를 다시 정해야 한다 |
-| 반환 | 실제 Free·재사용은 14-2다. 그 전까지 반환한 chunk page는 첫 extent의 dynamic page를 계속 차지한다. preflight의 Capacity 판정(§7.2)이 쓰는 도중의 부족을 막지만, rollback·검산 실패로 반환한 page는 14-2까지 남는다 |
+| 동시성 | 모든 ChunkWrite가 allocator page 하나를 patch한다. A4가 writer를 병렬화할 때 이 page는 공유 지점이다(PostgreSQL의 relation extension lock과 비슷한 자리). 또 기존 Row write는 preflight부터 최종 Forward/Cancel까지 TerminalReadGate를 쥔다. §7.2의 chunk continuation도 이를 유지하므로 큰 행 하나의 Reserve + k ChunkWrite + Forward(최대 11개 durable 그룹)와 그 사이 flush·검산 동안 새 읽기를 연속해서 막는다. 그룹 사이 gate를 풀었다가 다시 얻는 설계는 아니다. 08-3은 단일 MutationPort라 정확성 영향은 없지만, A4의 동시 읽기·쓰기 목표에서는 이 gate 범위를 다시 정해야 한다 |
+| 반환 | 실제 Free·재사용은 14-2다. 그 전까지 반환한 chunk page는 첫 extent의 dynamic page를 계속 차지한다. reserve(plan)의 allocator 용량 판정(§7.2)이 쓰는 도중의 부족을 막지만, rollback·검산 실패로 반환한 page는 14-2까지 남는다 |
 
 <a id="tests"></a>
 ## 10. 시험
@@ -354,9 +361,9 @@ Base4는 형식을 바꾼다. 1판의 "record·certificate 형식은 바꾸지 �
 | OVF-C06 | O2 | split·unlink 검산(§7.6): 큰 행·보상 chain·XTR1 Overflow가 있는 table의 정상 split·unlink, Reserved overflow root가 있으면 audit 거절, 개수가 하나 많거나 적으면 거절, Overflow 항목이 있는 XTR1 위의 unlink 목록 병합 |
 | OVF-J01 | O3 | 자동커밋 INSERT 2,049·16,092·16,093·131,072 B 행. 같은 거래와 새 statement의 point·cursor 읽기 값이 쓴 값과 같음(조용한 Missing이 없음), allocator·chunk 수 |
 | OVF-J02 | O3 | 명시 거래: 큰 행·작은 행 섞어 넣고 statement rollback(큰 행 CLR, **거래가 끝난 뒤 drain의 ChainRetire**), full rollback, commit 뒤 Prune(chain 유지)과 drain. split한 적 없는(revision 1) table과 split한 table 둘 다 |
-| OVF-J03 | O3 | preflight의 Free page 부족(Capacity, 효과 없음), 쓰는 도중의 FlushRequired·Busy 재시도, written ≥ 1에서 취소 → OverflowCancel, written 0이면 Cancel |
+| OVF-J03 | O3 | Free 수 k−1/k, allocator Reserved, invalid value와 부족 동시 입력의 오류 순서. allocator 부족은 OverflowCapacity·효과0·split0, leaf 부족만 길이64 split. 각 chunk 앞/뒤 FlushRequired·Busy에서 같은 활성 예약·cut·written을 보존/갱신하며 중복 할당 없음, stage 뒤 실패·활성 Drop fence. Forward 검산·취소의 예약 중 flush. written ≥ 1 취소 → OverflowCancel, written 0 → Cancel |
 | OVF-J04 | O3 | Forward의 chain 검산 실패(시험 전용 producer가 창 하나를 바꿈) → OverflowCancel, 효과 없음. Forward 검산 도중 FlushRequired |
-| OVF-J05 | O3 | 다른 거래가 미확정 큰 행을 Missing으로 봄(chunk를 읽지 않음), commit 뒤 snapshot 규칙대로 보임. 출력 부족 `OutputTooSmall{total}`. B 읽기의 chain 손상(T06-10 대응)은 손상 오류이고 Missing이 아님. B 복사 도중 FlushRequired |
+| OVF-J05 | O3 | 다른 거래가 미확정 큰 행을 Missing으로 봄(chunk를 읽지 않음), commit 뒤 snapshot 규칙대로 보임. 출력 부족 `OutputTooSmall{total}`. B 읽기의 chain 손상(T06-10 대응)은 손상 오류이고 Missing이 아님. point·cursor 각각 첫/중간/마지막 chunk LOAD의 FlushRequired 및 최종 digest/schema 실패: 출력 유효0, pin·gate 반환, invisible prefix 보존·visible 행 건너뛰기 없음, flush 후 같은 행을 한 번만 반환. inline Ready 회귀 |
 | OVF-J06 | O3 | commit된 큰 행이 있는 table의 다음 split·unlink, split 뒤 읽기, 큰 행과 같은 leaf의 작은 행 INSERT·DELETE·UPDATE, Overflow 항목이 있는 XTR1 위의 unlink와 ChainRetire 두 순서. DELETE·UPDATE 대상이 큰 행이면 Unsupported |
 | OVF-J07 | O3 | census: 새 C 진입·Forward 검산·B 복사·drain의 frame이 기존 상한 안 |
 | OVF-R01 | O3 | 재시작: loser Reserved(written 0·중간·k), loser Retained, winner, ChainRetire 전 crash. 복구 뒤 Base4·XTR1·읽기 |
@@ -408,6 +415,7 @@ O2는 크기 때문에 네 PR로 나눈다(각각 독립 D2): **O2a** Reserve(ov
 | Base4 allocator incarnation 상계 | `System HW + creates + Structural HW` | kind 7 Allocated page 수를 더함(O2). 14-2가 Overflow page를 Free로 돌리면 다시 정한다 |
 | `jobs.rs` census의 TerminalLeased 연산 목록 | Reserve·Forward·Cancel·Commit·AbortEnd·Clr | ChunkWrite·OverflowCancel 추가, ChainRetire는 TerminalReady(O2) |
 | 효과 추론 `op_effect`·`opcode_effect` | `op != op.role()`이면 DELETE | 명시적 `Operation::delete()`(O1) |
+| [module-boundaries Row read/write](dev3-module-boundaries.md#row-write-validate-once)와 B driver seam | copy는 Step 없음; PreparedRow apply는 예약 discharge; RowDraftCut 불변 | copy의 ReadStep·재시도, prepared-chunk의 활성 예약 반환·성공 후 cut 갱신·예약 중 flush, allocator 부족의 split 분류 분리(O3). 원 수명·오류·F02 출력 규칙은 유지 |
 
 <a id="o1-record"></a>
 ## 14. O1 구현 기록
