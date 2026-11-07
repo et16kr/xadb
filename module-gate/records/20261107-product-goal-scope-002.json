@@ -1,0 +1,5 @@
+{
+  "schema": "XADB_MODULE_GATE_RECORD_V1",
+  "change": "D3 user decision record (decision card in the project thread): product goal class set to Oracle/PostgreSQL single-instance level as XADB-SCOPE-002 in devdoc/plans/project-direction.md, with design targets, draft qualification criteria, remaining user decisions U2/U4/U6 and the impact on existing plans; README entry. No product code, contract, format, schedule credit or test changes; no independent D1/D2 approval claimed.",
+  "reviews": []
+}
