@@ -16,6 +16,9 @@ use foundation::{
     value::{MAX_VALUE_BYTES, Value},
 };
 
+/// Chunked canonical bytes for overflow rows (dev3-row-overflow.md#plan).
+pub(crate) mod stream;
+
 pub(crate) const MAX_ROW_COLUMNS: usize = 32;
 pub(crate) const ROW_HEADER_BYTES: usize = 168;
 pub(crate) const INDEX_RECORD_BYTES: usize = 160;

@@ -49,7 +49,7 @@ fn make_cell(owner: OverflowHead, index: usize, data: &[u8]) -> Vec<u8> {
         &data[index * MAX_OVERFLOW_PAYLOAD..((index + 1) * MAX_OVERFLOW_PAYLOAD).min(data.len())];
     let mut cell = vec![0; OVERFLOW_HEADER_BYTES + part.len()];
     encode_overflow_cell(
-        owner,
+        owner.chain(),
         index,
         address(index),
         (index + 1 < owner.count()).then(|| address(index + 1)),
@@ -69,7 +69,7 @@ fn raw_page(header: PageHeader, cell: &[u8]) -> Vec<u8> {
 fn make_page(owner: OverflowHead, index: usize, data: &[u8]) -> Vec<u8> {
     let cell = make_cell(owner, index, data);
     let mut page = vec![0; PAGE_BYTES];
-    encode_overflow_page(header(index), owner, index, &cell, &mut page).unwrap();
+    encode_overflow_page(header(index), owner.chain(), index, &cell, &mut page).unwrap();
     page
 }
 
@@ -111,6 +111,11 @@ fn overflow_head_literal_and_limits() {
     }
 }
 
+/// OVF-F01 (dev3-row-overflow.md#chunk-revision): the cell's `[24,48)` is
+/// reserved zero. Expected bytes are from the independent struct/hashlib
+/// script module-gate/evidence/dev3-08-3-o1/overflow_literal.py, which
+/// first rebuilds the pre-revision literal of dev3-overflow-format.md
+/// (checksum 1f97d1d7…, full-page cd849926…).
 #[test]
 fn overflow_page_literal() {
     let data = payload(2049);
@@ -118,7 +123,7 @@ fn overflow_page_literal() {
     let page = make_page(owner, 0, &data);
     let cell_header = bytes(
         "584f56310100000001000000010800000108000000000000\
-         020000000100000003000000000000000400000000000000\
+         000000000000000000000000000000000000000000000000\
          000000000000000000000000000000000000000000000000\
          22f0a97231b1c2f1c8e4390f637461035e336295817ba70929f902e11b5e9809\
          000000000000000000000000000000000000000000000000",
@@ -129,15 +134,34 @@ fn overflow_page_literal() {
     assert_eq!(&cell[OVERFLOW_HEADER_BYTES..], data);
     assert_eq!(
         &page[DIGEST_OFFSET..],
-        bytes("1f97d1d77b1d98246096de2d96fc2675fe08524a5d377fae0534a26538c02a3b")
+        bytes("6f1967a99a15982cf640c05412c167f319b95286baa426de4b3d64714e2cca14")
     );
     assert_eq!(
         content_digest(&page).as_slice(),
-        bytes("cd8499269433bc243136e100edb13f7328d0563d2a74f1098f23ec1cfc4634d5")
+        bytes("4c6ecd862bee935ac8dad2f74a214e366fd1475ac876eee0ab373ab5734594c9")
     );
-    let view = decode_overflow_page(&page, header(0).identity, owner, 0).unwrap();
+    let view = decode_overflow_page(&page, header(0).identity, owner.chain(), 0).unwrap();
     assert_eq!(view.payload(), data);
     assert_eq!(view.next(), None);
+    // A pre-revision cell (the root at `[24,48)`) is Corrupt, with either
+    // the root or any other nonzero bytes there.
+    for root in [address(0), address(7)] {
+        let mut old = make_cell(owner, 0, &data);
+        root.encode(&mut old[24..48]).unwrap();
+        let page = raw_page(header(0), &old);
+        assert_eq!(
+            decode_overflow_page(&page, header(0).identity, owner.chain(), 0).err(),
+            Some(OverflowError::Corrupt)
+        );
+    }
+    for at in 24..48 {
+        let mut old = make_cell(owner, 0, &data);
+        old[at] = 1;
+        let page = raw_page(header(0), &old);
+        assert!(decode_overflow_page(&page, header(0).identity, owner.chain(), 0).is_err());
+        let mut out = vec![0xa5; PAGE_BYTES];
+        assert!(encode_overflow_page(header(0), owner.chain(), 0, &old, &mut out).is_err());
+    }
 }
 
 fn verify_chain(data: &[u8], digest: [u8; 32]) -> usize {
@@ -145,9 +169,9 @@ fn verify_chain(data: &[u8], digest: [u8; 32]) -> usize {
     let mut verifier = OverflowChainVerifier::new(header(0).identity, owner).unwrap();
     for i in 0..owner.count() {
         let page = make_page(owner, i, data);
-        let view = decode_overflow_page(&page, header(i).identity, owner, i).unwrap();
+        let view = decode_overflow_page(&page, header(i).identity, owner.chain(), i).unwrap();
         assert_eq!(view.index(), i);
-        assert_eq!(view.head(), owner);
+        assert_eq!(view.chain(), owner.chain());
         assert_eq!(view.header(), header(i));
         assert_eq!(
             view.payload(),
@@ -182,23 +206,23 @@ fn overflow_rejects_checksummed_damage() {
             let mut cell = original.clone();
             cell[offset] ^= 0x40;
             let page = raw_page(header(i), &cell);
-            assert!(decode_overflow_page(&page, header(i).identity, owner, i).is_err());
+            assert!(decode_overflow_page(&page, header(i).identity, owner.chain(), i).is_err());
             rejected += 1;
         }
         let page = raw_page(header(i), &original[..original.len() - 1]);
-        assert!(decode_overflow_page(&page, header(i).identity, owner, i).is_err());
+        assert!(decode_overflow_page(&page, header(i).identity, owner.chain(), i).is_err());
         rejected += 1;
     }
     assert_eq!(rejected, 36);
     let mut last = make_cell(owner, 2, &data);
     last.push(0);
     let page = raw_page(header(2), &last);
-    assert!(decode_overflow_page(&page, header(2).identity, owner, 2).is_err());
+    assert!(decode_overflow_page(&page, header(2).identity, owner.chain(), 2).is_err());
     let last = make_cell(owner, 2, &data);
     for cells in [vec![], vec![last.as_slice(), last.as_slice()]] {
         let mut page = vec![0; PAGE_BYTES];
         encode_page(header(2), &cells, &mut page).unwrap();
-        assert!(decode_overflow_page(&page, header(2).identity, owner, 2).is_err());
+        assert!(decode_overflow_page(&page, header(2).identity, owner.chain(), 2).is_err());
     }
 }
 
@@ -206,24 +230,67 @@ fn overflow_rejects_checksummed_damage() {
 fn overflow_rejects_links_and_identity() {
     let data = payload(32185);
     let owner = head(&data);
+    let chain = owner.chain();
+    // The cell names no root, so only the verifier (expected root identity
+    // and visited set) rejects chunk 0 away from the root and a later chunk
+    // at the root's address (dev3-row-overflow.md#chunk-revision).
     let first = make_cell(owner, 0, &data);
-    let page = raw_page(header(1), &first);
-    assert!(decode_overflow_page(&page, header(1).identity, owner, 0).is_err());
+    let mut away = vec![0; first.len()];
+    encode_overflow_cell(
+        chain,
+        0,
+        address(1),
+        Some(address(2)),
+        &data[..MAX_OVERFLOW_PAYLOAD],
+        &mut away,
+    )
+    .unwrap();
+    let page = raw_page(header(1), &away);
+    let view = decode_overflow_page(&page, header(1).identity, chain, 0).unwrap();
+    assert_eq!((view.index(), view.next()), (0, Some(address(2))));
+    let mut verifier = OverflowChainVerifier::new(header(0).identity, owner).unwrap();
+    assert_eq!(verifier.push(&view), Err(OverflowError::OrderMismatch));
     let middle = make_cell(owner, 1, &data);
+    let root_page = make_page(owner, 0, &data);
+    let root_view = decode_overflow_page(&root_page, header(0).identity, chain, 0).unwrap();
+    verifier.push(&root_view).unwrap();
     let page = raw_page(header(0), &middle);
-    assert!(decode_overflow_page(&page, header(0).identity, owner, 1).is_err());
-    for next in [address(0), address(1)] {
-        for incarnation in [4, 5] {
-            let mut cell = middle.clone();
-            PageRef {
-                incarnation: Generation::new(incarnation).unwrap(),
-                ..next
-            }
-            .encode(&mut cell[48..72])
-            .unwrap();
-            let page = raw_page(header(1), &cell);
-            assert!(decode_overflow_page(&page, header(1).identity, owner, 1).is_err());
+    let view = decode_overflow_page(&page, header(0).identity, chain, 1).unwrap();
+    assert_eq!(verifier.push(&view), Err(OverflowError::OrderMismatch));
+    // next = self stays a local rejection for either incarnation.
+    for incarnation in [4, 5] {
+        let mut cell = middle.clone();
+        PageRef {
+            incarnation: Generation::new(incarnation).unwrap(),
+            ..address(1)
         }
+        .encode(&mut cell[48..72])
+        .unwrap();
+        let page = raw_page(header(1), &cell);
+        assert!(decode_overflow_page(&page, header(1).identity, chain, 1).is_err());
+    }
+    // next = the root's address passes the local check; the chunk found
+    // there is refused by the visited set, for either incarnation.
+    for incarnation in [4, 5] {
+        let back = PageRef {
+            incarnation: Generation::new(incarnation).unwrap(),
+            ..address(0)
+        };
+        let mut cell = middle.clone();
+        back.encode(&mut cell[48..72]).unwrap();
+        let page = raw_page(header(1), &cell);
+        let view = decode_overflow_page(&page, header(1).identity, chain, 1).unwrap();
+        assert_eq!(view.next(), Some(back));
+        let mut verifier = OverflowChainVerifier::new(header(0).identity, owner).unwrap();
+        verifier.push(&root_view).unwrap();
+        verifier.push(&view).unwrap();
+        let mut at_root = header(2);
+        at_root.identity.page = back;
+        let last = make_cell(owner, 2, &data);
+        let page = raw_page(at_root, &last);
+        let view = decode_overflow_page(&page, at_root.identity, chain, 2).unwrap();
+        assert_eq!(verifier.push(&view), Err(OverflowError::OrderMismatch));
+        assert_eq!(verifier.finish(), Err(OverflowError::Incomplete));
     }
     for i in [1, 2] {
         let mut cell = make_cell(owner, i, &data);
@@ -233,7 +300,7 @@ fn overflow_rejects_links_and_identity() {
             address(3).encode(&mut cell[48..72]).unwrap();
         }
         let page = raw_page(header(i), &cell);
-        assert!(decode_overflow_page(&page, header(i).identity, owner, i).is_err());
+        assert!(decode_overflow_page(&page, header(i).identity, owner.chain(), i).is_err());
     }
     let mut headers = [header(0); 7];
     headers[0].identity.database = DatabaseId::new([12; 16]).unwrap();
@@ -245,7 +312,7 @@ fn overflow_rejects_links_and_identity() {
     headers[6].kind = PageKind::Undo;
     for changed in headers {
         let page = raw_page(changed, &first);
-        assert!(decode_overflow_page(&page, header(0).identity, owner, 0).is_err());
+        assert!(decode_overflow_page(&page, header(0).identity, owner.chain(), 0).is_err());
     }
 }
 
@@ -263,7 +330,7 @@ fn overflow_verifier_requires_complete_order_and_digest() {
     let views: Vec<_> = pages
         .iter()
         .enumerate()
-        .map(|(i, page)| decode_overflow_page(page, header(i).identity, owner, i).unwrap())
+        .map(|(i, page)| decode_overflow_page(page, header(i).identity, owner.chain(), i).unwrap())
         .collect();
     let mut verifier = OverflowChainVerifier::new(header(0).identity, owner).unwrap();
     assert_eq!(verifier.finish(), Err(OverflowError::Incomplete));
@@ -274,20 +341,21 @@ fn overflow_verifier_requires_complete_order_and_digest() {
     foreign_header.identity.owner = ObjectId::new(8).unwrap();
     let foreign_page = raw_page(foreign_header, &make_cell(owner, 1, &data));
     let foreign_view =
-        decode_overflow_page(&foreign_page, foreign_header.identity, owner, 1).unwrap();
+        decode_overflow_page(&foreign_page, foreign_header.identity, owner.chain(), 1).unwrap();
     assert_eq!(
         verifier.push(&foreign_view),
         Err(OverflowError::OrderMismatch)
     );
     let other = OverflowHead::new(address(0), data.len(), [9; 32]).unwrap();
     let other_page = make_page(other, 1, &data);
-    let other_view = decode_overflow_page(&other_page, header(1).identity, other, 1).unwrap();
+    let other_view =
+        decode_overflow_page(&other_page, header(1).identity, other.chain(), 1).unwrap();
     assert_eq!(verifier.push(&other_view), Err(OverflowError::HeadMismatch));
     verifier.push(&views[1]).unwrap();
     let mut last = make_cell(owner, 2, &data);
     last[OVERFLOW_HEADER_BYTES] ^= 1;
     let bad_page = raw_page(header(2), &last);
-    let bad_view = decode_overflow_page(&bad_page, header(2).identity, owner, 2).unwrap();
+    let bad_view = decode_overflow_page(&bad_page, header(2).identity, owner.chain(), 2).unwrap();
     assert_eq!(verifier.push(&bad_view), Err(OverflowError::Corrupt));
     verifier.push(&views[2]).unwrap();
     assert_eq!(verifier.push(&views[2]), Err(OverflowError::InvalidInput));
@@ -311,7 +379,7 @@ fn overflow_verifier_requires_complete_order_and_digest() {
                 &data[i * MAX_OVERFLOW_PAYLOAD..((i + 1) * MAX_OVERFLOW_PAYLOAD).min(data.len())];
             let mut cell = vec![0; OVERFLOW_HEADER_BYTES + part.len()];
             encode_overflow_cell(
-                owner,
+                owner.chain(),
                 i,
                 current[i],
                 current.get(i + 1).copied(),
@@ -320,7 +388,7 @@ fn overflow_verifier_requires_complete_order_and_digest() {
             )
             .unwrap();
             let page = raw_page(h, &cell);
-            let view = decode_overflow_page(&page, h.identity, owner, i).unwrap();
+            let view = decode_overflow_page(&page, h.identity, owner.chain(), i).unwrap();
             if i < 3 {
                 verifier.push(&view).unwrap();
             } else {
@@ -371,21 +439,37 @@ fn overflow_encoders_preserve_outputs() {
         assert!(owner.encode(&mut out).is_err());
         assert_eq!(out, vec![0xa5; len]);
     }
+    let chain = owner.chain();
     for (index, current, next, len) in [
         (1, address(0), None, data.len()),
-        (0, address(1), None, data.len()),
         (0, address(0), Some(address(1)), data.len()),
         (0, address(0), None, data.len() - 1),
     ] {
         let mut out = vec![0xa5; OVERFLOW_HEADER_BYTES + data.len() + 4];
-        assert!(encode_overflow_cell(owner, index, current, next, &data[..len], &mut out).is_err());
+        assert!(encode_overflow_cell(chain, index, current, next, &data[..len], &mut out).is_err());
         assert!(out.iter().all(|b| *b == 0xa5));
     }
+    // Two chunks: a missing next, and a next at the current address.
+    let two = OverflowChain::new(16_093, [3; 32]).unwrap();
+    let full = payload(MAX_OVERFLOW_PAYLOAD);
+    let reused = PageRef {
+        incarnation: Generation::new(5).unwrap(),
+        ..address(0)
+    };
+    for next in [None, Some(address(0)), Some(reused)] {
+        let mut out = vec![0xa5; OVERFLOW_HEADER_BYTES + full.len()];
+        assert!(encode_overflow_cell(two, 0, address(0), next, &full, &mut out).is_err());
+        assert!(out.iter().all(|b| *b == 0xa5));
+    }
+    // A chunk is written before its root exists: any current page is valid.
+    let mut out = vec![0xa5; OVERFLOW_HEADER_BYTES + data.len()];
+    assert!(encode_overflow_cell(chain, 0, address(1), None, &data, &mut out).is_ok());
+    assert!(out[24..48].iter().all(|b| *b == 0));
     let mut small = vec![0xa5; OVERFLOW_HEADER_BYTES + data.len() - 1];
-    assert!(encode_overflow_cell(owner, 0, address(0), None, &data, &mut small).is_err());
+    assert!(encode_overflow_cell(chain, 0, address(0), None, &data, &mut small).is_err());
     assert!(small.iter().all(|b| *b == 0xa5));
     let mut out = vec![0xa5; OVERFLOW_HEADER_BYTES + data.len() + 4];
-    let used = encode_overflow_cell(owner, 0, address(0), None, &data, &mut out).unwrap();
+    let used = encode_overflow_cell(chain, 0, address(0), None, &data, &mut out).unwrap();
     assert_eq!(used, OVERFLOW_HEADER_BYTES + data.len());
     assert_eq!(&out[used..], &[0xa5; 4]);
     let cell = make_cell(owner, 0, &data);
@@ -399,7 +483,7 @@ fn overflow_encoders_preserve_outputs() {
         (header(0), cell.as_slice(), PAGE_BYTES - 1),
     ] {
         let mut out = vec![0xa5; len];
-        assert!(encode_overflow_page(h, owner, 0, cell, &mut out).is_err());
+        assert!(encode_overflow_page(h, chain, 0, cell, &mut out).is_err());
         assert!(out.iter().all(|b| *b == 0xa5));
     }
 }
