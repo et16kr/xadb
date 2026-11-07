@@ -112,6 +112,44 @@ pub(crate) fn row_cleanup_wal(effect: RowEffect, cell: u32, new_cell: u32, previ
         + 128 * u64::from(previous)
 }
 
+/// An overflow INSERT root's cell: 12-byte cell head, 168-byte record
+/// header and the 64-byte head (dev3-row-overflow.md#overflow-row).
+pub(crate) const OVERFLOW_CELL: u32 = 244;
+/// ChunkWrite's frame W and ChainRetire's largest frame X
+/// (dev3-row-overflow.md#opcodes, #ledger).
+pub(crate) const CHUNK_WRITE_WAL: u64 = 56_976;
+pub(crate) const CHAIN_RETIRE_WAL: u64 = 59_056;
+const OVERFLOW_TOTAL: std::ops::RangeInclusive<u32> = 2_049..=131_072;
+const CHUNK_PAYLOAD: u32 = 16_092;
+
+/// A Reserved overflow root's chain so far (`[328,360)`): the last written
+/// chunk (lowest index), the row's total and the chunks written.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct PendingChain {
+    pub(crate) front: Option<PageRef>,
+    pub(crate) total: u32,
+    pub(crate) written: u16,
+}
+impl PendingChain {
+    pub(crate) fn count(self) -> u16 {
+        self.total.div_ceil(CHUNK_PAYLOAD) as u16
+    }
+}
+
+/// The chain a ReleasingCompensated overflow root still has to return
+/// (`[200,248)`, `[288,292)`): its table anchor, chunk 0 and the total.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct ReturnChain {
+    pub(crate) anchor: PageRef,
+    pub(crate) root: PageRef,
+    pub(crate) total: u32,
+}
+impl ReturnChain {
+    pub(crate) fn count(self) -> u16 {
+        self.total.div_ceil(CHUNK_PAYLOAD) as u16
+    }
+}
+
 #[derive(Clone, Copy)]
 pub(crate) struct JobView<'a> {
     bytes: &'a [u8; JOB_BYTES],
@@ -174,11 +212,56 @@ impl<'a> JobView<'a> {
             RowEffect::Update => cell.saturating_sub(self.new_cell() as usize),
         }
     }
+    /// The payload byte `@285` (dev3-row-overflow.md#job-overflow): 1 for an
+    /// overflow INSERT root in Reserved, Retained or ReleasingCompensated,
+    /// 0 for every other Job.
+    pub(crate) fn payload(self) -> u8 {
+        self.bytes[285]
+    }
+    pub(crate) fn overflow(self) -> bool {
+        self.payload() == 1
+    }
+    /// A Reserved overflow root's pending chain; None for every other Job.
+    pub(crate) fn pending(self) -> Option<PendingChain> {
+        (self.state == JobState::RootReserved && self.overflow()).then(|| PendingChain {
+            front: (!zero(&self.bytes[328..352]))
+                .then(|| PageRef::decode(&self.bytes[328..352]).expect("validated front")),
+            total: u32::from_le_bytes(self.bytes[352..356].try_into().expect("checked field")),
+            written: u16::from_le_bytes([self.bytes[356], self.bytes[357]]),
+        })
+    }
+    /// A ReleasingCompensated overflow root's chain still to return; None
+    /// once ChainRetire returned it and for every other Job.
+    pub(crate) fn chain(self) -> Option<ReturnChain> {
+        (self.state == JobState::RootReleasingCompensated
+            && self.overflow()
+            && !zero(&self.bytes[200..248]))
+        .then(|| ReturnChain {
+            anchor: PageRef::decode(&self.bytes[200..224]).expect("validated anchor"),
+            root: PageRef::decode(&self.bytes[224..248]).expect("validated root"),
+            total: u32::from_le_bytes(self.bytes[288..292].try_into().expect("checked field")),
+        })
+    }
     /// The Reserved root's remaining Forward and a live root's remaining CLR
     /// (ledger rows 1 and 0); `None` outside a Row Reserved/Retained root.
+    /// A Reserved overflow root's Forward also carries its unwritten chunks
+    /// (dev3-row-overflow.md#ledger): `(k−written)·W + F`.
     pub(crate) fn forward_wal(self) -> Option<u64> {
-        self.has_previous_transaction()
-            .map(|h| row_forward_wal(self.effect(), self.cell_bytes(), self.new_cell(), h))
+        let chunks = self
+            .pending()
+            .map_or(0, |p| u64::from(p.count() - p.written));
+        self.has_previous_transaction().map(|h| {
+            chunks * CHUNK_WRITE_WAL
+                + row_forward_wal(self.effect(), self.cell_bytes(), self.new_cell(), h)
+        })
+    }
+    /// The steps of `forward_wal`: 1, plus a Reserved overflow root's
+    /// unwritten chunks.
+    pub(crate) fn forward_steps(self) -> Option<u64> {
+        let chunks = self
+            .pending()
+            .map_or(0, |p| u64::from(p.count() - p.written));
+        self.has_previous_transaction().map(|_| 1 + chunks)
     }
     pub(crate) fn clr_wal(self) -> Option<u64> {
         self.has_previous_transaction()
@@ -270,6 +353,9 @@ impl<'a> JobView<'a> {
                     self.has_previous_transaction().unwrap_or(false),
                 ),
             ),
+            // A chain still to return adds ChainRetire before the four
+            // release steps (dev3-row-overflow.md#ledger).
+            _ if self.chain().is_some() => (5, RELEASE_STEPS + CHAIN_RETIRE_WAL),
             _ => {
                 let steps = 4 - u64::from(self.release_cursor());
                 (steps, steps * RELEASE_BYTES)
@@ -376,8 +462,14 @@ pub(crate) fn decode_job(input: &[u8], namespace: Namespace) -> Result<JobView<'
         return Err(RetentionError::OrderMismatch);
     }
     // `@284` is the Row root effect byte (0 INSERT, 1 DELETE, 2 UPDATE); every
-    // other Job keeps it zero, and `@285` stays zero. `[286,288)` is an
-    // UPDATE root's C' (checked by `validate_root`), zero everywhere else.
+    // other Job keeps it zero. `@285` is the payload byte: 1 only for an
+    // INSERT Row root in Reserved, Retained or ReleasingCompensated
+    // (dev3-row-overflow.md#job-overflow). `[286,288)` is an UPDATE root's
+    // C' (checked by `validate_root`), zero everywhere else.
+    let overflow_state = matches!(
+        state,
+        JobState::RootReserved | JobState::RootRetained | JobState::RootReleasingCompensated
+    );
     if !zero(&bytes[122..128])
         || bytes[284]
             > if bytes[7] == 3 && state.is_root() {
@@ -385,7 +477,7 @@ pub(crate) fn decode_job(input: &[u8], namespace: Namespace) -> Result<JobView<'
             } else {
                 0
             }
-        || bytes[285] != 0
+        || bytes[285] > u8::from(bytes[7] == 3 && overflow_state && bytes[284] == 0)
         || (bytes[284] != 2 && !zero(&bytes[286..288]))
         || (bytes[7] != 3 && !zero(&bytes[320..328]))
         || !zero(&bytes[360..376])
@@ -459,16 +551,48 @@ fn validate_root(job: JobView<'_>, status: StatusSlotRef) -> Result<()> {
         return Err(RetentionError::Corrupt);
     }
     if job.state.is_releasing() {
-        // Releasing keeps only the effect byte of `[280,320)`.
-        if !zero(&bytes[200..248]) || !zero(&bytes[280..284]) || !zero(&bytes[285..320]) {
+        // Releasing keeps only the effect and payload bytes of `[280,320)`;
+        // a ReleasingCompensated overflow root also its chain still to
+        // return: `[200,248)` anchor and root, `[288,292)` total.
+        let parts = [&bytes[200..224], &bytes[224..248], &bytes[288..292]].map(|b| !zero(b));
+        let chain = parts.contains(&true);
+        if !zero(&bytes[280..284])
+            || !zero(&bytes[286..288])
+            || !zero(&bytes[292..320])
+            || (chain && (!job.overflow() || parts.contains(&false)))
+        {
             return Err(RetentionError::Corrupt);
         }
+        if chain {
+            let anchor = PageRef::decode(&bytes[200..224])?;
+            let root = PageRef::decode(&bytes[224..248])?;
+            let total = u32::from_le_bytes(bytes[288..292].try_into().expect("checked field"));
+            if !OVERFLOW_TOTAL.contains(&total) {
+                return Err(RetentionError::Corrupt);
+            }
+            if same_address(anchor, root)
+                || [anchor, root].iter().any(|p| {
+                    !dynamic_page(*p)
+                        || same_address(*p, status.page())
+                        || same_address(*p, undo.page())
+                })
+            {
+                return Err(RetentionError::IdentityMismatch);
+            }
+            // ChainRetire is the first cleanup step (cursor 0).
+            if job.release_cursor() != 0 {
+                return Err(RetentionError::OrderMismatch);
+            }
+        }
+        // At cursor 0 the last step is the CLR/Prune itself, except for an
+        // overflow root whose ChainRetire already returned its chain.
+        let retired = job.overflow() && !chain;
         if job.adoption_lsn() <= job.lease_lsn()
             || job.release_start() <= job.adoption_lsn()
             || job.release_cursor() > 3
             || (job.state == JobState::RootReleasingCommitted) != (job.commit_q() != 0)
-            || (job.release_cursor() == 0 && job.last_step() != job.release_start())
-            || (job.release_cursor() != 0 && job.last_step() <= job.release_start())
+            || (job.release_cursor() == 0 && !retired && job.last_step() != job.release_start())
+            || ((job.release_cursor() != 0 || retired) && job.last_step() <= job.release_start())
         {
             return Err(RetentionError::OrderMismatch);
         }
@@ -497,6 +621,7 @@ fn validate_root(job: JobView<'_>, status: StatusSlotRef) -> Result<()> {
             job.new_cell() == 0
         };
         if !cell_range.contains(&job.cell_bytes())
+            || (job.overflow() && job.cell_bytes() != OVERFLOW_CELL)
             || !new_cell_ok
             || job.release_cursor() != 0
             || job.release_start() != 0
@@ -505,10 +630,41 @@ fn validate_root(job: JobView<'_>, status: StatusSlotRef) -> Result<()> {
             return Err(RetentionError::Corrupt);
         }
         if job.state == JobState::RootReserved {
-            if job.adoption_lsn() != 0 || !zero(job.sender_digest()) {
+            // An overflow root's pending chain takes the sender digest's
+            // place until Forward (dev3-row-overflow.md#job-overflow).
+            // `pending` reads a front that this check decoded first.
+            if job.overflow() && !zero(&bytes[328..352]) {
+                PageRef::decode(&bytes[328..352])?;
+            }
+            let written = match job.pending() {
+                None if !zero(job.sender_digest()) => return Err(RetentionError::Corrupt),
+                None => 0,
+                Some(pending) => {
+                    if !OVERFLOW_TOTAL.contains(&pending.total)
+                        || pending.written > pending.count()
+                        || pending.front.is_some() != (pending.written != 0)
+                        || !zero(&bytes[358..360])
+                    {
+                        return Err(RetentionError::Corrupt);
+                    }
+                    if let Some(front) = pending.front
+                        && (!dynamic_page(front)
+                            || same_address(front, status.page())
+                            || same_address(front, undo.page())
+                            || pair.iter().any(|p| same_address(front, *p)))
+                    {
+                        return Err(RetentionError::IdentityMismatch);
+                    }
+                    pending.written
+                }
+            };
+            if job.adoption_lsn() != 0 {
                 return Err(RetentionError::Corrupt);
             }
-            if job.last_step() != job.lease_lsn() {
+            // Each ChunkWrite is the root's last step.
+            if (written == 0) != (job.last_step() == job.lease_lsn())
+                || job.last_step() < job.lease_lsn()
+            {
                 return Err(RetentionError::OrderMismatch);
             }
         } else if job.adoption_lsn() <= job.lease_lsn() || job.last_step() != job.adoption_lsn() {

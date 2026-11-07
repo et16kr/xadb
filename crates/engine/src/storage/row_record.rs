@@ -608,10 +608,20 @@ pub(crate) fn decode_materialized_row<'a>(
     bytes: &'a [u8],
     columns: &[Column],
 ) -> Result<CanonicalRowView<'a>, RowError> {
+    decode_materialized_row_with_schema(head, bytes, RowSchemaInput::Columns(columns))
+}
+
+/// `decode_materialized_row` against borrowed (e.g. Catalog) schema input,
+/// for B's copy of an overflow row (dev3-row-overflow.md#read).
+pub(crate) fn decode_materialized_row_with_schema<'a>(
+    head: OverflowHead,
+    bytes: &'a [u8],
+    schema: RowSchemaInput<'_>,
+) -> Result<CanonicalRowView<'a>, RowError> {
     if bytes.len() != head.total() || content_digest(bytes) != head.digest() {
         return Err(RowError::OverflowMismatch);
     }
-    decode_canonical_row(bytes, columns)
+    decode_canonical_row_with_schema(bytes, schema)
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

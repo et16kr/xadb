@@ -1,6 +1,6 @@
 //! Literal cell/census validation only: no persistent pages or actual grants.
 use super::*;
-use crate::api::DatabaseId;
+use crate::{api::DatabaseId, storage::page::PageError};
 
 macro_rules! literal {
     ($name:literal) => {
@@ -904,4 +904,303 @@ fn rup_f06_update_recipes_and_has_previous() {
         (RowEffect::Delete, RowEffect::Update)
     );
     assert_eq!(update.has_previous_transaction(), Some(false));
+}
+
+// ---- OVF-F02: the overflow INSERT root (dev3-row-overflow.md#job-overflow,
+// #ledger). Expected values are the contract's integers: W 56976, F
+// 91548+128h, CLR 91340+128h, R 55528, X 59056. ----
+
+fn page(no: u64) -> [u8; 24] {
+    let mut bytes = [0; 24];
+    bytes[..8].copy_from_slice(&0x0000_0001_0000_0001u64.to_le_bytes());
+    bytes[8..16].copy_from_slice(&no.to_le_bytes());
+    bytes[16..24].copy_from_slice(&1u64.to_le_bytes());
+    bytes
+}
+
+/// The live root `i` (Reserved 19/20, Retained 21/22) as an overflow root:
+/// payload 1, C = 244 and the cleanup budget `312096 + 128h`.
+fn overflow_root(i: usize, h: bool) -> [u8; JOB_BYTES] {
+    let mut bytes = cell(i);
+    bytes[280..284].copy_from_slice(&244u32.to_le_bytes());
+    bytes[285] = 1;
+    let wal = 312_096 + 128 * u64::from(h);
+    put(&mut bytes, 784, wal);
+    put(&mut bytes, 880, wal);
+    bytes
+}
+
+/// A Reserved overflow root (19 h0, 20 h1) with `written` chunks of `total`
+/// written, the front at page 40 and the last ChunkWrite at LSN 2+written.
+fn pending_root(i: usize, h: bool, total: u32, written: u16) -> [u8; JOB_BYTES] {
+    let mut bytes = overflow_root(i, h);
+    if written != 0 {
+        bytes[328..352].copy_from_slice(&page(40));
+    }
+    bytes[352..356].copy_from_slice(&total.to_le_bytes());
+    bytes[356..358].copy_from_slice(&written.to_le_bytes());
+    put(&mut bytes, 376, 2 + u64::from(written));
+    bytes
+}
+
+/// ReleasingCompensated cursor 0 (cell 27) of an overflow root that still
+/// holds its chain: anchor page 10, chunk 0 at page 41, the total and the
+/// cleanup `(5, 4R + X = 281168)`.
+fn chain_root(total: u32) -> [u8; JOB_BYTES] {
+    let mut bytes = cell(27);
+    bytes[285] = 1;
+    bytes[200..224].copy_from_slice(&page(10));
+    bytes[224..248].copy_from_slice(&page(41));
+    bytes[288..292].copy_from_slice(&total.to_le_bytes());
+    put(&mut bytes, 776, 5);
+    put(&mut bytes, 784, 281_168);
+    put(&mut bytes, 880, 281_168);
+    bytes
+}
+
+fn round_trip(bytes: &[u8; JOB_BYTES]) {
+    let mut out = [0xa5; JOB_BYTES];
+    encode_job(bytes, ns(), &mut out).unwrap();
+    assert_eq!(&out, bytes);
+}
+
+/// The chunk counts of the contract's totals: `ceil(total / 16092)`.
+const TOTALS: [(u32, u16); 6] = [
+    (2_049, 1),
+    (16_092, 1),
+    (16_093, 2),
+    (32_184, 2),
+    (32_185, 3),
+    (131_072, 9),
+];
+
+/// OVF-F02: the four states of the §4.3 table are accepted with their
+/// pending, chain and last_step rules and round-trip; the views report the
+/// pending chain, the chain to return and the contract's Forward, CLR and
+/// cleanup integers.
+#[test]
+fn ovf_f02_overflow_root_states_and_recipes() {
+    for (i, h) in [(19, false), (20, true)] {
+        let h128 = 128 * u64::from(h);
+        for (total, k) in TOTALS {
+            for written in [0, 1, k / 2, k - 1, k] {
+                let bytes = pending_root(i, h, total, written);
+                let view = decode_job(&bytes, ns()).unwrap();
+                round_trip(&bytes);
+                assert_eq!(view.payload(), 1);
+                assert!(view.overflow());
+                assert_eq!(view.cell_bytes(), 244);
+                assert_eq!(view.has_previous_transaction(), Some(h));
+                let front = (written != 0).then(|| PageRef::decode(&page(40)).unwrap());
+                let pending = view.pending().unwrap();
+                assert_eq!((pending.front, pending.total), (front, total));
+                assert_eq!((pending.written, pending.count()), (written, k));
+                assert_eq!(view.chain(), None);
+                let left = u64::from(k - written);
+                assert_eq!(view.forward_wal(), Some(left * 56_976 + 91_548 + h128));
+                assert_eq!(view.forward_steps(), Some(1 + left));
+                assert_eq!(view.clr_wal(), Some(91_340 + h128));
+                let cleanup = view.cleanup();
+                assert_eq!((cleanup.steps, cleanup.wal), (5, 312_096 + h128));
+                assert_eq!(cleanup.protected, 312_096 + h128);
+            }
+        }
+    }
+    // Retained: the sender digest is back, the Forward is spent.
+    for (i, h) in [(21, false), (22, true)] {
+        let h128 = 128 * u64::from(h);
+        let bytes = overflow_root(i, h);
+        let view = decode_job(&bytes, ns()).unwrap();
+        round_trip(&bytes);
+        assert!(view.overflow());
+        assert_eq!((view.pending(), view.chain()), (None, None));
+        assert_eq!(view.forward_wal(), Some(91_548 + h128));
+        assert_eq!(view.forward_steps(), Some(1));
+        assert_eq!(view.clr_wal(), Some(91_340 + h128));
+        assert_eq!(view.cleanup().wal, 312_096 + h128);
+    }
+    // ReleasingCompensated with the chain still to return.
+    for (total, k) in TOTALS {
+        let bytes = chain_root(total);
+        let view = decode_job(&bytes, ns()).unwrap();
+        round_trip(&bytes);
+        let chain = view.chain().unwrap();
+        assert_eq!(chain.anchor, PageRef::decode(&page(10)).unwrap());
+        assert_eq!(chain.root, PageRef::decode(&page(41)).unwrap());
+        assert_eq!((chain.total, chain.count()), (total, k));
+        assert_eq!(view.pending(), None);
+        assert_eq!((view.forward_wal(), view.forward_steps()), (None, None));
+        let cleanup = view.cleanup();
+        assert_eq!(
+            (cleanup.steps, cleanup.wal, cleanup.protected),
+            (5, 281_168, 281_168)
+        );
+    }
+    // ReleasingCompensated after ChainRetire: payload 1, no chain, every
+    // cursor; at cursor 0 the last step is ChainRetire (> release_start).
+    for i in 27..31 {
+        let mut bytes = cell(i);
+        bytes[285] = 1;
+        if i == 27 {
+            put(&mut bytes, 376, 41);
+        }
+        let view = decode_job(&bytes, ns()).unwrap();
+        round_trip(&bytes);
+        assert!(view.overflow());
+        assert_eq!((view.pending(), view.chain()), (None, None));
+        let cursor = (i - 27) as u64;
+        let cleanup = view.cleanup();
+        assert_eq!(
+            (cleanup.steps, cleanup.wal),
+            (4 - cursor, (4 - cursor) * 55_528)
+        );
+    }
+    // An inline root keeps payload 0, no pending and no chain.
+    for i in [19, 21, 23, 27] {
+        let bytes = cell(i);
+        let view = decode_job(&bytes, ns()).unwrap();
+        assert_eq!(view.payload(), 0);
+        assert_eq!((view.pending(), view.chain()), (None, None));
+    }
+    for i in [19, 20, 21, 22] {
+        assert_eq!(decode_job(&cell(i), ns()).unwrap().forward_steps(), Some(1));
+    }
+}
+
+/// OVF-F02: the payload byte, the pending chain, the chain to return and the
+/// last_step rules refuse every combination outside the §4.3 table.
+#[test]
+fn ovf_f02_overflow_root_rejections() {
+    // Payload 2, and payload 1 beside any other effect, state or scope.
+    for base in [pending_root(19, false, 2_049, 0), overflow_root(21, false)] {
+        let mut bad = base;
+        bad[285] = 2;
+        rejected(&bad, RetentionError::Corrupt);
+    }
+    for (i, c, h) in LIVE_ROOTS {
+        let mut bad = delete_root(i, c, h);
+        bad[285] = 1;
+        rejected(&bad, RetentionError::Corrupt);
+        let mut bad = update_root(i, c, 185, h);
+        bad[285] = 1;
+        rejected(&bad, RetentionError::Corrupt);
+    }
+    // Free, Terminal, Catalog roots and ReleasingCommitted (Prune wrote 0).
+    for i in (0..19).chain(23..27) {
+        let mut bad = cell(i);
+        bad[285] = 1;
+        rejected(&bad, RetentionError::Corrupt);
+    }
+    // An overflow root's cell is 244 (with its own matching budget).
+    for c in [185u32, 243, 245, 2228] {
+        let mut bad = pending_root(19, false, 2_049, 0);
+        bad[280..284].copy_from_slice(&c.to_le_bytes());
+        let wal = 311_608 + 2 * u64::from(c);
+        put(&mut bad, 784, wal);
+        put(&mut bad, 880, wal);
+        rejected(&bad, RetentionError::Corrupt);
+    }
+    // The inline cleanup budget under C = 244 is not the overflow root's.
+    let mut bad = pending_root(19, false, 2_049, 0);
+    put(&mut bad, 784, 311_978);
+    rejected(&bad, RetentionError::BudgetMismatch);
+
+    // Reserved pending: total range, written ≤ k, front ⇔ written, the
+    // zero tail, the front's identity and last_step.
+    for total in [0, 2_048, 131_073, u32::MAX] {
+        rejected(&pending_root(19, false, total, 0), RetentionError::Corrupt);
+    }
+    for (total, k) in TOTALS {
+        rejected(
+            &pending_root(19, false, total, k + 1),
+            RetentionError::Corrupt,
+        );
+    }
+    let mut bad = pending_root(19, false, 16_093, 1);
+    bad[328..352].fill(0);
+    rejected(&bad, RetentionError::Corrupt);
+    let mut bad = pending_root(19, false, 16_093, 0);
+    bad[328..352].copy_from_slice(&page(40));
+    rejected(&bad, RetentionError::Corrupt);
+    for at in [358, 359] {
+        let mut bad = pending_root(19, false, 16_093, 1);
+        bad[at] = 1;
+        rejected(&bad, RetentionError::Corrupt);
+    }
+    // The front is a dynamic page apart from the status, undo and pair pages.
+    for no in [8, 9, 10, 11, 12, 64] {
+        let mut bad = pending_root(19, false, 16_093, 1);
+        bad[328..352].copy_from_slice(&page(no));
+        rejected(&bad, RetentionError::IdentityMismatch);
+    }
+    let mut bad = pending_root(19, false, 16_093, 1);
+    bad[328..336].fill(0);
+    rejected(&bad, RetentionError::Page(PageError::Corrupt));
+    // written 0 ⇔ last_step == lease_lsn.
+    let mut bad = pending_root(19, false, 16_093, 0);
+    put(&mut bad, 376, 3);
+    rejected(&bad, RetentionError::OrderMismatch);
+    let mut bad = pending_root(19, false, 16_093, 1);
+    put(&mut bad, 376, 2);
+    rejected(&bad, RetentionError::OrderMismatch);
+    // An inline Reserved root keeps `[328,360)` zero.
+    let mut bad = cell(19);
+    bad[352..356].copy_from_slice(&2_049u32.to_le_bytes());
+    rejected(&bad, RetentionError::Corrupt);
+
+    // The chain to return: all three fields or none, an overflow
+    // ReleasingCompensated root only, total range, distinct dynamic pages
+    // apart from status and undo, cursor 0 and last_step == release_start.
+    for (from, to) in [(200, 224), (224, 248), (288, 292)] {
+        let mut bad = chain_root(16_093);
+        bad[from..to].fill(0);
+        rejected(&bad, RetentionError::Corrupt);
+    }
+    let mut bad = chain_root(16_093);
+    bad[285] = 0;
+    rejected(&bad, RetentionError::Corrupt);
+    for i in [23, 27] {
+        let mut bad = cell(i);
+        bad[224..248].copy_from_slice(&page(41));
+        rejected(&bad, RetentionError::Corrupt);
+    }
+    for total in [0, 2_048, 131_073] {
+        rejected(&chain_root(total), RetentionError::Corrupt);
+    }
+    for (at, no) in [
+        (224, 10),
+        (224, 9),
+        (224, 12),
+        (224, 64),
+        (200, 9),
+        (200, 12),
+    ] {
+        let mut bad = chain_root(16_093);
+        bad[at..at + 24].copy_from_slice(&page(no));
+        rejected(&bad, RetentionError::IdentityMismatch);
+    }
+    for at in [200, 224] {
+        let mut bad = chain_root(16_093);
+        bad[at..at + 8].fill(0);
+        rejected(&bad, RetentionError::Page(PageError::Corrupt));
+    }
+    for cursor in 1..4 {
+        let mut bad = chain_root(16_093);
+        bad[121] = cursor;
+        put(&mut bad, 376, 60 + u64::from(cursor));
+        rejected(&bad, RetentionError::OrderMismatch);
+    }
+    let mut bad = chain_root(16_093);
+    put(&mut bad, 376, 41);
+    rejected(&bad, RetentionError::OrderMismatch);
+    // After ChainRetire, cursor 0's last step is past release_start.
+    let mut bad = cell(27);
+    bad[285] = 1;
+    rejected(&bad, RetentionError::OrderMismatch);
+    // The chain's budget is `(5, 4R + X)`; the release budget is not.
+    let mut bad = chain_root(16_093);
+    put(&mut bad, 776, 4);
+    put(&mut bad, 784, 222_112);
+    put(&mut bad, 880, 222_112);
+    rejected(&bad, RetentionError::BudgetMismatch);
 }

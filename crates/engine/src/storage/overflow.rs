@@ -336,6 +336,110 @@ pub(crate) fn decode_overflow_page(
     )
 }
 
+/// Decode a chunk page whose chain is not known in advance: a returned or
+/// pending chain, or a retired chunk (dev3-row-overflow.md#chunk-revision).
+/// The envelope is checked against `expected` and the cell grammar fully;
+/// the caller compares the returned chain, index and next with its owner.
+pub(crate) fn inspect_overflow_page(
+    input: &[u8],
+    expected: PageIdentity,
+) -> Result<OverflowPageView<'_>, OverflowError> {
+    let page = decode_page(input, expected, PageKind::Overflow)?;
+    let cell = match (page.len(), page.cell(0)) {
+        (1, Some(cell)) => cell,
+        _ => return Err(OverflowError::Corrupt),
+    };
+    // parse_cell's own order: magic, then version, then fields.
+    if cell.len() < OVERFLOW_HEADER_BYTES || &cell[..4] != b"XOV1" {
+        return Err(OverflowError::Corrupt);
+    }
+    if read_u16(cell, 4) != 1 {
+        return Err(OverflowError::UnsupportedFormat);
+    }
+    let mut digest = [0; 32];
+    digest.copy_from_slice(&cell[72..104]);
+    let chain = OverflowChain::new(read_u32(cell, 12) as usize, digest)
+        .map_err(|_| OverflowError::Corrupt)?;
+    let index = usize::from(read_u16(cell, 6));
+    if index >= chain.count() {
+        return Err(OverflowError::Corrupt);
+    }
+    parse_cell(cell, page.header(), chain, index)
+}
+
+/// Walk part of a chain front to back without its head: a pending chain
+/// from its front (first index k−written) or a returned chain from its root
+/// (first index 0). Each chunk follows the previous next, has the next
+/// index and the same chain, and repeats no address; the last ends at index
+/// k−1 with no next. No payload digest is checked (dev3-row-overflow.md
+/// #chunk-revision). Failed pushes preserve the walk.
+pub(crate) struct OverflowSegmentWalk {
+    identity: PageIdentity,
+    chain: OverflowChain,
+    next: Option<PageRef>,
+    index: usize,
+    seen: [Option<PageRef>; MAX_OVERFLOW_CHUNKS],
+    pushed: usize,
+}
+
+impl OverflowSegmentWalk {
+    pub(crate) fn new(
+        front: PageIdentity,
+        chain: OverflowChain,
+        first: usize,
+    ) -> Result<Self, OverflowError> {
+        if first >= chain.count() {
+            return Err(OverflowError::InvalidInput);
+        }
+        Ok(Self {
+            identity: front,
+            chain,
+            next: Some(front.page),
+            index: first,
+            seen: [None; MAX_OVERFLOW_CHUNKS],
+            pushed: 0,
+        })
+    }
+
+    /// The identity the next chunk must have; None once the walk ended.
+    pub(crate) fn expected(&self) -> Option<PageIdentity> {
+        self.next.map(|page| PageIdentity {
+            page,
+            ..self.identity
+        })
+    }
+
+    pub(crate) fn push(&mut self, view: &OverflowPageView<'_>) -> Result<(), OverflowError> {
+        let expected = self.expected().ok_or(OverflowError::InvalidInput)?;
+        if view.chain != self.chain {
+            return Err(OverflowError::HeadMismatch);
+        }
+        if view.index != self.index
+            || view.header.identity != expected
+            || self
+                .seen
+                .iter()
+                .flatten()
+                .any(|old| same_address(*old, expected.page))
+        {
+            return Err(OverflowError::OrderMismatch);
+        }
+        self.seen[self.pushed] = Some(expected.page);
+        self.pushed += 1;
+        self.index += 1;
+        self.next = view.next;
+        Ok(())
+    }
+
+    /// The pages pushed, in chain order, once the last chunk ended the walk.
+    pub(crate) fn finish(&self) -> Result<&[Option<PageRef>], OverflowError> {
+        if self.next.is_some() || self.index != self.chain.count() {
+            return Err(OverflowError::Incomplete);
+        }
+        Ok(&self.seen[..self.pushed])
+    }
+}
+
 /// Bounded streaming verification. Payload storage belongs to the caller.
 /// Failed pushes preserve this verifier, including its digest and next address.
 /// Chunk 0 must sit at the root identity; the visited set, which starts with

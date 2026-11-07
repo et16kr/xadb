@@ -487,3 +487,105 @@ fn overflow_encoders_preserve_outputs() {
         assert!(out.iter().all(|b| *b == 0xa5));
     }
 }
+
+/// OVF-F01 (dev3-row-overflow.md#chunk-revision): chunks read without a
+/// head, and the head-less walk of a pending or returned chain.
+#[test]
+fn ovf_f01_inspect_and_segment_walk() {
+    let data = payload(32185);
+    let owner = head(&data);
+    let chain = owner.chain();
+    let pages: Vec<_> = (0..3).map(|i| make_page(owner, i, &data)).collect();
+    for (i, page) in pages.iter().enumerate() {
+        let view = inspect_overflow_page(page, header(i).identity).unwrap();
+        assert_eq!(
+            (view.chain(), view.index(), view.next()),
+            (chain, i, (i < 2).then(|| address(i + 1)))
+        );
+        assert_eq!(view.payload().len(), [16_092, 16_092, 1][i]);
+    }
+    // Envelope identity, the pre-revision root bytes and the version.
+    let mut other = header(1).identity;
+    other.owner = ObjectId::new(8).unwrap();
+    assert!(inspect_overflow_page(&pages[1], other).is_err());
+    let mut old = make_cell(owner, 1, &data);
+    address(0).encode(&mut old[24..48]).unwrap();
+    let page = raw_page(header(1), &old);
+    assert_eq!(
+        inspect_overflow_page(&page, header(1).identity).err(),
+        Some(OverflowError::Corrupt)
+    );
+    let mut newer = make_cell(owner, 1, &data);
+    newer[4] = 2;
+    newer[20] = 1;
+    let page = raw_page(header(1), &newer);
+    assert_eq!(
+        inspect_overflow_page(&page, header(1).identity).err(),
+        Some(OverflowError::UnsupportedFormat)
+    );
+    let views: Vec<_> = pages
+        .iter()
+        .enumerate()
+        .map(|(i, page)| inspect_overflow_page(page, header(i).identity).unwrap())
+        .collect();
+    // A pending chain with two chunks written (front = chunk 1) and the
+    // whole chain from its root.
+    for first in [1, 0] {
+        let mut walk = OverflowSegmentWalk::new(header(first).identity, chain, first).unwrap();
+        for view in &views[first..] {
+            assert_eq!(walk.finish().err(), Some(OverflowError::Incomplete));
+            assert_eq!(walk.expected(), Some(view.header().identity));
+            walk.push(view).unwrap();
+        }
+        let expected: Vec<_> = (first..3).map(|i| Some(address(i))).collect();
+        assert_eq!(walk.finish().unwrap(), expected.as_slice());
+        assert_eq!(walk.expected(), None);
+        assert_eq!(walk.push(&views[2]), Err(OverflowError::InvalidInput));
+    }
+    assert_eq!(
+        OverflowSegmentWalk::new(header(0).identity, chain, 3).err(),
+        Some(OverflowError::InvalidInput)
+    );
+    // Out of order, a foreign chain, another owner: refused, walk kept.
+    let mut walk = OverflowSegmentWalk::new(header(1).identity, chain, 1).unwrap();
+    assert_eq!(walk.push(&views[2]), Err(OverflowError::OrderMismatch));
+    let foreign = OverflowHead::new(address(0), data.len(), [9; 32]).unwrap();
+    let foreign_page = make_page(foreign, 1, &data);
+    let foreign_view = inspect_overflow_page(&foreign_page, header(1).identity).unwrap();
+    assert_eq!(walk.push(&foreign_view), Err(OverflowError::HeadMismatch));
+    let mut moved = header(1);
+    moved.identity.owner = ObjectId::new(8).unwrap();
+    let moved_page = raw_page(moved, &make_cell(owner, 1, &data));
+    let moved_view = inspect_overflow_page(&moved_page, moved.identity).unwrap();
+    assert_eq!(walk.push(&moved_view), Err(OverflowError::OrderMismatch));
+    walk.push(&views[1]).unwrap();
+    walk.push(&views[2]).unwrap();
+    assert_eq!(walk.finish().unwrap().len(), 2);
+    // A chunk whose next returns to a visited address (another incarnation).
+    let data = payload(48277);
+    let owner = head(&data);
+    let loop_back = PageRef {
+        incarnation: Generation::new(5).unwrap(),
+        ..address(1)
+    };
+    let current = [address(1), address(2), loop_back];
+    let mut walk = OverflowSegmentWalk::new(header(1).identity, owner.chain(), 1).unwrap();
+    for (step, at) in current.iter().copied().enumerate() {
+        let index = step + 1;
+        let part = &data
+            [index * MAX_OVERFLOW_PAYLOAD..((index + 1) * MAX_OVERFLOW_PAYLOAD).min(data.len())];
+        let mut cell = vec![0; OVERFLOW_HEADER_BYTES + part.len()];
+        let next = current.get(step + 1).copied();
+        encode_overflow_cell(owner.chain(), index, at, next, part, &mut cell).unwrap();
+        let mut h = header(index);
+        h.identity.page = at;
+        let page = raw_page(h, &cell);
+        let view = inspect_overflow_page(&page, h.identity).unwrap();
+        if step < 2 {
+            walk.push(&view).unwrap();
+        } else {
+            assert_eq!(walk.push(&view), Err(OverflowError::OrderMismatch));
+            assert_eq!(walk.finish().err(), Some(OverflowError::Incomplete));
+        }
+    }
+}
