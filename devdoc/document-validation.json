@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "product": "XADB",
-  "date": "2026-11-07T11:23:16.312976+09:00",
+  "date": "2026-11-07T11:29:54.326018+09:00",
   "status": "PASS",
   "errors": [],
   "markdown_documents": [
@@ -117,7 +117,7 @@
       "file": "devdoc/contracts/dev3-cursor-locator.md",
       "links": 28,
       "duplicate_ids": 0,
-      "sha256": "487070a6f87709d99dcf23687a038b0239b75b9fcb6e8987e08237dcea64b33a"
+      "sha256": "01abf6ea9fbe492a44ebb2520934dd5666d47eead20b664f2cddad5156a98a7d"
     },
     {
       "file": "devdoc/contracts/dev3-dirty-stage.md",

@@ -77,9 +77,11 @@ pub(super) struct DamagedHint;
 /// outlive the core; a table of another core is refused, so no hint crosses
 /// an open.
 pub(crate) struct RowLocator<'c, 's> {
-    share: LocatorShare<'c, 's>,
     entries: Box<[Option<Entry>]>,
     counts: LocatorCounts,
+    /// Last: fields drop in declaration order, so the table is freed before
+    /// the share returns and a new locator never overlaps it in the 1 MiB.
+    share: LocatorShare<'c, 's>,
 }
 
 impl<'c, 's> RowLocator<'c, 's> {
@@ -93,9 +95,9 @@ impl<'c, 's> RowLocator<'c, 's> {
         entries.try_reserve_exact(ROW_LOCATOR_ENTRIES).ok()?;
         entries.resize(ROW_LOCATOR_ENTRIES, None);
         Some(Self {
-            share,
             entries: entries.into_boxed_slice(),
             counts: LocatorCounts::default(),
+            share,
         })
     }
     pub(crate) fn counts(&self) -> LocatorCounts {
