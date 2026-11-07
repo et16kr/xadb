@@ -186,3 +186,19 @@ GA07의 새 독립 oracle 부정 입력은20개다. 상태7·action trace5·sele
 
 
 실제 source별 결과와 남은 경계는 [단위 인수](../evidence/dev3-concurrency-admission-20261022.md)를 따른다. 계약의 후보/미실측 문구는 당시 동결 입력이며 실행 성공은 해당 receipt만 증명한다.
+
+<a id="locator-shares"></a>
+## 14. 08-2b 추가 — Row locator 몫 계수
+
+2026-11-07 [cursor·locator 계약](dev3-cursor-locator.md#locator)의 L1·L2가 core에 RAM 회계 하나를 더한다. owner slot, apply/content admission, version gate, installation의 의미와 §3–§13의 수량·오류 우선순위·lock 규칙은 바뀌지 않는다.
+
+| 항목 | 규칙 |
+| --- | --- |
+| 상수 | `LOCATOR_SHARES` = `FOREGROUND_OWNERS` = 32. `u8::MAX`보다 작음을 상수 검사한다 |
+| field | `locator_shares: AtomicU8`, 생성 때 0. 이 세션에서 살아 있는 `RowLocator` 수다 |
+| 받기 | `take_locator_share(&self) -> bool`. `fetch_update(AcqRel, Acquire)`로 32보다 작을 때만 1을 더한다. false면 아무것도 바뀌지 않는다 |
+| 반환 | `return_locator_share(&self)`. `RowLocator`의 Drop과, 몫을 받은 뒤 표 할당이 거절된 생성만 부른다. `checked_sub`로 0 아래로 내려가지 않는다 |
+| lock·fence | state·version mutex를 잡지 않고, fence·poison을 읽거나 바꾸지 않는다. owner slot·active_apply·active_content·installation과 어떤 순서도 맺지 않는다. 대기·재시도·Condvar가 없다. 그래서 fence된 세션에서도 몫을 받고 돌려줄 수 있으며, 그 locator를 쓰는 읽기는 operation을 열 때 지금처럼 fence로 거절된다 |
+| 의미 | 몫은 admission이 아니다. Owner나 guard를 발급하지 않고, 몫을 쥐었다고 어떤 읽기·쓰기도 허락되지 않는다. metadata/cache 8 MiB 안의 기존 locator 배정 1 MiB를 32개(각 32,768 B)로 나눈 caller RAM의 회계 단위다 |
+| 크기·heap | 1 byte는 core의 기존 padding에 들어가서 core 크기는 제품 640 B, 시험 cfg 824 B로 바꾸기 전과 같고 §7의 2048 B ceiling 안이다(GA07 resource가 다시 확인). 생성자는 여전히 heap·page·file·WAL 0이고, 더한 생성 값은 `AtomicU8` 하나뿐이다. §12 constructor 산식은 그대로다 |
+| 시험 | LOC-B02(32개, 33번째 거절과 무변경, drop 뒤 재사용, 다른 core의 몫 분리). GA01–GA07의 입력과 기대값은 바뀌지 않는다 |

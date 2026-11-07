@@ -60,8 +60,9 @@ fn counts(
 /// of the same PageRef, another database); 256 consecutive RowIds take
 /// distinct slots and a key 256 RowIds on shares a slot and evicts; a route
 /// that does not hold the RowId is not recorded; a recheck confirms only the
-/// hint itself; an entry whose bounds do not hold its RowId is damaged,
-/// never a miss; a locator serves only its own core.
+/// hint itself; an entry whose bounds do not hold its RowId is damaged at its
+/// own revision and at a later one, never a miss or stale; a locator serves
+/// only its own core.
 #[test]
 fn loc_b01_lookup_record_and_eviction() {
     let fence = SessionFence::new();
@@ -162,9 +163,20 @@ fn loc_b01_lookup_record_and_eviction() {
     }
     assert_eq!(locator.counts().rechecks, 5);
 
-    // A damaged entry (its bounds no longer hold the RowId).
+    // A damaged entry (its bounds no longer hold the RowId), recorded at
+    // revision 5: refused at its own revision and at a later one, where a
+    // healthy entry would be stale. Neither is a hit or stale.
     assert!(locator.test_redirect(t, row(10), page(36, 2), Some(right)));
+    let before = locator.counts();
     assert_eq!(locator.lookup(t, row(10), 5), Err(DamagedHint));
+    assert_eq!(locator.lookup(t, row(10), 6), Err(DamagedHint));
+    assert_eq!(
+        locator.counts(),
+        LocatorCounts {
+            lookups: before.lookups + 2,
+            ..before
+        }
+    );
 
     // A locator serves only its own core.
     let fence2 = SessionFence::new();
