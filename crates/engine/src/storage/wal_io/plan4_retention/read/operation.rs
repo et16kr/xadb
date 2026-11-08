@@ -737,7 +737,7 @@ pub(super) fn entry_source_bytes<W: WriterNamespace>() -> usize {
 /// whose selection takes the same guard and scans the same directory
 /// (`check_retention_reader`, `select_load`). The frame ends before
 /// `capture_catalog` starts.
-pub(super) fn catalog_load_source_bytes() -> usize {
+pub(super) fn catalog_load_frame_source_bytes() -> usize {
     use std::mem::size_of;
     size_of::<[TargetRequest; 2]>()
         + size_of::<Result<RetentionResidencyStep>>()

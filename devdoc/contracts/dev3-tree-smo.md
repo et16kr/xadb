@@ -1897,8 +1897,9 @@ RowInternal의 child를 따라 닿는 leaf가 도달 leaf이고, 등록된 leaf�
 - **UNL-L09(작은 pool의 FlushRequired 왕복)는 A를 거치는 drain이 아니라 C 직접 호출로 본다.** A의 drain을 거치면
   unlink의 LOAD가 dirty victim을 고르는 상태를 만들 수 없다. pool을 줄이면 unlink 전에 Begin(24 frame)이나 statement의
   table 발급(28 frame)이 `MissingTarget` Unchanged로 먼저 거절한다. 두 입구는 target이 resident해야 하고 LOAD하지 않는다.
-  (그 뒤 [catalog-capture-load](dev3-visibility-retirement.md#catalog-capture-load)가 table 발급에 Catalog anchor·leaf
-  LOAD를 더했다. Begin은 여전히 LOAD하지 않는다.)
+  (이 frame 수는 그 수정 전 측정이다. 그 뒤 [catalog-capture-load](dev3-visibility-retirement.md#catalog-capture-load)가
+  table 발급에 Catalog anchor·leaf LOAD를 더했으나 25–28 frame에서 A의 drain으로 L09 상태를 만들 수 있는지는 다시 재지 않았다.
+  Begin은 여전히 LOAD하지 않는다.)
   29 frame 이상에서는 DELETE와 그 정리 그룹이 방금 쓴 anchor·P·L·S가 모두 resident여서 unlink가 바로 설치된다
   (RootCollapse 표에서 29..40 frame, leaf 넷 표에서 34·36 frame을 실측). 그래서 L09는 drain 대신 C로만 회수한 뒤 pool을
   시험 pin으로 배치하고 `unlink_leaf_live`를 직접 부른다. A의 FlushRequired 처리(flush 뒤 같은 note, 미계수)는 UNL-A01이

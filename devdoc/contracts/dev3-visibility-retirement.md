@@ -63,7 +63,7 @@ StatusCommitted(q)에서 **q>Q이면 무조건 prune 금지**이고 q≤H도 단
 
 `RetentionCatalogGuard::lookup`의 physical 의미는 유지한다. 첫 actual resolver가 guard 아래 record를 보고 private `capture_catalog_refs`를 호출한다. raw UndoRef를 받는 공개 pin 함수로 노출하지 않는다.
 
-1. snapshot 및 두 reference slots를 먼저 확보하고 원 `prepare_catalog`→`read_catalog` 경로로 actual leaf를 읽는다.
+1. snapshot 및 두 reference slots를 먼저 확보하고 actual leaf를 읽는다. writer는 원 `prepare_catalog`→`read_catalog`, reader의 Full 조회는 `load_catalog`→`read_catalog`([capture 전 LOAD](#catalog-capture-load))다.
 2. source leaf의 content latch를 유지한 채 stored Tx stamp와 UndoRef를 exact namespace/object로 검산하고 registry 아래 **TxnPin+UndoPin 둘 다** 등록한다. 두 자리/세대/target retirement 검산을 모두 마친 뒤 일괄 publish하므로 부분 pin을 반환하지 않는다. source-latch 아래 buffer load/allocator admission은 없다.
 3. 짧은 canonical candidate bytes를 이미 예약된 caller buffer로 복사한 뒤 physical Catalog guard를 release한다. 현재 `CatalogRecordView`는 guard를 borrow하므로 latch 밖으로 그냥 보내지 못한다. 첫 정의242B라도 일반 bound는 existing Catalog 최대4588B를 따르며 별도 private loan에서 charged한다.
 4. TxnRef를 원 persistent status directory/actual StatusSlotRef로 resolve하여 원 pool/load 경로로 status를 읽고 generation을 검산한다. **현재 `control::slot`은 Active ATT만 찾으므로 terminal Commit의 조회 공급이 아니다.** 첫 scope에서는 RootJob/TerminalJob 및 실제 status home을 포함한 원 bounded directory resolver를 B2/B3에서 공급해야 한다. TxnPin이 TerminalFinish/free를 막으며 caller가 임의 StatusSlotRef를 제시하지 않는다.
@@ -75,14 +75,15 @@ StatusCommitted(q)에서 **q>Q이면 무조건 prune 금지**이고 q≤H도 단
 <a id="catalog-capture-load"></a>
 ### Catalog capture 전의 anchor·leaf LOAD
 
-1단계의 `read_catalog`는 고정 Catalog anchor(page 7)와 leaf(page 8)를 resident일 때만 읽는다(`reserve_target_set`, LOAD 없음). pool의 victim 선택은 깨끗한 frame이면 두 page도 다른 page처럼 내보낸다. 고치기 전에는 page 7이나 8이 한 번 pool을 떠나면 그 뒤의 Full 조회와 table issue가 모두 `MissingTarget` Unchanged로 거절됐다. 작은 pool에서 08-3 overflow 행을 쓸 때와 SPL-A05의 split 뒤 새 statement가 그 예다.
+1단계의 `read_catalog`는 고정 Catalog anchor(page 7)와 leaf(page 8)를 resident일 때만 읽는다(`reserve_target_set`, LOAD 없음). pool의 victim 선택은 깨끗한 frame이면 두 page도 다른 page처럼 내보낸다. 고치기 전에는 page 7이나 8이 한 번 pool을 떠나면 그 뒤의 Full 조회와 table issue가 모두 `Frame(MissingTarget)` Unchanged로 거절됐다. SPL-A05(18 frame)의 split 뒤 새 statement가 그 예다.
 
-- **Full 클래스는 capture 전에 LOAD한다.** `CatalogReadOperation::load_catalog`가 두 page마다 먼저 registry에서 resident인지 보고(LOAD claim 없음), 없는 page만 Status/Undo LOAD와 같은 reader lookup LOAD(`load_lookup_target`)로 올린다. 한 page를 올리는 동안 다른 page는 보호 집합에 있어 victim으로 고르지 않는다. victim이 dirty이면 효과 없이 `FlushRequired { target }`을 돌려준다(table issue는 `TableStep::FlushRequired`, 조회는 `CatalogLookupStep::FlushRequired`). caller는 그 target을 flush하고 같은 statement로 다시 부른다. 두 page가 resident인 조회는 전과 같이 실행된다.
+- **Full 클래스는 capture 전에 LOAD한다.** `CatalogReadOperation::load_catalog`가 두 page마다 먼저 registry에서 resident인지 보고(LOAD claim 없음), 없는 page만 Status/Undo LOAD와 같은 reader lookup LOAD(`load_lookup_target`)로 올린다. 한 page를 올리는 동안 다른 page는 보호 집합에 있어 victim으로 고르지 않는다(CEV-J04). 두 page가 resident인 조회는 LOAD를 열지 않고 전과 같이 실행된다(CEV-J01의 replay scope 수).
+- **Full 클래스의 결과.** 고르는 victim이 dirty이면 효과 없이 `FlushRequired { target }`이다(table issue는 `TableStep::FlushRequired`, 조회는 `CatalogLookupStep::FlushRequired`). caller는 그 target을 flush하고 같은 statement로 다시 부른다. LOAD 본문은 Status/Undo LOAD와 같은 Unchanged 거절을 낼 수 있다(후보 frame이 없거나 다른 Owner의 claim이 있으면 Load 단계 Busy). `load_catalog`는 page를 pin하지 않고 끝나므로, 그 뒤 capture 전에 다른 Owner의 LOAD가 깨끗한 page를 victim으로 고르면 capture는 여전히 `Frame(MissingTarget)` Unchanged다. Status LOAD와 그 read 사이에도 같은 창이 있다. 이제 이 거절은 작은 pool의 고정 거절이 아니라 같은 statement의 재시도로 풀리는 일시 결과다.
 - **resident 클래스는 LOAD하지 않는다.** `CatalogResident`의 capture miss는 이 클래스의 기존 재시도 가능 Busy로 남는다(같은 snapshot 재시도).
 - **고정 pin을 택하지 않았다.** page 7·8(그리고 System 1–6)을 victim에서 빼면 쓸 수 있는 frame이 줄고, 모든 victim 선택이 바뀌어 정확한 trace를 보는 기존 시험이 흔들리며, open 뒤 처음부터 non-resident인 경우는 풀리지 않는다. 공통 LOAD·replacement로 가는 buffer manager 방향과도 어긋난다.
-- **자원은 그대로다.** LOAD 단계는 capture 전이므로 후보 복사본(CatalogHeader·TransactionStatus 368 B)이 아직 없다. 자기 frame 280 B와 LOAD 본문(`lookup_load::source_bytes`)을 더해도 34,452 B로 Full 조회 charge 34,588 B 아래다(CEV-C01). charge·ceiling·Pending 옆 Full 창은 바뀌지 않는다.
-- **남은 한계.** Begin(`row_begin`이 읽는 Root/Jobs/Status)은 여전히 resident만 읽는다. [tree SMO의 UNL-L09 기록](dev3-tree-smo.md)대로 24 frame pool에서 Begin이 먼저 거절되는 일은 이 절의 범위 밖이다.
-- 시험: CEV-J01(anchor·leaf·둘 다 내보낸 뒤 table issue), CEV-J02(dirty victim의 FlushRequired 왕복), CEV-J03(resident 클래스 Busy), CEV-C01(자원), SPL-A05(split 뒤 새 statement read).
+- **자원은 그대로다.** LOAD 단계는 capture 전이므로 후보 복사본(CatalogHeader·TransactionStatus 368 B)이 아직 없다. 단계의 peak은 held 1,044 B + Catalog 고정 frame 2,042 B + 자기 frame 280 B + LOAD 본문(`lookup_load::source_bytes`) 31,086 B = 34,452 B다. Full 조회의 다른 단계 peak(Status/Undo LOAD 단계 34,540 B)보다 88 B 작으므로 statement held 48 B를 더한 Full charge는 34,588 B 그대로다. CEV-C01이 `LOAD 단계 ≤ 다른 단계 peak`을 단언한다. charge·ceiling·Pending 옆 Full 창(65,486 ≤ 65,536 B)은 바뀌지 않는다.
+- **남은 한계(미배정 의무).** Begin(`row_begin`이 읽는 Root/Jobs/Status)은 여전히 resident만 읽는다. System page 1–6도 깨끗하면 같은 victim 선택으로 밀려나므로, 작은 pool에서 split 뒤 새 Row transaction이 Begin에서 `MissingTarget`으로 거절될 수 있다([tree SMO의 UNL-L09 기록](dev3-tree-smo.md)에서 24 frame). Begin의 LOAD는 이 절의 범위 밖이며 소유자·일정이 아직 없다.
+- 시험: CEV-J01(없음·anchor·leaf·둘 다 내보낸 뒤 table issue, resident 조회의 replay scope 수), CEV-J02(table issue의 dirty victim FlushRequired 왕복), CEV-J03(resident 클래스 Busy), CEV-J04(leaf LOAD가 방금 올린 anchor를 지킴, 조회의 FlushRequired 왕복), CEV-J05(eviction 뒤 첫 조회의 LOAD, Found·Missing), CEV-C01(자원), SPL-A05(split 뒤 anchor 비상주와 새 statement read).
 
 ## 5. atomic retirement intent와 CLR의 자기 pin
 

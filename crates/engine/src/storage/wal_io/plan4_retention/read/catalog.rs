@@ -204,8 +204,10 @@ impl<'b, 'arena, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     RetentionReader<'b, 'arena, 's, 'c, 'p, 'd, 'm, 'w, W>
 {
     /// Borrow the resident fixed catalog root through the original pool. A
-    /// caller first makes both pages resident (`prepare_catalog`, or the Full
-    /// class's `load_catalog`); this never loads, allocates, stages WAL or writes.
+    /// caller first makes both pages resident: the writer's `prepare_catalog`,
+    /// C's Full lookup (`CatalogReadOperation::load_catalog`) or B's Row read
+    /// (`load_catalog` in `plan4_apply/row/read.rs`). This never loads,
+    /// allocates, stages WAL or writes.
     ///
     /// Semantic lookup captures references under this guard and copies the
     /// value before releasing these physical source latches.

@@ -652,7 +652,10 @@ fn spl_a05_dirty_victim_is_flushed_before_the_split() {
                     .enumerate()
                     .map(|(at, row)| (*row, tagged(at, BIG)))
                     .collect();
+                // The split's pages took the anchor's frame: the read's table
+                // issue LOADs it.
                 let catalog = [7, 8].map(|page| resident_index(&writer, page).is_some());
+                assert_eq!(catalog, [false, true]);
                 assert_eq!(
                     read_big!(writer, reader, core, reader_private, flush, flusher),
                     expected
