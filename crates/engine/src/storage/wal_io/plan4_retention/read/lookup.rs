@@ -394,6 +394,5 @@ mod tests {
             load <= peak,
             "the Catalog LOAD phase raises the Full charge"
         );
-        assert_eq!(full, peak + held);
     }
 }

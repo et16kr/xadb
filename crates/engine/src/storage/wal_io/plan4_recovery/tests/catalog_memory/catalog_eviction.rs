@@ -18,8 +18,8 @@ use crate::transaction::concurrency::catalog_test_support::observe;
 const ANCHOR: u64 = 7;
 const LEAF: u64 = 8;
 /// A committed T's Full lookup with no Catalog LOAD: the Status read's
-/// (replay scopes, replay checkouts), measured with `load_catalog`'s call
-/// removed (the code before this fix).
+/// (replay scopes opened on the thread, replay checkouts of the history),
+/// measured with `load_catalog`'s call removed (the code before this fix).
 const STATUS_READ: (u64, u64) = (2, 1);
 
 /// The WAL length and the data file images: a no-effect step changes
@@ -147,11 +147,12 @@ fn cev_j01_full_table_issue_loads_an_evicted_catalog_page() {
                     let issue = (issued.0 - issue_start.0, issued.1 - issue_start.1);
                     let lookup = (found.0 - issued.0, found.1 - issued.1);
                     println!("CEV_J01 evicted={evicted:?} issue={issue:?} lookup={lookup:?}");
-                    // (replay scopes, checkouts) of this thread. Without a
-                    // Catalog LOAD (measured with the LOAD call removed, the
-                    // code before the fix) the issue and the lookup each
-                    // open only the Status read's: (2, 1). Each Catalog page
-                    // LOAD adds one of each; resident pages add none.
+                    // (replay scopes opened on this thread, replay checkouts
+                    // of the original history). Without a Catalog LOAD
+                    // (measured with the LOAD call removed, the code before
+                    // the fix) the issue and the lookup each make only the
+                    // Status read's: (2, 1). Each Catalog page LOAD adds one
+                    // of each; resident pages add none.
                     let loads = evicted.len() as u64;
                     assert_eq!(issue, (STATUS_READ.0 + loads, STATUS_READ.1 + loads));
                     assert_eq!(lookup, STATUS_READ);
@@ -504,4 +505,54 @@ fn cev_j05_first_lookup_after_eviction_loads_for_found_and_missing() {
             );
         });
     }
+}
+
+/// CEV-J06: the LOADed leaf holds an uncommitted record. T's CREATE is
+/// Active (forwarded, not committed) when its Catalog leaf is flushed and
+/// evicted. A Full lookup of object 6 from a new snapshot LOADs the leaf
+/// (its replayed image must equal the flushed home image, else the LOAD is
+/// fatal), reads T's Active Status and the Undo before it, and answers
+/// Missing. The leaf is resident afterwards, the files are unchanged and no
+/// reference pin or fence remains.
+#[test]
+fn cev_j06_loaded_leaf_with_an_active_create_answers_missing() {
+    case("CEV-J06", || {
+        let oracle = Oracle::new();
+        with_fresh!(
+            oracle,
+            frames = 12,
+            |live, owner, flusher, status, undo, private, reader_private, core, fence, state| {
+                let _actor = create_forward(
+                    live, owner, flusher, status, undo, private, &oracle, state, 1,
+                );
+                evict_catalog(live, flusher, LEAF);
+                assert!(resident_index(live, ANCHOR).is_some());
+                let before = files(state);
+                let (writer, reader, _) = live.split();
+                let snapshot = reader.catalog_snapshot(owner).unwrap();
+                let step = reader
+                    .lookup_catalog(
+                        owner,
+                        &snapshot,
+                        ObjectId::new(6).unwrap(),
+                        &mut Plan4ResidencyCursor::new(),
+                        reader_private,
+                    )
+                    .unwrap();
+                assert!(
+                    matches!(step, CatalogLookupStep::Missing),
+                    "an Active CREATE is not visible to another snapshot"
+                );
+                assert!(resident_index(&writer, ANCHOR).is_some());
+                assert!(resident_index(&writer, LEAF).is_some());
+                assert_eq!(files(state), before);
+                assert_eq!(reader.catalog_test_references(), ((0, 0, 0), false));
+                assert_eq!(observe(core).active_read_operations, 0);
+                snapshot.release_checked().unwrap();
+                owner.check_idle().unwrap();
+                flusher.check_idle().unwrap();
+                assert!(!fence.is_fenced());
+            }
+        );
+    });
 }

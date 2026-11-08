@@ -83,7 +83,7 @@ StatusCommitted(q)에서 **q>Q이면 무조건 prune 금지**이고 q≤H도 단
 - **고정 pin을 택하지 않았다.** page 7·8(그리고 System 1–6)을 victim에서 빼면 쓸 수 있는 frame이 줄고, 모든 victim 선택이 바뀌어 정확한 trace를 보는 기존 시험이 흔들리며, open 뒤 처음부터 non-resident인 경우는 풀리지 않는다. 공통 LOAD·replacement로 가는 buffer manager 방향과도 어긋난다.
 - **자원은 그대로다.** LOAD 단계는 capture 전이므로 후보 복사본(CatalogHeader·TransactionStatus 368 B)이 아직 없다. 단계의 peak은 held 1,044 B + Catalog 고정 frame 2,042 B + 자기 frame 280 B + LOAD 본문(`lookup_load::source_bytes`) 31,086 B = 34,452 B다. Full 조회의 다른 단계 peak(Status/Undo LOAD 단계 34,540 B)보다 88 B 작으므로 statement held 48 B를 더한 Full charge는 34,588 B 그대로다. CEV-C01이 `LOAD 단계 ≤ 다른 단계 peak`을 단언한다. charge·ceiling·Pending 옆 Full 창(65,486 ≤ 65,536 B)은 바뀌지 않는다.
 - **남은 한계(미배정 의무).** Begin(`row_begin`이 읽는 Root/Jobs/Status)은 여전히 resident만 읽는다. System page 1–6도 깨끗하면 같은 victim 선택으로 밀려나므로, 작은 pool에서 split 뒤 새 Row transaction이 Begin에서 `MissingTarget`으로 거절될 수 있다([tree SMO의 UNL-L09 기록](dev3-tree-smo.md)에서 24 frame). Begin의 LOAD는 이 절의 범위 밖이며 소유자·일정이 아직 없다.
-- 시험: CEV-J01(없음·anchor·leaf·둘 다 내보낸 뒤 table issue, resident 조회의 replay scope 수), CEV-J02(table issue의 dirty victim FlushRequired 왕복), CEV-J03(resident 클래스 Busy), CEV-J04(leaf LOAD가 방금 올린 anchor를 지킴, 조회의 FlushRequired 왕복), CEV-J05(eviction 뒤 첫 조회의 LOAD, Found·Missing), CEV-C01(자원), SPL-A05(split 뒤 anchor 비상주와 새 statement read).
+- 시험: CEV-J01(없음·anchor·leaf·둘 다 내보낸 뒤 table issue, resident 조회의 replay scope 수), CEV-J02(table issue의 dirty victim FlushRequired 왕복), CEV-J03(resident 클래스 Busy), CEV-J04(leaf LOAD가 방금 올린 anchor를 지킴, 조회의 FlushRequired 왕복), CEV-J05(eviction 뒤 첫 조회의 LOAD, Found·Missing), CEV-J06(미commit CREATE가 든 leaf의 LOAD 뒤 Missing), CEV-C01(자원), SPL-A05(split 뒤 anchor 비상주와 새 statement read).
 
 ## 5. atomic retirement intent와 CLR의 자기 pin
 
