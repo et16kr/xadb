@@ -8,7 +8,6 @@
 //! retryable Busy. Expectations are fixture facts (the issued handle, the
 //! pages resident, files and registrations unchanged), never values read
 //! back from the same producer.
-use super::row_forward::files;
 use super::row_preflight::{create_table, evict, frames, with_pins};
 use super::*;
 use crate::storage::disk::{
@@ -18,6 +17,13 @@ use crate::transaction::concurrency::catalog_test_support::observe;
 
 const ANCHOR: u64 = 7;
 const LEAF: u64 = 8;
+
+/// The WAL length and the data file images: a no-effect step changes
+/// neither.
+fn files(state: &State) -> (usize, Images) {
+    let state = state.lock().unwrap();
+    (state.files["d3-wal-00000001"].bytes.len(), state.images())
+}
 
 fn read_only() -> TransactionOptions {
     TransactionOptions {
