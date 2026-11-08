@@ -1100,7 +1100,7 @@ unlink·shrink에서 다룬다).
 | SPL-A02 | 한 autocommit statement의 큰 행 15개가 중간에 RootSplit과 ChildSplit을 거쳐 모두 적용·q 2 Commit. leaf 3개 이상, key 순서, drain, read, 재시작 |
 | SPL-A03 | 명시 거래 statement의 큰 행 8개가 8번째 행의 값 검사 Capacity에서 split(D를 만들지 않는 거래의 Retained INSERT root 7개 옆), Done 8. rollback 뒤 행은 없고 split(두 leaf, 빈)은 남음. 다음 INSERT q 2 Commit, read, 재시작. U3 뒤에는 rollback drain이 RootCollapse 한 번으로 두 leaf 중 하나를 level 0 root로 만들고 anchor가 다른 leaf와 옛 root를 목록에 올린다. INSERT는 그 root leaf로 들어간다([U3 결과](#unlink-u3)) |
 | SPL-A04 | 100B 행 + 큰 행 7개(q 2..9, 여유 271B). 100B 행을 큰 값으로 바꾸는 UPDATE가 값 검사 Capacity, split 뒤 q 10 Commit. 새 값 read와 재시작 |
-| SPL-A05 | 18-frame pool(`fill!`이 통과하는 가장 작은 pool)에서 C가 직접 `FlushRequired`(WAL·Jobs·leaf 불변)를 답함. 같은 상태의 A INSERT가 flush 뒤 같은 split을 다시 불러 RootSplit·q 9 Commit, 재시작 read. 이 pool에서 split 뒤 새 statement의 table issue는 C의 table issue가 MissingTarget으로 거절하므로(split 전 17-frame에서도 같다) read는 재시작 뒤에만 본다 |
+| SPL-A05 | 18-frame pool(`fill!`이 통과하는 가장 작은 pool)에서 C가 직접 `FlushRequired`(WAL·Jobs·leaf 불변)를 답함. 같은 상태의 A INSERT가 flush 뒤 같은 split을 다시 불러 RootSplit·q 9 Commit, 새 statement와 재시작 read. 이 pool에서 split 뒤 Catalog anchor가 pool을 떠나며, 새 statement의 table issue가 그것을 LOAD한다([catalog-capture-load](dev3-visibility-retirement.md#catalog-capture-load)). 그 LOAD 전에는 table issue가 MissingTarget으로 거절되어(split 전 17-frame에서도 같았다) read를 재시작 뒤에만 봤다 |
 | SPL-A06 | 거절: CREATE Catalog Job이 남은 T의 찬 leaf INSERT는 `Stage::Split` Unsupported로 abort, leaf 불변. 같은 T에 C를 직접 부르면 들어가는 행은 `NotNeeded`, 찬 행은 Unsupported, WAL·Jobs·leaf 불변. 정리 뒤 들어가는 INSERT와 같은 크기 UPDATE는 `NotNeeded`, 길이 0·4·2049(`MIN_CANONICAL` 5와 2048 바깥)는 `RowSemantic`, 찬 행은 Split |
 | SPL-A07 | 순수 함수: `separator_room(n)` ⇔ n+1 entry 인코딩 성공(경계 404), `split_target`이 부모 여유가 있는 가장 낮은 page, 모두 차면 root |
 | SPL-A08 | C census: 위 단계별 값, 6,144 상수, peak + 6,144 ≤ 44,304 = charge (memory·native W). `spl_row_capacity_is_exactly_the_unchanged_prepare_capacity`, `spl_leaf_short_is_exact_at_the_boundary`(INSERT·UPDATE의 `필요+D = 여유`와 1B 초과) |
@@ -1121,7 +1121,8 @@ PR #54 후속 리뷰는 아래 신규 사례를 추가했다. 모두 실제 C/A/
 남은 D2 선택(시험 미작성): SPL-A05가 A의 split flush 호출을 직접 단언하는 관측, 최소 pool 경계 시험,
 FlushRequired 왕복 사이 경합(`Stage::Split` Busy), SPL-A01..A04의
 split 종류 직접 관측. 18-frame pool에서 split 뒤 table issue의 MissingTarget(SPL-A05)은 C table issue의 작은 pool
-한계로 남긴다.
+한계로 남겼으나, 그 뒤 [catalog-capture-load](dev3-visibility-retirement.md#catalog-capture-load)가 Full table issue에
+Catalog anchor·leaf LOAD를 더해 풀었다.
 
 이 절로 08-1을 완료로 적립하지 않는다. 빈 leaf unlink·root shrink·retirement가 남는다.
 
@@ -1896,6 +1897,9 @@ RowInternal의 child를 따라 닿는 leaf가 도달 leaf이고, 등록된 leaf�
 - **UNL-L09(작은 pool의 FlushRequired 왕복)는 A를 거치는 drain이 아니라 C 직접 호출로 본다.** A의 drain을 거치면
   unlink의 LOAD가 dirty victim을 고르는 상태를 만들 수 없다. pool을 줄이면 unlink 전에 Begin(24 frame)이나 statement의
   table 발급(28 frame)이 `MissingTarget` Unchanged로 먼저 거절한다. 두 입구는 target이 resident해야 하고 LOAD하지 않는다.
+  (이 frame 수는 그 수정 전 측정이다. 그 뒤 [catalog-capture-load](dev3-visibility-retirement.md#catalog-capture-load)가
+  table 발급에 Catalog anchor·leaf LOAD를 더했으나 25–28 frame에서 A의 drain으로 L09 상태를 만들 수 있는지는 다시 재지 않았다.
+  Begin은 여전히 LOAD하지 않는다.)
   29 frame 이상에서는 DELETE와 그 정리 그룹이 방금 쓴 anchor·P·L·S가 모두 resident여서 unlink가 바로 설치된다
   (RootCollapse 표에서 29..40 frame, leaf 넷 표에서 34·36 frame을 실측). 그래서 L09는 drain 대신 C로만 회수한 뒤 pool을
   시험 pin으로 배치하고 `unlink_leaf_live`를 직접 부른다. A의 FlushRequired 처리(flush 뒤 같은 note, 미계수)는 UNL-A01이

@@ -1,5 +1,6 @@
 //! One lookup borrows its call scope and owns only the actual reference lease,
 //! captured references and caller scratch. The scope outlives result consumption.
+use super::super::lookup_load::RetentionLoadPort as _;
 use super::super::source::OperationSourceAdmission;
 use super::super::transaction::RowStatementView;
 use super::super::visibility::{
@@ -244,6 +245,51 @@ impl<'u, 'r, 'v, 'j, 'i, 'b, 'a, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             statement.check_catalog_read()?;
         }
         Ok(())
+    }
+    /// Residency of the two pages `capture_catalog` reads, the Catalog anchor
+    /// and leaf (dev3-visibility-retirement.md#catalog-capture-load). The
+    /// pool's victim selection may replace either page once it is clean, as
+    /// any other page, so the Full class LOADs a missing one through the
+    /// reader's lookup LOAD (the same body as `status`'s), each while the
+    /// other is kept from victim selection; a dirty victim is the caller's
+    /// FlushRequired with no effect. A resident page is only observed in the
+    /// registry, without a LOAD claim, so a lookup whose pages are resident
+    /// runs as before. The resident class never LOADs: its capture's miss
+    /// stays the class's retryable Busy.
+    pub(in crate::storage) fn load_catalog(
+        &mut self,
+        cursor: &mut Plan4ResidencyCursor,
+    ) -> Result<ReadStep<()>> {
+        self.check_statement()?;
+        if self.selected.is_some() {
+            return Err(self.invariant());
+        }
+        if self.source.resident() {
+            return Ok(ReadStep::Ready(()));
+        }
+        let requests = super::catalog::catalog_requests(self.backend.storage)?;
+        for at in 0..requests.len() {
+            if self
+                .backend
+                .pool
+                .resident_address_present(requests[at])
+                .map_err(|e| frame(RetentionPhase::Census, e))?
+            {
+                continue;
+            }
+            if let RetentionResidencyStep::FlushRequired { target, .. } =
+                self.backend.load_lookup_target(
+                    &mut *self.owner,
+                    requests[at],
+                    cursor,
+                    &requests[1 - at..2 - at],
+                    &mut self.loader[..],
+                )?
+            {
+                return Ok(ReadStep::FlushRequired { target });
+            }
+        }
+        Ok(ReadStep::Ready(()))
     }
     pub(in crate::storage) fn capture_catalog(
         &mut self,
@@ -643,16 +689,25 @@ impl<W: WriterNamespace> Drop
 
 /// The call scope remains live through lookup and selected result consumption.
 pub(super) fn held_source_bytes<W: WriterNamespace>() -> usize {
+    held_before_capture_source_bytes::<W>() + captured_copy_source_bytes()
+}
+/// What `held_source_bytes` holds from the operation's start, before
+/// `capture_catalog`: everything but `captured_copy_source_bytes`.
+pub(super) fn held_before_capture_source_bytes<W: WriterNamespace>() -> usize {
     use std::mem::size_of;
     super::scope::held_source_bytes::<W>()
         + size_of::<CatalogReadOperation<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_, W>>()
         + 4 * size_of::<Result<()>>()
         + 2 * size_of::<RetentionError>()
-        // missing_before's copied header survives location/LOAD through actor validation.
-        + size_of::<CatalogHeader>()
-        + size_of::<TransactionStatus>()
         + size_of::<Option<&RowStatementView<'_, '_, '_, '_, '_>>>()
         + 16 * size_of::<&()>()
+}
+/// Copies of a captured candidate's values: missing_before's copied header
+/// survives location/LOAD through actor validation, and the Status `status`
+/// read. Neither exists before `capture_catalog` returned a candidate.
+fn captured_copy_source_bytes() -> usize {
+    use std::mem::size_of;
+    size_of::<CatalogHeader>() + size_of::<TransactionStatus>()
 }
 pub(super) fn entry_source_bytes<W: WriterNamespace>() -> usize {
     use std::mem::size_of;
@@ -669,6 +724,24 @@ pub(super) fn entry_source_bytes<W: WriterNamespace>() -> usize {
         + 16 * size_of::<&()>()
         + visibility::source_census().peak_leaf
         + super::scope::entry_source_bytes::<W>()
+}
+
+/// `load_catalog`'s own frame while a LOAD runs, beside the LOAD body's
+/// `lookup_load::source_bytes`: both Catalog requests (the kept one is the
+/// LOAD's protected slice), the LOAD's returned step it matches, the index
+/// and the protected/scratch slices. `catalog_requests`'s Result ends
+/// before the first LOAD; the step's own Result is the caller's carrier,
+/// charged in `CATALOG_PRODUCT_SOURCE_BYTES`. The residency probe
+/// (`resident_address_present`: health, one registry guard and its
+/// directory scan) ends before a LOAD starts and is below the LOAD body,
+/// whose selection takes the same guard and scans the same directory
+/// (`check_retention_reader`, `select_load`). The frame ends before
+/// `capture_catalog` starts.
+pub(super) fn catalog_load_frame_source_bytes() -> usize {
+    use std::mem::size_of;
+    size_of::<[TargetRequest; 2]>()
+        + size_of::<Result<RetentionResidencyStep>>()
+        + size_of::<(usize, &[TargetRequest], &mut [u8])>()
 }
 
 /// record()/check()/finish_found decoding ends before location replay or LOAD.
