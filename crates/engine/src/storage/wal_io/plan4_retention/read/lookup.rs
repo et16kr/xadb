@@ -258,6 +258,25 @@ pub(in super::super) fn reference_location_source_bytes<W: WriterNamespace>() ->
             )
             .max(location_select)
 }
+/// The Full class's Catalog anchor/leaf LOAD (`load_catalog`), before the
+/// capture: the operation's held part before capture (no candidate copy
+/// exists yet), Catalog's fixed product frame, the step's own frame and the
+/// same LOAD body as a Status/Undo LOAD. The resident class does not LOAD.
+fn catalog_load_source_bytes<W: WriterNamespace>(resident: bool) -> usize {
+    if resident {
+        return 0;
+    }
+    super::operation::held_before_capture_source_bytes::<W>()
+        + super::CATALOG_PRODUCT_SOURCE_BYTES
+        + super::operation::catalog_load_source_bytes()
+        + super::super::lookup_load::source_bytes::<W>()
+}
+/// The capture-time LOAD phase beside the full lookup charge it must stay
+/// within (CEV-C01).
+#[cfg(test)]
+pub(in super::super) fn catalog_load_source_observation<W: WriterNamespace>() -> (usize, usize) {
+    (catalog_load_source_bytes::<W>(false), source_bytes::<W>())
+}
 fn lookup_source_bytes<W: WriterNamespace>(resident: bool) -> usize {
     use crate::storage::{
         page::PageView,
@@ -336,9 +355,26 @@ fn lookup_source_bytes<W: WriterNamespace>(resident: bool) -> usize {
                     // The final decoded output remains live through source return.
                     .max(super::super::source::leaf_source_bytes()),
         )
+        .max(catalog_load_source_bytes::<W>(resident))
         .max(super::scope::validation_source_bytes::<W>())
         .max(super::scope::consumer_source_bytes::<W>())
         .max(super::scope::legacy_boundary_source_bytes::<W>())
         .max(super::statement::source_bytes::<W>())
         + super::statement::held_source_bytes()
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::storage::wal_io::plan4_test_support as port;
+
+    /// CEV-C01: the Full class's Catalog anchor/leaf LOAD before the capture
+    /// (`load_catalog`) is below the full lookup charge, not its peak: the
+    /// charge, and every window priced beside it, stays as it was.
+    #[test]
+    fn cev_c01_catalog_load_phase_is_below_the_full_charge() {
+        let (load, full) = super::catalog_load_source_observation::<port::Writer>();
+        let frame = super::super::operation::catalog_load_source_bytes();
+        println!("CEV_C01 catalog_load={load} frame={frame} full={full}");
+        assert!(load < full);
+    }
 }

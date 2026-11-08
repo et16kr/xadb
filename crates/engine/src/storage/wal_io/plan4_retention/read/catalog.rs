@@ -182,11 +182,30 @@ impl<'c, 's, W: WriterNamespace> RetentionCatalogGuard<'_, '_, 'c, 's, '_, '_, '
     }
 }
 
+/// The fixed Catalog anchor (page 7) and leaf (page 8) as `read_catalog`
+/// reserves them. The Full class LOADs exactly these before its capture
+/// (`CatalogReadOperation::load_catalog`).
+pub(super) fn catalog_requests<W: WriterNamespace>(
+    storage: &MutableStorageOwner<'_, '_, W>,
+) -> Result<[TargetRequest; 2]> {
+    let request = |index| {
+        super::super::super::genesis::owned_header(&storage.core.plan, index)
+            .map(|header| TargetRequest {
+                identity: header.identity,
+                kind: header.kind,
+                level: 0,
+            })
+            .map_err(|_| fatal(storage, RetentionPhase::Census, RetentionCause::Invariant))
+    };
+    Ok([request(7)?, request(8)?])
+}
+
 impl<'b, 'arena, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
     RetentionReader<'b, 'arena, 's, 'c, 'p, 'd, 'm, 'w, W>
 {
-    /// Borrow the resident fixed catalog root through the original pool. Call
-    /// `prepare_catalog` first; this never loads, allocates, stages WAL or writes.
+    /// Borrow the resident fixed catalog root through the original pool. A
+    /// caller first makes both pages resident (`prepare_catalog`, or the Full
+    /// class's `load_catalog`); this never loads, allocates, stages WAL or writes.
     ///
     /// Semantic lookup captures references under this guard and copies the
     /// value before releasing these physical source latches.
@@ -205,32 +224,8 @@ impl<'b, 'arena, 's, 'c, 'p, 'd, 'm, 'w, W: WriterNamespace>
             .pool
             .target_request(0)
             .map_err(|e| frame(RetentionPhase::Census, e))?;
-        let header = |index| {
-            super::super::super::genesis::owned_header(&self.storage.core.plan, index).map_err(
-                |_| {
-                    fatal(
-                        self.storage,
-                        RetentionPhase::Census,
-                        RetentionCause::Invariant,
-                    )
-                },
-            )
-        };
-        let anchor = header(7)?;
-        let leaf = header(8)?;
-        let requests = [
-            allocator,
-            TargetRequest {
-                identity: anchor.identity,
-                kind: anchor.kind,
-                level: 0,
-            },
-            TargetRequest {
-                identity: leaf.identity,
-                kind: leaf.kind,
-                level: 0,
-            },
-        ];
+        let [anchor, leaf] = catalog_requests(self.storage)?;
+        let requests = [allocator, anchor, leaf];
         let read = self
             .pool
             .reserve_target_set(owner, &requests)

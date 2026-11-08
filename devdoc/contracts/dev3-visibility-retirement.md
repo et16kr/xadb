@@ -72,6 +72,18 @@ StatusCommitted(q)에서 **q>Q이면 무조건 prune 금지**이고 q≤H도 단
 7. 현재 Reader는 load/scratch/control 권한이 없다. original Writer의 mutable operation loan/prepare 경로를 resolver 단계 사이에 재대여하여 NotResident를 채운다. `CatalogLookup`가 가진 owner를 그 좁은 prepare 호출에 빌려 주고, reference pins만 유지하며 page/version/append/registry locks0에서 I/O한다. Reader에 두 번째 replay scratch/loader owner를 주지 않는다. 원 split의 공유 pool과 원 writer만 쓴다.
 8. checked release에서 source/target content guards→physical pins→semantic reference pins를 정리한다. snapshot은 borrowed transaction/statement 소유로 남는다. pin 검산 실패·generation mismatch·필요 Live 부재는 정상 None으로 내리지 않는다.
 
+<a id="catalog-capture-load"></a>
+### Catalog capture 전의 anchor·leaf LOAD
+
+1단계의 `read_catalog`는 고정 Catalog anchor(page 7)와 leaf(page 8)를 resident일 때만 읽는다(`reserve_target_set`, LOAD 없음). pool의 victim 선택은 깨끗한 frame이면 두 page도 다른 page처럼 내보낸다. 고치기 전에는 page 7이나 8이 한 번 pool을 떠나면 그 뒤의 Full 조회와 table issue가 모두 `MissingTarget` Unchanged로 거절됐다. 작은 pool에서 08-3 overflow 행을 쓸 때와 SPL-A05의 split 뒤 새 statement가 그 예다.
+
+- **Full 클래스는 capture 전에 LOAD한다.** `CatalogReadOperation::load_catalog`가 두 page마다 먼저 registry에서 resident인지 보고(LOAD claim 없음), 없는 page만 Status/Undo LOAD와 같은 reader lookup LOAD(`load_lookup_target`)로 올린다. 한 page를 올리는 동안 다른 page는 보호 집합에 있어 victim으로 고르지 않는다. victim이 dirty이면 효과 없이 `FlushRequired { target }`을 돌려준다(table issue는 `TableStep::FlushRequired`, 조회는 `CatalogLookupStep::FlushRequired`). caller는 그 target을 flush하고 같은 statement로 다시 부른다. 두 page가 resident인 조회는 전과 같이 실행된다.
+- **resident 클래스는 LOAD하지 않는다.** `CatalogResident`의 capture miss는 이 클래스의 기존 재시도 가능 Busy로 남는다(같은 snapshot 재시도).
+- **고정 pin을 택하지 않았다.** page 7·8(그리고 System 1–6)을 victim에서 빼면 쓸 수 있는 frame이 줄고, 모든 victim 선택이 바뀌어 정확한 trace를 보는 기존 시험이 흔들리며, open 뒤 처음부터 non-resident인 경우는 풀리지 않는다. 공통 LOAD·replacement로 가는 buffer manager 방향과도 어긋난다.
+- **자원은 그대로다.** LOAD 단계는 capture 전이므로 후보 복사본(CatalogHeader·TransactionStatus 368 B)이 아직 없다. 자기 frame 280 B와 LOAD 본문(`lookup_load::source_bytes`)을 더해도 34,452 B로 Full 조회 charge 34,588 B 아래다(CEV-C01). charge·ceiling·Pending 옆 Full 창은 바뀌지 않는다.
+- **남은 한계.** Begin(`row_begin`이 읽는 Root/Jobs/Status)은 여전히 resident만 읽는다. [tree SMO의 UNL-L09 기록](dev3-tree-smo.md)대로 24 frame pool에서 Begin이 먼저 거절되는 일은 이 절의 범위 밖이다.
+- 시험: CEV-J01(anchor·leaf·둘 다 내보낸 뒤 table issue), CEV-J02(dirty victim의 FlushRequired 왕복), CEV-J03(resident 클래스 Busy), CEV-C01(자원), SPL-A05(split 뒤 새 statement read).
+
 ## 5. atomic retirement intent와 CLR의 자기 pin
 
 Registry에는 한 개의 bounded **retiring key marker**만 둔다. original version gate가 logical retire producer를 직렬화하므로 target-map이나 새 durable Job이 필요 없다. marker는 exact UndoRef 또는 TxnRef + scope generation + source-owner token에 묶인다.
