@@ -1305,6 +1305,40 @@ fn ovf_c02_forward_checks_the_chain_then_commit_or_rollback() {
         ..row_pages()
     };
     let frame = a_group(&world.inputs(clr15, pages15), None).expect("A's CLR of root 15");
+    // A valid overflow CLR releases a chain. Transplant its release fields
+    // into the inline CLR. Both Job images decode and bind to their frames,
+    // but only the first Job had an overflow chain to return.
+    {
+        let mut after = loans(0);
+        let observation = observe(&world.inputs(clr15, pages15), &frame, &mut after).unwrap();
+        let overflow = compensated.bytes();
+        let (candidate, job_after) = rebind(&frame, world.lsn, 9, &after[JOB], |cell| {
+            for range in [200..248, 285..292, 384..1024] {
+                cell[range.clone()].copy_from_slice(&overflow[range]);
+            }
+        });
+        row::decode_job(cell(&job_after[..], 0), namespace()).unwrap();
+        let observed = jobs::observe(
+            decode_layout(&candidate, expectation(world.lsn), profile()).unwrap(),
+            jobs::Inputs {
+                context: undo::UndoContext {
+                    profile: profile(),
+                    actor: observation.actor.unwrap(),
+                    location: observation.status.unwrap(),
+                },
+                jobs: JobCells::original(&world.bank),
+                ordinal: 15,
+                images: jobs::JobImages {
+                    before: world.jobs[1].as_ref().unwrap(),
+                    after: &job_after,
+                },
+                reserve: None,
+                sender: None,
+                commit: None,
+            },
+        );
+        assert_eq!(observed.map(|_| ()), Err(Error::IdentityMismatch));
+    }
     world.observe("OVF-clr15", &frame, clr15, pages15);
     step(
         &mut world,

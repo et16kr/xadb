@@ -238,13 +238,11 @@ pub(crate) fn observe(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<JobOb
             // An overflow root's CLR keeps the chain it returns (its anchor
             // pair[0]); its Prune keeps none (dev3-row-overflow.md
             // #job-overflow).
-            if before.overflow() {
+            if op == Operation::Clr && before.overflow() {
                 let anchor = before.pair().ok_or(Error::IdentityMismatch)?[0];
-                require(if op == Operation::Clr {
-                    after.chain().is_some_and(|chain| chain.anchor == anchor)
-                } else {
-                    !after.overflow()
-                })?;
+                require(after.chain().is_some_and(|chain| chain.anchor == anchor))?;
+            } else {
+                require(!after.overflow())?;
             }
         }
         Operation::ReleaseRole => {
