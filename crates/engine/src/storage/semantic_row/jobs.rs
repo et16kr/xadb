@@ -165,9 +165,12 @@ pub(crate) fn observe(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<JobOb
             )?;
             unchanged(before, after, &[(6, 7), (72, 80), (328, 360), (376, 384)])?;
         }
-        Operation::Cancel => {
-            require(before.state() == JobState::RootReserved && after.state() == JobState::Free)?
-        }
+        Operation::Cancel => require(
+            before.state() == JobState::RootReserved
+                && after.state() == JobState::Free
+                && (layout.operation() == Operation::OverflowCancel)
+                    == before.pending().is_some_and(|p| p.written > 0),
+        )?,
         // One chunk of a Reserved overflow root: the pending front moves to
         // the new chunk and written grows by one; the cleanup recipe stays
         // (dev3-row-overflow.md#job-overflow).
@@ -245,6 +248,10 @@ pub(crate) fn observe(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<JobOb
                 require(!after.overflow())?;
             }
         }
+        Operation::ChainRetire => {
+            require(before.has_return_chain() && !after.has_return_chain())?;
+            unchanged(before, after, &[(200, 248), (288, 292), (376, 1024)])?;
+        }
         Operation::ReleaseRole => {
             // A compensated overflow root returns its chain first
             // (dev3-row-overflow.md#transitions). The Job codec already
@@ -254,7 +261,7 @@ pub(crate) fn observe(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<JobOb
             // `unchanged` below; the rule states it here.
             require(
                 before.state().is_releasing()
-                    && before.chain().is_none()
+                    && !before.has_return_chain()
                     && after.state() == before.state()
                     && before.release_cursor() < 3
                     && after.release_cursor() == before.release_cursor() + 1,
@@ -306,7 +313,11 @@ pub(crate) fn observe(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<JobOb
     }
     if matches!(
         op,
-        Operation::Prune | Operation::ReleaseRole | Operation::RootFree | Operation::TerminalFinish
+        Operation::Prune
+            | Operation::ChainRetire
+            | Operation::ReleaseRole
+            | Operation::RootFree
+            | Operation::TerminalFinish
     ) {
         require(layout.core().cursors().1 == ((input.ordinal + 1) % JOB_COUNT) as u64)?;
     }
@@ -405,7 +416,7 @@ fn census(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<()> {
     }
     match op {
         Operation::Reserve | Operation::Commit => require(reserved == 0)?,
-        Operation::ChunkWrite => require(reserved == 1)?,
+        Operation::ChunkWrite | Operation::Cancel => require(reserved == 1)?,
         Operation::AbortEnd => require(reserved == 0 && retained == 0)?,
         Operation::TerminalFinish => require(roots == 0)?,
         Operation::Prune => require(
@@ -413,7 +424,9 @@ fn census(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<()> {
                 && Some(terminal.commit_q()) == input.commit.map(CommitSeq::get)
                 && reserved == 0,
         )?,
-        Operation::ReleaseRole | Operation::RootFree => require(reserved == 0)?,
+        Operation::ChainRetire | Operation::ReleaseRole | Operation::RootFree => {
+            require(reserved == 0)?
+        }
         _ => {}
     }
     // A compensated root may coexist with either eventual terminal outcome;

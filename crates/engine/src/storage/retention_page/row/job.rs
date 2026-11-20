@@ -233,15 +233,20 @@ impl<'a> JobView<'a> {
     /// A ReleasingCompensated overflow root's chain still to return; None
     /// once ChainRetire returned it and for every other Job.
     pub(crate) fn chain(self) -> Option<ReturnChain> {
-        (self.state == JobState::RootReleasingCompensated
-            && self.overflow()
-            && !zero(&self.bytes[200..248]))
-        .then(|| ReturnChain {
+        self.has_return_chain().then(|| ReturnChain {
             anchor: PageRef::decode(&self.bytes[200..224]).expect("validated anchor"),
             root: PageRef::decode(&self.bytes[224..248]).expect("validated root"),
             total: u32::from_le_bytes(self.bytes[288..292].try_into().expect("checked field")),
         })
     }
+    /// Root validation binds a nonzero chain total to both references.
+    /// Budget and census only need presence, so they need no decoded refs.
+    pub(crate) fn has_return_chain(self) -> bool {
+        self.state == JobState::RootReleasingCompensated
+            && self.overflow()
+            && !zero(&self.bytes[288..292])
+    }
+
     /// Whether a Releasing root's cleanup started: a release step ran
     /// (cursor > 0), or ChainRetire returned an overflow root's chain
     /// (dev3-row-overflow.md#job-overflow). Both happen only after the
@@ -251,7 +256,19 @@ impl<'a> JobView<'a> {
             && (self.release_cursor() != 0
                 || (self.state == JobState::RootReleasingCompensated
                     && self.overflow()
-                    && self.chain().is_none()))
+                    && !self.has_return_chain()))
+    }
+    /// ChainRetire advances the Job without touching U. At cursor zero its
+    /// last U write was CLR. Later release steps write both together.
+    pub(crate) fn accepts_release_undo_lsn(self, lsn: u64) -> bool {
+        if self.state == JobState::RootReleasingCompensated
+            && self.overflow()
+            && self.release_cursor() == 0
+        {
+            lsn == self.release_start()
+        } else {
+            lsn >= self.last_step()
+        }
     }
     /// The Reserved root's remaining Forward and a live root's remaining CLR
     /// (ledger rows 1 and 0); `None` outside a Row Reserved/Retained root.
@@ -366,7 +383,7 @@ impl<'a> JobView<'a> {
             ),
             // A chain still to return adds ChainRetire before the four
             // release steps (dev3-row-overflow.md#ledger).
-            _ if self.chain().is_some() => (5, RELEASE_STEPS + CHAIN_RETIRE_WAL),
+            _ if self.has_return_chain() => (5, RELEASE_STEPS + CHAIN_RETIRE_WAL),
             _ => {
                 let steps = 4 - u64::from(self.release_cursor());
                 (steps, steps * RELEASE_BYTES)

@@ -78,6 +78,7 @@ pub(super) fn new_prepared<'a, 's>(
         frame_bytes: 0,
         row_cell: 0,
         new_cell: 0,
+        list_before: 0,
         predecessor: false,
         ordinal: None,
         actor: None,
@@ -117,7 +118,10 @@ pub(super) fn record_scratch(descriptors: &mut [[u8; 1536]; 2]) -> &mut [u8; MAX
 fn needs_status(op: Operation) -> bool {
     !matches!(
         op,
-        Operation::AgingStart | Operation::ReleaseRole | Operation::RootFree
+        Operation::AgingStart
+            | Operation::ChainRetire
+            | Operation::ReleaseRole
+            | Operation::RootFree
     )
 }
 fn is_tx(op: Operation) -> bool {
@@ -1268,6 +1272,8 @@ pub(super) fn prepare<'a>(
         Change::ChunkWrite(plan) => Some(plan.ordinal),
         Change::Forward { ordinal, .. }
         | Change::ForwardOverflow { ordinal, .. }
+        | Change::ChainRetire { ordinal, .. }
+        | Change::OverflowCancel { ordinal, .. }
         | Change::Cancel { ordinal }
         | Change::Clr { ordinal, .. }
         | Change::Prune { ordinal }
@@ -1686,14 +1692,17 @@ pub(super) fn prepare<'a>(
             core = overflow::chunk_write(inputs, plan, before.expect("selected"), actor, out)?;
             credit = true;
         }
-        Change::Cancel { .. } => {
+        Change::Cancel { .. } | Change::OverflowCancel { .. } => {
             let job = before.expect("selected");
             let actor = actor.expect("actor");
             require(job.state() == JobState::RootReserved)?;
             // An overflow root with written chunks returns them through
             // OverflowCancel; Cancel takes one with none
             // (dev3-row-overflow.md#transitions).
-            if job.pending().is_some_and(|pending| pending.written != 0) {
+            if let Change::OverflowCancel { chain, anchor, .. } = inputs.change {
+                require(summary.as_ref().expect("actor").reserved == selected)?;
+                overflow::return_list(inputs, job, chain, anchor, out)?;
+            } else if job.pending().is_some_and(|pending| pending.written != 0) {
                 return Err(Error::InvalidInput);
             }
             let status = occupied(status_before.expect("status"), actor)?;
@@ -2070,6 +2079,21 @@ pub(super) fn prepare<'a>(
                 ..Core::default()
             };
         }
+        Change::ChainRetire { chain, anchor, .. } => {
+            let job = before.expect("selected");
+            let summary = summary.as_ref().expect("actor");
+            let terminal = decode_job(inputs, summary.terminal.ok_or(Error::IdentityMismatch)?)?;
+            require(terminal.state() == JobState::TerminalReady && summary.reserved.is_none())?;
+            overflow::return_list(inputs, job, chain, anchor, out)?;
+            out.job[200..248].fill(0);
+            out.job[288..292].fill(0);
+            set_budget(out.job, 4, 4 * RELEASE_BYTES);
+            core = Core {
+                sequence: job.undo_sequence(),
+                current: Some(job.undo().ok_or(Error::IdentityMismatch)?),
+                ..Core::default()
+            };
+        }
         Change::ReleaseRole { .. } | Change::RootFree { .. } => {
             let job = before.expect("selected");
             let summary = summary.as_ref().expect("actor");
@@ -2077,7 +2101,7 @@ pub(super) fn prepare<'a>(
             require(terminal.state() == JobState::TerminalReady && job.state().is_releasing())?;
             // A compensated overflow root returns its chain (ChainRetire)
             // before any release step (dev3-row-overflow.md#transitions).
-            if job.chain().is_some() {
+            if job.has_return_chain() {
                 return Err(Error::InvalidInput);
             }
             let cursor = job.release_cursor();
@@ -2089,7 +2113,7 @@ pub(super) fn prepare<'a>(
             let undo = job.undo().ok_or(Error::IdentityMismatch)?;
             let bytes = inputs.undo.ok_or(Error::InvalidInput)?;
             let cell = cells::undo_before(bytes, namespace, undo.page(), frame)?;
-            require(cells::page_lsn(bytes) >= job.last_step())?;
+            require(job.accepts_release_undo_lsn(cells::page_lsn(bytes)))?;
             // Missing before has Never/Cut at cursor0/1 and Released from 2.
             let transaction = match (cursor, cell[326]) {
                 (0 | 1, 0) => UndoEdge::Never,
@@ -2188,8 +2212,11 @@ pub(super) fn prepare<'a>(
     if selected.is_some() {
         row::decode_job(out.job, namespace)?;
     }
-    out.frame_bytes =
-        op.frame_bytes_cells(out.row_cell, usize::from(out.new_cell), out.predecessor)?;
+    out.frame_bytes = if op.list() {
+        op.frame_bytes_list(usize::from(out.list_before), out.cell_len)?
+    } else {
+        op.frame_bytes_cells(out.row_cell, usize::from(out.new_cell), out.predecessor)?
+    };
 
     // Root after (not for the status-patch ops) and the after census.
     if has_root(op) {
@@ -2224,7 +2251,9 @@ pub(super) fn prepare<'a>(
                     put(root_cell, 432, issued.row.get());
                 }
             }
-            Operation::Cancel => put(root_cell, 384, next(root.canceled())?),
+            Operation::Cancel | Operation::OverflowCancel => {
+                put(root_cell, 384, next(root.canceled())?)
+            }
             Operation::Commit => put(root_cell, 408, q),
             Operation::RootFree | Operation::TerminalFinish => {
                 put(root_cell, 376, next(root.completed())?)
@@ -2259,6 +2288,7 @@ pub(super) fn prepare<'a>(
         if matches!(
             op.role(),
             Operation::Prune
+                | Operation::ChainRetire
                 | Operation::ReleaseRole
                 | Operation::RootFree
                 | Operation::TerminalFinish
@@ -2441,6 +2471,9 @@ pub(super) fn write_pages(
     // ChunkWrite's other two pages are the allocator and the new chunk.
     if prepared.op == Operation::ChunkWrite {
         return overflow::write_chunk(inputs, prepared, after);
+    }
+    if prepared.op.list() {
+        return overflow::write_return_list(prepared, &mut after[LEAF]);
     }
     for role in [STATUS, UNDO] {
         let Some(page) = prepared.pages[role] else {
@@ -2636,6 +2669,7 @@ pub(super) fn callee_bytes() -> usize {
         .max(source::job_edit())
         .max(source::graph())
         .max(overflow::chunk_write_bytes())
+        .max(overflow::return_list_bytes())
 }
 pub(super) fn source_bytes() -> usize {
     locals_bytes() + callee_bytes() + SHA
@@ -2679,5 +2713,6 @@ pub(super) fn write_source_bytes() -> usize {
             .max(source::status_codec())
             .max(source::page_codec())
             .max(overflow::write_chunk_bytes())
+            .max(overflow::write_return_list_bytes())
         + SHA
 }

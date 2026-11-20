@@ -380,7 +380,7 @@ Base4는 형식을 바꾼다. 1판의 "record·certificate 형식은 바꾸지 �
 | O3 | 제품 경로: A 실행기·C 진입·B 읽기·live 정리·복구(OVF-J·R) | F4 caller 상한 전부, B read census, A drain | 큰 행 INSERT가 처음 성공 |
 | O4 | native fault cut(OVF-N) | — | **08-3 적립(2일)은 O4의 병합** |
 
-O2는 크기 때문에 네 PR로 나눈다(각각 독립 D2): **O2a** Reserve(overflow)·ChunkWrite·Forward(overflow)·CLR·Prune의 C 전이, ledger row1, 국소 관측기(OVF-C01·C02, [§15](#o2a-record)), **O2b** OverflowCancel·ChainRetire와 XTR1 after(OVF-C03), **O2c** replay(opcode 14·15·25, overflow ReserveAdopted, INIT claim, OVF-C04), **O2d** Base4 role 7 closure·incarnation 상계·split/unlink closure·kind별 retire LSN과 §14의 남은 census 항(OVF-C05·C06).
+O2는 크기 때문에 네 PR로 나눈다(각각 독립 D2): **O2a** Reserve(overflow)·ChunkWrite·Forward(overflow)·CLR·Prune의 C 전이, ledger row1, 국소 관측기(OVF-C01·C02, [§15](#o2a-record)), **O2b** OverflowCancel·ChainRetire와 XTR1 after(OVF-C03, [§16](#o2b-record)), **O2c** replay(opcode 14·15·25, overflow ReserveAdopted, INIT claim, OVF-C04), **O2d** Base4 role 7 closure·incarnation 상계·split/unlink closure·kind별 retire LSN과 §14의 남은 census 항(OVF-C05·C06).
 
 각 단계는 PR 하나와 독립 D2이며, 필수 지적을 해소한 뒤 연다. census가 상한을 넘으면 상한을 올리지 않고 이 계약을 다시 검토한다(§7.1). 08-3은 08의 마지막 항목이 아니므로 항목 조건으로 적립한다. 08-1이 U4의 병합으로 적립된 것과 같다.
 
@@ -412,6 +412,7 @@ O2는 크기 때문에 네 PR로 나눈다(각각 독립 D2): **O2a** Reserve(ov
 | [자원 정본](dev3-resource-bounds.md) | Row WAL recipe | ChunkWrite·OverflowCancel·ChainRetire와 row1 걸음(O2) |
 | [행 owner §5.4](dev3-task-06-tree-rows.md#algorithms) transient pin | overflow 읽기 pin | 08-3은 반환 chain을 reader가 읽지 않으므로 pin 없음, 규칙은 08-4(O3) |
 | Base4 certificate·provenance | kind 7 dynamic page 없음, source kind 2 claim은 모두 CREATE pair | Overflow role, provenance role 7, `pair()`는 role 3·4만, `validate_pairs`·`provenance`·`payloads`의 role 7 분기(O1 codec, O2 검산). role 7의 "현재 image == INIT image" 규칙은 page를 재사용하지 않는 동안만이고 14-2가 다시 정한다 |
+| 반환 뒤 첫 ReleaseRole의 U | U pageLSN ≥ Job last_step | overflow 보상 후 cursor 0에서는 U pageLSN = CLR release_start(O2b). Base4 actor 검증 반영은 O2d |
 | Base4 allocator incarnation 상계 | `System HW + creates + Structural HW` | kind 7 Allocated page 수를 더함(O2). 14-2가 Overflow page를 Free로 돌리면 다시 정한다 |
 | `jobs.rs` census의 TerminalLeased 연산 목록 | Reserve·Forward·Cancel·Commit·AbortEnd·Clr | ChunkWrite·OverflowCancel 추가, ChainRetire는 TerminalReady(O2) |
 | 효과 추론 `op_effect`·`opcode_effect` | `op != op.role()`이면 DELETE | 명시적 `Operation::delete()`(O1) |
@@ -471,3 +472,13 @@ O2b 이후에 남긴 것: OverflowCancel·ChainRetire(OVF-C03), replay(OVF-C04),
 - **O2d(Base4).** `plan4_recovery_base/row/actor.rs`의 `header.lsn < job.last_step()` → Identity와 `plan4_recovery_base/catalog/graph/ledger.rs`의 `RootReserved && chain.apply != lease_lsn` → OrderMismatch가 written ≥ 1인 Reserved overflow root(OVF-R01의 loser Reserved 중간)와 ChainRetire 뒤 root를 거절한다. 뒤의 것은 O2a가 `semantic_row/ledger.rs`에서 바꾼 규칙(`chain.apply == last_step`)의 Base4 쌍이다. 이 두 규칙 변경과 O2b의 U 규칙은 그 단계 PR에서 §13 표(Base4 행)에도 적는다.
 - **O3(A).** `row/insert/group.rs`의 Forward 준비는 아직 `chain.apply == lease_lsn`, `debt(row_forward_wal(..), 1)`이다. §6.2의 값(steps = forward_steps, wal = forward_wal, undo_slots = 1)으로 바꾸되 A 전용 `debt(wal, undo_slots)`의 인자 순서에 맞춘다. 244 B cell이 leaf에 맞지 않는 overflow Reserve(split 유발)의 시험도 A의 split 호출과 함께 여기서 둔다(C 쪽 판정은 inline과 같은 `leaf_reserved!`·entry 크기 검사다).
 - **08-4.** RowReserve의 DELETE·UPDATE 대상이 Overflow 행이면 `reserve_target`이 Unsupported로 거절한다(읽어서 확인. 시험은 두 번째 transaction과 해제된 overflow root가 필요해, big row DELETE·UPDATE를 여는 08-4가 그 갈래를 바꾸며 함께 둔다).
+
+<a id="o2b-record"></a>
+## 16. O2b 구현 기록
+
+2026-11-20. PR #68이 병합된 `ad8e0280`에서 C의 `OverflowCancel`(15)과 `ChainRetire`(25)를 구현했다. 두 그룹은 검증한 Job에서 anchor·front·total·첫 index를 얻는다. allocator의 table·generation·kind와 모든 chunk의 envelope·chain·순서를 확인한 뒤, 기존 Row cell scratch에 XTR1을 물리 주소순으로 병합한다. 프레임은 Root·Job·anchor의 변경을 함께 담는다. anchor의 XTA1 descriptor와 route revision을 보존한다.
+
+- **예약 취소.** 첫 chunk의 LSN은 마지막 ChunkWrite의 Job `last_step`과 같아야 한다. 뒤로 갈수록 LSN은 작아지고 모든 chunk는 Reserve보다 뒤에 있어야 한다. 세 chunk 중 두 개를 쓴 revision 1 사례에서 두 페이지가 같은 retire LSN으로 등록되고, Job이 Free로 바뀌며 Root의 canceled가 1 증가했다. 프레임은 56,568 B였다.
+- **롤백 뒤 반환.** terminal Ready 뒤 CLR의 Job이 가진 전체 chain을 반환한다. 첫 chunk의 LSN은 Forward의 `adoption_lsn`보다 작아야 한다. revision 2 사례에서 기존 tree 항목을 보존하며 세 chunk를 추가했고 Root의 consumed_wal이 실제 프레임 크기 54,896 B만큼 증가했다. Job은 release cursor 0에서 네 걸음의 예산을 갖는다. 첫 ReleaseRole은 U의 pageLSN이 CLR의 `release_start`와 같을 때 진행한다. 이후 cursor에서는 기존 last_step 규칙을 적용한다.
+- **자원.** 반환 준비의 source 모델은 7,050 B, anchor 쓰기는 2,731 B다(SHA는 상위에서 합산). N1 전체 상한 30,359 B와 S2W C charge 44,304 B 범위에 든다. Job budget·terminal census·ledger가 반환 여부만 물을 때는 검증된 chain total의 유무를 사용한다. 이 경로에서 §14가 지적한 두 PageRef 디코딩과 ReturnChain 지역값을 제거했다.
+- **검증 범위.** OVF-C03은 잘못된 front·tail LSN, 미할당 tail, 빈 pending, terminal 전 반환, 이중 반환, ChainRetire의 LSN으로 바뀐 U를 거절하는지 검사했다. 성공한 그룹은 whole-group 관측기, Job 관측기, 시험 harness의 page redo 적용으로 대조했다. 제품 복구의 opcode dispatch와 INIT claim 검증은 다음 단계 O2c(OVF-C04)다.
