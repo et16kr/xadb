@@ -1,0 +1,127 @@
+{
+  "schema": "XADB_MODULE_GATE_RECORD_V1",
+  "change": "DEV3 08-3 O2b: C OverflowCancel and ChainRetire, XTR1 return, cleanup and OVF-C03.",
+  "rust_tests": [
+    {
+      "paths": [
+        "crates/engine/src/storage/semantic_row/transition/overflow.rs",
+        "crates/engine/src/storage/semantic_row/transition.rs",
+        "crates/engine/src/storage/semantic_row/transition/prepare.rs",
+        "crates/engine/src/storage/semantic_row/transition_tests.rs",
+        "crates/engine/src/storage/semantic_row/transition_overflow_tests.rs",
+        "crates/engine/src/storage/anchor.rs"
+      ],
+      "reason": "OVF-C03 produces and observes the two list transitions, compares their page redo and budgets, and exercises unchanged-output refusals and the prepare/write resource models. N1 and S2W check the composed bound and charge.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_overflow_tests.rs",
+          "case": "storage::semantic_row::transition::tests::overflow::ovf_c03_return_source_bounds",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_overflow_tests.rs",
+          "case": "storage::semantic_row::transition::tests::overflow::ovf_c03_cancel_partial_chain",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_overflow_tests.rs",
+          "case": "storage::semantic_row::transition::tests::overflow::ovf_c03_retire_after_terminal_and_release",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+          "case": "storage::semantic_row::transition::tests::n1_transition_source_bounds_cover_measured_frames",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c06_row_write_c_margins_against_both_bounds",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/semantic_row/jobs.rs",
+        "crates/engine/src/storage/semantic_row/undo.rs",
+        "crates/engine/src/storage/retention_page/row/job.rs"
+      ],
+      "reason": "Both return histories run the Job observer. The compensated history reaches the first ReleaseRole and checks its U timestamp. F02 covers the shared chain-presence predicate in job recipes and cleanup_started.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_overflow_tests.rs",
+          "case": "storage::semantic_row::transition::tests::overflow::ovf_c03_cancel_partial_chain",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_overflow_tests.rs",
+          "case": "storage::semantic_row::transition::tests::overflow::ovf_c03_retire_after_terminal_and_release",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/retention_page/row/job_tests.rs",
+          "case": "storage::retention_page::row::job_tests::ovf_f02_overflow_root_states_and_recipes",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/retention_page/row/job_tests.rs",
+          "case": "storage::retention_page::row::job_tests::ovf_f02_returned_chain_starts_cleanup",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    }
+  ],
+  "na": [
+    {
+      "paths": [
+        "crates/engine/src/storage/retention_page/row.rs"
+      ],
+      "reason": "Compile-time re-export of ReturnChain for the source cost model; no executable behavior in the re-export."
+    }
+  ],
+  "reviews": [
+    {
+      "id": "dev3-08-3-o2b-d2",
+      "class": "D2",
+      "scopes": [],
+      "author": "Codex /root",
+      "reviewer": "Codex /root/review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/anchor.rs": "4b727d7486a92990f6eb045e2c95dda15c04ca60",
+        "crates/engine/src/storage/retention_page/row.rs": "2e20ac6d306d2425c5b159f3ea33a741f38a5cff",
+        "crates/engine/src/storage/retention_page/row/job.rs": "9bcf7ee974cbdc15f167311ec8a0ba832c46c900",
+        "crates/engine/src/storage/retention_page/row/job_tests.rs": "4ac3432fa341afc1a081bdca4b0b0228c34c128d",
+        "crates/engine/src/storage/semantic_row/jobs.rs": "4691661e35079f1fa9122cb28fc00d2220f9bb68",
+        "crates/engine/src/storage/semantic_row/transition.rs": "af2853805e94d58b9af8ca2b940e07426fd094d1",
+        "crates/engine/src/storage/semantic_row/transition/overflow.rs": "6af995437ef5a02ec782c57ff0bf9f21a47ca293",
+        "crates/engine/src/storage/semantic_row/transition/prepare.rs": "0e576caa7ecdc114db1a49245affaba77a01bfaa",
+        "crates/engine/src/storage/semantic_row/transition_overflow_tests.rs": "a14249881dba81f7f425d72b901d258875c5c10d",
+        "crates/engine/src/storage/semantic_row/transition_tests.rs": "8fa328446c05334d597689d6529ece303cbb0450",
+        "crates/engine/src/storage/semantic_row/undo.rs": "d5d54c531c53afdd454f9bd7aab7d9b439979431",
+        "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs": "82aa2cfba8b44863e23c498cb2ba4835be9ab2df",
+        "devdoc/contracts/dev3-row-overflow.md": "1c63307e97c68647fe5e54b6f9808e97a6405c5a"
+      },
+      "log": "Independent read-only D2 by /root/review on ad8e0280..deef475b. Round 1 required tying the pending front to last_step, the compensated front to a time before adoption, and later chunks to strictly earlier writes. Round 2 accepted those checks, XTR1 and WAL accounting, the first ReleaseRole's exact CLR LSN, the two source terms and section 16. Verified the 13 listed blobs and seven selected cases. The pending-front negative also violates descending order; the separate front equality was inspected statically. Required open: 0. Implementer receipts: module-gate/evidence/dev3-08-3-o2b/selected.log (SHA-256 17c6f36ea46ef039d8fc56c6ad2423b1ae18034e8704c456c4f2980914d4fba4); the preceding source-model compile attempt failed on an unresolved ReturnChain import, resolved by the checked re-export."
+    }
+  ]
+}
