@@ -66,6 +66,7 @@ fn plan(c: u32, h: bool) -> ReservePlan {
         predecessor: h,
         effect: row::RowEffect::Insert,
         new_cell: 0,
+        overflow: None,
     }
 }
 fn free(g: u64) -> [u8; 1024] {

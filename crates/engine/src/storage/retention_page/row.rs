@@ -24,16 +24,18 @@ mod pages;
     reason = "pure Job3 supply awaits the closed current-profile owner"
 )]
 pub(crate) use census::{JobCells, summarize_jobs, verify_census, verify_selected_census};
-/// The overflow recipes' frame sizes, tied to the opcode shapes by OVF-F04.
 #[cfg(test)]
-pub(crate) use job::{CHAIN_RETIRE_WAL, CHUNK_WRITE_WAL};
+pub(crate) use job::CHUNK_WRITE_WAL;
+/// The overflow recipes' frame sizes, tied to the opcode shapes by OVF-F04,
+/// and the head row's cell C (dev3-row-overflow.md#overflow-row).
+pub(crate) use job::{CHAIN_RETIRE_WAL, OVERFLOW_CELL};
 #[allow(
     unused_imports,
     reason = "pure Job3 supply awaits the closed current-profile owner"
 )]
 pub(crate) use job::{
-    JobScope, JobState, JobView, RowEffect, decode_job, encode_job, row_cleanup_wal, row_clr_wal,
-    row_forward_wal,
+    JobScope, JobState, JobView, PendingChain, RowEffect, decode_job, encode_job, row_cleanup_wal,
+    row_clr_wal, row_forward_wal,
 };
 #[allow(
     unused_imports,

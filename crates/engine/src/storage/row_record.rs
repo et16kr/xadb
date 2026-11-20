@@ -556,6 +556,36 @@ pub(crate) fn encode_row_record_with_schema(
     Ok(total)
 }
 
+/// The record of an overflow row (dev3-row-overflow.md#overflow-row): the
+/// bytes `encode_row_record_with_schema` writes for `RowPayload::Overflow`.
+/// No schema is read for this payload, so a Job-only owner (ChunkWrite's
+/// value commitment) can rebuild the record without a table source. Every
+/// error leaves `output` unchanged.
+pub(crate) fn encode_overflow_record(
+    expected: RecordExpectation,
+    version: RecordVersion,
+    head: OverflowHead,
+    output: &mut [u8],
+) -> Result<usize, RowError> {
+    version.validate(expected)?;
+    let total = ROW_HEADER_BYTES + OVERFLOW_HEAD_BYTES;
+    if output.len() < total {
+        return Err(RowError::NoSpace);
+    }
+    let mut header = [0; ROW_HEADER_BYTES];
+    header[..4].copy_from_slice(b"XRW1");
+    header[4..6].copy_from_slice(&1_u16.to_le_bytes());
+    header[6] = u8::from(version.undo.is_some()) << 1;
+    header[7] = 2;
+    version_bytes(version, &mut header)?;
+    put_u32(&mut header, 160, OVERFLOW_HEAD_BYTES);
+    let mut body = [0; OVERFLOW_HEAD_BYTES];
+    head.encode(&mut body).map_err(|_| RowError::InvalidInput)?;
+    output[..ROW_HEADER_BYTES].copy_from_slice(&header);
+    output[ROW_HEADER_BYTES..total].copy_from_slice(&body);
+    Ok(total)
+}
+
 pub(crate) fn decode_row_record<'a>(
     input: &'a [u8],
     expected: RecordExpectation,

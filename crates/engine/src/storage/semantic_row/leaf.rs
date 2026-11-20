@@ -257,12 +257,23 @@ pub(crate) fn observe(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<LeafO
                     RowEffect::Delete => TOMBSTONE_CELL,
                     RowEffect::Update => job.new_cell() as usize,
                 }
-            && projection(table.handle, row, Some(original))? == *job.projection_digest(),
+            && match (record.payload(), job.overflow()) {
+                // An overflow root seals its head record with the root
+                // zero, and only an overflow root has a head record
+                // (dev3-row-overflow.md#overflow-row).
+                (RowPayload::Overflow(_), true) => {
+                    root_free_projection(table.handle, row, original)?
+                }
+                (RowPayload::Overflow(_), false) | (_, true) => {
+                    return Err(Error::IdentityMismatch);
+                }
+                _ => projection(table.handle, row, Some(original))?,
+            } == *job.projection_digest(),
     )?;
     let expected = RecordExpectation { namespace, row };
     let schema = RowSchemaInput::Catalog(schema);
     match effect {
-        RowEffect::Insert => insert_rows(role, input, record, a, expected, schema)?,
+        RowEffect::Insert => insert_rows(role, input, job, record, a, expected, schema)?,
         RowEffect::Delete => {
             require(record.payload() == RowPayload::Deleted)?;
             delete_rows(
@@ -280,7 +291,7 @@ pub(crate) fn observe(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<LeafO
         // Forward and the restored row after Clr (dev3-row-update.md
         // #update-states).
         RowEffect::Update => {
-            insert_rows(role, input, record, a, expected, schema)?;
+            insert_rows(role, input, job, record, a, expected, schema)?;
             delete_rows(
                 role,
                 input,
@@ -320,28 +331,53 @@ pub(crate) fn observe(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<LeafO
 fn insert_rows(
     op: Operation,
     input: Inputs<'_>,
+    job: JobView<'_>,
     record: RowRecordView<'_>,
     a: Option<&[u8]>,
     expected: RecordExpectation,
     schema: RowSchemaInput<'_>,
 ) -> Result<()> {
     let version = record.version();
-    let canonical = inline(record)?;
+    let (length, digest) = sealed_value(record, job.overflow())?;
     if let Some(sealed) = input.sealed {
-        require(sealed.length == canonical.len() && sealed.digest == content_digest(canonical))?;
+        require(sealed.length == length && sealed.digest == digest)?;
     }
     if op == Operation::Prune {
         let new =
             row_record::decode_row_record_with_schema(a.ok_or(Error::Corrupt)?, expected, schema)?;
         let q = input.status.commit.ok_or(Error::InvalidInput)?;
+        sealed_value(new, job.overflow())?;
         require(
             new.version().stamp == VersionStamp::Committed(q)
                 && new.version().logical == version.logical
                 && new.version().undo.is_none()
-                && inline(new)? == canonical,
+                && new.payload() == record.payload(),
         )?;
     }
     Ok(())
+}
+/// The value an INSERT row seals: an inline row's canonical length and
+/// SHA-256, or an overflow row's head total and digest, which is the
+/// canonical row's SHA-256 (dev3-row-overflow.md#overflow-row). The row's
+/// payload kind is the Job's: a head record only for an overflow root.
+fn sealed_value(row: RowRecordView<'_>, overflow: bool) -> Result<(usize, [u8; 32])> {
+    match (row.payload(), overflow) {
+        (RowPayload::Overflow(head), true) => Ok((head.total(), head.digest())),
+        (RowPayload::Overflow(_), false) | (_, true) => Err(Error::IdentityMismatch),
+        _ => {
+            let canonical = inline(row)?;
+            Ok((canonical.len(), content_digest(canonical)))
+        }
+    }
+}
+/// The XRP1 projection of an overflow head record with its root `[168,192)`
+/// as zero (dev3-row-overflow.md#overflow-row), from a copy.
+fn root_free_projection(table: ObjectHandle, row: RowId, record: &[u8]) -> Result<[u8; 32]> {
+    let mut copy = [0; 232];
+    require(record.len() == copy.len())?;
+    copy.copy_from_slice(record);
+    copy[168..192].fill(0);
+    projection(table, row, Some(&copy))
 }
 /// DELETE's and UPDATE's U and committed row (dev3-row-delete.md
 /// #delete-states, #delete-undo; dev3-row-update.md#update-states). U's Live
@@ -458,13 +494,20 @@ fn validate_rows(
             RecordExpectation { namespace, row },
             RowSchemaInput::Catalog(schema),
         )?;
-        if decoded.payload() == RowPayload::Deleted {
-            let version = decoded.version();
-            if !matches!(version.stamp, VersionStamp::Transaction(_)) || version.undo.is_none() {
-                return Err(Error::Corrupt);
+        // An overflow row is an INSERT row with its head
+        // (dev3-row-overflow.md#inline-gates).
+        match decoded.payload() {
+            RowPayload::Deleted => {
+                let version = decoded.version();
+                if !matches!(version.stamp, VersionStamp::Transaction(_)) || version.undo.is_none()
+                {
+                    return Err(Error::Corrupt);
+                }
             }
-        } else {
-            inline(decoded)?;
+            RowPayload::Overflow(_) => {}
+            RowPayload::Inline(_) => {
+                inline(decoded)?;
+            }
         }
         used += bytes.len() + 16;
     }

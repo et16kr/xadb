@@ -8,6 +8,8 @@ use super::{
     cells::{put, put16, put32},
 };
 use crate::storage::{
+    allocation_page::ALLOCATION_ENTRY_BYTES,
+    overflow::OVERFLOW_HEADER_BYTES,
     page::{self, DIGEST_OFFSET, PAGE_BYTES, PageKind},
     wal_frame::{self, FrameExpectation, RedoKind, RedoTarget, WalFrameHeader},
 };
@@ -71,6 +73,39 @@ impl Cursor<'_> {
         self.at = end;
         Ok(())
     }
+    /// The new chunk's INIT record (dev3-row-overflow.md#opcodes); compared
+    /// decoded like a Patch.
+    fn init(&mut self, header: WalFrameHeader, target: RedoTarget, image: &[u8]) -> Result<()> {
+        let length = 64 + image.len();
+        let end = self.at.checked_add(length).ok_or(Error::Corrupt)?;
+        match &mut self.sink {
+            Sink::Write(output) => {
+                let written = wal_frame::encode_init_record(
+                    header.stream.database,
+                    header.lsn,
+                    target,
+                    image,
+                    output.get_mut(self.at..end).ok_or(Error::Corrupt)?,
+                )?
+                .len();
+                if written != length {
+                    return Err(Error::Corrupt);
+                }
+            }
+            Sink::Compare(bytes) => {
+                let raw = bytes.get(self.at..end).ok_or(Error::Corrupt)?;
+                if u32::from_le_bytes(raw[4..8].try_into().expect("length")) as usize != length {
+                    return Err(Error::Corrupt);
+                }
+                let redo = wal_frame::decode_redo_record(header, raw)?;
+                if redo.kind != RedoKind::Init || redo.target != target || redo.data != image {
+                    return Err(Error::Corrupt);
+                }
+            }
+        }
+        self.at = end;
+        Ok(())
+    }
     /// One Patch record; compared decoded, like the Catalog verifier.
     fn patch(
         &mut self,
@@ -121,8 +156,11 @@ fn native_kind(kind: PageKind) -> Result<u8> {
         PageKind::RowLeaf => 1,
         PageKind::Undo => 3,
         PageKind::TransactionStatus => 5,
+        PageKind::Allocation => 6,
         PageKind::RetentionRoot => 8,
         PageKind::RetentionJobs => 9,
+        PageKind::TreeAnchor => 10,
+        PageKind::Overflow => 12,
         _ => return Err(Error::Unsupported),
     })
 }
@@ -249,6 +287,17 @@ fn body(
             let range = view
                 .cell_range(usize::from(slot))
                 .ok_or(Error::IdentityMismatch)?;
+            // ChunkWrite's natives (dev3-row-overflow.md#opcodes): the one
+            // allocator entry it changes and the new chunk's cell header,
+            // each at slot 0 and its own page offset.
+            let range = match page.kind {
+                PageKind::Allocation => {
+                    let at = allocator_entry(prepared, page.before)?;
+                    at..at + ALLOCATION_ENTRY_BYTES
+                }
+                PageKind::Overflow => range.start..range.start + OVERFLOW_HEADER_BYTES,
+                _ => range,
+            };
             let cell = &bytes[range.clone()];
             header[1] |= bit;
             put16(&mut header, slot_at, slot);
@@ -281,24 +330,48 @@ fn body(
     };
     for role in order.into_iter().flatten() {
         let page = prepared.pages[role].ok_or(Error::Corrupt)?;
-        cursor.patch(
-            prepared.header,
-            RedoTarget {
-                page: page.identity.page,
-                owner: page.identity.owner,
-                owner_generation: page.identity.owner_generation,
-                kind: page.kind,
-                level: 0,
-            },
-            super::cells::page_lsn(page.before),
-            offset,
-            &after[role][span.clone()],
-        )?;
+        let target = RedoTarget {
+            page: page.identity.page,
+            owner: page.identity.owner,
+            owner_generation: page.identity.owner_generation,
+            kind: page.kind,
+            level: 0,
+        };
+        let prior = super::cells::page_lsn(page.before);
+        // ChunkWrite's allocator entry patch and its new chunk's INIT; every
+        // other page is the whole-body Patch (dev3-row-overflow.md#opcodes).
+        match page.kind {
+            PageKind::Allocation => {
+                let at = allocator_entry(prepared, page.before)?;
+                cursor.patch(
+                    prepared.header,
+                    target,
+                    prior,
+                    at as u16,
+                    &after[role][at..at + ALLOCATION_ENTRY_BYTES],
+                )?;
+            }
+            PageKind::Overflow => cursor.init(prepared.header, target, &after[role])?,
+            _ => cursor.patch(
+                prepared.header,
+                target,
+                prior,
+                offset,
+                &after[role][span.clone()],
+            )?,
+        }
     }
     if cursor.at - redo != shape.redo_bytes || cursor.at + 32 != prepared.frame_bytes {
         return Err(Error::Corrupt);
     }
     Ok(())
+}
+
+/// The page offset of the allocator entry ChunkWrite changes: the entry of
+/// its new chunk page (UNDO role).
+fn allocator_entry(prepared: &Prepared<'_, '_>, before: &[u8; PAGE_BYTES]) -> Result<usize> {
+    let chunk = prepared.pages[super::UNDO].ok_or(Error::Corrupt)?;
+    super::overflow::entry_offset(before, chunk.identity.database, chunk.identity.page.page_no)
 }
 
 /// Write the complete frame into `output` (exactly `frame_bytes`), finish the

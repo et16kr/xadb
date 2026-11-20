@@ -235,7 +235,12 @@ fn remaining(
     let mut rows = [RemainingBudget::default(); 5];
     rows[0] = debt(observed.clr_steps, observed.clr_wal);
     if let Some(job) = observed.reserved {
-        rows[1] = debt(1, job.forward_wal().ok_or(Error::IdentityMismatch)?);
+        // A Reserved overflow root's Forward also carries its unwritten
+        // chunks, one ChunkWrite step each (dev3-row-overflow.md#ledger).
+        rows[1] = debt(
+            job.forward_steps().ok_or(Error::IdentityMismatch)?,
+            job.forward_wal().ok_or(Error::IdentityMismatch)?,
+        );
         rows[1].undo_slots = 1;
     }
     if !is_terminal(status) {
@@ -313,8 +318,11 @@ pub(crate) fn validate_transaction(
     {
         return Err(Error::OrderMismatch);
     }
+    // The ATT's last group is the Reserve, or a Reserved overflow root's
+    // last ChunkWrite (`last_step`, dev3-row-overflow.md#ledger); the
+    // inventory changed only at the Reserve.
     if let Some(job) = observed.reserved
-        && (descriptor.chain.apply != job.lease_lsn()
+        && (descriptor.chain.apply != job.last_step()
             || descriptor.inventory.change_lsn != job.lease_lsn()
             || descriptor.last_mutation_sequence != job.mutation())
     {
