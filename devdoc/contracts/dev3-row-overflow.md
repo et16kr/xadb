@@ -380,7 +380,7 @@ Base4는 형식을 바꾼다. 1판의 "record·certificate 형식은 바꾸지 �
 | O3 | 제품 경로: A 실행기·C 진입·B 읽기·live 정리·복구(OVF-J·R) | F4 caller 상한 전부, B read census, A drain | 큰 행 INSERT가 처음 성공 |
 | O4 | native fault cut(OVF-N) | — | **08-3 적립(2일)은 O4의 병합** |
 
-O2는 크기 때문에 네 PR로 나눈다(각각 독립 D2): **O2a** Reserve(overflow)·ChunkWrite·Forward(overflow)·CLR·Prune의 C 전이, ledger row1, 국소 관측기(OVF-C01·C02, [§15](#o2a-record)), **O2b** OverflowCancel·ChainRetire와 XTR1 after(OVF-C03, [§16](#o2b-record)), **O2c** replay(opcode 14·15·25, overflow ReserveAdopted, INIT claim, OVF-C04), **O2d** Base4 role 7 closure·incarnation 상계·split/unlink closure·kind별 retire LSN과 §14의 남은 census 항(OVF-C05·C06).
+O2는 크기 때문에 네 PR로 나눈다(각각 독립 D2): **O2a** Reserve(overflow)·ChunkWrite·Forward(overflow)·CLR·Prune의 C 전이, ledger row1, 국소 관측기(OVF-C01·C02, [§15](#o2a-record)), **O2b** OverflowCancel·ChainRetire와 XTR1 after(OVF-C03, [§16](#o2b-record)), **O2c** replay(opcode 14·15·25, overflow ReserveAdopted, INIT claim, OVF-C04, [§17](#o2c-record)), **O2d** Base4 role 7 closure·incarnation 상계·split/unlink closure·kind별 retire LSN과 §14의 남은 census 항(OVF-C05·C06).
 
 각 단계는 PR 하나와 독립 D2이며, 필수 지적을 해소한 뒤 연다. census가 상한을 넘으면 상한을 올리지 않고 이 계약을 다시 검토한다(§7.1). 08-3은 08의 마지막 항목이 아니므로 항목 조건으로 적립한다. 08-1이 U4의 병합으로 적립된 것과 같다.
 
@@ -482,3 +482,14 @@ O2b 이후에 남긴 것: OverflowCancel·ChainRetire(OVF-C03), replay(OVF-C04),
 - **롤백 뒤 반환.** terminal Ready 뒤 CLR의 Job이 가진 전체 chain을 반환한다. 첫 chunk의 LSN은 Forward의 `adoption_lsn`보다 작아야 한다. revision 2 사례에서 기존 tree 항목을 보존하며 세 chunk를 추가했고 Root의 consumed_wal이 실제 프레임 크기 54,896 B만큼 증가했다. Job은 release cursor 0에서 네 걸음의 예산을 갖는다. 첫 ReleaseRole은 U의 pageLSN이 CLR의 `release_start`와 같을 때 진행한다. 이후 cursor에서는 기존 last_step 규칙을 적용한다.
 - **자원.** 반환 준비의 source 모델은 7,050 B, anchor 쓰기는 2,731 B다(SHA는 상위에서 합산). N1 전체 상한 30,359 B와 S2W C charge 44,304 B 범위에 든다. Job budget·terminal census·ledger가 반환 여부만 물을 때는 검증된 chain total의 유무를 사용한다. 이 경로에서 §14가 지적한 두 PageRef 디코딩과 ReturnChain 지역값을 제거했다.
 - **검증 범위.** OVF-C03은 잘못된 front·tail LSN, 미할당 tail, 빈 pending, terminal 전 반환, 이중 반환, ChainRetire의 LSN으로 바뀐 U를 거절하는지 검사했다. 성공한 그룹은 whole-group 관측기, Job 관측기, 시험 harness의 page redo 적용으로 대조했다. 제품 복구의 opcode dispatch와 INIT claim 검증은 다음 단계 O2c(OVF-C04)다.
+
+<a id="o2c-record"></a>
+## 17. O2c 복구 구현 기록
+
+2026-11-20. `recovery::apply_frame`의 Row 경로가 overflow Reserve, ChunkWrite(14), Forward, OverflowCancel(15), ChainRetire(25)를 재계산한다. Reserve는 후보 Job에서 total과 root-free projection을 채택하고, 244 B cell과 빈 pending을 재생성한다. ChunkWrite는 새 payload를 WAL에서 얻는다. 기존 체인을 읽는 그룹은 Job의 front에서 시작해 복구 전 arena를 따라가며 최대 9개의 페이지 참조를 빌린다.
+
+- ChunkWrite는 현재 allocator의 Free entry와 다음 generation, 후보 Allocated entry, Job front와 INIT page, chunk의 index·next·total·LSN을 대조한다. 전체 그룹의 재계산이 allocator 선택과 모든 WAL 바이트를 확인한다. 대상 arena와 claim 칸이 모두 비어 있으면 §8.1 형식의 role 7 claim 352 B를 만들고, 성공한 그룹의 페이지·제어 상태와 함께 반영한다.
+- OVF-C04는 24,018 B 행의 부분 취소, 두 chunk를 쓴 뒤의 Commit·Prune, 두 행을 롤백한 뒤의 AbortEnd·ChainRetire를 제품 복구 진입점에서 재생했다. 각 프레임의 전체 arena를 독립 redo 결과와 대조하고 Job·제어 bank·claim·커서와 현재 상태 검사를 확인했다. 반환한 chunk와 INIT claim은 보존된다. INIT와 다른 Job front를 담고 digest를 다시 계산한 WAL, 이미 사용 중인 arena 또는 claim 칸, 손상된 기존 chunk를 거절할 때 복구 상태와 커서는 그대로였다.
+- 국소 leaf 관측기는 Forward의 head를 Job pending의 front·written·total과 대조하고, CLR이 반환할 anchor·root·total을 삭제한 행과 대조한다. 세 chunk 사례에서 각 필드를 하나씩 바꿔 거절을 확인했다. §15의 payload 종류 사례에서는 Retained Job의 bank와 WAL native before를 함께 inline으로 바꿨다. 같은 후보를 Undo 관측기가 받아들인 뒤 leaf 관측기가 거절했다.
+- 두 writer의 Row replay source는 25,915 B다. 이전에 Row보다 컸던 population 25,743 B를 172 B 넘으며, 전체 프레임 상한을 정하는 structural 26,452 B까지 537 B 남는다. N1 전이 상한은 30,375 B, S2W C charge는 44,304 B다. 초기 census 실행에서 이전의 Row ≤ population 관계를 검사한 두 단언이 실패했다. 새 검사는 Row의 정확한 값과 기존 전체 상한을 각각 고정한다.
+- 이 기록은 WAL 재생과 현재 상태 검사에 해당한다. role 7 claim을 포함하는 Base4에서 시작하는 복구, split·unlink 뒤 소유권 검산은 O2d(OVF-C05·C06), 실제 INSERT 실행기의 대형 행 생산은 O3에서 다룬다.

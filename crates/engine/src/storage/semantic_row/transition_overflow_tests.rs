@@ -211,7 +211,10 @@ fn step(world: &mut World, name: &str, change: Change<'_>, pages: Pages) -> (Obs
 
 /// A's group for `change` built through C's own prepare, run and encode
 /// with A's row cell `inserted` (test-only: A's overflow producer is O3's).
-fn a_group<'a>(inputs: &Inputs<'a>, inserted: Option<&'a [u8]>) -> Result<Vec<u8>, Error> {
+pub(crate) fn a_group<'a>(
+    inputs: &Inputs<'a>,
+    inserted: Option<&'a [u8]>,
+) -> Result<Vec<u8>, Error> {
     let mut backing = vec![0; ROW_REPLAY_SCRATCH_BYTES];
     let backing: &mut [u8; ROW_REPLAY_SCRATCH_BYTES] = (&mut backing[..]).try_into().unwrap();
     let mut prepared = prepare::new_prepared(inputs, backing);
@@ -1748,4 +1751,158 @@ fn ovf_c03_return_source_bounds() {
     println!("OVF_C03_SOURCE prepare={prepare} write={write}");
     assert!(prepare <= source::ledger());
     assert!(write <= crate::storage::retention_obligation::row::source_bytes());
+}
+
+/// Reseal the original Job native alongside the selected bank cell. This
+/// reaches the leaf observer past Undo's byte-for-byte binding of the before.
+fn paired_job_before(frame: &[u8], lsn: u64, before: &[u8; JOB_BYTES]) -> Vec<u8> {
+    let layout = decode_layout(frame, expectation(lsn), profile()).unwrap();
+    let source = layout
+        .native_records()
+        .find(|n| n.kind() == 9)
+        .unwrap()
+        .before()
+        .unwrap();
+    let start = source.as_ptr() as usize - frame.as_ptr() as usize;
+    let header = start - 128;
+    let mut frame = frame.to_vec();
+    frame[start..start + JOB_BYTES].copy_from_slice(before);
+    frame[header + 24..header + 56].copy_from_slice(&content_digest(before));
+    let end = frame.len() - 32;
+    let digest = content_digest(&frame[..end]);
+    frame[end..].copy_from_slice(&digest);
+    frame
+}
+
+#[test]
+fn ovf_c04_leaf_binds_the_pending_and_returned_head() {
+    let value = value();
+    let (mut world, plan) = written(&value);
+    let front = job(&world).pending().unwrap().front.unwrap();
+    let head = OverflowHead::new(front, value.len(), plan.digest).unwrap();
+    let row = row_cell(&world, &head_record(&world, head));
+    let (allocator, chunks) = chain_pages(&world);
+    let refs: Vec<_> = chunks.iter().map(|page| &**page).collect();
+    let images = ChainImages {
+        allocator: &allocator,
+        pages: &refs,
+    };
+    let forward = Change::ForwardOverflow {
+        ordinal: ORDINAL,
+        statement: boundary(4, None),
+        chain: &images,
+    };
+    let inputs = world.inputs(forward, row_pages());
+    let frame = a_group(&inputs, Some(&row)).unwrap();
+    let mut out = loans(0);
+    observe(&inputs, &frame, &mut out).unwrap();
+    let after = RowAfters {
+        undo: &out[UNDO],
+        status: &out[STATUS],
+        leaf: &out[LEAF],
+    };
+    world
+        .observe_leaf(&frame, forward, row_pages(), after)
+        .unwrap()
+        .unwrap();
+    let original = world.bank[ORDINAL];
+    for variant in ["front", "written", "total"] {
+        let before = &mut world.bank[ORDINAL];
+        match variant {
+            "front" => page_ref(18, 2).encode(&mut before[328..352]).unwrap(),
+            "written" => before[356..358].copy_from_slice(&2u16.to_le_bytes()),
+            _ => before[352..356].copy_from_slice(&(value.len() as u32 - 1).to_le_bytes()),
+        }
+        let mutant = paired_job_before(&frame, world.lsn, before);
+        assert_eq!(
+            world
+                .observe_leaf(&mutant, forward, row_pages(), after)
+                .unwrap(),
+            Err(Error::IdentityMismatch),
+            "{variant}"
+        );
+        world.bank[ORDINAL] = original;
+    }
+    world.observe("OVF-forward", &frame, forward, row_pages());
+    step(
+        &mut world,
+        "OVF-rollback",
+        Change::RollbackStart {
+            terminal: 14,
+            statement: None,
+        },
+        Pages {
+            status: Some(9),
+            undo: Some(14),
+            ..pages()
+        },
+    );
+    let clr = Change::Clr {
+        ordinal: ORDINAL,
+        statement: None,
+    };
+    let inputs = world.inputs(clr, row_pages());
+    let frame = a_group(&inputs, None).unwrap();
+    observe(&inputs, &frame, &mut out).unwrap();
+    let after = RowAfters {
+        undo: &out[UNDO],
+        status: &out[STATUS],
+        leaf: &out[LEAF],
+    };
+    world
+        .observe_leaf(&frame, clr, row_pages(), after)
+        .unwrap()
+        .unwrap();
+    for variant in ["anchor", "front", "total"] {
+        let (mutant, _) = rebind(&frame, world.lsn, 9, &out[JOB], |after| match variant {
+            "anchor" => page_ref(18, 2).encode(&mut after[200..224]).unwrap(),
+            "front" => page_ref(18, 2).encode(&mut after[224..248]).unwrap(),
+            _ => after[288..292].copy_from_slice(&(value.len() as u32 - 1).to_le_bytes()),
+        });
+        assert_eq!(
+            world
+                .observe_leaf(&mutant, clr, row_pages(), after)
+                .unwrap(),
+            Err(Error::IdentityMismatch),
+            "{variant}"
+        );
+    }
+    // §15's paired payload-kind mutant: a decodable inline Retained Job in
+    // both sources, with the original overflow row still present before CLR.
+    world.bank[ORDINAL][285] = 0;
+    let mutant = paired_job_before(&frame, world.lsn, &world.bank[ORDINAL]);
+    let layout = decode_layout(&mutant, expectation(world.lsn), profile()).unwrap();
+    let selected = job(&world);
+    assert!(!selected.overflow());
+    let location = selected.status().unwrap();
+    undo::observe(
+        layout,
+        undo::UndoContext {
+            profile: profile(),
+            actor: selected.source().unwrap(),
+            location,
+        },
+        JobCells::original(&world.bank),
+        undo::UndoSource::Existing { ordinal: ORDINAL },
+        undo::UndoImages {
+            before: World::find(&world.undo, 14),
+            after: after.undo,
+            predecessor: row_pages().previous.map(|n| World::find(&world.undo, n)),
+        },
+        Some(undo::StatusProof {
+            statement: None,
+            commit: None,
+            images: status::StatusImages {
+                before: World::find(&world.status, location.page().page_no),
+                after: after.status,
+            },
+        }),
+    )
+    .expect("paired inline Job reaches the leaf payload check");
+    assert_eq!(
+        world
+            .observe_leaf(&mutant, clr, row_pages(), after)
+            .unwrap(),
+        Err(Error::IdentityMismatch)
+    );
 }

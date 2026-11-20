@@ -608,23 +608,14 @@ fn census<W: WriterNamespace>(label: &str) {
         recovered.analysis,
         recovered.peak,
     );
-    // The Row arm is exclusive with the Catalog/System arms of one frame: it
-    // fits under the existing frame-phase maximum. The scope4 arm
-    // (dev3-tree-smo.md#current-leaf-consumers) is exclusive with all of
-    // them and is the one arm above it: the history frame is exactly the
-    // larger of the two, 26,452 B in both writers (26,420 B before the split
-    // audit counted the anchor's retired list, dev3-tree-smo.md
-    // #empty-leaf-unlink U1). The scope4 arm is the larger of its split and
-    // unlink frames; the unlink frame (U2, #unlink-u2) stays below the split
-    // frame in both phases. The other consumers keep their values: the
-    // history peak is still set outside the frame.
-    assert!(
-        live.history_row <= phases,
-        "{label}: Row arm above frame max"
-    );
+    // O2c holds nine chunk references and the selected plan across the Row
+    // observer. Its branch is larger than population but still fits beneath
+    // the structural arm. Pin both sizes independently of the composed max.
+    assert_eq!(live.history_row, 25_915, "{label}: Row replay source");
+    assert!(live.history_row <= live.history_structural);
     assert_eq!(
         live.recovery_frame,
-        phases.max(live.history_structural),
+        phases.max(live.history_row).max(live.history_structural),
         "{label}: frame changed"
     );
     assert_eq!(live.recovery_frame, 26_452, "{label}: frame value");
