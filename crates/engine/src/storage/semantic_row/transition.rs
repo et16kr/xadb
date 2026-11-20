@@ -211,18 +211,12 @@ pub(crate) enum Change<'a> {
     )]
     ReserveOverflow(&'a OverflowReservePlan),
     /// C produces ChunkWrite, one chunk of a Reserved overflow root.
-    #[cfg_attr(
-        not(test),
-        allow(
-            dead_code,
-            reason = "A's overflow INSERT executor (dev3-row-overflow.md O3) constructs it"
-        )
-    )]
     ChunkWrite(&'a ChunkPlan<'a>),
     /// Replay-only RowReserve (contract row-reserve-replay): the three
     /// selectors the original owner chose, bound and checked by the Row
     /// replay arm. From the candidate's single kind-9 after, an INSERT root
-    /// adopts C and the projection, a DELETE root its effect byte and RowId
+    /// adopts C and the projection (overflow uses the total and root-free
+    /// projection with fixed C), a DELETE root its effect byte and RowId
     /// (dev3-row-delete.md#api), an UPDATE root its effect byte, RowId, C'
     /// and projection (dev3-row-update.md#api; its C is the leaf row's);
     /// every other byte is recomputed and compared. Reached only through
@@ -240,31 +234,16 @@ pub(crate) enum Change<'a> {
     },
     /// Observe only; A produces the Forward of an overflow root, which also
     /// checks the pending chain (dev3-row-overflow.md#forward-check).
-    #[cfg_attr(
-        not(test),
-        allow(
-            dead_code,
-            reason = "A's overflow INSERT executor (dev3-row-overflow.md O3) constructs it"
-        )
-    )]
     ForwardOverflow {
         ordinal: usize,
         statement: StatementBoundary,
         chain: &'a ChainImages<'a>,
     },
-    #[cfg_attr(
-        not(test),
-        allow(dead_code, reason = "constructed by the O3 overflow executor")
-    )]
     OverflowCancel {
         ordinal: usize,
         chain: &'a ChainImages<'a>,
         anchor: &'a [u8; PAGE_BYTES],
     },
-    #[cfg_attr(
-        not(test),
-        allow(dead_code, reason = "constructed by the O3 cleanup drain")
-    )]
     ChainRetire {
         ordinal: usize,
         chain: &'a ChainImages<'a>,

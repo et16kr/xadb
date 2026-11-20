@@ -1,0 +1,288 @@
+DEV3 08-3 O2c, implementation commit d7adc599, baseline 5216c998.
+10 distinct passing tests across incremental builds. Earlier executions and the superseded census failures are retained below.
+The initial compile and first replay run were intermediate sources. After the two-case replay run, only census, tests and comments changed; forward/compensate was selected again after sharing its setup with commit/prune.
+The paired-leaf run preceded that test-only fixture refactor. The eight-case batch preceded the census assertion update. Final changes to production source after that batch were comments and dead-code lint annotations.
+The case and final source blob inventory is in module-gate/records/20261120-dev3-08-3-o2c.json.
+Commands used /tmp/o2c-cargo with the isolated Cargo target and offline dependencies. Focused tests used RUST_MIN_STACK=33554432.
+Final lint: cargo fmt --all --check; cargo clippy --offline -p xadb-engine --lib --tests -- -D warnings.
+
+[Initial compile, no product tests] o2c-check.log sha256=24be5cba74fc486d104efbcd3970083bfc11a14590ccf7ab2c0c4d791932ca56
+   Compiling version_check v0.9.5
+    Checking typenum v1.20.1
+    Checking cfg-if v1.0.5
+    Checking cpufeatures v0.2.17
+   Compiling generic-array v0.14.7
+    Checking crypto-common v0.1.7
+    Checking block-buffer v0.10.4
+    Checking digest v0.10.7
+    Checking sha2 v0.10.9
+    Checking xadb-foundation v0.1.0 (/workspace/xadb/crates/foundation)
+    Checking xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 16.49s
+
+[Initial two replay cases before adding the rebound WAL candidate and validate_current assertions] o2c-tests.log sha256=3f7e53b9102db39e469c69a4612cf1b4b419f9e409d2075e5a4a6d0cfcb52ee6
+   Compiling typenum v1.20.1
+   Compiling autocfg v1.5.1
+   Compiling cfg-if v1.0.5
+   Compiling cfg_aliases v0.2.2
+   Compiling libc v0.2.191
+   Compiling nix v0.30.1
+   Compiling cpufeatures v0.2.17
+   Compiling memoffset v0.9.1
+   Compiling bitflags v2.13.2
+   Compiling generic-array v0.14.7
+   Compiling block-buffer v0.10.4
+   Compiling crypto-common v0.1.7
+   Compiling digest v0.10.7
+   Compiling sha2 v0.10.9
+   Compiling xadb-foundation v0.1.0 (/workspace/xadb/crates/foundation)
+   Compiling xadb-platform v0.1.0 (/workspace/xadb/crates/platform)
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 41s
+     Running unittests src/lib.rs (/tmp/xadb-o2c-target/debug/deps/engine-e4e141083d864921)
+
+running 2 tests
+S1B_REPLAYED	H-502	RollbackStart	pages=[9]
+S1B_REPLAYED	H-502	RollbackStart	pages=[9]
+S1B_REPLAYED	H-503	Clr	pages=[1, 3, 9, 11, 13]
+S1B_REPLAYED	H-503	Clr	pages=[1, 3, 9, 11, 13]
+S1B_REPLAYED	H-504	StatementFinish	pages=[9]
+S1B_REPLAYED	H-504	StatementFinish	pages=[9]
+S1B_REFUSED	occupied INIT slot	Some(Invariant)
+S1B_REFUSED	occupied INIT slot	Some(Invariant)
+S1B_REFUSED	occupied INIT claim	Some(Invariant)
+S1B_REFUSED	occupied INIT claim	Some(Invariant)
+S1B_REFUSED	damaged pending image	Some(Invariant)
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::overflow::ovf_c04_replay_partial_cancel ... ok
+S1B_REFUSED	damaged Forward suffix	Some(Invariant)
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::overflow::ovf_c04_replay_forward_compensate_retire ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 2482 filtered out; finished in 0.14s
+
+[Two revised replay cases with atomic rejection and closure] o2c-tests2.log sha256=e1e3d3f075190530109edfb9661fddb1d10bac42ee2b712d405b31c06256df21
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 37.87s
+     Running unittests src/lib.rs (/tmp/xadb-o2c-target/debug/deps/engine-e4e141083d864921)
+
+running 2 tests
+S1B_REPLAYED	H-502	RollbackStart	pages=[9]
+S1B_REPLAYED	H-502	RollbackStart	pages=[9]
+S1B_REPLAYED	H-503	Clr	pages=[1, 3, 9, 11, 13]
+S1B_REPLAYED	H-503	Clr	pages=[1, 3, 9, 11, 13]
+S1B_REPLAYED	H-504	StatementFinish	pages=[9]
+S1B_REPLAYED	H-504	StatementFinish	pages=[9]
+S1B_REFUSED	rebound Job front differs from INIT	Some(Invariant)
+S1B_REFUSED	rebound Job front differs from INIT	Some(Invariant)
+S1B_REFUSED	occupied INIT slot	Some(Invariant)
+S1B_REFUSED	occupied INIT slot	Some(Invariant)
+S1B_REFUSED	occupied INIT claim	Some(Invariant)
+S1B_REFUSED	occupied INIT claim	Some(Invariant)
+S1B_REFUSED	damaged pending image	Some(Invariant)
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::overflow::ovf_c04_replay_partial_cancel ... ok
+S1B_REFUSED	damaged Forward suffix	Some(Invariant)
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::overflow::ovf_c04_replay_forward_compensate_retire ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 2482 filtered out; finished in 0.17s
+
+[Paired leaf payload, pending front and CLR returned chain] o2c-leaf.log sha256=3f84e1d4122717a4ce06172a9fa8be29b94e9c8aaa04d9e1e22288a87e9f9100
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 42.76s
+     Running unittests src/lib.rs (/tmp/xadb-o2c-target/debug/deps/engine-e4e141083d864921)
+
+running 1 test
+N1_CROSS	H-502	status=true	undo=false	leaf=false	jobs=false
+N1_GROUP	H-502	RollbackStart	bytes=3040	order=[2]
+N1_CROSS	H-503	status=true	undo=true	leaf=true	jobs=true
+N1_OBSERVED	H-503	Clr	bytes=91426	order=[0, 1, 2, 3, 4]
+N1_CROSS	H-504	status=true	undo=false	leaf=false	jobs=false
+N1_GROUP	H-504	StatementFinish	bytes=3040	order=[2]
+N1_CROSS	H-505	status=false	undo=true	leaf=false	jobs=true
+N1_GROUP	H-505	Reserve	bytes=57336	order=[0, 1, 3]
+N1_CROSS	H-506	status=false	undo=false	leaf=false	jobs=true
+N1_GROUP	H-506	Cancel	bytes=40000	order=[0, 1]
+N1_CROSS	OVF-reserve	status=false	undo=true	leaf=false	jobs=true
+OVF_GROUP	OVF-reserve	Reserve	bytes=57336	order=[0, 1, 3]
+N1_CROSS	OVF-chunk2	status=true	undo=true	leaf=false	jobs=true
+OVF_GROUP	OVF-chunk2	ChunkWrite	bytes=56976	order=[2, 0, 1, 3]
+N1_CROSS	OVF-chunk1	status=true	undo=true	leaf=false	jobs=true
+OVF_GROUP	OVF-chunk1	ChunkWrite	bytes=56976	order=[2, 0, 1, 3]
+N1_CROSS	OVF-chunk0	status=true	undo=true	leaf=false	jobs=true
+OVF_GROUP	OVF-chunk0	ChunkWrite	bytes=56976	order=[2, 0, 1, 3]
+N1_CROSS	OVF-forward	status=true	undo=true	leaf=true	jobs=true
+N1_OBSERVED	OVF-forward	Forward	bytes=91676	order=[0, 1, 2, 4, 3]
+N1_CROSS	OVF-rollback	status=true	undo=false	leaf=false	jobs=false
+OVF_GROUP	OVF-rollback	RollbackStart	bytes=3040	order=[2]
+test storage::semantic_row::transition::tests::overflow::ovf_c04_leaf_binds_the_pending_and_returned_head ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2484 filtered out; finished in 0.18s
+
+[Eight selected cases: six PASS, two initial source ordering assertions FAIL] o2c-selected.log sha256=ab89b38993f5bd5a147ede9c4bdd6368e79f9275380f7afb0df9467e5b25119e
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 36.98s
+     Running unittests src/lib.rs (/tmp/xadb-o2c-target/debug/deps/engine-e4e141083d864921)
+
+running 8 tests
+test storage::semantic_row::transition::tests::n1_transition_source_bounds_cover_measured_frames ... N1_SOURCE_CODEC	row_record_decode	measured=3002	counted=3168
+N1_SOURCE_CODEC	row_record_encode	measured=2122	counted=3168
+N1_SOURCE_CODEC	row_record_canonical	measured=990	counted=3168
+N1_SOURCE_CODEC	tree_page_decode	measured=1554	counted=1869
+N1_SOURCE_CODEC	tree_page_lower_bound	measured=826	counted=1869
+N1_SOURCE_CODEC	tree_page_leaf_cell	measured=227	counted=1869
+N1_SOURCE_CODEC	tree_page_prepare_leaf_edit	measured=1570	counted=2318
+N1_SOURCE_CODEC	tree_page_plan_encode	measured=1211	counted=2318
+N1_SOURCE_CODEC	undo_record_material	measured=8889	counted=10217
+N1_SOURCE_CODEC	undo_record_outline	measured=7729	counted=10217
+N1_SOURCE_CODEC	undo_record_release_step	measured=6693	counted=10217
+N1_SOURCE_CODEC	delete_undo_live	measured=7476	counted=9473
+N1_SOURCE_CODEC	delete_before	measured=9309	counted=9473
+N1_SOURCE_CODEC	delete_release	measured=7356	counted=9473
+N1_SOURCE_CODEC	frame_callee	measured=1628	counted=4752
+N1_SOURCE_CHAIN	prepare+row_job_census	23708
+N1_SOURCE_CHAIN	prepare+row_root_decode	23643
+N1_SOURCE_CHAIN	prepare+descriptor_codec	26611
+N1_SOURCE_CHAIN	prepare+tx_before	28693
+N1_SOURCE_CHAIN	prepare+descriptor_after	29347
+N1_SOURCE_CHAIN	prepare+aging_decode	29475
+N1_SOURCE_CHAIN	prepare+row_codec_bound	25104
+N1_SOURCE_CHAIN	prepare+row_record_decode	21566
+N1_SOURCE_CHAIN	prepare+row_record_encode	20686
+N1_SOURCE_CHAIN	prepare+tree_page_decode	20118
+N1_SOURCE_CHAIN	prepare+leaf_edit	20134
+N1_SOURCE_CHAIN	prepare+undo_material	27453
+N1_SOURCE_CHAIN	prepare+undo_outline	26293
+N1_SOURCE_CHAIN	prepare+undo_release_step	25257
+N1_SOURCE_CHAIN	prepare+delete_undo_live	26040
+N1_SOURCE_CHAIN	prepare+delete_before	27873
+N1_SOURCE_CHAIN	prepare+delete_release	25920
+N1_SOURCE_CHAIN	frame+callee	18144
+N1_SOURCE_CHAIN	write+aging_next	26835
+N1_SOURCE_CHAIN	write+leaf_encode	17494
+N1_SOURCE bound=30375 measured=29475 outer=9404 entry=3296 split=1456 prepare=17675 locals=4328 callee=11811 frame=8568 write=15391 slack=656 cap=65536 recovered_peak=65512
+N1_SOURCE_TERMS ledger=11811 tx_before=10129 descriptor_after=10783 status=5901 material=10217 leaf=10300 delete=11485 undo_row_codec=6023 job_edit=1020 graph=976 row_codec=3168 tree_codec=1869 leaf_edit=2318 frame_callee=4752
+ok
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::overflow::ovf_c04_replay_commit_prune ... S1B_REPLAYED	H-502	RollbackStart	pages=[9]
+S1B_REPLAYED	H-503	Clr	pages=[1, 3, 9, 11, 13]
+S1B_REPLAYED	H-504	StatementFinish	pages=[9]
+S1B_REFUSED	rebound Job front differs from INIT	Some(Invariant)
+S1B_REFUSED	occupied INIT slot	Some(Invariant)
+S1B_REFUSED	occupied INIT claim	Some(Invariant)
+S1B_REFUSED	damaged Forward suffix	Some(Invariant)
+ok
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::overflow::ovf_c04_replay_forward_compensate_retire ... S1B_REPLAYED	H-502	RollbackStart	pages=[9]
+S1B_REPLAYED	H-503	Clr	pages=[1, 3, 9, 11, 13]
+S1B_REPLAYED	H-504	StatementFinish	pages=[9]
+S1B_REFUSED	rebound Job front differs from INIT	Some(Invariant)
+S1B_REFUSED	occupied INIT slot	Some(Invariant)
+S1B_REFUSED	occupied INIT claim	Some(Invariant)
+S1B_REFUSED	damaged Forward suffix	Some(Invariant)
+ok
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1g_row_reserve_replays_n1_literals ... S1G_CLOSURE_TERMS	row=14947	catalog=15883
+S1B_REPLAYED	H-502	RollbackStart	pages=[9]
+S1G_CLOSURE	H-502	ok
+S1B_REPLAYED	H-503	Clr	pages=[1, 3, 9, 11, 13]
+S1G_CLOSURE	H-503	ok
+S1B_REPLAYED	H-504	StatementFinish	pages=[9]
+S1G_CLOSURE	H-504	ok
+S1B_REPLAYED	H-505	Reserve	pages=[1, 3, 14]
+S1G_CLOSURE	H-505	ok
+S1B_REPLAYED	H-506	Cancel	pages=[1, 3]
+S1G_CLOSURE	H-506	ok
+S1B_REPLAYED	H-507	Reserve	pages=[1, 3, 14]
+S1G_CLOSURE	H-507	ok
+S1B_REPLAYED	H-508	Forward	pages=[1, 3, 9, 13, 14]
+S1G_CLOSURE	H-508	ok
+S1B_REPLAYED	H-509	Commit	pages=[1, 2, 9]
+S1G_CLOSURE	H-509	ok
+S1B_REPLAYED	H-510	Prune	pages=[1, 3, 9, 13, 14]
+S1G_CLOSURE	H-510	ok
+S1B_REPLAYED	H-511	Prune	pages=[1, 3, 9, 10, 13]
+S1G_CLOSURE	H-511	ok
+S1B_REPLAYED	H-512	ReleaseRole	pages=[1, 3, 11]
+S1G_CLOSURE	H-512	ok
+S1B_REPLAYED	H-513	ReleaseRole	pages=[1, 3, 11]
+S1G_CLOSURE	H-513	ok
+S1B_REPLAYED	H-514	ReleaseRole	pages=[1, 3, 11]
+S1G_CLOSURE	H-514	ok
+S1B_REPLAYED	H-515	RootFree	pages=[1, 3, 11]
+S1G_CLOSURE	H-515	ok
+ok
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::tree_search::row_replay_tree_selector_fits_existing_source_admission ... tree selector source: row semantic=24499, owner peak=64016, metadata=187024, whole=252560
+ok
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c06_row_write_c_margins_against_both_bounds ... S2W_C06 writer=memory charge=44304 preflight_bound=6144 write_bound=11520 levels_L=1 return_slot_r=2104 held_L_r=2104 group_typed_G=27067 group_typed_plus_L_r=29171 validate_V=31126 load=32854 arena=7931 validate_below_load=yes
+S2W_C06 writer=memory preflight_body actual=37386 estimate=35528 actual_minus_estimate=1858 shell=1698 frame=4152 lease_check=656 check=25300 load=31494 select=1034 shape=7844 undo_scan=6644 delete=12736 finish_frame=1506 observe=30030 register=6641 finish=31536 carriers=592 c_total=37978 bound=6144 charge=44304 c_margin=182
+S2W_C06 writer=memory reserve_body actual=31085 estimate=30317 actual_minus_estimate=768 shell=2066 frame=1024 entry=26324 held=2072 suspended_level="reserve_group.group: Result<PreparedRowGroup<ROW_WRITE_TARGETS>>" levels=1 group=648 recompute=15924 sources=17397 produce=21803 prepare=25275 register=6785 install=19239 draft=11669 carriers=1216 c_total=32301 bound=11520 charge=44304 c_margin=483
+S2W_C06 writer=memory validation_lane_body actual=14658 estimate=5362 actual_minus_estimate=9296
+S2W_C06 writer=memory producer_lane_body actual=23507 estimate=7778 actual_minus_estimate=15729 lane_shell=4946 context=18561 control=208 carriers=3256 c_total=26763 bound=11520 charge=44304 c_margin=6021
+S2W_C06 writer=memory prepare_body actual=29654 estimate=30317 actual_minus_estimate=-663 shell=1762 arms=688 frame=1264 entry=26628 held=592 suspended_level="prepare_forward.observation: Result<Observation>" levels=1 group=3537 recompute=10527 observe=21827 calls=21827 carriers=1368 c_total=31022 bound=11520 charge=44304 c_margin=1762
+S2W_C06 writer=memory apply_body actual=30006 estimate=29920 actual_minus_estimate=86 shell=2082 arms=688 frame=1296 entry=26628 held=2072 suspended_level="forward_group.group: Result<PreparedRowGroup<ROW_WRITE_TARGETS>>" levels=1 group=544 recompute=10527 reassemble=13558 register=6785 install=19239 carriers=1544 c_total=31550 bound=11520 charge=44304 c_margin=1234
+S2W_C06 writer=memory cancel_body actual=30021 estimate=30317 actual_minus_estimate=-296 shell=1658 arms=688 frame=1144 entry=26628 held=2072 suspended_level="cancel_group.group: Result<PreparedRowGroup<ROW_WRITE_TARGETS>>" levels=1 group=472 recompute=10527 sources=11584 produce=21803 prepare=24675 install=19239 carriers=1248 c_total=31269 bound=11520 charge=44304 c_margin=1515
+S2W_C06 writer=memory phase=preflight c_total=37978 bound=6144 c_margin=182
+S2W_C06 writer=memory phase=validation_lane c_total=15402 bound=11520 c_margin=17382
+S2W_C06 writer=memory phase=reserve c_total=32301 bound=11520 c_margin=483
+S2W_C06 writer=memory phase=producer_lane c_total=26763 bound=11520 c_margin=6021
+S2W_C06 writer=memory phase=prepare c_total=31022 bound=11520 c_margin=1762
+S2W_C06 writer=memory phase=apply c_total=31550 bound=11520 c_margin=1234
+S2W_C06 writer=memory phase=cancel c_total=31269 bound=11520 c_margin=1515
+S2W_C06 writer=memory phase=finish c_total=1666 bound=11520 c_margin=31118
+S2W_C06 writer=native charge=44304 preflight_bound=6144 write_bound=11520 levels_L=1 return_slot_r=2104 held_L_r=2104 group_typed_G=27067 group_typed_plus_L_r=29171 validate_V=31126 load=32854 arena=7931 validate_below_load=yes
+S2W_C06 writer=native preflight_body actual=37386 estimate=35528 actual_minus_estimate=1858 shell=1698 frame=4152 lease_check=656 check=25300 load=31494 select=1034 shape=7844 undo_scan=6644 delete=12736 finish_frame=1506 observe=30030 register=6641 finish=31536 carriers=592 c_total=37978 bound=6144 charge=44304 c_margin=182
+S2W_C06 writer=native reserve_body actual=31085 estimate=30317 actual_minus_estimate=768 shell=2066 frame=1024 entry=26324 held=2072 suspended_level="reserve_group.group: Result<PreparedRowGroup<ROW_WRITE_TARGETS>>" levels=1 group=648 recompute=15924 sources=17397 produce=21803 prepare=25275 register=6785 install=19239 draft=11669 carriers=1216 c_total=32301 bound=11520 charge=44304 c_margin=483
+S2W_C06 writer=native validation_lane_body actual=14658 estimate=5362 actual_minus_estimate=9296
+S2W_C06 writer=native producer_lane_body actual=23507 estimate=7778 actual_minus_estimate=15729 lane_shell=4946 context=18561 control=208 carriers=3256 c_total=26763 bound=11520 charge=44304 c_margin=6021
+S2W_C06 writer=native prepare_body actual=29654 estimate=30317 actual_minus_estimate=-663 shell=1762 arms=688 frame=1264 entry=26628 held=592 suspended_level="prepare_forward.observation: Result<Observation>" levels=1 group=3537 recompute=10527 observe=21827 calls=21827 carriers=1368 c_total=31022 bound=11520 charge=44304 c_margin=1762
+S2W_C06 writer=native apply_body actual=30006 estimate=29920 actual_minus_estimate=86 shell=2082 arms=688 frame=1296 entry=26628 held=2072 suspended_level="forward_group.group: Result<PreparedRowGroup<ROW_WRITE_TARGETS>>" levels=1 group=544 recompute=10527 reassemble=13558 register=6785 install=19239 carriers=1544 c_total=31550 bound=11520 charge=44304 c_margin=1234
+S2W_C06 writer=native cancel_body actual=30021 estimate=30317 actual_minus_estimate=-296 shell=1658 arms=688 frame=1144 entry=26628 held=2072 suspended_level="cancel_group.group: Result<PreparedRowGroup<ROW_WRITE_TARGETS>>" levels=1 group=472 recompute=10527 sources=11584 produce=21803 prepare=24675 install=19239 carriers=1248 c_total=31269 bound=11520 charge=44304 c_margin=1515
+S2W_C06 writer=native phase=preflight c_total=37978 bound=6144 c_margin=182
+S2W_C06 writer=native phase=validation_lane c_total=15402 bound=11520 c_margin=17382
+S2W_C06 writer=native phase=reserve c_total=32301 bound=11520 c_margin=483
+S2W_C06 writer=native phase=producer_lane c_total=26763 bound=11520 c_margin=6021
+S2W_C06 writer=native phase=prepare c_total=31022 bound=11520 c_margin=1762
+S2W_C06 writer=native phase=apply c_total=31550 bound=11520 c_margin=1234
+S2W_C06 writer=native phase=cancel c_total=31269 bound=11520 c_margin=1515
+S2W_C06 writer=native phase=finish c_total=1666 bound=11520 c_margin=31118
+ok
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::row_gate::s1b_row_arm_census_memory ... S1B_ROW_CENSUS	actual-memory	row=25915	structural=26452	phase_max=25743	frame=26452	closure=20951	frame_return=14884	population=25743	live_peak=64016	catalog_lookup=34588	catalog_commit=39040	recovered_analysis=62819	recovered_peak=65392
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::row_gate::s1b_row_arm_census_memory' (6480) panicked at crates/engine/src/storage/wal_io/plan4_recovery/tests/row_gate.rs:621:5:
+actual-memory: Row arm above frame max
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::row_gate::s1b_row_arm_census_native ... S1B_ROW_CENSUS	actual-native	row=25915	structural=26452	phase_max=25743	frame=26452	closure=20951	frame_return=14884	population=25743	live_peak=64024	catalog_lookup=34588	catalog_commit=39040	recovered_analysis=62827	recovered_peak=65400
+
+thread 'storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::row_gate::s1b_row_arm_census_native' (6481) panicked at crates/engine/src/storage/wal_io/plan4_recovery/tests/row_gate.rs:621:5:
+actual-native: Row arm above frame max
+FAILED
+
+failures:
+
+failures:
+    storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::row_gate::s1b_row_arm_census_memory
+    storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::row_gate::s1b_row_arm_census_native
+
+test result: FAILED. 6 passed; 2 failed; 0 ignored; 0 measured; 2478 filtered out; finished in 0.45s
+
+error: test failed, to rerun pass `-p xadb-engine --lib`
+
+[The two revised source assertions: PASS on unchanged production source] o2c-census.log sha256=2fe59b54b2842962f725598b482fe71a99e8bbcd58307b829406af56ca4f1f0f
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 37.04s
+     Running unittests src/lib.rs (/tmp/xadb-o2c-target/debug/deps/engine-e4e141083d864921)
+
+running 2 tests
+S1B_ROW_CENSUS	actual-native	row=25915	structural=26452	phase_max=25743	frame=26452	closure=20951	frame_return=14884	population=25743	live_peak=64024	catalog_lookup=34588	catalog_commit=39040	recovered_analysis=62827	recovered_peak=65400
+S1B_ROW_CENSUS	actual-memory	row=25915	structural=26452	phase_max=25743	frame=26452	closure=20951	frame_return=14884	population=25743	live_peak=64016	catalog_lookup=34588	catalog_commit=39040	recovered_analysis=62819	recovered_peak=65392
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::row_gate::s1b_row_arm_census_native ... ok
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::row_gate::s1b_row_arm_census_memory ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 2484 filtered out; finished in 0.00s
+
+[Package clippy, including tests, final source] o2c-clippy.log sha256=57a77d0ea1bd76baa9b335d6d4896af56d6627b69abfaa75bbf1aa8503e10cd5
+    Blocking waiting for file lock on build directory
+    Checking memoffset v0.9.1
+    Checking libc v0.2.191
+    Checking xadb-foundation v0.1.0 (/workspace/xadb/crates/foundation)
+    Checking bitflags v2.13.2
+    Checking xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+    Checking nix v0.30.1
+    Checking xadb-platform v0.1.0 (/workspace/xadb/crates/platform)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1m 34s

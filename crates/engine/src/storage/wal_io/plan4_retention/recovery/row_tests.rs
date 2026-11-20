@@ -50,6 +50,8 @@ macro_rules! scope3 {
         ))
     };
 }
+#[path = "row_tests/overflow.rs"]
+mod overflow;
 #[path = "row_tests/tree_search.rs"]
 mod tree_search;
 const BLOBS: &[u8] = include_bytes!(concat!(
@@ -571,10 +573,15 @@ impl Replay {
             let length = u32::from_le_bytes(redo[4..8].try_into().unwrap()) as usize;
             let record = wal_frame::decode_redo_record(header, &redo[..length]).unwrap();
             redo = &redo[length..];
-            assert!(matches!(record.kind, RedoKind::Patch));
+
             let page_no = record.target.page.page_no;
             assert!(out.iter().all(|(n, _)| *n != page_no));
             let mut image = *self.page(page_no);
+            if record.kind == RedoKind::Init {
+                assert!(image.iter().all(|b| *b == 0));
+                out.push((page_no, *page_of(record.data)));
+                continue;
+            }
             assert_eq!(record.prior_lsn, u64_at(&image, 64));
             image[64..72].copy_from_slice(&header.lsn.to_le_bytes());
             let offset = usize::from(record.offset);

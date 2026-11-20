@@ -1428,7 +1428,8 @@ pub(super) fn prepare<'a>(
         | Change::ReserveOverflow(_)
         | Change::ReserveAdopted { .. } => {
             // Live passes its plan and no cell. Replay passes the candidate's
-            // kind-9 Job after and adopts only its C and projection (INSERT),
+            // kind-9 Job after and adopts its C and projection (inline INSERT),
+            // its total and root-free projection (overflow INSERT),
             // its effect byte and RowId (DELETE, dev3-row-delete.md#api) or
             // its effect byte, RowId, C' and projection (UPDATE,
             // dev3-row-update.md#api); every other step below runs for all
@@ -1493,8 +1494,17 @@ pub(super) fn prepare<'a>(
             let canonical = value
                 .map(|value| row_record::decode_canonical_row_with_schema(value, table.schema))
                 .transpose()?;
-            let planned = match (value, inserted, &inputs.change) {
-                (_, _, Change::ReserveOverflow(plan)) => overflow::reserve_total(plan.total)?,
+            // A replayed overflow Reserve adopts total and projection. C,
+            // front and written are reconstructed from the empty reservation.
+            let overflow_total = match (&inputs.change, inserted) {
+                (Change::ReserveOverflow(plan), _) => Some(plan.total),
+                (Change::ReserveAdopted { .. }, Some(job)) if job[285] == 1 => {
+                    Some(u32::from_le_bytes(job[352..356].try_into().expect("Job total")) as usize)
+                }
+                _ => None,
+            };
+            let planned = match (value, inserted, overflow_total) {
+                (_, _, Some(total)) => overflow::reserve_total(total)?,
                 (Some(value), _, _) => {
                     if !(5..=crate::storage::overflow::INLINE_ROW_BYTES).contains(&value.len()) {
                         return Err(Error::Unsupported);
@@ -1651,8 +1661,8 @@ pub(super) fn prepare<'a>(
             cells::put16(job, 286, new_cell as u16);
             job[288..320].copy_from_slice(&projection);
             put(job, 320, row.get());
-            if let Change::ReserveOverflow(plan) = inputs.change {
-                overflow::reserve_job(job, plan.total);
+            if let Some(total) = overflow_total {
+                overflow::reserve_job(job, total);
             }
             set_budget(
                 job,
@@ -2598,6 +2608,7 @@ pub(super) fn locals_bytes() -> usize {
         + 2 * size_of::<[u8; 96]>()
         + 3 * size_of::<[u8; 32]>()
         + size_of::<[Option<usize>; 5]>()
+        + size_of::<Option<usize>>() // Reserve's live or adopted overflow total.
         // The Reserve's DELETE/UPDATE target and effect. Its `value` is a
         // reference to the plan's canonical field, the size of the earlier
         // `Option<&ReservePlan>`; its effect and C' are scalars (#update-states).

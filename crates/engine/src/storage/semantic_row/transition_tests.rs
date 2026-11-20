@@ -365,7 +365,7 @@ fn leaf_ref(leaf: &Page) -> PageRef {
 /// its digest, the redo page image and the page and frame digests follow
 /// it, so the group stays framed and bound. Every observer that reads the
 /// patched bytes sees one consistent candidate.
-fn rebind(
+pub(crate) fn rebind(
     frame: &[u8],
     previous_lsn: u64,
     kind: u8,
@@ -2387,6 +2387,7 @@ pub(crate) mod update;
 
 #[path = "transition_overflow_tests.rs"]
 mod overflow;
+pub(crate) use overflow::a_group;
 
 mod measured {
     use super::super::source::returned;
