@@ -1,0 +1,207 @@
+{
+  "schema": "XADB_MODULE_GATE_RECORD_V1",
+  "change": "DEV3 08-3 O2c: overflow WAL replay, role 7 INIT claim and OVF-C04.",
+  "rust_tests": [
+    {
+      "paths": [
+        "crates/engine/src/storage/wal_io/plan4_retention/history/row.rs",
+        "crates/engine/src/storage/wal_io/plan4_retention/history/row/overflow.rs",
+        "crates/engine/src/storage/wal_io/plan4_retention/recovery.rs",
+        "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs",
+        "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests/overflow.rs"
+      ],
+      "reason": "C04 uses the recovery dispatcher and checks replay against physical redo, control and claims, atomic refusal, and validate_current. Source tests pin the semantic arm and existing admission.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests/overflow.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::overflow::ovf_c04_replay_commit_prune",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests/overflow.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::overflow::ovf_c04_replay_forward_compensate_retire",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests/overflow.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::overflow::ovf_c04_replay_partial_cancel",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests/tree_search.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::tree_search::row_replay_tree_selector_fits_existing_source_admission",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/row_gate.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::row_gate::s1b_row_arm_census_memory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/row_gate.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::row_gate::s1b_row_arm_census_native",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1g_row_reserve_replays_n1_literals",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/semantic_row/transition/prepare.rs",
+        "crates/engine/src/storage/semantic_row/transition.rs"
+      ],
+      "reason": "C04 consumes live and adopted overflow reserves. S1G also checks ordinary reserve replay. N1 and S2W check the changed prepare locals and composed bounds.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_tests.rs",
+          "case": "storage::semantic_row::transition::tests::n1_transition_source_bounds_cover_measured_frames",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests/overflow.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::overflow::ovf_c04_replay_commit_prune",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests/overflow.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::overflow::ovf_c04_replay_forward_compensate_retire",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests/overflow.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::overflow::ovf_c04_replay_partial_cancel",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::s1g_row_reserve_replays_n1_literals",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c06_row_write_c_margins_against_both_bounds",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/semantic_row/leaf.rs",
+        "crates/engine/src/storage/semantic_row/transition_overflow_tests.rs",
+        "crates/engine/src/storage/semantic_row/transition_tests.rs"
+      ],
+      "reason": "The paired Jobs bind before Undo validation, then the leaf validates the payload and the pending/returned head. Recovery tests reuse the group and native mutation helpers.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/semantic_row/transition_overflow_tests.rs",
+          "case": "storage::semantic_row::transition::tests::overflow::ovf_c04_leaf_binds_the_pending_and_returned_head",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests/overflow.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::overflow::ovf_c04_replay_commit_prune",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests/overflow.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::overflow::ovf_c04_replay_forward_compensate_retire",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests/overflow.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::recovery::row_tests::overflow::ovf_c04_replay_partial_cancel",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    },
+    {
+      "paths": [
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/row_gate.rs"
+      ],
+      "reason": "Both writer types pin the updated Row branch and the unchanged overall structural frame ceiling.",
+      "cases": [
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/row_gate.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::row_gate::s1b_row_arm_census_memory",
+          "sources": [
+            "head"
+          ]
+        },
+        {
+          "file": "crates/engine/src/storage/wal_io/plan4_recovery/tests/row_gate.rs",
+          "case": "storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_recovery::tests::row_gate::s1b_row_arm_census_native",
+          "sources": [
+            "head"
+          ]
+        }
+      ]
+    }
+  ],
+  "na": [],
+  "reviews": [
+    {
+      "id": "dev3-08-3-o2c-d2",
+      "class": "D2",
+      "scopes": [],
+      "author": "Codex /root",
+      "reviewer": "Codex /root/o2c_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/semantic_row/leaf.rs": "71e998763a3c64660d1613d66eef97f5bb162a88",
+        "crates/engine/src/storage/semantic_row/transition.rs": "4d6382fdf4a21568f3a42a69052678fb80dafc9d",
+        "crates/engine/src/storage/semantic_row/transition/prepare.rs": "88b3013322db7feec09a3094ef9b548b8bd9863f",
+        "crates/engine/src/storage/semantic_row/transition_overflow_tests.rs": "bfc7ee920b7411f57680c7b9e16b8eb4701788f6",
+        "crates/engine/src/storage/semantic_row/transition_tests.rs": "d718cb48cd66ceaa5f1da5b74eec9eef67163866",
+        "crates/engine/src/storage/wal_io/plan4_apply/row/census_tests.rs": "82aa2cfba8b44863e23c498cb2ba4835be9ab2df",
+        "crates/engine/src/storage/wal_io/plan4_recovery/tests/row_gate.rs": "d48bd62b36fe4071ef854a778abdde33534db982",
+        "crates/engine/src/storage/wal_io/plan4_retention/history/row.rs": "b1c286ee17ff0617ec45a95a6d0f86e578c0ae87",
+        "crates/engine/src/storage/wal_io/plan4_retention/history/row/overflow.rs": "9adec8cb5fd7a5a6742a76a0db6f382ae01b4062",
+        "crates/engine/src/storage/wal_io/plan4_retention/recovery.rs": "03770a4754361293ad4dfd6d8c2fd4f2eaa9b897",
+        "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests.rs": "9d6fcb3a2235c2cc12ca1e15eeaca63f09317fb9",
+        "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests/overflow.rs": "f73b23f061c49771c018767e8afe00d234acfd5e",
+        "crates/engine/src/storage/wal_io/plan4_retention/recovery/row_tests/tree_search.rs": "fada3453bf733640f9b026a89e5e5eac3c76ee20",
+        "devdoc/contracts/dev3-row-overflow.md": "0fcb659b4a5d374a7defb2bd47212448b363dc51"
+      },
+      "log": "Independent D2 by Codex /root/o2c_review on 5216c998..d7adc599 (tree 264e9a386e8762b800d52a8328fb7bef270a3bba). Round 1 requested a framing-valid divergent WAL, current-state closure and a full resource census. Final review accepted the paired CLR/Undo test, both resource assertions, section 17, all 14 source blobs, and 10 distinct selected cases. Required open: 0. Receipts, including the two failed superseded census assertions: module-gate/evidence/dev3-08-3-o2c/selected.log (SHA-256 09cb6f17f366d5ffae0c862f85e8546717f7e6bba42453fbdb2b8b8fdf08f27a)."
+    }
+  ]
+}
