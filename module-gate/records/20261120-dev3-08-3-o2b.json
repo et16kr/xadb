@@ -122,6 +122,22 @@
         "devdoc/contracts/dev3-row-overflow.md": "1c63307e97c68647fe5e54b6f9808e97a6405c5a"
       },
       "log": "Independent read-only D2 by /root/review on ad8e0280..deef475b. Round 1 required tying the pending front to last_step, the compensated front to a time before adoption, and later chunks to strictly earlier writes. Round 2 accepted those checks, XTR1 and WAL accounting, the first ReleaseRole's exact CLR LSN, the two source terms and section 16. Verified the 13 listed blobs and seven selected cases. The pending-front negative also violates descending order; the separate front equality was inspected statically. Required open: 0. Implementer receipts: module-gate/evidence/dev3-08-3-o2b/selected.log (SHA-256 17c6f36ea46ef039d8fc56c6ad2423b1ae18034e8704c456c4f2980914d4fba4); the preceding source-model compile attempt failed on an unresolved ReturnChain import, resolved by the checked re-export."
+    },
+    {
+      "id": "dev3-08-3-o2b-d2-stacked-inputs",
+      "class": "D2",
+      "scopes": [],
+      "author": "Codex /root",
+      "reviewer": "Codex /root/o2c_review",
+      "verdict": "ACCEPT",
+      "required_open": 0,
+      "files": {
+        "crates/engine/src/storage/semantic_row/transition.rs": "4d6382fdf4a21568f3a42a69052678fb80dafc9d",
+        "crates/engine/src/storage/semantic_row/transition/prepare.rs": "88b3013322db7feec09a3094ef9b548b8bd9863f",
+        "crates/engine/src/storage/semantic_row/transition_overflow_tests.rs": "bfc7ee920b7411f57680c7b9e16b8eb4701788f6",
+        "crates/engine/src/storage/semantic_row/transition_tests.rs": "d718cb48cd66ceaa5f1da5b74eec9eef67163866"
+      },
+      "log": "Supplemental independent D2 for the cumulative main-to-O2c selection. Reviewed 5216c998..993a2d7e, tip tree 267c6ae7e6494d40aede67642240621cd40f6c43. The four shared Rust inputs have the blobs above at the O2c tip. All seven O2b selected case bodies remain unchanged and directly cover partial cancellation, post-terminal retirement and release, returned-chain Job state, and source budgets. N1 and S2W account for the updated prepare size. This entry verifies the CI mappings. The seven original execution receipts remain bound to O2b. Required open: 0."
     }
   ]
 }
