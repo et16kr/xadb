@@ -581,11 +581,13 @@ fn spl_a04_growing_update_splits_and_commits() {
 /// FlushRequired with no effect (the WAL, the Jobs and the leaves are
 /// unchanged), so the next autocommit INSERT's split meets the same answer:
 /// A flushes the victim as a preflight's, asks the same split again, which
-/// installs one RootSplit, and the row commits at q 9 in two leaves. C's
-/// restart reads the eight values. (A new statement's table issue in this
-/// pool, now holding the split's two new pages, is refused MissingTarget by
-/// C's table issue, as in a 17-frame pool before any split, so the values
-/// are read after the restart only.)
+/// installs one RootSplit, and the row commits at q 9 in two leaves. A new
+/// statement and C's restart read the eight values. (In this pool, now
+/// holding the split's two new pages, the Catalog anchor or leaf has left
+/// the pool; the new statement's table issue LOADs it
+/// (dev3-visibility-retirement.md#catalog-capture-load). Before that LOAD
+/// the issue was refused MissingTarget, as in a 17-frame pool before any
+/// split, and this case read the values after the restart only.)
 #[test]
 fn spl_a05_dirty_victim_is_flushed_before_the_split() {
     use super::super::super::super::super::super::row_forward::files;
@@ -650,8 +652,21 @@ fn spl_a05_dirty_victim_is_flushed_before_the_split() {
                     .enumerate()
                     .map(|(at, row)| (*row, tagged(at, BIG)))
                     .collect();
+                // The split's pages took the anchor's frame: the read's table
+                // issue LOADs it.
+                let catalog = [7, 8].map(|page| resident_index(&writer, page).is_some());
+                assert_eq!(catalog, [false, true]);
+                assert_eq!(
+                    read_big!(writer, reader, core, reader_private, flush, flusher),
+                    expected
+                );
+                assert!(resident_index(&writer, 7).is_some());
+                assert!(resident_index(&writer, 8).is_some());
                 assert!(!fence.is_fenced());
-                println!("SPL_A05 flush_required leaves={:?}", shape(&after).0);
+                println!(
+                    "SPL_A05 flush_required leaves={:?} catalog_resident_before_read={catalog:?}",
+                    shape(&after).0
+                );
                 (state.lock().unwrap().images(), expected)
             }
         );

@@ -24,6 +24,11 @@ fn select<W: WriterNamespace>(
     object: ObjectId,
     cursor: &mut Plan4ResidencyCursor,
 ) -> Result<Selection, RetentionError> {
+    // C's Full class LOADs the Catalog anchor and leaf the capture reads; the
+    // resident class answers Ready and its capture keeps the resident miss.
+    if let ReadStep::FlushRequired { target } = operation.load_catalog(cursor)? {
+        return Ok(Selection::Flush(target));
+    }
     let candidate = operation.capture_catalog(object)?;
     loop {
         match operation.visibility(&candidate)? {
@@ -68,7 +73,10 @@ fn source_bytes() -> usize {
         + 2 * size_of::<Result<Selection, RetentionError>>()
         + size_of::<CatalogCandidate>()
         + 2 * size_of::<Result<CatalogLookupStep<'_>, RetentionError>>()
+        // The Catalog load step's result ends before the capture; a Status
+        // step's result exists only after it. One carrier, the larger.
         + size_of::<Result<ReadStep<(TransactionState, bool)>, RetentionError>>()
+            .max(size_of::<Result<ReadStep<()>, RetentionError>>())
         + 2 * size_of::<Option<&RowStatementView<'_, '_, '_, '_, '_>>>()
         + 2 * size_of::<bool>()
         + 4 * size_of::<&()>()

@@ -1257,6 +1257,9 @@ mod row_live;
 #[path = "catalog_memory/row_read_live.rs"]
 mod row_read_live;
 
+#[path = "catalog_memory/catalog_eviction.rs"]
+mod catalog_eviction;
+
 #[path = "catalog_memory/row_commit.rs"]
 mod row_commit;
 
