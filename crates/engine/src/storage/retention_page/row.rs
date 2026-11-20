@@ -34,8 +34,8 @@ pub(crate) use job::{CHAIN_RETIRE_WAL, OVERFLOW_CELL};
     reason = "pure Job3 supply awaits the closed current-profile owner"
 )]
 pub(crate) use job::{
-    JobScope, JobState, JobView, PendingChain, RowEffect, decode_job, encode_job, row_cleanup_wal,
-    row_clr_wal, row_forward_wal,
+    JobScope, JobState, JobView, PendingChain, ReturnChain, RowEffect, decode_job, encode_job,
+    row_cleanup_wal, row_clr_wal, row_forward_wal,
 };
 #[allow(
     unused_imports,

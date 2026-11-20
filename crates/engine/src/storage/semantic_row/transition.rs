@@ -252,6 +252,24 @@ pub(crate) enum Change<'a> {
         statement: StatementBoundary,
         chain: &'a ChainImages<'a>,
     },
+    #[cfg_attr(
+        not(test),
+        allow(dead_code, reason = "constructed by the O3 overflow executor")
+    )]
+    OverflowCancel {
+        ordinal: usize,
+        chain: &'a ChainImages<'a>,
+        anchor: &'a [u8; PAGE_BYTES],
+    },
+    #[cfg_attr(
+        not(test),
+        allow(dead_code, reason = "constructed by the O3 cleanup drain")
+    )]
+    ChainRetire {
+        ordinal: usize,
+        chain: &'a ChainImages<'a>,
+        anchor: &'a [u8; PAGE_BYTES],
+    },
     Cancel {
         ordinal: usize,
     },
@@ -349,6 +367,8 @@ impl Change<'_> {
             | Self::ReserveAdopted { .. } => Operation::Reserve,
             Self::ChunkWrite(_) => Operation::ChunkWrite,
             Self::Forward { .. } | Self::ForwardOverflow { .. } => Operation::Forward,
+            Self::OverflowCancel { .. } => Operation::OverflowCancel,
+            Self::ChainRetire { .. } => Operation::ChainRetire,
             Self::Cancel { .. } => Operation::Cancel,
             Self::RollbackStart { .. } => Operation::RollbackStart,
             Self::Clr { .. } => Operation::Clr,
@@ -452,6 +472,7 @@ struct Prepared<'a, 's> {
     /// UPDATE's new cell C' (dev3-row-update.md#update-shape, 185..=2228);
     /// 0 otherwise.
     new_cell: u16,
+    list_before: u16,
     predecessor: bool,
     ordinal: Option<usize>,
     actor: Option<TxnRef>,
@@ -485,6 +506,11 @@ struct Prepared<'a, 's> {
 impl Prepared<'_, '_> {
     /// The group's shape over its cells C (and C' for UPDATE) and h.
     fn shape(&self) -> Result<super::Shape> {
+        if self.op.list() {
+            return self
+                .op
+                .shape_list(usize::from(self.list_before), self.cell_len);
+        }
         self.op
             .shape_cells(self.row_cell, usize::from(self.new_cell), self.predecessor)
     }

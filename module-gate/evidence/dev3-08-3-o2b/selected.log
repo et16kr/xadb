@@ -1,0 +1,147 @@
+   Compiling xadb-engine v0.1.0 (/workspace/xadb/crates/engine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 38.82s
+     Running unittests src/lib.rs (/tmp/xadb-o2b-build/debug/deps/engine-e4e141083d864921)
+
+running 3 tests
+OVF_C03_SOURCE prepare=7050 write=2731
+test storage::semantic_row::transition::tests::overflow::ovf_c03_return_source_bounds ... ok
+N1_CROSS	H-502	status=true	undo=false	leaf=false	jobs=false
+N1_CROSS	H-502	status=true	undo=false	leaf=false	jobs=false
+N1_GROUP	H-502	RollbackStart	bytes=3040	order=[2]
+N1_GROUP	H-502	RollbackStart	bytes=3040	order=[2]
+N1_CROSS	H-503	status=true	undo=true	leaf=true	jobs=true
+N1_CROSS	H-503	status=true	undo=true	leaf=true	jobs=true
+N1_OBSERVED	H-503	Clr	bytes=91426	order=[0, 1, 2, 3, 4]
+N1_OBSERVED	H-503	Clr	bytes=91426	order=[0, 1, 2, 3, 4]
+N1_CROSS	H-504	status=true	undo=false	leaf=false	jobs=false
+N1_GROUP	H-504	StatementFinish	bytes=3040	order=[2]
+N1_CROSS	H-504	status=true	undo=false	leaf=false	jobs=false
+N1_GROUP	H-504	StatementFinish	bytes=3040	order=[2]
+N1_CROSS	H-505	status=false	undo=true	leaf=false	jobs=true
+N1_CROSS	H-505	status=false	undo=true	leaf=false	jobs=true
+N1_GROUP	H-505	Reserve	bytes=57336	order=[0, 1, 3]
+N1_GROUP	H-505	Reserve	bytes=57336	order=[0, 1, 3]
+N1_CROSS	H-506	status=false	undo=false	leaf=false	jobs=true
+N1_GROUP	H-506	Cancel	bytes=40000	order=[0, 1]
+N1_CROSS	H-506	status=false	undo=false	leaf=false	jobs=true
+N1_GROUP	H-506	Cancel	bytes=40000	order=[0, 1]
+N1_CROSS	OVF-reserve	status=false	undo=true	leaf=false	jobs=true
+N1_CROSS	OVF-reserve	status=false	undo=true	leaf=false	jobs=true
+OVF_GROUP	OVF-reserve	Reserve	bytes=57336	order=[0, 1, 3]
+OVF_GROUP	OVF-reserve	Reserve	bytes=57336	order=[0, 1, 3]
+N1_REFUSAL	empty pending	InvalidInput
+N1_CROSS	OVF-chunk2	status=true	undo=true	leaf=false	jobs=true
+OVF_GROUP	OVF-chunk2	ChunkWrite	bytes=56976	order=[2, 0, 1, 3]
+N1_CROSS	OVF-chunk2	status=true	undo=true	leaf=false	jobs=true
+OVF_GROUP	OVF-chunk2	ChunkWrite	bytes=56976	order=[2, 0, 1, 3]
+N1_CROSS	OVF-chunk1	status=true	undo=true	leaf=false	jobs=true
+OVF_GROUP	OVF-chunk1	ChunkWrite	bytes=56976	order=[2, 0, 1, 3]
+N1_CROSS	OVF-chunk1	status=true	undo=true	leaf=false	jobs=true
+OVF_GROUP	OVF-chunk1	ChunkWrite	bytes=56976	order=[2, 0, 1, 3]
+N1_REFUSAL	invalid reverse write order	OrderMismatch
+N1_REFUSAL	invalid reverse write order	OrderMismatch
+N1_REFUSAL	tail unallocated	IdentityMismatch
+N1_CROSS	OVF-chunk0	status=true	undo=true	leaf=false	jobs=true
+OVF_GROUP	OVF-chunk0	ChunkWrite	bytes=56976	order=[2, 0, 1, 3]
+N1_CROSS	OVF-cancel	status=false	undo=false	leaf=false	jobs=true
+OVF_GROUP	OVF-cancel	OverflowCancel	bytes=56568	order=[0, 1, 4]
+test storage::semantic_row::transition::tests::overflow::ovf_c03_cancel_partial_chain ... ok
+N1_CROSS	OVF-forward	status=true	undo=true	leaf=true	jobs=true
+N1_OBSERVED	OVF-forward	Forward	bytes=91676	order=[0, 1, 2, 4, 3]
+N1_CROSS	OVF-rollback	status=true	undo=false	leaf=false	jobs=false
+OVF_GROUP	OVF-rollback	RollbackStart	bytes=3040	order=[2]
+N1_CROSS	OVF-clr	status=true	undo=true	leaf=true	jobs=true
+N1_OBSERVED	OVF-clr	Clr	bytes=91468	order=[0, 1, 2, 4, 3]
+N1_CROSS	OVF-clr	status=true	undo=true	leaf=true	jobs=true
+N1_OBSERVED	OVF-clr	Clr	bytes=91290	order=[0, 1, 2, 3, 4]
+N1_REFUSAL	before terminal	OrderMismatch
+N1_CROSS	OVF-abort	status=true	undo=false	leaf=false	jobs=true
+OVF_GROUP	OVF-abort	AbortEnd	bytes=56712	order=[0, 1, 2]
+N1_REFUSAL	front stamped at Forward	OrderMismatch
+N1_CROSS	OVF-chain-retire	status=false	undo=false	leaf=false	jobs=true
+OVF_GROUP	OVF-chain-retire	ChainRetire	bytes=54896	order=[0, 1, 4]
+N1_REFUSAL	chain already retired	InvalidInput
+N1_REFUSAL	U stamped by ChainRetire	OrderMismatch
+N1_CROSS	OVF-release	status=false	undo=true	leaf=false	jobs=true
+OVF_GROUP	OVF-release	ReleaseRole	bytes=55528	order=[0, 1, 3]
+test storage::semantic_row::transition::tests::overflow::ovf_c03_retire_after_terminal_and_release ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 2479 filtered out; finished in 0.23s
+
+
+running 4 tests
+N1_SOURCE_CODEC	row_record_decode	measured=3002	counted=3168
+N1_SOURCE_CODEC	row_record_encode	measured=2122	counted=3168
+N1_SOURCE_CODEC	row_record_canonical	measured=990	counted=3168
+N1_SOURCE_CODEC	tree_page_decode	measured=1554	counted=1869
+N1_SOURCE_CODEC	tree_page_lower_bound	measured=826	counted=1869
+N1_SOURCE_CODEC	tree_page_leaf_cell	measured=227	counted=1869
+N1_SOURCE_CODEC	tree_page_prepare_leaf_edit	measured=1570	counted=2318
+N1_SOURCE_CODEC	tree_page_plan_encode	measured=1211	counted=2318
+N1_SOURCE_CODEC	undo_record_material	measured=8889	counted=10217
+N1_SOURCE_CODEC	undo_record_outline	measured=7729	counted=10217
+N1_SOURCE_CODEC	undo_record_release_step	measured=6693	counted=10217
+N1_SOURCE_CODEC	delete_undo_live	measured=7476	counted=9473
+N1_SOURCE_CODEC	delete_before	measured=9309	counted=9473
+N1_SOURCE_CODEC	delete_release	measured=7356	counted=9473
+N1_SOURCE_CODEC	frame_callee	measured=1628	counted=4752
+N1_SOURCE_CHAIN	prepare+row_job_census	23692
+N1_SOURCE_CHAIN	prepare+row_root_decode	23627
+N1_SOURCE_CHAIN	prepare+descriptor_codec	26595
+N1_SOURCE_CHAIN	prepare+tx_before	28677
+N1_SOURCE_CHAIN	prepare+descriptor_after	29331
+N1_SOURCE_CHAIN	prepare+aging_decode	29459
+N1_SOURCE_CHAIN	prepare+row_codec_bound	25088
+N1_SOURCE_CHAIN	prepare+row_record_decode	21550
+N1_SOURCE_CHAIN	prepare+row_record_encode	20670
+N1_SOURCE_CHAIN	prepare+tree_page_decode	20102
+N1_SOURCE_CHAIN	prepare+leaf_edit	20118
+N1_SOURCE_CHAIN	prepare+undo_material	27437
+N1_SOURCE_CHAIN	prepare+undo_outline	26277
+N1_SOURCE_CHAIN	prepare+undo_release_step	25241
+N1_SOURCE_CHAIN	prepare+delete_undo_live	26024
+N1_SOURCE_CHAIN	prepare+delete_before	27857
+N1_SOURCE_CHAIN	prepare+delete_release	25904
+N1_SOURCE_CHAIN	frame+callee	18144
+N1_SOURCE_CHAIN	write+aging_next	26835
+N1_SOURCE_CHAIN	write+leaf_encode	17494
+N1_SOURCE bound=30359 measured=29459 outer=9404 entry=3296 split=1456 prepare=17659 locals=4312 callee=11811 frame=8568 write=15391 slack=656 cap=65536 recovered_peak=65512
+N1_SOURCE_TERMS ledger=11811 tx_before=10129 descriptor_after=10783 status=5901 material=10217 leaf=10300 delete=11485 undo_row_codec=6023 job_edit=1020 graph=976 row_codec=3168 tree_codec=1869 leaf_edit=2318 frame_callee=4752
+S2W_C06 writer=memory charge=44304 preflight_bound=6144 write_bound=11520 levels_L=1 return_slot_r=2104 held_L_r=2104 group_typed_G=27051 group_typed_plus_L_r=29155 validate_V=31126 load=32854 arena=7931 validate_below_load=yes
+test storage::semantic_row::transition::tests::n1_transition_source_bounds_cover_measured_frames ... ok
+test storage::retention_page::row::job_tests::ovf_f02_overflow_root_states_and_recipes ... ok
+S2W_C06 writer=memory preflight_body actual=37386 estimate=35528 actual_minus_estimate=1858 shell=1698 frame=4152 lease_check=656 check=25300 load=31494 select=1034 shape=7844 undo_scan=6644 delete=12736 finish_frame=1506 observe=30030 register=6641 finish=31536 carriers=592 c_total=37978 bound=6144 charge=44304 c_margin=182
+S2W_C06 writer=memory reserve_body actual=31069 estimate=30301 actual_minus_estimate=768 shell=2066 frame=1024 entry=26324 held=2072 suspended_level="reserve_group.group: Result<PreparedRowGroup<ROW_WRITE_TARGETS>>" levels=1 group=648 recompute=15924 sources=17397 produce=21787 prepare=25259 register=6785 install=19239 draft=11669 carriers=1216 c_total=32285 bound=11520 charge=44304 c_margin=499
+S2W_C06 writer=memory validation_lane_body actual=14658 estimate=5362 actual_minus_estimate=9296
+S2W_C06 writer=memory producer_lane_body actual=23507 estimate=7778 actual_minus_estimate=15729 lane_shell=4946 context=18561 control=208 carriers=3256 c_total=26763 bound=11520 charge=44304 c_margin=6021
+S2W_C06 writer=memory prepare_body actual=29654 estimate=30301 actual_minus_estimate=-647 shell=1762 arms=688 frame=1264 entry=26628 held=592 suspended_level="prepare_forward.observation: Result<Observation>" levels=1 group=3537 recompute=10527 observe=21811 calls=21811 carriers=1368 c_total=31022 bound=11520 charge=44304 c_margin=1762
+S2W_C06 writer=memory apply_body actual=30006 estimate=29920 actual_minus_estimate=86 shell=2082 arms=688 frame=1296 entry=26628 held=2072 suspended_level="forward_group.group: Result<PreparedRowGroup<ROW_WRITE_TARGETS>>" levels=1 group=544 recompute=10527 reassemble=13558 register=6785 install=19239 carriers=1544 c_total=31550 bound=11520 charge=44304 c_margin=1234
+S2W_C06 writer=memory cancel_body actual=30005 estimate=30301 actual_minus_estimate=-296 shell=1658 arms=688 frame=1144 entry=26628 held=2072 suspended_level="cancel_group.group: Result<PreparedRowGroup<ROW_WRITE_TARGETS>>" levels=1 group=472 recompute=10527 sources=11584 produce=21787 prepare=24659 install=19239 carriers=1248 c_total=31253 bound=11520 charge=44304 c_margin=1531
+S2W_C06 writer=memory phase=preflight c_total=37978 bound=6144 c_margin=182
+S2W_C06 writer=memory phase=validation_lane c_total=15402 bound=11520 c_margin=17382
+S2W_C06 writer=memory phase=reserve c_total=32285 bound=11520 c_margin=499
+S2W_C06 writer=memory phase=producer_lane c_total=26763 bound=11520 c_margin=6021
+S2W_C06 writer=memory phase=prepare c_total=31022 bound=11520 c_margin=1762
+S2W_C06 writer=memory phase=apply c_total=31550 bound=11520 c_margin=1234
+S2W_C06 writer=memory phase=cancel c_total=31253 bound=11520 c_margin=1531
+S2W_C06 writer=memory phase=finish c_total=1666 bound=11520 c_margin=31118
+S2W_C06 writer=native charge=44304 preflight_bound=6144 write_bound=11520 levels_L=1 return_slot_r=2104 held_L_r=2104 group_typed_G=27051 group_typed_plus_L_r=29155 validate_V=31126 load=32854 arena=7931 validate_below_load=yes
+S2W_C06 writer=native preflight_body actual=37386 estimate=35528 actual_minus_estimate=1858 shell=1698 frame=4152 lease_check=656 check=25300 load=31494 select=1034 shape=7844 undo_scan=6644 delete=12736 finish_frame=1506 observe=30030 register=6641 finish=31536 carriers=592 c_total=37978 bound=6144 charge=44304 c_margin=182
+S2W_C06 writer=native reserve_body actual=31069 estimate=30301 actual_minus_estimate=768 shell=2066 frame=1024 entry=26324 held=2072 suspended_level="reserve_group.group: Result<PreparedRowGroup<ROW_WRITE_TARGETS>>" levels=1 group=648 recompute=15924 sources=17397 produce=21787 prepare=25259 register=6785 install=19239 draft=11669 carriers=1216 c_total=32285 bound=11520 charge=44304 c_margin=499
+S2W_C06 writer=native validation_lane_body actual=14658 estimate=5362 actual_minus_estimate=9296
+S2W_C06 writer=native producer_lane_body actual=23507 estimate=7778 actual_minus_estimate=15729 lane_shell=4946 context=18561 control=208 carriers=3256 c_total=26763 bound=11520 charge=44304 c_margin=6021
+S2W_C06 writer=native prepare_body actual=29654 estimate=30301 actual_minus_estimate=-647 shell=1762 arms=688 frame=1264 entry=26628 held=592 suspended_level="prepare_forward.observation: Result<Observation>" levels=1 group=3537 recompute=10527 observe=21811 calls=21811 carriers=1368 c_total=31022 bound=11520 charge=44304 c_margin=1762
+S2W_C06 writer=native apply_body actual=30006 estimate=29920 actual_minus_estimate=86 shell=2082 arms=688 frame=1296 entry=26628 held=2072 suspended_level="forward_group.group: Result<PreparedRowGroup<ROW_WRITE_TARGETS>>" levels=1 group=544 recompute=10527 reassemble=13558 register=6785 install=19239 carriers=1544 c_total=31550 bound=11520 charge=44304 c_margin=1234
+S2W_C06 writer=native cancel_body actual=30005 estimate=30301 actual_minus_estimate=-296 shell=1658 arms=688 frame=1144 entry=26628 held=2072 suspended_level="cancel_group.group: Result<PreparedRowGroup<ROW_WRITE_TARGETS>>" levels=1 group=472 recompute=10527 sources=11584 produce=21787 prepare=24659 install=19239 carriers=1248 c_total=31253 bound=11520 charge=44304 c_margin=1531
+S2W_C06 writer=native phase=preflight c_total=37978 bound=6144 c_margin=182
+S2W_C06 writer=native phase=validation_lane c_total=15402 bound=11520 c_margin=17382
+S2W_C06 writer=native phase=reserve c_total=32285 bound=11520 c_margin=499
+S2W_C06 writer=native phase=producer_lane c_total=26763 bound=11520 c_margin=6021
+S2W_C06 writer=native phase=prepare c_total=31022 bound=11520 c_margin=1762
+S2W_C06 writer=native phase=apply c_total=31550 bound=11520 c_margin=1234
+S2W_C06 writer=native phase=cancel c_total=31253 bound=11520 c_margin=1531
+S2W_C06 writer=native phase=finish c_total=1666 bound=11520 c_margin=31118
+test storage::wal_io::bootstrap::doublewrite_install::mutable_storage::plan4_pages::retention::row::census_tests::s2w_c06_row_write_c_margins_against_both_bounds ... ok
+test storage::retention_page::row::job_tests::ovf_f02_returned_chain_starts_cleanup ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 2478 filtered out; finished in 0.01s

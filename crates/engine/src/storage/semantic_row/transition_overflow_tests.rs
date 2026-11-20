@@ -1455,3 +1455,297 @@ fn ovf_c_census_new_frames_stay_under_the_callee_maximum() {
     assert!(write_chunk < write_others);
     assert!(forward_chain < src::leaf());
 }
+
+/// Return two of a three-chunk row from a Reserved Job. A damaged tail
+/// must refuse the entire group, including the already checked front.
+#[test]
+fn ovf_c03_cancel_partial_chain() {
+    use crate::storage::anchor;
+    let mut world = h_506();
+    let value = value();
+    let plan = reserve(&mut world, &value);
+    let pages = Pages {
+        jobs: Some(1),
+        status: Some(9),
+        undo: Some(14),
+        ..pages()
+    };
+    let anchor = scope3!("anchor.bin");
+    let change = |chain| Change::OverflowCancel {
+        ordinal: ORDINAL,
+        anchor,
+        chain,
+    };
+    let empty = ChainImages {
+        allocator: scope3!("anchor.bin"),
+        pages: &[],
+    };
+    refuses(
+        "empty pending",
+        &world.inputs(change(&empty), pages),
+        FRAME_BYTES,
+        Error::InvalidInput,
+    );
+    chunk(&mut world, &plan, &value, 15);
+    chunk(&mut world, &plan, &value, 16);
+    let (allocator, chunks) = chain_pages(&world);
+    let refs = [&*chunks[0], &*chunks[1]];
+    let chain = ChainImages {
+        allocator: &allocator,
+        pages: &refs,
+    };
+    for (slot, lsn) in [(0, world.lsn - 1), (1, world.lsn)] {
+        let image = restamped(refs[slot], lsn);
+        let mut pages_with_bad_lsn = refs;
+        pages_with_bad_lsn[slot] = &image;
+        let invalid = ChainImages {
+            pages: &pages_with_bad_lsn,
+            ..chain
+        };
+        refuses(
+            "invalid reverse write order",
+            &world.inputs(
+                Change::OverflowCancel {
+                    ordinal: ORDINAL,
+                    anchor,
+                    chain: &invalid,
+                },
+                pages,
+            ),
+            FRAME_BYTES,
+            Error::OrderMismatch,
+        );
+    }
+    let mut damaged = entries(&world);
+    damaged[15] = AllocationEntry::Free(generation(2));
+    let invalid = allocator_page(&damaged, world.lsn);
+    let invalid = ChainImages {
+        allocator: &invalid,
+        ..chain
+    };
+    refuses(
+        "tail unallocated",
+        &world.inputs(change(&invalid), pages),
+        FRAME_BYTES,
+        Error::IdentityMismatch,
+    );
+    let prior = row::decode_root_page(&world.root, namespace())
+        .unwrap()
+        .1
+        .canceled();
+    let (obs, _) = step(&mut world, "OVF-cancel", change(&chain), pages);
+    assert_eq!(obs.frame_bytes, 56_472 + 96);
+    assert_eq!(job(&world).state(), row::JobState::Free);
+    assert_eq!(
+        row::decode_root_page(&world.root, namespace())
+            .unwrap()
+            .1
+            .canceled(),
+        prior + 1
+    );
+    let image = world.listed_anchor.as_deref().unwrap();
+    assert_eq!(cell(image, 0), cell(anchor, 0));
+    let list = anchor::retired(image, chunk_identity(page_ref(12, 2))).unwrap();
+    assert_eq!(list.len(), 2);
+    for (i, n) in [15, 16].into_iter().enumerate() {
+        assert_eq!(
+            list.get(i),
+            Some(anchor::RetiredPage {
+                page: page_ref(n, 2),
+                kind: PageKind::Overflow,
+                level: 0,
+                retire_lsn: world.lsn
+            })
+        );
+    }
+}
+
+#[test]
+fn ovf_c03_retire_after_terminal_and_release() {
+    use crate::storage::anchor;
+    let value = value();
+    let (mut world, plan) = written(&value);
+    let head = OverflowHead::new(page_ref(17, 2), value.len(), plan.digest).unwrap();
+    let row_after = row_cell(&world, &head_record(&world, head));
+    let (allocator, chunks) = chain_pages(&world);
+    let refs: Vec<_> = chunks.iter().map(Box::as_ref).collect();
+    let chain = ChainImages {
+        allocator: &allocator,
+        pages: &refs,
+    };
+    let forward = Change::ForwardOverflow {
+        ordinal: ORDINAL,
+        statement: boundary(4, None),
+        chain: &chain,
+    };
+    let frame = a_group(&world.inputs(forward, row_pages()), Some(&row_after)).unwrap();
+    world.observe("OVF-forward", &frame, forward, row_pages());
+    step(
+        &mut world,
+        "OVF-rollback",
+        Change::RollbackStart {
+            terminal: 14,
+            statement: None,
+        },
+        Pages {
+            status: Some(9),
+            undo: Some(14),
+            ..pages()
+        },
+    );
+    for (ordinal, sources) in [
+        (ORDINAL, row_pages()),
+        (
+            15,
+            Pages {
+                undo: Some(10),
+                previous: None,
+                ..row_pages()
+            },
+        ),
+    ] {
+        let clr = Change::Clr {
+            ordinal,
+            statement: None,
+        };
+        let frame = a_group(&world.inputs(clr, sources), None).unwrap();
+        world.observe("OVF-clr", &frame, clr, sources);
+    }
+    let sources = Pages {
+        jobs: Some(1),
+        ..pages()
+    };
+    let identity = chunk_identity(page_ref(12, 2));
+    let anchor_input = scope3!("anchor.bin");
+    let mut route = anchor::decode_anchor(anchor_input, identity)
+        .unwrap()
+        .root();
+    route.revision = 2;
+    let previous = anchor::RetiredPage {
+        page: page_ref(20, 2),
+        kind: PageKind::RowLeaf,
+        level: 0,
+        retire_lsn: world.lsn,
+    };
+    let mut cell_buf = [0; anchor::RETIRED_CELL_BYTES];
+    let length = anchor::RetiredList::EMPTY
+        .extend(&[previous], &mut cell_buf)
+        .unwrap();
+    let mut listed = Box::new([0; PAGE_BYTES]);
+    anchor::encode_listed_anchor(
+        PageHeader {
+            identity,
+            kind: PageKind::TreeAnchor,
+            level: 0,
+            lsn: PageLsn(world.lsn),
+        },
+        route,
+        &cell_buf[..length],
+        &mut *listed,
+    )
+    .unwrap();
+    world.listed_anchor = Some(listed.clone());
+    let retire = Change::ChainRetire {
+        ordinal: ORDINAL,
+        chain: &chain,
+        anchor: &listed,
+    };
+    refuses(
+        "before terminal",
+        &world.inputs(retire, sources),
+        FRAME_BYTES,
+        Error::OrderMismatch,
+    );
+    step(
+        &mut world,
+        "OVF-abort",
+        Change::AbortEnd { terminal: 14 },
+        Pages {
+            jobs: Some(0),
+            status: Some(9),
+            ..pages()
+        },
+    );
+    let before = row::decode_root_page(&world.root, namespace())
+        .unwrap()
+        .1
+        .consumed_wal();
+    let too_late = restamped(refs[0], job(&world).adoption_lsn());
+    let mut bad_refs = refs.clone();
+    bad_refs[0] = &too_late;
+    let damaged = ChainImages {
+        pages: &bad_refs,
+        ..chain
+    };
+    refuses(
+        "front stamped at Forward",
+        &world.inputs(
+            Change::ChainRetire {
+                ordinal: ORDINAL,
+                chain: &damaged,
+                anchor: &listed,
+            },
+            sources,
+        ),
+        FRAME_BYTES,
+        Error::OrderMismatch,
+    );
+    let (obs, _) = step(&mut world, "OVF-chain-retire", retire, sources);
+    assert_eq!(obs.frame_bytes, 54_664 + 56 + 176);
+    let root = row::decode_root_page(&world.root, namespace()).unwrap().1;
+    assert_eq!(root.cursor(), ORDINAL as u64 + 1);
+    assert_eq!(root.consumed_wal(), before + obs.frame_bytes as u64);
+    assert_eq!(job(&world).chain(), None);
+    assert_eq!(job(&world).release_cursor(), 0);
+    let budget = job(&world).cleanup();
+    assert_eq!((budget.steps, budget.wal), (4, 4 * R));
+    let after = world.listed_anchor.as_deref().unwrap();
+    assert_eq!(cell(after, 0), cell(&*listed, 0));
+    let list = anchor::retired(after, identity).unwrap();
+    assert_eq!(list.len(), 4);
+    assert_eq!(list.get(3), Some(previous));
+    for i in 0..3 {
+        assert_eq!(
+            list.get(i),
+            Some(anchor::RetiredPage {
+                page: page_ref(15 + i as u64, 2),
+                kind: PageKind::Overflow,
+                level: 0,
+                retire_lsn: world.lsn
+            })
+        );
+    }
+    refuses(
+        "chain already retired",
+        &world.inputs(retire, sources),
+        FRAME_BYTES,
+        Error::InvalidInput,
+    );
+    let release = Change::ReleaseRole { ordinal: ORDINAL };
+    let release_pages = Pages {
+        undo: Some(14),
+        ..sources
+    };
+    let stale_undo = restamped(World::find(&world.undo, 14), world.lsn);
+    refuses(
+        "U stamped by ChainRetire",
+        &Inputs {
+            undo: Some(&stale_undo),
+            ..world.inputs(release, release_pages)
+        },
+        FRAME_BYTES,
+        Error::OrderMismatch,
+    );
+    step(&mut world, "OVF-release", release, release_pages);
+    assert_eq!(job(&world).release_cursor(), 1);
+}
+
+#[test]
+fn ovf_c03_return_source_bounds() {
+    use super::super::{overflow, source};
+    let prepare = overflow::return_list_bytes();
+    let write = overflow::write_return_list_bytes();
+    println!("OVF_C03_SOURCE prepare={prepare} write={write}");
+    assert!(prepare <= source::ledger());
+    assert!(write <= crate::storage::retention_obligation::row::source_bytes());
+}
