@@ -571,6 +571,7 @@ pub(super) fn apply_frame(
                 cells,
                 bank,
                 after,
+                claims,
                 (&mut tail[..crate::storage::semantic_row::transition::ROW_REPLAY_SCRATCH_BYTES])
                     .try_into()
                     .expect("Row loan"),

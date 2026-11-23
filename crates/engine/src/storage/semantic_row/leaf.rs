@@ -270,6 +270,34 @@ pub(crate) fn observe(layout: LayoutView<'_>, input: Inputs<'_>) -> Result<LeafO
                 _ => projection(table.handle, row, Some(original))?,
             } == *job.projection_digest(),
     )?;
+    if let RowPayload::Overflow(head) = record.payload() {
+        match role {
+            Operation::Forward => {
+                let pending = job.pending().ok_or(Error::IdentityMismatch)?;
+                require(
+                    pending.front == Some(head.root())
+                        && pending.written == pending.count()
+                        && pending.total as usize == head.total(),
+                )?;
+            }
+            Operation::Clr => {
+                let after = layout
+                    .native_records()
+                    .find(|n| n.kind() == 9)
+                    .and_then(|n| n.after())
+                    .ok_or(Error::Corrupt)?;
+                let chain = row::decode_job(after, namespace)?
+                    .chain()
+                    .ok_or(Error::IdentityMismatch)?;
+                require(
+                    chain.anchor == table.anchor
+                        && chain.root == head.root()
+                        && chain.total as usize == head.total(),
+                )?;
+            }
+            _ => {}
+        }
+    }
     let expected = RecordExpectation { namespace, row };
     let schema = RowSchemaInput::Catalog(schema);
     match effect {

@@ -7,7 +7,7 @@
 //! arguments. This module never calls `semantic_catalog`'s observer.
 //!
 //! RowReserve carries no canonical row value. Its replay adopts only the
-//! value commitment (Job C and projection) from the candidate's Job after and
+//! value commitment (C or overflow total, and projection) from the Job after and
 //! recomputes everything else (`Change::ReserveAdopted`, contract
 //! row-reserve-replay); the selectors it takes from the candidate are checked
 //! against the arena and bank before the observer runs.
@@ -31,6 +31,9 @@ use crate::storage::{
     transaction_record::{RollbackState, StatusSlotRef, TransactionState},
     tree_page::{self, EntryPayload, TreeExpectation},
 };
+
+#[path = "row/overflow.rs"]
+mod overflow;
 
 type ObservationResult<T> = std::result::Result<T, RetentionCause>;
 fn invalid() -> RetentionCause {
@@ -326,6 +329,7 @@ pub(in super::super) fn apply(
     cells: &mut [[u8; JOB_BYTES]; JOB_COUNT],
     bank: &mut [u8],
     after: &mut [[u8; PAGE_BYTES]; 8],
+    claims: &mut [[u8; 352]; 64],
     scratch: &mut [u8; ROW_REPLAY_SCRATCH_BYTES],
     adopted: &mut u64,
 ) -> ObservationResult<recovery::RetentionFrameObservation> {
@@ -347,14 +351,11 @@ pub(in super::super) fn apply(
             )
         };
         let ordinal = match op {
-            // The overflow chain groups replay from O2
-            // (dev3-row-overflow.md#replay); until then they are refused.
-            Operation::ChunkWrite | Operation::OverflowCancel | Operation::ChainRetire => {
-                return Err(RetentionCause::Unsupported);
-            }
             Operation::AgingStart => None,
             Operation::Begin | Operation::Reserve => Some(first_free(arena, jobs, profile)?),
-            Operation::Forward
+            Operation::ChunkWrite
+            | Operation::OverflowCancel
+            | Operation::Forward
             | Operation::DeleteForward
             | Operation::UpdateForward
             | Operation::Cancel => Some(actor_job(
@@ -367,7 +368,8 @@ pub(in super::super) fn apply(
             | Operation::StatementFinish
             | Operation::Commit
             | Operation::AbortEnd => Some(terminal(actor)?),
-            Operation::Clr
+            Operation::ChainRetire
+            | Operation::Clr
             | Operation::Prune
             | Operation::DeleteClr
             | Operation::DeletePrune
@@ -420,7 +422,10 @@ pub(in super::super) fn apply(
             )
             .map_err(RetentionCause::Retention)?
             .status(),
-            Operation::AgingStart | Operation::ReleaseRole | Operation::RootFree => None,
+            Operation::AgingStart
+            | Operation::ReleaseRole
+            | Operation::RootFree
+            | Operation::ChainRetire => None,
             _ => Some(selected.and_then(|j| j.status()).ok_or_else(invalid)?),
         };
         let home = match op {
@@ -434,9 +439,31 @@ pub(in super::super) fn apply(
         };
         let core = view.core();
         let ordinal_of = || ordinal.ok_or_else(invalid);
+        let chunk;
+        let chain;
+        let mut chain_pages = [arena_page(arena, 0); crate::storage::overflow::MAX_OVERFLOW_CHUNKS];
+        let overflow_job = || selected.ok_or_else(invalid);
         let change = match op {
-            Operation::ChunkWrite | Operation::OverflowCancel | Operation::ChainRetire => {
-                unreachable!("refused above")
+            Operation::ChunkWrite => {
+                chunk = overflow::chunk_plan(view, arena, profile, overflow_job()?, ordinal_of()?)?;
+                Change::ChunkWrite(&chunk)
+            }
+            Operation::OverflowCancel | Operation::ChainRetire => {
+                let job = overflow_job()?;
+                chain = overflow::chain_images(arena, profile, job, &mut chain_pages)?;
+                if op == Operation::OverflowCancel {
+                    Change::OverflowCancel {
+                        ordinal: ordinal_of()?,
+                        chain: &chain,
+                        anchor: image(arena, job.pair().ok_or_else(invalid)?[0])?,
+                    }
+                } else {
+                    Change::ChainRetire {
+                        ordinal: ordinal_of()?,
+                        chain: &chain,
+                        anchor: image(arena, job.chain().ok_or_else(invalid)?.anchor)?,
+                    }
+                }
             }
             Operation::AgingStart => Change::AgingStart,
             Operation::Begin => Change::Begin {
@@ -450,6 +477,17 @@ pub(in super::super) fn apply(
                 table: reserved.and_then(|j| j.object()).ok_or_else(invalid)?,
                 statement: core.statement(),
             },
+            Operation::Forward if overflow_job()?.overflow() => {
+                chain = overflow::chain_images(arena, profile, overflow_job()?, &mut chain_pages)?;
+                Change::ForwardOverflow {
+                    ordinal: ordinal_of()?,
+                    statement: StatementBoundary {
+                        sequence: core.statement(),
+                        mark: None,
+                    },
+                    chain: &chain,
+                }
+            }
             Operation::Forward => Change::Forward {
                 ordinal: ordinal_of()?,
                 statement: StatementBoundary {
@@ -527,6 +565,7 @@ pub(in super::super) fn apply(
         };
         let undo = match op {
             Operation::Cancel
+            | Operation::OverflowCancel
             | Operation::Forward
             | Operation::Clr
             | Operation::Prune
@@ -638,6 +677,7 @@ pub(in super::super) fn apply(
         initialized: [None; 2],
         retired: [None; 2],
     };
+    let mut new_claim = [0; 352];
     for (at, role) in observed.order[..usize::from(observed.count)]
         .iter()
         .copied()
@@ -651,6 +691,22 @@ pub(in super::super) fn apply(
             })
         {
             return Err(invalid());
+        }
+        if observed.operation == Operation::ChunkWrite && usize::from(role) == transition::UNDO {
+            let index = request.identity.page.page_no as usize;
+            if arena_page(arena, index).iter().any(|byte| *byte != 0)
+                || claims[index].iter().any(|byte| *byte != 0)
+            {
+                return Err(invalid());
+            }
+            overflow::overflow_init_record(
+                view,
+                request,
+                &pages[transition::UNDO],
+                job(cells, profile, observed.job_ordinal.ok_or_else(invalid)?)?,
+                &mut new_claim,
+            )?;
+            result.initialized[0] = Some(request);
         }
         result.changed[at] = Some(request);
     }
@@ -677,6 +733,9 @@ pub(in super::super) fn apply(
             .page_no as usize;
         arena[index * PAGE_BYTES..(index + 1) * PAGE_BYTES]
             .copy_from_slice(&pages[usize::from(role)]);
+    }
+    if let Some(request) = result.initialized[0] {
+        claims[request.identity.page.page_no as usize] = new_claim;
     }
     if observed.operation == Operation::Begin {
         *adopted = observed.actor.expect("checked Begin").id().local;
@@ -993,7 +1052,10 @@ pub(in super::super) fn source_bytes() -> SourceCensus {
     let job = job3::source_bytes();
     let carriers =
         24 * size_of::<&[u8]>() + 24 * size_of::<u64>() + 4 * size_of::<ObservationResult<()>>();
-    let outer = 2 * size_of::<LayoutView<'_>>()
+    let outer = size_of::<[&[u8; PAGE_BYTES]; crate::storage::overflow::MAX_OVERFLOW_CHUNKS]>()
+        + size_of::<transition::ChainImages<'_>>()
+        + size_of::<transition::ChunkPlan<'_>>()
+        + 2 * size_of::<LayoutView<'_>>()
         + size_of::<Inputs<'_>>()
         + size_of::<Change<'_>>()
         + size_of::<StatementBoundary>()
@@ -1016,6 +1078,7 @@ pub(in super::super) fn source_bytes() -> SourceCensus {
     // allocator entry, each with its returned carrier. Their results are
     // already inside Inputs.
     let lookup = job
+        .max(overflow::selection_bytes())
         .max(size_of::<NativeJob<'_>>() + 2 * size_of::<ObservationResult<NativeJob<'_>>>())
         .max(
             2 * size_of::<status_home::StatusHomePage<'_>>()
@@ -1032,7 +1095,8 @@ pub(in super::super) fn source_bytes() -> SourceCensus {
         + size_of::<&mut [u8; ROW_REPLAY_SCRATCH_BYTES]>()
         + transition::observe_borrowed_source_bytes().max(lookup);
     let hashing = 4 * size_of::<foundation::codec::ContentHasher>() + 1536;
-    let finishing = size_of::<LayoutView<'_>>()
+    let finishing = size_of::<[u8; 352]>()
+        + size_of::<LayoutView<'_>>()
         + size_of::<Option<usize>>()
         + carriers
         + 2 * size_of::<Observation>()
@@ -1045,7 +1109,7 @@ pub(in super::super) fn source_bytes() -> SourceCensus {
         + size_of::<([u8; 48], [u8; 40])>()
         + 2 * size_of::<crate::storage::page::PageView<'_>>()
         + 4 * size_of::<crate::storage::page::PageHeader>()
-        + job.max(hashing);
+        + job.max(hashing).max(overflow::claim_bytes());
     // The U allocator check adds one root JobView and its entry comparison.
     let closure_outer = 3 * size_of::<job3::JobView<'_>>()
         + 2 * size_of::<Option<AllocationEntry>>()
