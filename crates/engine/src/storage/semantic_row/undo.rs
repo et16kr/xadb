@@ -153,7 +153,9 @@ pub(crate) fn observe(
                 Operation::Forward => selected.state() == JobState::RootReserved,
                 Operation::Clr | Operation::Prune => selected.state() == JobState::RootRetained,
                 Operation::ReleaseRole => {
-                    selected.state().is_releasing() && selected.release_cursor() < 3
+                    selected.state().is_releasing()
+                        && selected.release_cursor() < 3
+                        && !selected.has_return_chain()
                 }
                 Operation::RootFree => {
                     selected.state().is_releasing() && selected.release_cursor() == 3
@@ -205,14 +207,12 @@ pub(crate) fn observe(
     // A Reserved overflow root's ChunkWrites move its last step but not its
     // U (dev3-row-overflow.md#transitions); its Forward reads U at the lease
     // (exactly, below).
-    require(
-        before.header().lsn.0
-            >= if role == Operation::Forward {
-                selected.lease_lsn()
-            } else {
-                selected.last_step()
-            },
-    )?;
+    let undo_lsn = before.header().lsn.0;
+    require(match role {
+        Operation::Forward => undo_lsn >= selected.lease_lsn(),
+        Operation::ReleaseRole => selected.accepts_release_undo_lsn(undo_lsn),
+        _ => undo_lsn >= selected.last_step(),
+    })?;
     let active_edge = matches!(role, Operation::Forward | Operation::Clr | Operation::Prune);
     let predecessor = if active_edge {
         let previous = predecessor(jobs, selected, context)?;

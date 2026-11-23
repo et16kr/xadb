@@ -576,6 +576,7 @@ struct World {
     /// dev3-row-overflow.md#transitions); only the overflow tests set them.
     allocator: Option<Page>,
     chunks: Vec<(u64, Page)>,
+    listed_anchor: Option<Box<Page>>,
     /// Counts R- variants checked against the before state of their base.
     rejects: Option<Cell<usize>>,
 }
@@ -596,6 +597,7 @@ impl World {
             sealed: Vec::new(),
             allocator: None,
             chunks: Vec::new(),
+            listed_anchor: None,
             rejects: None,
         })
     }
@@ -688,7 +690,10 @@ impl World {
             table: pages.table.then(|| TableSource {
                 handle: table(),
                 anchor: page_ref(12, 2),
-                anchor_image: scope3!("anchor.bin"),
+                anchor_image: self
+                    .listed_anchor
+                    .as_deref()
+                    .unwrap_or(scope3!("anchor.bin")),
                 leaf_image: self.leaf.as_ref(),
                 schema: RowSchemaInput::Columns(&self.columns),
             }),
@@ -1003,6 +1008,7 @@ impl World {
             leaf: &after[LEAF],
         };
         if present(LEAF)
+            && !op.list()
             && let Some(result) = self.observe_leaf(frame, change, pages, afters)
         {
             result.unwrap_or_else(|error| panic!("{name}: leaf.rs {error:?}"));
@@ -1330,6 +1336,10 @@ impl World {
                 UNDO if chunk => [0; PAGE_BYTES],
                 STATUS => *Self::find(&self.status, page_no),
                 UNDO => *Self::find(&self.undo, page_no),
+                LEAF if layout.operation().list() => *self
+                    .listed_anchor
+                    .as_deref()
+                    .unwrap_or(scope3!("anchor.bin")),
                 LEAF => self.leaf.unwrap(),
                 _ => unreachable!(),
             };
@@ -1352,6 +1362,7 @@ impl World {
                 UNDO if chunk => Self::replace(&mut self.chunks, page_no, image),
                 STATUS => Self::replace(&mut self.status, page_no, image),
                 UNDO => Self::replace(&mut self.undo, page_no, image),
+                LEAF if layout.operation().list() => self.listed_anchor = Some(Box::new(*image)),
                 _ => self.leaf = Some(*image),
             }
         }

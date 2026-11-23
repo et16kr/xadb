@@ -574,3 +574,186 @@ pub(super) fn forward_chain_bytes() -> usize {
             .max(overflow::source::verifier_push(0))
             .max(row_record::stream::source::push())
 }
+
+/// Gather the Job-owned suffix in chain order, then merge it into the
+/// anchor's XTR1 in physical order. Only prepare's existing cell scratch is
+/// written until every chunk, allocator entry and merged list is validated.
+#[inline(never)]
+pub(super) fn return_list<'a>(
+    inputs: &Inputs<'a>,
+    job: JobView<'_>,
+    images: &ChainImages<'_>,
+    anchor_image: &'a [u8; PAGE_BYTES],
+    out: &mut Prepared<'a, '_>,
+) -> Result<()> {
+    use crate::storage::anchor::{self, RetiredPage};
+    let (anchor, front, total, first, count) = match out.op {
+        super::Operation::OverflowCancel => {
+            let p = job.pending().ok_or(Error::InvalidInput)?;
+            (
+                job.pair().ok_or(Error::IdentityMismatch)?[0],
+                p.front.ok_or(Error::InvalidInput)?,
+                p.total,
+                p.count() - p.written,
+                p.written,
+            )
+        }
+        super::Operation::ChainRetire => {
+            let c = job.chain().ok_or(Error::InvalidInput)?;
+            (c.anchor, c.root, c.total, 0, c.count())
+        }
+        _ => return Err(Error::InvalidInput),
+    };
+    if images.pages.len() != usize::from(count) {
+        return Err(Error::InvalidInput);
+    }
+    let namespace = inputs.profile.spec().namespace;
+    let table = job.object().ok_or(Error::IdentityMismatch)?;
+    let identity = cells::table_identity(table, namespace, anchor);
+    let root = anchor::decode_anchor(anchor_image, identity)?.root();
+    let old = anchor::retired(anchor_image, identity)?;
+    require(
+        cells::page_lsn(anchor_image) != 0
+            && cells::page_lsn(anchor_image) <= inputs.frame.previous_lsn,
+    )?;
+    let alloc = allocator(images.allocator, namespace, inputs.frame.previous_lsn)?;
+    alloc
+        .lookup_allocated(identity, PageKind::TreeAnchor)
+        .map_err(allocation_error)?;
+    let front = cells::table_identity(table, namespace, front);
+    let mut added = [RetiredPage {
+        page: front.page,
+        kind: PageKind::Overflow,
+        level: 0,
+        retire_lsn: out.header.lsn,
+    }; overflow::MAX_OVERFLOW_CHUNKS];
+    let image = images.pages[0]; // a validated Job gives count >= 1
+    let first_view = overflow::inspect_overflow_page(image, front).map_err(overflow_error)?;
+    same(first_view.chain().total() == total as usize)?;
+    let mut walk =
+        overflow::OverflowSegmentWalk::new(front, first_view.chain(), usize::from(first))
+            .map_err(overflow_error)?;
+    let mut previous = first_view.header().lsn.0;
+    require(previous > job.lease_lsn() && previous <= inputs.frame.previous_lsn)?;
+    require(match out.op {
+        super::Operation::OverflowCancel => previous == job.last_step(),
+        _ => previous < job.adoption_lsn(),
+    })?;
+    alloc
+        .lookup_allocated(front, PageKind::Overflow)
+        .map_err(allocation_error)?;
+    walk.push(&first_view).map_err(overflow_error)?;
+    for image in &images.pages[1..] {
+        let expected = walk.expected().ok_or(Error::OrderMismatch)?;
+        alloc
+            .lookup_allocated(expected, PageKind::Overflow)
+            .map_err(allocation_error)?;
+        let view = overflow::inspect_overflow_page(&image[..], expected).map_err(overflow_error)?;
+        let lsn = view.header().lsn.0;
+        require(lsn > job.lease_lsn() && lsn < previous)?;
+        walk.push(&view).map_err(overflow_error)?;
+        previous = lsn;
+    }
+    // The walk has proved completeness and physical uniqueness. At most
+    // nine items need ordering. Insert in place without a sorting buffer.
+    let visited = walk.finish().map_err(overflow_error)?;
+    for (index, page) in visited.iter().enumerate() {
+        let page = page.expect("finished walk");
+        let mut at = index;
+        while at > 0 && added[at - 1].page.page_no > page.page_no {
+            added[at] = added[at - 1];
+            at -= 1;
+        }
+        added[at].page = page;
+    }
+    let added = &added[..visited.len()];
+    let cell = out
+        .cell
+        .first_chunk_mut::<{ anchor::RETIRED_CELL_BYTES }>()
+        .expect("XTR1 fits the row cell loan");
+    out.cell_len = old.extend(added, cell)?;
+    anchor::check_retired(&cell[..out.cell_len], anchor, root, out.header.lsn)?;
+    out.list_before = old.cell().len() as u16;
+    out.pages[LEAF] = Some(super::Changed {
+        identity,
+        kind: PageKind::TreeAnchor,
+        before: anchor_image,
+        before_slot: (!old.is_empty()).then_some(1),
+        after_slot: Some(1),
+    });
+    Ok(())
+}
+
+pub(super) fn write_return_list(
+    prepared: &Prepared<'_, '_>,
+    after: &mut [u8; PAGE_BYTES],
+) -> Result<()> {
+    use crate::storage::anchor;
+    let page = prepared.pages[LEAF].ok_or(Error::InvalidInput)?;
+    let root = anchor::decode_anchor(page.before, page.identity)?.root();
+    anchor::encode_listed_anchor(
+        PageHeader {
+            identity: page.identity,
+            kind: PageKind::TreeAnchor,
+            level: 0,
+            lsn: PageLsn(prepared.header.lsn),
+        },
+        root,
+        &prepared.cell[..prepared.cell_len],
+        after,
+    )?;
+    Ok(())
+}
+
+/// Return preparation uses the caller's row cell for XTR1. The nine new
+/// entries, suffix walk and views are local. SHA is charged by prepare.
+pub(super) fn return_list_bytes() -> usize {
+    use crate::storage::{
+        anchor,
+        retention_page::row::{PendingChain, ReturnChain},
+    };
+    use std::mem::size_of;
+    size_of::<(
+        &Inputs<'_>,
+        JobView<'_>,
+        &ChainImages<'_>,
+        &[u8; PAGE_BYTES],
+        &mut Prepared<'_, '_>,
+    )>() + size_of::<(Namespace, ObjectHandle, PageRef, PageRef, u32, u16, u16)>()
+        + size_of::<(
+            Option<PendingChain>,
+            Option<ReturnChain>,
+            Option<[PageRef; 2]>,
+        )>()
+        + 3 * size_of::<PageIdentity>()
+        + source::returned::<anchor::TreeAnchor, page::PageError>()
+        + size_of::<anchor::AnchorRoot>()
+        + source::returned::<anchor::RetiredList<'_>, page::PageError>()
+        + source::returned::<AllocationPage<'_>, Error>()
+        + source::returned::<overflow::OverflowSegmentWalk, OverflowError>()
+        + 2 * source::returned::<overflow::OverflowPageView<'_>, OverflowError>()
+        + size_of::<[anchor::RetiredPage; overflow::MAX_OVERFLOW_CHUNKS]>()
+        + size_of::<(PageRef, anchor::RetiredPage, super::Changed<'_>)>()
+        + source::slack()
+        + allocator_bytes()
+            .max(anchor::retired_source_bytes(source::page_codec()))
+            .max(overflow::source::inspect(source::page_codec()))
+            .max(overflow::source::segment_push())
+            .max(anchor::extend_source_bytes())
+}
+
+/// Place the unchanged route and the checked list in the anchor after page.
+pub(super) fn write_return_list_bytes() -> usize {
+    use crate::storage::anchor;
+    use std::mem::size_of;
+    size_of::<(
+        &Prepared<'_, '_>,
+        &mut [u8; PAGE_BYTES],
+        super::Changed<'_>,
+        PageHeader,
+        anchor::AnchorRoot,
+    )>() + source::returned::<anchor::TreeAnchor, page::PageError>()
+        + source::slack()
+        + anchor::whole_decode_source_bytes(source::page_codec())
+            .max(anchor::listed_encode_source_bytes(source::page_codec()))
+}

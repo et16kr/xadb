@@ -222,7 +222,7 @@ impl<'a> RetiredList<'a> {
 /// later (an unlink wrote it); an Overflow-only list is valid at revision 1,
 /// since a chain return leaves the route alone
 /// (dev3-row-overflow.md#retired-overflow).
-fn check_retired(
+pub(crate) fn check_retired(
     cell: &[u8],
     anchor: PageRef,
     root: AnchorRoot,
